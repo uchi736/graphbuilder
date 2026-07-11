@@ -5,7 +5,7 @@ from neo4j.exceptions import TransientError
 from langchain_neo4j import Neo4jGraph
 from src.shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file, load_embedding_model, get_value_from_env, get_user_embedding_model
 from src.document_sources.gcs_bucket import delete_file_from_gcs
-from src.shared.constants import NODEREL_COUNT_QUERY_WITH_COMMUNITY, NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY
+from src.shared.constants import NODEREL_COUNT_QUERY_WITH_COMMUNITY, NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY, PROTECTED_MANAGEMENT_LABELS, PROTECTED_LABELS_CYPHER, PROTECTED_RELATIONSHIP_TYPES
 from src.entities.source_node import sourceNode
 from src.communities import MAX_COMMUNITY_LEVELS
 import json
@@ -400,9 +400,10 @@ class graphDBdataAccess:
         return len(filename_list)
     
     def list_unconnected_nodes(self):
+        excl = PROTECTED_LABELS_CYPHER
         query = """
-        MATCH (e:!Chunk&!Document&!`__Community__`) 
-        WHERE NOT exists { (e)--(:!Chunk&!Document&!`__Community__`) }
+        MATCH (e:!Chunk&!Document&!`__Community__`""" + excl + """)
+        WHERE NOT exists { (e)--(:!Chunk&!Document&!`__Community__`""" + excl + """) }
         OPTIONAL MATCH (doc:Document)<-[:PART_OF]-(c:Chunk)-[:HAS_ENTITY]->(e)
         RETURN 
         e {
@@ -422,8 +423,8 @@ class graphDBdataAccess:
         LIMIT 100
         """
         query_total_nodes = """
-        MATCH (e:!Chunk&!Document&!`__Community__`) 
-        WHERE NOT exists { (e)--(:!Chunk&!Document&!`__Community__`) }
+        MATCH (e:!Chunk&!Document&!`__Community__`""" + excl + """)
+        WHERE NOT exists { (e)--(:!Chunk&!Document&!`__Community__`""" + excl + """) }
         RETURN count(*) as total
         """
         nodes_list = self.execute_query(query)
@@ -443,7 +444,7 @@ class graphDBdataAccess:
         score_value = get_value_from_env("DUPLICATE_SCORE_VALUE",0.97,"float")
         text_distance = get_value_from_env("DUPLICATE_TEXT_DISTANCE", 3 ,"int")
         query_duplicate_nodes = """
-                MATCH (n:!Chunk&!Session&!Document&!`__Community__`) with n 
+                MATCH (n:!Chunk&!Session&!Document&!`__Community__`""" + PROTECTED_LABELS_CYPHER + """) with n
                 WHERE n.embedding is not null and n.id is not null // and size(toString(n.id)) > 3
                 WITH n ORDER BY count {{ (n)--() }} DESC, size(toString(n.id)) DESC // updated
                 WITH collect(n) as nodes
@@ -619,10 +620,12 @@ class graphDBdataAccess:
         return response
     
     def get_nodelabels_relationships(self):
+        excluded_labels = ['Document', 'Chunk', '_Bloom_Perspective_', '__Community__', '__Entity__'] + PROTECTED_MANAGEMENT_LABELS
+        excluded_relationships = ['PART_OF', 'NEXT_CHUNK', 'HAS_ENTITY', '_Bloom_Perspective_', 'FIRST_CHUNK', 'SIMILAR', 'IN_COMMUNITY', 'PARENT_COMMUNITY'] + PROTECTED_RELATIONSHIP_TYPES
         node_query = """
                     CALL db.labels() YIELD label
                     WITH label
-                    WHERE NOT label IN ['Document', 'Chunk', '_Bloom_Perspective_', '__Community__', '__Entity__']
+                    WHERE NOT label IN $excluded_labels
                     CALL apoc.cypher.run("MATCH (n:`" + label + "`) RETURN count(n) AS count",{}) YIELD value
                     WHERE value.count > 0
                     RETURN label order by label
@@ -630,14 +633,14 @@ class graphDBdataAccess:
 
         relation_query = """
                 CALL db.relationshipTypes() yield relationshipType
-                WHERE NOT relationshipType  IN ['PART_OF', 'NEXT_CHUNK', 'HAS_ENTITY', '_Bloom_Perspective_','FIRST_CHUNK','SIMILAR','IN_COMMUNITY','PARENT_COMMUNITY'] 
+                WHERE NOT relationshipType IN $excluded_relationships
                 return relationshipType order by relationshipType
                 """
             
         try:
-            node_result = self.execute_query(node_query)
+            node_result = self.execute_query(node_query, {"excluded_labels": excluded_labels})
             node_labels = [record["label"] for record in node_result]
-            relationship_result = self.execute_query(relation_query)
+            relationship_result = self.execute_query(relation_query, {"excluded_relationships": excluded_relationships})
             relationship_types = [record["relationshipType"] for record in relationship_result]
             return node_labels,relationship_types
         except Exception as e:

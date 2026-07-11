@@ -4,7 +4,7 @@ from src.graph_query import get_graphDB_driver
 from src.shared.common_fn import load_embedding_model,execute_graph_query,get_value_from_env
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from src.shared.constants import GRAPH_CLEANUP_PROMPT
+from src.shared.constants import GRAPH_CLEANUP_PROMPT, PROTECTED_LABELS_WHERE
 from src.llm import get_llm
 from src.graphDB_dataAccess import graphDBdataAccess
 
@@ -128,10 +128,10 @@ def create_entity_embedding(graph:Neo4jGraph, embedding_provider, embedding_mode
 def fetch_entities_for_embedding(graph):
     query = """
                 MATCH (e)
-                WHERE NOT (e:Chunk OR e:Document OR e:`__Community__`) AND e.embedding IS NULL AND e.id IS NOT NULL
+                WHERE NOT (e:Chunk OR e:Document OR e:`__Community__` OR """ + PROTECTED_LABELS_WHERE + """) AND e.embedding IS NULL AND e.id IS NOT NULL
                 RETURN elementId(e) AS elementId, e.id + " " + coalesce(e.description, "") AS text
-                """ 
-    result = execute_graph_query(graph,query)        
+                """
+    result = execute_graph_query(graph,query)
     return [{"elementId": record["elementId"], "text": record["text"]} for record in result]
 
 def update_embeddings(rows, graph, embedding_provider, embedding_model):

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from langchain_core.documents import Document
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
@@ -14,6 +15,7 @@ import boto3
 import google.auth
 from src.shared.constants import ADDITIONAL_INSTRUCTIONS
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
+from src.edc_extraction import get_graph_from_edc
 import re
 from langchain_core.callbacks.manager import CallbackManager
 from src.shared.common_fn import UniversalTokenUsageHandler,get_value_from_env
@@ -21,6 +23,11 @@ from src.shared.common_fn import UniversalTokenUsageHandler,get_value_from_env
 def get_llm(model: str):
     """Retrieve the specified language model based on the model name."""
     model = model.upper().replace('.', '_').strip()
+    if model == "EDC":
+        # EDC はグラフ抽出専用の連携（get_graph_from_llm 側で分岐）。チャット・後処理には使えない
+        err = "'edc' is available for document extraction only (EDC API integration); choose another model for chat and post-processing"
+        logging.error(err)
+        raise Exception(err)
     env_key = f"LLM_MODEL_CONFIG_{model}"
     env_value = get_value_from_env(env_key)
 
@@ -127,13 +134,16 @@ def get_llm(model: str):
             )
             callback_handler = None
         
-        else: 
+        else:
             model_name, api_endpoint, api_key = env_value.split(",")
+            # ローカルLLMは出力が暴走してコンテキスト上限(32k)まで生成し続けることがあるため上限を設ける
+            local_max_tokens = get_value_from_env("LOCAL_LLM_MAX_TOKENS", 8192, int)
             llm = ChatOpenAI(
                 api_key=api_key,
                 base_url=api_endpoint,
                 model=model_name,
                 temperature=0,
+                max_tokens=local_max_tokens,
                 callbacks=callback_manager,
             )
     except Exception as e:
@@ -230,7 +240,24 @@ async def get_graph_document_list(
         if isinstance(llm,DiffbotGraphTransformer):
             graph_document_list = llm_transformer.convert_to_graph_documents(combined_chunk_document_list)
         else:
-            graph_document_list = await llm_transformer.aconvert_to_graph_documents(combined_chunk_document_list)
+            # チャンクごとに個別変換し、一部のチャンクで生成が暴走・失敗してもファイル全体を失敗にしない
+            results = await asyncio.gather(
+                *[llm_transformer.aconvert_to_graph_documents([doc]) for doc in combined_chunk_document_list],
+                return_exceptions=True,
+            )
+            failed_chunks = 0
+            for result in results:
+                if isinstance(result, BaseException):
+                    failed_chunks += 1
+                    logging.warning(f"Skipping chunk due to graph transformation error: {result}")
+                else:
+                    graph_document_list.extend(result)
+            if failed_chunks:
+                logging.warning(f"Graph transformation skipped {failed_chunks}/{len(combined_chunk_document_list)} combined chunks")
+            if failed_chunks == len(combined_chunk_document_list):
+                raise LLMGraphBuilderException(f"Graph transformation failed for all chunks: {results[0]}")
+    except LLMGraphBuilderException:
+       raise
     except Exception as e:
        logging.error(f"Error in graph transformation: {e}", exc_info=True)
        raise LLMGraphBuilderException(f"Graph transformation failed: {str(e)}")
@@ -246,6 +273,13 @@ async def get_graph_document_list(
 
 async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship, chunks_to_combine, additional_instructions=None):
    try:
+       if model.strip().lower() == "edc":
+           if allowedNodes or allowedRelationship:
+               logging.info("EDC extraction manages schema via its doctype registry; ignoring allowedNodes/allowedRelationship")
+           combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list, chunks_to_combine)
+           logging.info(f"Combined {len(combined_chunk_document_list)} chunks for EDC extraction")
+           return await get_graph_from_edc(combined_chunk_document_list)
+
        llm, model_name,callback_handler = get_llm(model)
        logging.info(f"Using model: {model_name}")
     

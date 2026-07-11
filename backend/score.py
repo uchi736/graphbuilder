@@ -357,9 +357,14 @@ async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_cred
             logging.info('Entity Embeddings created')
 
         if "graph_schema_consolidation" in tasks :
-            await asyncio.to_thread(graph_schema_consolidation, graph)
-            api_name = 'post_processing/graph_schema_consolidation'
-            logging.info('Updated nodes and relationship labels')
+            # LLMによるラベル・関係型の一括リネームは、EDC/graphragが正規化した語彙を壊しうるため
+            # 共有グラフ運用では GRAPH_SCHEMA_CONSOLIDATION_ENABLED=false で無効化できる
+            if get_value_from_env("GRAPH_SCHEMA_CONSOLIDATION_ENABLED", "true", "bool"):
+                await asyncio.to_thread(graph_schema_consolidation, graph)
+                api_name = 'post_processing/graph_schema_consolidation'
+                logging.info('Updated nodes and relationship labels')
+            else:
+                logging.info('graph_schema_consolidation is disabled by GRAPH_SCHEMA_CONSOLIDATION_ENABLED=false')
             
         if "enable_communities" in tasks:
             api_name = 'create_communities'

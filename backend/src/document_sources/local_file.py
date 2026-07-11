@@ -33,6 +33,43 @@ def detect_encoding(file_path):
         result = chardet.detect(raw_data)
         return result['encoding'] or "utf-8"
 
+def convert_pdf_via_edc(file_path):
+    """
+    EDC APIの /convert でPDFをページ毎テキストに変換する（PaddleX OCR、スキャンPDF対応）。
+
+    EDC_PDF_CONVERT が無効・EDC未設定・変換失敗時は None を返し、
+    呼び出し側は PyMuPDF にフォールバックする。
+    """
+    from src.shared.common_fn import get_value_from_env
+    if not get_value_from_env("EDC_PDF_CONVERT", "false", "bool"):
+        return None
+    edc_config = get_value_from_env("LLM_MODEL_CONFIG_EDC")
+    if not edc_config:
+        logging.warning("EDC_PDF_CONVERT is enabled but LLM_MODEL_CONFIG_EDC is not set")
+        return None
+    base_url = edc_config.split(",")[0].strip().rstrip("/")
+    timeout = get_value_from_env("EDC_CONVERT_TIMEOUT", 300, "int")
+    try:
+        import httpx
+        with open(file_path, "rb") as f:
+            response = httpx.post(
+                f"{base_url}/convert",
+                files={"file": (Path(file_path).name, f, "application/pdf")},
+                timeout=float(timeout),
+            )
+        response.raise_for_status()
+        pages = response.json().get("pages") or []
+        if not pages:
+            return None
+        logging.info("EDC /convert succeeded: %d pages from %s", len(pages), Path(file_path).name)
+        return [
+            Document(page_content=page_text, metadata={"source": str(file_path), "page": i})
+            for i, page_text in enumerate(pages)
+        ]
+    except Exception as exc:
+        logging.warning("EDC /convert failed (%s); falling back to PyMuPDF", exc)
+        return None
+
 def load_document_content(file_path):
     """
     Loads document content from a file, handling PDFs and text encoding.
@@ -41,15 +78,27 @@ def load_document_content(file_path):
         file_path (str or Path): Path to the file.
 
     Returns:
-        tuple: (loader, encoding_flag)
+        tuple: (loader, raw_flag)
             loader: Document loader instance.
-            encoding_flag (bool): True if non-UTF-8 encoding was used for .txt files.
+            raw_flag (bool): True if the loader returns raw page Documents
+                (skip unstructured page grouping).
     """
     file_extension = Path(file_path).suffix.lower()
     encoding_flag = False
     if file_extension == '.pdf':
+        edc_pages = convert_pdf_via_edc(file_path)
+        if edc_pages is not None:
+            return ListLoader(edc_pages), False
         loader = PyMuPDFLoader(file_path)
         return loader, encoding_flag
+    if file_extension == ".md":
+        # Markdownは見出し構造を保持するため生テキストで読む
+        # （UnstructuredFileLoaderは要素分解時に # マーカーを落とし、見出しパンくずチャンキングが効かなくなる）
+        encoding = detect_encoding(file_path)
+        with open(file_path, encoding=encoding, errors="replace") as f:
+            content = f.read()
+        loader = ListLoader([Document(page_content=content, metadata={"source": str(file_path)})])
+        return loader, True
     if file_extension == ".txt":
         encoding = detect_encoding(file_path)
         logging.info("Detected encoding for text file: %s", encoding)
@@ -84,9 +133,9 @@ def get_documents_from_file_by_path(file_path, file_name):
         raise Exception(f'File {file_name} does not exist')
     logging.info('file %s processing', file_name)
     try:
-        loader, encoding_flag = load_document_content(file_path)
+        loader, raw_flag = load_document_content(file_path)
         file_extension = file_path.suffix.lower()
-        if file_extension == ".pdf" or (file_extension == ".txt" and encoding_flag):
+        if file_extension == ".pdf" or raw_flag:
             pages = loader.load()
         else:
             unstructured_pages = loader.load()

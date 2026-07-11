@@ -1,6 +1,17 @@
-GRAPH_CHUNK_LIMIT = 50 
+GRAPH_CHUNK_LIMIT = 50
 
-#query 
+# 共有グラフ運用時の保護対象ラベル。
+# チャット履歴(Session/Message)と外部プログラム(graphrag等)の管理ノードを、
+# 後処理（エンティティ埋め込み・名寄せ・コミュニティ投影・未接続列挙・スキーマ統合）から除外する
+PROTECTED_MANAGEMENT_LABELS = ["Session", "Message", "SchemaMeta", "ProcessedChunk", "GraphProvenance", "CondFact", "Cond"]
+# Cypherラベル式 (:!A&!B...) に連結する形式
+PROTECTED_LABELS_CYPHER = "".join(f"&!`{label}`" for label in PROTECTED_MANAGEMENT_LABELS)
+# WHERE NOT (e:A OR e:B ...) に連結する形式
+PROTECTED_LABELS_WHERE = " OR ".join(f"e:`{label}`" for label in PROTECTED_MANAGEMENT_LABELS)
+# 外部プログラムが張る関係型（スキーマ統合のリネーム対象から保護）
+PROTECTED_RELATIONSHIP_TYPES = ["NEXT", "LAST_MESSAGE", "REFERS_TO", "ALIAS_OF", "WHEN", "MENTIONS"]
+
+#query
 GRAPH_QUERY = """
 MATCH docs = (d:Document) 
 WHERE d.fileName IN $document_names

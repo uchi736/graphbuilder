@@ -7,9 +7,11 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from src.shared.common_fn import get_value_from_env
 from src.shared.common_fn import load_embedding_model,track_token_usage
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
+from src.shared.constants import PROTECTED_LABELS_CYPHER
 
 COMMUNITY_PROJECTION_NAME = "communities"
-NODE_PROJECTION = "!Chunk&!Document&!__Community__"
+# 保護ラベル（チャット履歴・外部管理ノード）はLeiden投影から除外する
+NODE_PROJECTION = "!Chunk&!Document&!__Community__" + PROTECTED_LABELS_CYPHER
 NODE_PROJECTION_ENTITY = "__Entity__"
 MAX_WORKERS = 10
 MAX_COMMUNITY_LEVELS = 3 

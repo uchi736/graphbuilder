@@ -100,7 +100,30 @@ def _get_bedrock_embeddings(model_name: str):
     except Exception as e:
         logging.error(f"An unexpected error occurred: {e}")
         raise
-   
+
+def _get_vllm_embeddings(model_name: str):
+    """
+    OpenAI互換の /v1/embeddings を提供する vLLM サーバ用の埋め込みクライアントを返す。
+    環境変数 VLLM_EMBEDDING_ENDPOINT: <base_url>[,<api_key>]  (例: http://host:8003/v1,dummy)
+    EDC と同じ呼び方（プレフィックスなしの生テキスト）で埋め込む。
+    """
+    env_value = get_value_from_env("VLLM_EMBEDDING_ENDPOINT")
+    if not env_value:
+        raise ValueError(
+            "Environment variable 'VLLM_EMBEDDING_ENDPOINT' is not set. "
+            "Expected format: <base_url>[,<api_key>] (e.g. http://192.168.0.250:8003/v1,dummy)"
+        )
+    parts = [p.strip() for p in env_value.split(",")]
+    base_url = parts[0]
+    api_key = parts[1] if len(parts) > 1 and parts[1] else "dummy"
+    return OpenAIEmbeddings(
+        model=model_name,
+        api_key=api_key,
+        base_url=base_url,
+        # 非OpenAIサーバはtiktokenのトークン列を解釈できないため生テキストで送る
+        check_embedding_ctx_length=False,
+    )
+
 def create_youtube_url(url):
     you_tu_url = "https://www.youtube.com/watch?v="
     u_pars = urlparse(url)
@@ -191,6 +214,9 @@ def load_embedding_model(embedding_provider: str, embedding_model_name: str):
             "all-MiniLM-L6-v2": 384,
             "sentence-transformers/all-MiniLM-L6-v2": 384,
         },
+        "vllm": {
+            "cl-nagoya/ruri-v3-310m": 768,
+        },
     }
 
     provider = embedding_provider.lower()
@@ -208,8 +234,10 @@ def load_embedding_model(embedding_provider: str, embedding_model_name: str):
     elif provider == "titan":
         embeddings = _get_bedrock_embeddings(model)
     elif provider == "sentence-transformer":
-        model_path = "./local_model" 
+        model_path = "./local_model"
         embeddings = _get_sentence_transformer_embedding(model, model_path)
+    elif provider == "vllm":
+        embeddings = _get_vllm_embeddings(model)
     else:
         raise ValueError(f"Unknown embedding provider: {provider}")
 

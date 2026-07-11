@@ -36,18 +36,28 @@ services:
       - LLM_MODEL_CONFIG_BEDROCK_NOVA_LITE_V1=${LLM_MODEL_CONFIG_BEDROCK_NOVA_LITE_V1-}
       - LLM_MODEL_CONFIG_BEDROCK_NOVA_PRO_V1=${LLM_MODEL_CONFIG_BEDROCK_NOVA_PRO_V1-}
       - LLM_MODEL_CONFIG_OLLAMA_LLAMA3=${LLM_MODEL_CONFIG_OLLAMA_LLAMA3-}
+      - LLM_MODEL_CONFIG_GEMMA4=${LLM_MODEL_CONFIG_GEMMA4-}
+      - LLM_MODEL_CONFIG_EDC=${LLM_MODEL_CONFIG_EDC-}
+      - EDC_EXTRACTION_TIMEOUT=${EDC_EXTRACTION_TIMEOUT-}
+      - GRAPH_SCHEMA_CONSOLIDATION_ENABLED=${GRAPH_SCHEMA_CONSOLIDATION_ENABLED-}
+      - EDC_PDF_CONVERT=${EDC_PDF_CONVERT-}
+      - EDC_CONVERT_TIMEOUT=${EDC_CONVERT_TIMEOUT-}
+      - MARKDOWN_CHUNKING=${MARKDOWN_CHUNKING-}
       - OPENAI_API_KEY=${OPENAI_API_KEY-}
       - DIFFBOT_API_KEY=${DIFFBOT_API_KEY-}
       - EMBEDDING_MODEL=${EMBEDDING_MODEL-}
       - EMBEDDING_PROVIDER=${EMBEDDING_PROVIDER-}
+      - VLLM_EMBEDDING_ENDPOINT=${VLLM_EMBEDDING_ENDPOINT-}
       - MAX_TOKEN_CHUNK_SIZE=${MAX_TOKEN_CHUNK_SIZE-}
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/application_default_credentials.json
       - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT-}
     container_name: backend
     extra_hosts:
       - host.docker.internal:host-gateway
+    depends_on:
+      - database
     ports:
-      - "8000:8000"
+      - "8440:8000"
     networks:
       - net
 
@@ -84,9 +94,36 @@ services:
       - ./frontend/.env
     container_name: frontend
     ports:
-      - "8080:8080"
+      - "8441:8080"
+    networks:
+      - net
+
+  # 専用 Neo4j（データ分離）。Community 5.26 はベクトルインデックスをネイティブ対応。
+  database:
+    image: neo4j:5.26-community
+    container_name: neo4j-kgb
+    environment:
+      - NEO4J_AUTH=neo4j/kgb-please-change
+      - NEO4J_PLUGINS=["apoc"]
+      - NEO4J_apoc_export_file_enabled=true
+      - NEO4J_apoc_import_file_enabled=true
+      - NEO4J_apoc_import_file_use__neo4j__config=true
+      - NEO4J_dbms_security_procedures_unrestricted=apoc.*
+      - NEO4J_server_memory_heap_initial__size=1G
+      - NEO4J_server_memory_heap_max__size=4G
+      - NEO4J_server_memory_pagecache_size=2G
+    ports:
+      - "7475:7474"
+      - "7688:7687"
+    volumes:
+      - neo4j-kgb-data:/data
+      - neo4j-kgb-logs:/logs
     networks:
       - net
 
 networks:
   net:
+
+volumes:
+  neo4j-kgb-data:
+  neo4j-kgb-logs:

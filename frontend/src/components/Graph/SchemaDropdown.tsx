@@ -38,38 +38,38 @@ const SchemaDropdown: React.FunctionComponent<SchemaDropdownProps> = ({ isDisabl
           },
         }}
       >
-        Show Schema from ...
+        スキーマの表示元 ...
       </DropdownButton>
       <Menu isOpen={isOpen} anchorRef={btnRef} onClose={() => setIsOpen(false)}>
         <Menu.Items htmlAttributes={{ id: 'default-menu' }}>
           <Menu.Item
             title={
-              <TooltipWrapper placement='right' tooltip={'Predefined Schema'}>
-                Predefined Schema
+              <TooltipWrapper placement='right' tooltip={'定義済みスキーマ'}>
+                定義済みスキーマ
               </TooltipWrapper>
             }
             onClick={() => handleSelect('predefined', preDefinedNodes, preDefinedRels)}
           />
           <Menu.Item
             title={
-              <TooltipWrapper placement='right' tooltip={'DB Schema'}>
-                DB Schema
+              <TooltipWrapper placement='right' tooltip={'DBスキーマ'}>
+                DBスキーマ
               </TooltipWrapper>
             }
             onClick={() => handleSelect('db', dbNodes, dbRels)}
           />
           <Menu.Item
             title={
-              <TooltipWrapper placement='right' tooltip={'Get Schema From Text'}>
-                Get Schema From Text
+              <TooltipWrapper placement='right' tooltip={'テキストからスキーマを取得'}>
+                テキストからスキーマを取得
               </TooltipWrapper>
             }
             onClick={() => handleSelect('text', schemaValNodes, schemaValRels)}
           />
           <Menu.Item
             title={
-              <TooltipWrapper placement='right' tooltip={'User defined'}>
-                User Configured
+              <TooltipWrapper placement='right' tooltip={'ユーザー定義'}>
+                ユーザー定義
               </TooltipWrapper>
             }
             onClick={() => handleSelect('user', userDefinedNodes, userDefinedRels)}

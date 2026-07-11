@@ -161,7 +161,7 @@ const DropZone: FunctionComponent = () => {
         } catch (error) {
           setIsLoading(false);
           if (error instanceof Error) {
-            showErrorToast(`Error Occurred: ${error.message}`, true);
+            showErrorToast(`エラーが発生しました: ${error.message}`, true);
           }
           setFilesData((prevfiles) =>
             prevfiles.map((curfile) => {
@@ -192,7 +192,7 @@ const DropZone: FunctionComponent = () => {
         );
         setIsClicked(false);
         setIsLoading(false);
-        showSuccessToast(`${file.name} uploaded successfully`);
+        showSuccessToast(`${file.name} をアップロードしました`);
       }
     };
 
@@ -209,7 +209,7 @@ const DropZone: FunctionComponent = () => {
         borderRadius={11}
       >
         <Dropzone
-          loadingComponent={isLoading && <Loader title='Uploading' />}
+          loadingComponent={isLoading && <Loader title='アップロード中' />}
           isTesting={true}
           className='bg-none! dropzoneContainer'
           supportedFilesDescription={
@@ -218,15 +218,15 @@ const DropZone: FunctionComponent = () => {
                 <span>{buttonCaptions.dropzoneSpan}</span>
                 <div className='align-self-center'>
                   <IconButtonWithToolTip
-                    label='Source info'
+                    label='対応ファイル形式'
                     clean
                     text={
                       <Typography variant='body-small'>
                         <Flex gap='3' alignItems='flex-start'>
                           <span>Microsoft Office (.docx, .pptx, .xls, .xlsx)</span>
                           <span>PDF (.pdf)</span>
-                          <span>Images (.jpeg, .jpg, .png, .svg)</span>
-                          <span>Text (.html, .txt , .md)</span>
+                          <span>画像 (.jpeg, .jpg, .png, .svg)</span>
+                          <span>テキスト (.html, .txt , .md)</span>
                         </Flex>
                       </Typography>
                     }
@@ -254,7 +254,7 @@ const DropZone: FunctionComponent = () => {
             },
             onDropRejected: (e) => {
               if (e.length) {
-                showErrorToast('Failed To Upload, Unsupported file extention');
+                showErrorToast('アップロードに失敗しました。サポートされていないファイル形式です');
               }
             },
           }}

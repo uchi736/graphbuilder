@@ -64,11 +64,11 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                       mode !== chatModeLables.graph &&
                       chunk.score && (
                         <Flex alignItems='center' flexDirection='row' justifyContent='space-between'>
-                          <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                          <Typography variant='subheading-small'>類似度スコア: {chunk?.score}</Typography>
                           <IconButtonWithToolTip
                             placement='top'
-                            text='View Graph'
-                            label='View Graph btn'
+                            text='グラフを表示'
+                            label='グラフ表示ボタン'
                             className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                             onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
                           >
@@ -77,7 +77,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                         </Flex>
                       )}
                     <div>
-                      <Typography variant='subheading-small'>Page: {chunk?.page_number}</Typography>
+                      <Typography variant='subheading-small'>ページ: {chunk?.page_number}</Typography>
                     </div>
                   </>
                 ) : chunk?.url && chunk?.start_time ? (
@@ -104,11 +104,11 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                       mode !== chatModeLables.graph && (
                         <>
                           <Flex alignItems='center' flexDirection='row' justifyContent='space-between'>
-                            <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                            <Typography variant='subheading-small'>類似度スコア: {chunk?.score}</Typography>
                             <IconButtonWithToolTip
                               placement='top'
-                              text='View Graph'
-                              label='View Graph btn'
+                              text='グラフを表示'
+                              label='グラフ表示ボタン'
                               className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                               onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
                             >
@@ -129,12 +129,12 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                       mode !== chatModeLables.graph && (
                         <>
                           <Flex alignItems='center' flexDirection='row' justifyContent='space-between'>
-                            <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                            <Typography variant='subheading-small'>類似度スコア: {chunk?.score}</Typography>
 
                             <IconButtonWithToolTip
                               placement='top'
-                              text='View Graph'
-                              label='View Graph btn'
+                              text='グラフを表示'
+                              label='グラフ表示ボタン'
                               className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                               onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
                             >
@@ -156,11 +156,11 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                       mode !== chatModeLables.graph && (
                         <>
                           <Flex alignItems='center' flexDirection='row' justifyContent='space-between'>
-                            <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                            <Typography variant='subheading-small'>類似度スコア: {chunk?.score}</Typography>
                             <IconButtonWithToolTip
                               placement='top'
-                              text='View Graph'
-                              label='View Graph btn'
+                              text='グラフを表示'
+                              label='グラフ表示ボタン'
                               className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                               onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
                             >
@@ -181,11 +181,11 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                       mode !== chatModeLables.graph && (
                         <>
                           <Flex alignItems='center' flexDirection='row' justifyContent='space-between'>
-                            <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                            <Typography variant='subheading-small'>類似度スコア: {chunk?.score}</Typography>
                             <IconButtonWithToolTip
                               placement='top'
-                              text='View Graph'
-                              label='View Graph btn'
+                              text='グラフを表示'
+                              label='グラフ表示ボタン'
                               className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                               onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
                             >
@@ -216,11 +216,11 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                       mode !== chatModeLables.graph && (
                         <>
                           <Flex alignItems='center' flexDirection='row' justifyContent='space-between'>
-                            <Typography variant='subheading-small'>Similarity Score: {chunk?.score}</Typography>
+                            <Typography variant='subheading-small'>類似度スコア: {chunk?.score}</Typography>
                             <IconButtonWithToolTip
                               placement='top'
-                              text='View Graph'
-                              label='View Graph btn'
+                              text='グラフを表示'
+                              label='グラフ表示ボタン'
                               className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                               onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
                             >
@@ -254,8 +254,8 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
                         </div>
                         <IconButtonWithToolTip
                           placement='top'
-                          text='View Graph'
-                          label='View Graph btn'
+                          text='グラフを表示'
+                          label='グラフ表示ボタン'
                           className={`${loadingGraphView ? 'cursor-wait' : 'cursor-pointer'}`}
                           onClick={() => handleChunkClick(chunk.element_id, 'Chunk')}
                         >
@@ -281,7 +281,7 @@ const ChunkInfo: FC<ChunkProps> = ({ loading, chunks, mode }) => {
           </ul>
         </div>
       ) : (
-        <span className='h6 text-center'> No Chunks Found</span>
+        <span className='h6 text-center'> チャンクが見つかりません</span>
       )}
       {openGraphView && (
         <GraphViewModal

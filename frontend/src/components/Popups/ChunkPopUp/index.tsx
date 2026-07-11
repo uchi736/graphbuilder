@@ -43,34 +43,33 @@ const ChunkPopUp = ({
             alt='chunks-logo'
           />
           <div className='flex flex-col'>
-            <Typography variant='h2'>Text Chunks</Typography>
+            <Typography variant='h2'>テキストチャンク</Typography>
             <Typography variant='body-medium' className='mb-2'>
-              These text chunks are extracted to build a knowledge graph and enable accurate information retrieval using
-              a different retrieval strategies
+              これらのテキストチャンクは、ナレッジグラフの構築と、さまざまな検索戦略による正確な情報検索のために抽出されたものです。
             </Typography>
           </div>
         </div>
         {!chunksLoading && totalPageCount != null && totalPageCount > 0 && (
           <div className='flex! flex-row justify-end'>
-            <Typography variant='subheading-small'>Total Pages: {totalPageCount}</Typography>
+            <Typography variant='subheading-small'>総ページ数: {totalPageCount}</Typography>
           </div>
         )}
       </Dialog.Header>
       <Dialog.Content>
         {chunksLoading ? (
-          <Loader title='loading...'></Loader>
+          <Loader title='読み込み中...'></Loader>
         ) : (
           <ol className='max-h-80 overflow-y-auto flex! flex-col gap-4'>
             {sortedChunksData.map((c) => (
               <li key={`${c.position}`} className='flex! flex-row gap-1'>
                 <Flex flexDirection='column' gap='2'>
                   <Flex flexDirection='row'>
-                    <Typography variant='label'>Position :</Typography>
+                    <Typography variant='label'>位置 :</Typography>
                     <Typography variant='subheading-medium'>{c.position}</Typography>
                   </Flex>
                   {c.pagenumber ? (
                     <Flex flexDirection='row'>
-                      <Typography variant='label'>Page No :</Typography>{' '}
+                      <Typography variant='label'>ページ番号 :</Typography>{' '}
                       <Typography variant='subheading-small'>{c.pagenumber}</Typography>
                     </Flex>
                   ) : null}

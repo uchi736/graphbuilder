@@ -41,7 +41,7 @@ function MetricsTab({
     () => [
       columnHelper.accessor((row) => row.metric, {
         id: 'Metric',
-        header: () => <span>Metric</span>,
+        header: () => <span>メトリクス</span>,
         cell: (info) => {
           const metric = info.getValue();
           const capitalizedMetric = metric.includes('_')
@@ -57,7 +57,7 @@ function MetricsTab({
               </div>
 
               <IconButtonWithToolTip
-                label='Metric info'
+                label='メトリクス情報'
                 text={
                   <Box
                     style={{
@@ -82,7 +82,7 @@ function MetricsTab({
       }),
       columnHelper.accessor((row) => row.score as number, {
         id: 'Score',
-        header: () => <span>Score</span>,
+        header: () => <span>スコア</span>,
         cell: (info) => {
           const value = isNaN(info.getValue()) ? 'N.A' : info.getValue()?.toFixed(2);
           if (value === 'N.A') {

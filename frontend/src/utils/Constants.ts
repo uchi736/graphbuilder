@@ -26,6 +26,7 @@ export const llms = import.meta.env?.VITE_LLM_MODELS?.trim()
       'fireworks_gpt_oss',
       'fireworks_kimi_k2p6',
       'fireworks_glm_5.1',
+      'edc',
     ];
 
 export const prodllms = import.meta.env.VITE_LLM_MODELS_PROD?.trim()
@@ -39,8 +40,8 @@ export const chatModeLables = {
   fulltext: 'fulltext',
   'graph+vector+fulltext': 'graph_vector_fulltext',
   'entity search+vector': 'entity_vector',
-  unavailableChatMode: 'Chat mode is unavailable when files are selected',
-  selected: 'Selected',
+  unavailableChatMode: 'ファイル選択中はチャットモードを変更できません',
+  selected: '選択中',
   'global search+vector+fulltext': 'global_vector',
 };
 export const chatModeReadableLables: Record<string, string> = {
@@ -50,8 +51,8 @@ export const chatModeReadableLables: Record<string, string> = {
   fulltext: 'fulltext',
   graph_vector_fulltext: 'graph+vector+fulltext',
   entity_vector: 'entity search+vector',
-  unavailableChatMode: 'Chat mode is unavailable when files are selected',
-  selected: 'Selected',
+  unavailableChatMode: 'ファイル選択中はチャットモードを変更できません',
+  selected: '選択中',
   global_vector: 'global search+vector+fulltext',
 };
 export const chatModes = import.meta.env?.VITE_CHAT_MODES?.trim()
@@ -62,32 +63,31 @@ export const chatModes = import.meta.env?.VITE_CHAT_MODES?.trim()
   : [
       {
         mode: chatModeLables.vector,
-        description: 'Performs semantic similarity search on text chunks using vector indexing.',
+        description: 'ベクトルインデックスを使ってテキストチャンクの意味的類似検索を行います。',
       },
       {
         mode: chatModeLables.graph,
-        description: 'Translates text to Cypher queries for precise data retrieval from a graph database.',
+        description: '質問をCypherクエリに変換し、グラフデータベースから正確にデータを取得します。',
       },
       {
         mode: chatModeLables['graph+vector'],
-        description: 'Combines vector indexing and graph connections for contextually enhanced semantic search.',
+        description: 'ベクトルインデックスとグラフの関係を組み合わせ、文脈を強化した意味検索を行います。',
       },
       {
         mode: chatModeLables.fulltext,
-        description: 'Conducts fast, keyword-based search using full-text indexing on text chunks.',
+        description: '全文インデックスを使った高速なキーワード検索を行います。',
       },
       {
         mode: chatModeLables['graph+vector+fulltext'],
-        description: 'Integrates vector, graph, and full-text indexing for comprehensive search results.',
+        description: 'ベクトル・グラフ・全文インデックスを統合し、網羅的な検索結果を提供します。',
       },
       {
         mode: chatModeLables['entity search+vector'],
-        description: 'Uses vector indexing on entity nodes for highly relevant entity-based search.',
+        description: 'エンティティノードのベクトルインデックスを使い、エンティティ中心の検索を行います。',
       },
       {
         mode: chatModeLables['global search+vector+fulltext'],
-        description:
-          'Use vector and full-text indexing on community nodes to provide accurate, context-aware answers globally.',
+        description: 'コミュニティノードのベクトル・全文インデックスを使い、グラフ全体から文脈に即した回答を生成します。',
       },
     ];
 
@@ -184,35 +184,35 @@ export const largeFileSize = import.meta.env.VITE_LARGE_FILE_SIZE
   : 5 * 1024 * 1024;
 
 export const tooltips = {
-  generateGraph: 'Generate graph from selected files',
-  deleteFile: 'Select one or more files to delete',
-  showGraph: 'Preview generated graph.',
-  bloomGraph: 'Visualize the graph in Bloom',
-  deleteSelectedFiles: 'File/Files to be deleted',
-  previewGraphSelectedFiles: 'File/Files to Preview Graph',
-  documentation: 'Documentation',
+  generateGraph: '選択したファイルからグラフを生成',
+  deleteFile: '削除するファイルを選択してください',
+  showGraph: '生成されたグラフをプレビュー',
+  bloomGraph: 'Bloomでグラフを可視化',
+  deleteSelectedFiles: '削除対象のファイル',
+  previewGraphSelectedFiles: 'グラフをプレビューするファイル',
+  documentation: 'ドキュメント',
   github: 'GitHub Issues',
-  theme: 'Light / Dark mode',
-  settings: 'Entity Graph Extraction Settings',
-  chat: 'Start a chat',
-  sources: 'Upload files',
-  deleteChat: 'Delete',
-  maximise: 'Maximise',
-  copy: 'Copy to Clipboard',
-  copied: 'Copied',
-  stopSpeaking: 'Stop Speaking',
-  textTospeech: 'Text to Speech',
-  createSchema: 'Define schema from text',
-  useExistingSchema: 'Fetch schema from database',
-  clearChat: 'Clear Chat History',
-  continue: 'Continue',
-  clearGraphSettings: 'Clear configured Graph Schema',
-  applySettings: 'Apply Graph Schema',
-  openChatPopout: 'Chat',
-  downloadChat: 'Download Conversation',
-  visualizeGraph: 'Visualize Graph Schema',
-  additionalInstructions: 'Analyze instructions for schema',
-  predinedSchema: 'Predefined Schema',
+  theme: 'ライト / ダークモード',
+  settings: 'エンティティ抽出設定',
+  chat: 'チャットを開始',
+  sources: 'ファイルをアップロード',
+  deleteChat: '削除',
+  maximise: '最大化',
+  copy: 'クリップボードにコピー',
+  copied: 'コピーしました',
+  stopSpeaking: '読み上げを停止',
+  textTospeech: 'テキスト読み上げ',
+  createSchema: 'テキストからスキーマを定義',
+  useExistingSchema: 'データベースからスキーマを取得',
+  clearChat: 'チャット履歴をクリア',
+  continue: '続行',
+  clearGraphSettings: '設定済みのグラフスキーマをクリア',
+  applySettings: 'グラフスキーマを適用',
+  openChatPopout: 'チャット',
+  downloadChat: '会話をダウンロード',
+  visualizeGraph: 'グラフスキーマを可視化',
+  additionalInstructions: 'スキーマ向け指示を解析',
+  predinedSchema: '定義済みスキーマ',
   dataImporterJson: 'Data Importer JSON',
 };
 export const PRODMODELS = ['gemini_3.5_flash', 'openai_gpt_5.4_mini', 'diffbot', 'anthropic_claude_4.5_haiku'];
@@ -220,63 +220,59 @@ export const modelTooltipMap: Record<string, string> = {
   'gemini_3.5_flash': 'gemini-3.5-flash',
 };
 export const buttonCaptions = {
-  exploreGraphWithBloom: 'Explore Graph',
-  showPreviewGraph: 'Preview Graph',
-  deleteFiles: 'Delete Files',
-  generateGraph: 'Generate Graph',
-  dropzoneSpan: 'Documents, Images, Unstructured text',
+  exploreGraphWithBloom: 'グラフを探索',
+  showPreviewGraph: 'グラフをプレビュー',
+  deleteFiles: 'ファイルを削除',
+  generateGraph: 'グラフを生成',
+  dropzoneSpan: 'ドキュメント・画像・非構造化テキスト',
   youtube: 'Youtube',
   gcs: 'GCS',
   amazon: 'Amazon S3',
-  noLables: 'No Labels Found in the Database',
-  dropYourCreds: 'Drop your neo4j credentials file here',
-  analyze: 'Analyze text to extract graph schema',
-  connect: 'Connect',
-  disconnect: 'Disconnect',
-  submit: 'Submit',
-  connectToNeo4j: 'Connect to Neo4j',
-  cancel: 'Cancel',
-  details: 'Details',
-  continueSettings: 'Continue',
-  clearSettings: 'Clear Schema',
-  ask: 'Ask',
-  applyGraphSchema: 'Apply',
-  provideAdditionalInstructions: 'Provide Processing Configuration for Entity Extractions',
-  analyzeInstructions: 'Analyze Instructions',
-  helpInstructions: 'Provide specific instructions for entity extraction, such as focusing on the key topics.',
-  importDropzoneSpan: 'JSON Documents',
+  noLables: 'データベースにラベルが見つかりません',
+  dropYourCreds: 'Neo4j認証情報ファイルをここにドロップ',
+  analyze: 'テキストを解析してグラフスキーマを抽出',
+  connect: '接続',
+  disconnect: '切断',
+  submit: '送信',
+  connectToNeo4j: 'Neo4jに接続',
+  cancel: 'キャンセル',
+  details: '詳細',
+  continueSettings: '続行',
+  clearSettings: 'スキーマをクリア',
+  ask: '質問',
+  applyGraphSchema: '適用',
+  provideAdditionalInstructions: 'エンティティ抽出の処理設定',
+  analyzeInstructions: '指示を解析',
+  helpInstructions: '重要トピックへの着目など、エンティティ抽出に関する具体的な指示を入力してください。',
+  importDropzoneSpan: 'JSONドキュメント',
 };
 
 export const POST_PROCESSING_JOBS: { title: string; description: string }[] = [
   {
     title: 'materialize_text_chunk_similarities',
-    description: `This option refines the connections between different pieces of information (chunks) within your
-                knowledge graph. By leveraging a k-nearest neighbor algorithm with a similarity threshold (KNN_MIN_SCORE
-                of 0.8), this process identifies and links chunks with high semantic similarity. This results in a more
-                interconnected and insightful knowledge representation, enabling more accurate and relevant search
-                results.`,
+    description: `ナレッジグラフ内のチャンク同士のつながりを精緻化します。k近傍法と類似度しきい値(KNN_MIN_SCORE
+                0.8)を用いて、意味的に類似度の高いチャンクを特定してリンクします。これにより、より相互接続された
+                知識表現が得られ、検索結果の精度と関連性が向上します。`,
   },
   {
     title: 'enable_hybrid_search_and_fulltext_search_in_bloom',
-    description: `This option optimizes search capabilities within your knowledge graph. It rebuilds the full-text index
-                on database labels, ensuring faster and more efficient retrieval of information. This is particularly
-                beneficial for large knowledge graphs, as it significantly speeds up keyword-based searches and improves
-                overall query performance.`,
+    description: `ナレッジグラフ内の検索機能を最適化します。データベースラベルの全文インデックスを再構築し、
+                情報をより高速・効率的に取得できるようにします。特に大規模なナレッジグラフで効果が大きく、
+                キーワード検索の高速化とクエリ性能全体の改善につながります。`,
   },
   {
     title: 'materialize_entity_similarities',
-    description: `Enhances entity analysis by generating numerical representations (embeddings) that capture their
-                semantic meaning. This facilitates tasks like clustering similar entities, identifying duplicates, and
-                performing similarity-based searches.`,
+    description: `エンティティの意味を捉えた数値表現(埋め込み)を生成し、エンティティ分析を強化します。
+                類似エンティティのクラスタリング、重複の検出、類似度ベースの検索などが可能になります。`,
   },
   {
     title: 'enable_communities',
-    description: 'Enable community creation across entities to use GraphRAG capabilities both local and global search.',
+    description: 'エンティティ間のコミュニティ生成を有効にし、GraphRAGのローカル/グローバル検索を利用できるようにします。',
   },
   {
     title: 'graph_schema_consolidation',
     description:
-      'This option uses the LLM for large graph schemas to consolidate many node labels and relationship types into fewer, more relevant ones and apply it to the extracted and existing graph',
+      '大規模なグラフスキーマに対してLLMを使い、多数のノードラベルとリレーションシップタイプをより少なく適切なものに統合し、抽出済み・既存のグラフに適用します。',
   },
 ];
 export const RETRY_OPIONS = [
@@ -346,9 +342,9 @@ export const queryMap: {
 
 // export const graphQuery: string = queryMap.DocChunkEntities;
 export const graphView: OptionType[] = [
-  { label: 'Lexical Graph', value: queryMap.DocChunks },
-  { label: 'Entity Graph', value: queryMap.Entities },
-  { label: 'Knowledge Graph', value: queryMap.DocChunkEntities },
+  { label: 'レキシカルグラフ', value: queryMap.DocChunks },
+  { label: 'エンティティグラフ', value: queryMap.Entities },
+  { label: 'ナレッジグラフ', value: queryMap.DocChunkEntities },
 ];
 
 export const intitalGraphType = (isGDSActive: boolean): GraphType[] => {
@@ -360,32 +356,32 @@ export const intitalGraphType = (isGDSActive: boolean): GraphType[] => {
 export const graphLabels = {
   showGraphView: 'showGraphView',
   chatInfoView: 'chatInfoView',
-  generateGraph: 'Generated Graph',
-  inspectGeneratedGraphFrom: 'Inspect Generated Graph from',
+  generateGraph: '生成されたグラフ',
+  inspectGeneratedGraphFrom: '生成されたグラフの確認:',
   document: 'Document',
   chunk: 'Chunk',
   documentChunk: 'DocumentChunk',
-  entities: 'Entities',
-  resultOverview: 'Result Overview',
-  totalNodes: 'Total Nodes',
-  noEntities: 'No Entities Found',
-  selectCheckbox: 'Select atleast one checkbox for graph view',
-  totalRelationships: 'Total Relationships',
+  entities: 'エンティティ',
+  resultOverview: '結果の概要',
+  totalNodes: 'ノード総数',
+  noEntities: 'エンティティが見つかりません',
+  selectCheckbox: 'グラフ表示には少なくとも1つチェックを入れてください',
+  totalRelationships: 'リレーションシップ総数',
   nodeSize: 30,
-  docChunk: 'Document & Chunk',
-  community: 'Communities',
-  noNodesRels: 'No Nodes and No relationships',
+  docChunk: 'ドキュメント & チャンク',
+  community: 'コミュニティ',
+  noNodesRels: 'ノード・リレーションシップがありません',
   neighborView: 'neighborView',
-  chunksInfo: 'We are visualizing 50 chunks at a time',
+  chunksInfo: '一度に50チャンクまで可視化しています',
   showSchemaView: 'showSchemaView',
-  renderSchemaGraph: 'Graph from Database Schema',
-  generatedGraphFromUserSchema: 'Generated Graph from User Defined Schema',
+  renderSchemaGraph: 'データベーススキーマのグラフ',
+  generatedGraphFromUserSchema: 'ユーザー定義スキーマから生成されたグラフ',
 };
 
 export const RESULT_STEP_SIZE = 25;
 
 export const connectionLabels = {
-  notConnected: 'Not Connected',
+  notConnected: '未接続',
   graphDataScience: 'Graph Data Science',
   graphDatabase: 'Graph Database',
   greenStroke: 'green',
@@ -397,17 +393,17 @@ export const getDefaultMessage = () => {
 };
 
 export const appLabels = {
-  ownSchema: 'Or Define your own Schema',
-  predefinedSchema: 'Select a Pre-defined Schema',
-  chunkingConfiguration: 'Select a Chunking Configuration',
-  graphPatternTuple: 'Graph Pattern',
-  selectedPatterns: 'Selected Patterns',
-  dataImporterSchema: 'Schema from Data Importer',
+  ownSchema: 'または独自のスキーマを定義',
+  predefinedSchema: '定義済みスキーマを選択',
+  chunkingConfiguration: 'チャンク分割設定を選択',
+  graphPatternTuple: 'グラフパターン',
+  selectedPatterns: '選択中のパターン',
+  dataImporterSchema: 'Data Importerのスキーマ',
 };
 
 export const LLMDropdownLabel = {
-  disabledModels: 'Disabled models are available in the development version. Access more models in our ',
-  devEnv: 'development environment',
+  disabledModels: '無効化されているモデルは開発版で利用できます。より多くのモデルはこちら: ',
+  devEnv: '開発環境',
 };
 export const getDefaultSchemaExamples = () => {
   return schemaExamples.map((example) => ({
@@ -438,11 +434,11 @@ export function getStoredSchema() {
   return [];
 }
 export const metricsinfo: Record<string, string> = {
-  faithfulness: 'Determines How accurately the answer reflects the provided information',
-  answer_relevancy: "Determines How well the answer addresses the user's question.",
-  rouge_score: 'Determines How much the generated answer matches the reference answer, word-for-word.',
-  semantic_score: 'Determines How well the generated answer understands the meaning of the reference answer.',
-  context_entity_recall: 'Determines the recall of entities present in both generated answer and retrieved contexts',
+  faithfulness: '回答が提供された情報をどれだけ正確に反映しているか',
+  answer_relevancy: '回答がユーザーの質問にどれだけ適切に答えているか',
+  rouge_score: '生成された回答が参照回答と語句レベルでどれだけ一致しているか',
+  semantic_score: '生成された回答が参照回答の意味をどれだけ正しく捉えているか',
+  context_entity_recall: '生成回答と取得コンテキストの両方に含まれるエンティティの再現率',
 };
 export const EXPIRATION_DAYS = 3;
 export const SKIP_AUTH = (import.meta.env.VITE_SKIP_AUTH ?? 'true') == 'true';

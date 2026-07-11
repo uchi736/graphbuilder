@@ -94,10 +94,10 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
   const { isAuthenticated } = useAuth0();
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
-      showNormalToast(`${fileName} will take approx ${time} ${inMinutes ? 'Min' : 'Sec'}`);
+      showNormalToast(`${fileName} の処理には約 ${time} ${inMinutes ? '分' : '秒'} かかります`);
     },
     (fileName) => {
-      showErrorToast(`${fileName} Failed to process`);
+      showErrorToast(`${fileName} の処理に失敗しました`);
     }
   );
 
@@ -126,8 +126,8 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
               isDisabled={processingcheck}
               htmlAttributes={{
                 title: processingcheck
-                  ? `Files are still processing please select individual checkbox for deletion`
-                  : 'select all rows on current page for deletion',
+                  ? `処理中のファイルがあるため、削除する場合は個別のチェックボックスを選択してください`
+                  : '現在のページのすべての行を削除対象として選択',
               }}
             />
           );
@@ -168,7 +168,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
             </div>
           );
         },
-        header: () => <span>Name</span>,
+        header: () => <span>名前</span>,
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor((row) => row.status, {
@@ -189,9 +189,9 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                     <span className='mx-1'>
                       <IconButtonWithToolTip
                         placement='right'
-                        text='Ready to Reprocess'
+                        text='再処理'
                         size='small'
-                        label='Ready to Reprocess'
+                        label='再処理'
                         clean
                         onClick={() => onRetry(info?.row?.id as string)}
                       >
@@ -214,9 +214,9 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                   <IconButton
                     size='medium'
                     htmlAttributes={{
-                      title: 'cancel the processing job',
+                      title: '処理ジョブをキャンセル',
                     }}
-                    ariaLabel='cancel job button'
+                    ariaLabel='ジョブをキャンセル'
                     isClean
                     isDisabled={info.row.original.processingStatus}
                     onClick={() => {
@@ -248,9 +248,9 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                   <IconButton
                     size='medium'
                     htmlAttributes={{
-                      title: 'cancel the processing job',
+                      title: '処理ジョブをキャンセル',
                     }}
-                    ariaLabel='cancel job button'
+                    ariaLabel='ジョブをキャンセル'
                     isClean={true}
                     isDisabled={info.row.original.processingStatus}
                     onClick={() => {
@@ -276,7 +276,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
             </div>
           );
         },
-        header: () => <span>Status</span>,
+        header: () => <span>ステータス</span>,
         footer: (info) => info.column.id,
         filterFn: 'statusFilter' as any,
         size: 250,
@@ -286,7 +286,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
               {
                 title: (
                   <span className={`${statusFilter === 'All' ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>
-                    All Files
+                    すべてのファイル
                   </span>
                 ),
                 onClick: () => {
@@ -298,7 +298,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
               {
                 title: (
                   <span className={`${statusFilter === 'Completed' ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>
-                    <StatusIndicator type='success'></StatusIndicator> Completed Files
+                    <StatusIndicator type='success'></StatusIndicator> 完了したファイル
                   </span>
                 ),
                 onClick: () => {
@@ -310,7 +310,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
               {
                 title: (
                   <span className={`${statusFilter === 'New' ? 'n-bg-palette-primary-bg-selected' : 'p-2'} p-2`}>
-                    <StatusIndicator type='info'></StatusIndicator> New Files
+                    <StatusIndicator type='info'></StatusIndicator> 新規ファイル
                   </span>
                 ),
                 onClick: () => {
@@ -322,7 +322,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
               {
                 title: (
                   <span className={`${statusFilter === 'Failed' ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>
-                    <StatusIndicator type='danger'></StatusIndicator> Failed Files
+                    <StatusIndicator type='danger'></StatusIndicator> 失敗したファイル
                   </span>
                 ),
                 onClick: () => {
@@ -345,7 +345,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                 <Typography variant='body-medium'>
                   <StatusIndicator type='success' />
                 </Typography>
-                <Typography variant='body-medium'>Uploaded</Typography>
+                <Typography variant='body-medium'>アップロード済み</Typography>
               </div>
             );
           } else if (info.row.original?.status === 'Uploading') {
@@ -369,13 +369,13 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
             </div>
           );
         },
-        header: () => <span>Upload Status</span>,
+        header: () => <span>アップロード状況</span>,
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor((row) => row.size, {
         id: 'fileSize',
         cell: (info: CellContext<CustomFile, string>) => <i>{(Number(info?.getValue()) / 1000)?.toFixed(2)}</i>,
-        header: () => <span>Size (KB)</span>,
+        header: () => <span>サイズ (KB)</span>,
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor((row) => row, {
@@ -408,7 +408,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
             </div>
           );
         },
-        header: () => <span>Source</span>,
+        header: () => <span>ソース</span>,
         footer: (info) => info.column.id,
         filterFn: 'fileSourceFilter' as any,
         meta: {
@@ -417,7 +417,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
               {
                 title: (
                   <span className={`${fileSourceFilter === 'All' ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>
-                    All Sources
+                    すべてのソース
                   </span>
                 ),
                 onClick: () => {
@@ -453,7 +453,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
             </div>
           );
         },
-        header: () => <span>Type</span>,
+        header: () => <span>種類</span>,
         footer: (info) => info.column.id,
         filterFn: 'fileTypeFilter' as any,
         meta: {
@@ -462,7 +462,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
               {
                 title: (
                   <span className={`${filetypeFilter === 'All' ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>
-                    All Types
+                    すべての種類
                   </span>
                 ),
                 onClick: () => {
@@ -493,7 +493,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
           const model = info.getValue();
           return <i>{capitalizeWithUnderscore(model)}</i>;
         },
-        header: () => <span>Model</span>,
+        header: () => <span>モデル</span>,
         footer: (info) => info.column.id,
         filterFn: 'llmTypeFilter' as any,
         meta: {
@@ -502,7 +502,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
               {
                 title: (
                   <span className={`${llmtypeFilter === 'All' ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}>
-                    All
+                    すべて
                   </span>
                 ),
                 onClick: () => {
@@ -557,7 +557,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
             </Flex>
           );
         },
-        header: () => <span>Nodes</span>,
+        header: () => <span>ノード</span>,
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor((row) => row.relationshipsCount, {
@@ -579,7 +579,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
             </Flex>
           );
         },
-        header: () => <span>Relations</span>,
+        header: () => <span>リレーション</span>,
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor((row) => row.token_usage, {
@@ -588,7 +588,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
           const tokenUsage = info.getValue();
           return <i>{tokenUsage ?? 0}</i>;
         },
-        header: () => <span>Token Usage</span>,
+        header: () => <span>トークン使用量</span>,
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor((row) => row.status, {
@@ -597,9 +597,9 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
           <>
             <IconButtonWithToolTip
               placement='right'
-              text='Graph'
+              text='グラフ'
               size='large'
-              label='Graph view'
+              label='グラフ表示'
               disabled={info.getValue() === 'New' || info.getValue() === 'Uploading'}
               clean
               onClick={() => onInspect(info?.row?.original?.name as string)}
@@ -608,9 +608,9 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
             </IconButtonWithToolTip>
             <IconButtonWithToolTip
               placement='left'
-              text={copyRow ? 'Copied' : 'Copy'}
+              text={copyRow ? 'コピーしました' : 'コピー'}
               size='large'
-              label='Copy Row'
+              label='行をコピー'
               disabled={info.getValue() === 'Uploading'}
               clean
               onClick={() => {
@@ -628,7 +628,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
               clean
               placement='left'
               label='chunktextaction'
-              text='View Chunks'
+              text='チャンクを表示'
               size='large'
               disabled={info.getValue() === 'Uploading' || info.getValue() === 'New'}
             >
@@ -638,7 +638,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
         ),
         maxSize: 300,
         minSize: 180,
-        header: () => <span>Actions</span>,
+        header: () => <span>操作</span>,
         footer: (info) => info.column.id,
       }),
     ],
@@ -738,7 +738,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
           console.error('Failed to refresh token limits:', error);
         });
         if (!res.data) {
-          throw new Error('Please check backend connection');
+          throw new Error('バックエンドの接続を確認してください');
         }
         const stringified = waitingQueue.reduce((accu, f) => {
           const key = f.id;
@@ -849,7 +849,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
         if (processingFilesCount === 1) {
           setProcessedCount(1);
         }
-        showNormalToast(`Files are in processing please wait till previous batch completes`);
+        showNormalToast(`ファイルを処理中です。前のバッチが完了するまでお待ちください`);
       } else {
         const waitingQueue: CustomFile[] = JSON.parse(
           localStorage.getItem('waitingQueue') ?? JSON.stringify({ queue: [] })
@@ -909,7 +909,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
 
   const cancelQueue = async () => {
     if (queue.isEmpty()) {
-      showNormalToast('No files in queue to cancel');
+      showNormalToast('キャンセルする待機中のファイルはありません');
       return;
     }
 
@@ -923,13 +923,13 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
         queue.clear();
         await refreshFileData();
 
-        showNormalToast(`Successfully cancelled ${queuedFileNames.length} waiting file(s)`);
+        showNormalToast(`待機中のファイル ${queuedFileNames.length} 件をキャンセルしました`);
       } else {
-        throw new Error(res.data.error || 'Failed to cancel queue');
+        throw new Error(res.data.error || 'キューのキャンセルに失敗しました');
       }
     } catch (err) {
       if (err instanceof Error) {
-        showErrorToast(`Failed to cancel queue: ${err.message}`);
+        showErrorToast(`キューのキャンセルに失敗しました: ${err.message}`);
       }
     } finally {
       setIsCancellingQueue(false);
@@ -1145,8 +1145,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                         <span>
                           <InformationCircleIconOutline className='n-size-token-6' />
                         </span>
-                        {` It seems like you haven't ingested any data yet. To begin building your knowledge graph, you'll need to log
-            in to the main application.`}
+                        {` まだデータが取り込まれていないようです。ナレッジグラフの構築を始めるには、メインアプリケーションにログインしてください。`}
                         <span></span>
                       </Flex>
                     </DataGridComponents.TableResults>
@@ -1160,7 +1159,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                           <span>
                             <InformationCircleIconOutline className='n-size-token-6' />
                           </span>
-                          {`Large files may be partially processed up to 10K characters due to resource limit.`}
+                          {`リソース制限のため、大きなファイルは最大1万文字までの部分的な処理となる場合があります。`}
                         </Flex>
                         {queueSize > 0 && (
                           <Flex
@@ -1172,15 +1171,15 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                             <InformationCircleIconOutline className='n-size-token-5 text-palette-warning-text' />
                             <Typography variant='body-medium' className='font-semibold text-palette-warning-text'>
                               {isCancellingQueue
-                                ? 'Cancelling files in waiting queue...'
-                                : `${queueSize} file${queueSize !== 1 ? 's' : ''} waiting in queue`}
+                                ? '待機キューのファイルをキャンセルしています...'
+                                : `${queueSize} 件のファイルがキューで待機中です`}
                             </Typography>
                             {!isReadOnlyUser && (
                               <IconButtonWithToolTip
                                 placement='right'
-                                text={isCancellingQueue ? 'Cancelling...' : 'Cancel all waiting files'}
+                                text={isCancellingQueue ? 'キャンセル中...' : 'すべての待機中ファイルをキャンセル'}
                                 size='small'
-                                label='Cancel Queue'
+                                label='キューをキャンセル'
                                 clean
                                 disabled={isCancellingQueue}
                                 onClick={cancelQueue}

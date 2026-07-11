@@ -6,9 +6,9 @@ const GraphPropertiesTable = ({ propertiesWithTypes }: GraphPropertiesTableProps
     <div className='flex w-full flex-col break-all px-4 text-sm' data-testid='viz-details-pane-properties-table'>
       <div className='mb-1 flex! flex-row pl-2'>
         <Typography variant='body-medium' className='basis-1/3'>
-          Key
+          キー
         </Typography>
-        <Typography variant='body-medium'>Value</Typography>
+        <Typography variant='body-medium'>値</Typography>
       </div>
       {propertiesWithTypes
         .filter(({ value }) => value !== undefined && value !== null && value !== '' && !Array.isArray(value))

@@ -121,7 +121,7 @@ export default function ConnectionModal({
           } else {
             setMessage({
               type: 'success',
-              content: 'Successfully created the vector index',
+              content: 'ベクトルインデックスを作成しました',
             });
             setConnectionStatus(true);
             localStorage.setItem(
@@ -238,7 +238,7 @@ export default function ConnectionModal({
           setDatabase(configObject.NEO4J_DATABASE ?? 'neo4j');
           setPort(configObject.NEO4J_PORT ?? '7687');
         } else {
-          setMessage({ type: 'danger', content: 'Please drop a valid file' });
+          setMessage({ type: 'danger', content: '有効なファイルをドロップしてください' });
         }
       } catch (err: any) {
         console.log({ err });
@@ -420,11 +420,11 @@ export default function ConnectionModal({
           'aria-labelledby': 'form-dialog-title',
         }}
       >
-        <Dialog.Header htmlAttributes={{ id: 'form-dialog-title' }}>Connect to Neo4j</Dialog.Header>
+        <Dialog.Header htmlAttributes={{ id: 'form-dialog-title' }}>Neo4jに接続</Dialog.Header>
         <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
           <Typography variant='body-medium' className='mb-4'>
             <TextLink type='external' href='https://console.neo4j.io/'>
-              Don't have a Neo4j instance? Start for free today
+              Neo4jインスタンスをお持ちでない方は、今すぐ無料で始められます
             </TextLink>
           </Typography>
           {connectionMessage?.type !== 'unknown' &&
@@ -459,7 +459,7 @@ export default function ConnectionModal({
                 maxSize: 500,
                 onDropRejected: (e) => {
                   if (e.length) {
-                    setMessage({ type: 'danger', content: 'Failed To Upload, File is larger than 500 bytes' });
+                    setMessage({ type: 'danger', content: 'アップロードに失敗しました。ファイルサイズが500バイトを超えています' });
                   }
                 },
               }}
@@ -467,7 +467,7 @@ export default function ConnectionModal({
           </div>
           <div className='n-flex n-flex-row n-flex-wrap'>
             <Select
-              label='Protocol'
+              label='プロトコル'
               type='select'
               size='medium'
               isDisabled={false}
@@ -490,7 +490,7 @@ export default function ConnectionModal({
                   autoFocus: true,
                   onPaste: (e) => handleHostPasteChange(e),
                   onKeyDown: (e) => handleKeyPress(user?.email ?? '')(e, databaseRef),
-                  'aria-label': 'Connection URI',
+                  'aria-label': '接続URI',
                 }}
                 value={URI}
                 isDisabled={false}
@@ -506,12 +506,12 @@ export default function ConnectionModal({
               htmlAttributes={{
                 id: 'database',
                 onKeyDown: handleKeyPress(user?.email ?? ''),
-                'aria-label': 'Database',
+                'aria-label': 'データベース',
                 placeholder: 'neo4j',
               }}
               value={database}
               isDisabled={false}
-              label='Database'
+              label='データベース'
               isFluid={true}
               isRequired={true}
               onChange={(e) => setDatabase(e.target.value)}
@@ -524,12 +524,12 @@ export default function ConnectionModal({
                   htmlAttributes={{
                     id: 'username',
                     onKeyDown: handleKeyPress(user?.email ?? ''),
-                    'aria-label': 'Username',
+                    'aria-label': 'ユーザー名',
                     placeholder: 'neo4j',
                   }}
                   value={username}
                   isDisabled={false}
-                  label='Username'
+                  label='ユーザー名'
                   isFluid={true}
                   onChange={(e) => setUsername(e.target.value)}
                 />
@@ -541,13 +541,13 @@ export default function ConnectionModal({
                     id: 'password',
                     onKeyDown: handleKeyPress(user?.email ?? ''),
                     type: 'password',
-                    'aria-label': 'Password',
-                    placeholder: 'password',
+                    'aria-label': 'パスワード',
+                    placeholder: 'パスワード',
                     autoComplete: 'current-password',
                   }}
                   value={password}
                   isDisabled={false}
-                  label='Password'
+                  label='パスワード'
                   isFluid={true}
                   onChange={(e) => setPassword(e.target.value)}
                 />

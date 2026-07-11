@@ -19,10 +19,9 @@ const ExpiredFilesAlert: FC<LargefilesProps> = ({ Files, handleToggle, checked }
           alt='alert icon'
         />
         <div className='flex flex-col'>
-          <Typography variant='h3'>Document Expiration Notice</Typography>
+          <Typography variant='h3'>ドキュメントの有効期限に関するお知らせ</Typography>
           <Typography variant='body-medium'>
-            One or more of your selected documents are expired as per the expiration policy we are storing documents for
-            only {EXPIRATION_DAYS} days . Please delete and reupload the documents.
+            選択したドキュメントの中に、保存ポリシー(保存期間は{EXPIRATION_DAYS}日間)により有効期限が切れたものがあります。該当のドキュメントを削除して再アップロードしてください。
           </Typography>
           <List className='max-h-80 overflow-y-auto'>
             {Files.map((f) => {
@@ -48,7 +47,7 @@ const ExpiredFilesAlert: FC<LargefilesProps> = ({ Files, handleToggle, checked }
                           </span>
                           {f.createdAt != undefined && isExpired(f.createdAt) ? (
                             <span>
-                              <IconWithToolTip label={'expired'} text={'File has expired'} placement='top'>
+                              <IconWithToolTip label={'期限切れ'} text={'ファイルの有効期限が切れています'} placement='top'>
                                 <AlertIcon />
                               </IconWithToolTip>
                             </span>

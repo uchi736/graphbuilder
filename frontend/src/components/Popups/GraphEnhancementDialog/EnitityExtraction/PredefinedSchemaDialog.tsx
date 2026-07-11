@@ -114,14 +114,14 @@ const PredefinedSchemaDialog = ({ open, onClose, onApply }: SchemaFromTextProps)
           'aria-labelledby': 'form-dialog-title',
         }}
       >
-        <Dialog.Header>Entity Graph Extraction Settings</Dialog.Header>
+        <Dialog.Header>エンティティグラフ抽出設定</Dialog.Header>
         <Dialog.Content className='n-flex n-flex-col n-gap-token-6 p-6'>
           <div className='text-center'>
             <h5 className='text-lg font-semibold'>{appLabels.predefinedSchema}</h5>
           </div>
           <Select
-            helpText='Schema Examples'
-            label='Predefined Schema'
+            helpText='スキーマの例'
+            label='定義済みスキーマ'
             size='medium'
             selectProps={{
               isClearable: true,
@@ -141,10 +141,10 @@ const PredefinedSchemaDialog = ({ open, onClose, onApply }: SchemaFromTextProps)
           />
           <Dialog.Actions className='n-flex n-justify-end n-gap-token-4 pt-4'>
             <Button onClick={handleCancel} isDisabled={preDefinedPattern.length === 0}>
-              Cancel
+              キャンセル
             </Button>
             <Button onClick={handlePreDefinedSchemaApply} isDisabled={preDefinedPattern.length === 0}>
-              Apply
+              適用
             </Button>
           </Dialog.Actions>
         </Dialog.Content>

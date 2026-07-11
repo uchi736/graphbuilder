@@ -28,7 +28,7 @@ export default function YoutubeInput({
       isFocused={isFocused}
       isValid={isValid}
       disabledCheck={Boolean(loading)}
-      label='Youtube Link'
+      label='YouTubeリンク'
       placeHolder='https://www.youtube.com/watch?v=2W9HM1xBibo'
       value={inputVal}
       onChangeHandler={onChangeHandler}

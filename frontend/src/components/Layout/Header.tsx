@@ -92,7 +92,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
           role='navigation'
           data-testid='navigation'
           id='navigation'
-          aria-label='main navigation'
+          aria-label='メインナビゲーション'
         >
           <section className='flex w-1/3 shrink-0 grow-0 items-center min-w-[200px]'>
             <Typography variant='h1'>
@@ -160,12 +160,12 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                     (!connectionStatus ? (
                       <SpotlightTarget id='loginbutton' hasPulse={true} indicatorVariant='border' ref={firstTourTarget}>
                         <Button type='button' fill='outlined' onClick={() => loginWithRedirect()}>
-                          Login
+                          ログイン
                         </Button>
                       </SpotlightTarget>
                     ) : (
                       <Button type='button' fill='outlined' onClick={() => loginWithRedirect()}>
-                        Login
+                        ログイン
                       </Button>
                     ))}
                 </div>
@@ -200,9 +200,9 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                   <IconButtonWithToolTip
                     onClick={onBackButtonClick}
                     clean
-                    text='Back'
+                    text='戻る'
                     placement='bottom'
-                    label='Back'
+                    label='戻る'
                     disabled={getIsLoading(messages)}
                   >
                     <ArrowLeftIconOutline />
@@ -232,9 +232,9 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                       setShowChatModeOption(true);
                     }}
                     clean
-                    text='Chat mode'
+                    text='チャットモード'
                     placement='bottom'
-                    label='Chat mode'
+                    label='チャットモード'
                     disabled={!connectionStatus}
                   >
                     <RiChatSettingsLine />
@@ -243,7 +243,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                 <>
                   <IconButtonWithToolTip
                     text={tooltips.downloadChat}
-                    aria-label='Download Chat'
+                    aria-label='チャットをダウンロード'
                     clean
                     onClick={() =>
                       downloadClickHandler(
@@ -267,7 +267,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
                 </>
                 <IconButtonWithToolTip
                   text={tooltips.clearChat}
-                  aria-label='Remove chat history'
+                  aria-label='チャット履歴を削除'
                   clean
                   onClick={deleteOnClick}
                   disabled={!connectionStatus || messages.length === 1 || getIsLoading(messages)}

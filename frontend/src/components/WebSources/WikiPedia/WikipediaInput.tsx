@@ -28,7 +28,7 @@ export default function WikipediaInput({
       isFocused={isFocused}
       isValid={isValid}
       disabledCheck={Boolean(loading)}
-      label='Wikipedia Link'
+      label='Wikipediaリンク'
       placeHolder='https://en.wikipedia.org/wiki/Albert_Einstein'
       value={inputVal}
       onChangeHandler={onChangeHandler}

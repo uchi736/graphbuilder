@@ -30,7 +30,7 @@ function EmbeddingDimensionWarningModal({
 
   const handleProceed = async () => {
     if (!pendingEmbeddingModel) {
-      showErrorToast('No embedding model selected');
+      showErrorToast('埋め込みモデルが選択されていません');
       return;
     }
 
@@ -49,7 +49,7 @@ function EmbeddingDimensionWarningModal({
       setIsSuccess(true);
     } catch (error) {
       console.error('Error changing embedding model:', error);
-      showErrorToast('Failed to change embedding model. Please try again.');
+      showErrorToast('埋め込みモデルの変更に失敗しました。もう一度お試しください。');
     } finally {
       setIsProcessing(false);
     }
@@ -68,7 +68,7 @@ function EmbeddingDimensionWarningModal({
       onClose();
     } catch (error) {
       console.error('Error reverting embedding model:', error);
-      showErrorToast('Failed to revert embedding model. Please try again.');
+      showErrorToast('埋め込みモデルの差し戻しに失敗しました。もう一度お試しください。');
     }
   };
 
@@ -86,37 +86,37 @@ function EmbeddingDimensionWarningModal({
       }}
     >
       <Dialog.Header htmlAttributes={{ id: 'embedding-dimension-warning-dialog' }}>
-        {isSuccess ? 'Embedding Model Changed Successfully' : 'Important: Update Your Embedding Model'}
+        {isSuccess ? '埋め込みモデルを変更しました' : '重要: 埋め込みモデルの更新'}
       </Dialog.Header>
       <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
         <div className='n-flex n-flex-col n-gap-token-3'>
           <Typography variant='body-medium'>
-            You're switching to a new embedding model, which uses a different method to understand your documents.
+            新しい埋め込みモデルに切り替えようとしています。新しいモデルはドキュメントを異なる方法で解釈します。
           </Typography>
           <div className='n-flex n-flex-col n-gap-token-2'>
             <Typography variant='body-medium'>
-              Previous Model Dimension: <strong>{dbDimension}</strong>
+              変更前モデルの次元数: <strong>{dbDimension}</strong>
             </Typography>
             <Typography variant='body-medium'>
-              New Model Dimension: <strong>{selectedDimension}</strong>
+              新モデルの次元数: <strong>{selectedDimension}</strong>
             </Typography>
           </div>
           <Typography variant='body-medium'>
-            To make sure everything works correctly with the new model, two steps are needed:
+            新しいモデルで正しく動作させるには、次の2つのステップが必要です:
           </Typography>
           <div className='n-bg-palette-neutral-bg-weak n-p-token-4 n-rounded'>
             <ol className='n-list-decimal n-ml-token-6 n-flex n-flex-col n-gap-token-3'>
               <li>
                 <Typography variant='body-medium'>
-                  <strong>Database Index Update:</strong> Clicking <strong>"Update Index"</strong> will automatically
-                  update your database's vector index for the new model.
+                  <strong>データベースインデックスの更新:</strong> <strong>「インデックスを更新」</strong>
+                  をクリックすると、データベースのベクトルインデックスが新しいモデルに合わせて自動的に更新されます。
                 </Typography>
               </li>
               <li>
                 <Typography variant='body-medium'>
-                  <strong>Reprocess Your Files:</strong> After the index is updated, you must <strong>manually</strong>{' '}
-                  re-process all your previously processed files again. This step ensures your documents are compatible
-                  with the new model.
+                  <strong>ファイルの再処理:</strong> インデックスの更新後、これまでに処理したすべてのファイルを
+                  <strong>手動で</strong>
+                  再処理する必要があります。このステップにより、ドキュメントが新しいモデルと互換性を持つようになります。
                 </Typography>
               </li>
             </ol>
@@ -124,41 +124,41 @@ function EmbeddingDimensionWarningModal({
           <Banner
             type='warning'
             name='Warning Banner'
-            description='Skipping the file reprocessing step will lead to errors and incorrect results.'
+            description='ファイルの再処理を省略すると、エラーや不正確な結果の原因になります。'
             usage='inline'
           />
         </div>
       </Dialog.Content>
       <Dialog.Actions>
         <ButtonWithToolTip
-          text='Open GitHub to create a new issue for support'
-          label='Contact Team'
+          text='GitHubを開いてサポート用のIssueを作成'
+          label='チームに問い合わせ'
           onClick={handleContactTeam}
           size='medium'
           fill='outlined'
           disabled={isProcessing}
         >
-          Contact Team
+          チームに問い合わせ
         </ButtonWithToolTip>
         <ButtonWithToolTip
-          text='Cancel the embedding model change'
-          label='Cancel'
+          text='埋め込みモデルの変更をキャンセル'
+          label='キャンセル'
           onClick={onClose}
           size='medium'
           fill='outlined'
           disabled={isProcessing}
         >
-          Cancel
+          キャンセル
         </ButtonWithToolTip>
         <ButtonWithToolTip
-          text='Update the vector index to match the new embedding dimension'
-          label='Update Index'
+          text='新しい埋め込み次元数に合わせてベクトルインデックスを更新'
+          label='インデックスを更新'
           onClick={handleProceed}
           size='medium'
           loading={isProcessing}
           disabled={isProcessing}
         >
-          <strong>Update Index</strong>
+          <strong>インデックスを更新</strong>
         </ButtonWithToolTip>
       </Dialog.Actions>
     </Dialog>

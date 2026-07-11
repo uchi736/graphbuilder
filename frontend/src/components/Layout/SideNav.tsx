@@ -86,7 +86,7 @@ const SideNav: React.FC<SideNavProps> = ({
           <SideNavigation.Item
             key='local'
             icon={
-              <TooltipWrapper tooltip='Local Files' placement='right'>
+              <TooltipWrapper tooltip='ローカルファイル' placement='right'>
                 <DropZoneForSmallLayouts />
               </TooltipWrapper>
             }
@@ -99,7 +99,7 @@ const SideNav: React.FC<SideNavProps> = ({
           <SideNavigation.Item
             key='gcs'
             icon={
-              <TooltipWrapper tooltip='GCS Files' placement='right'>
+              <TooltipWrapper tooltip='GCSファイル' placement='right'>
                 <GCSButton isLargeDesktop={false} openModal={toggleGCSModal} isDisabled={!connectionStatus}></GCSButton>
               </TooltipWrapper>
             }
@@ -112,7 +112,7 @@ const SideNav: React.FC<SideNavProps> = ({
           <SideNavigation.Item
             key='s3'
             icon={
-              <TooltipWrapper tooltip='S3 Files' placement='right'>
+              <TooltipWrapper tooltip='S3ファイル' placement='right'>
                 <S3Component
                   isLargeDesktop={false}
                   openModal={toggles3Modal}
@@ -129,7 +129,7 @@ const SideNav: React.FC<SideNavProps> = ({
           <SideNavigation.Item
             key='web'
             icon={
-              <TooltipWrapper tooltip='Web Sources' placement='right'>
+              <TooltipWrapper tooltip='Webソース' placement='right'>
                 <WebButton
                   isLargeDesktop={false}
                   openModal={toggleGenericModal}
@@ -229,7 +229,7 @@ const SideNav: React.FC<SideNavProps> = ({
                         <ArrowDownTrayIconOutline className='n-size-token-7' />
                       </Tooltip.Trigger>
                       <Tooltip.Content>
-                        Download Conversation
+                        会話をダウンロード
                         <TextLink ref={downloadLinkRef} className='hidden!'>
                           ""
                         </TextLink>
@@ -250,8 +250,8 @@ const SideNav: React.FC<SideNavProps> = ({
                         size='small'
                         placement='left'
                         clean
-                        label='Chat mode'
-                        text='Chat mode'
+                        label='チャットモード'
+                        text='チャットモード'
                       >
                         <RiChatSettingsLine className='n-size-token-7' />
                       </IconButtonWithToolTip>

@@ -26,22 +26,22 @@ export default function CommonActions({
         fill='text'
         placement='top'
         clean
-        text='Retrieval Information'
-        label='Retrieval Information'
+        text='検索情報'
+        label='検索情報'
         disabled={chat.isTyping || chat.isLoading}
         onClick={() => detailsHandler(chat, activeChat)}
-        aria-label='Retrieval Information'
+        aria-label='検索情報'
       >
         {buttonCaptions.details}
       </ButtonWithToolTip>
       <IconButtonWithToolTip
-        label='copy text'
+        label='テキストをコピー'
         placement='top'
         clean
         text={chat.copying ? tooltips.copied : tooltips.copy}
         onClick={() => copyHandler(chat.modes[chat.currentMode]?.message, chat.id)}
         disabled={chat.isTyping || chat.isLoading}
-        aria-label='copy text'
+        aria-label='テキストをコピー'
       >
         <ClipboardDocumentIconOutline className='n-size-token-4' />
       </IconButtonWithToolTip>
@@ -51,8 +51,8 @@ export default function CommonActions({
         onClick={() => speechHandler(chat)}
         text={chat.speaking ? tooltips.stopSpeaking : tooltips.textTospeech}
         disabled={listMessages.some((msg) => msg.speaking && msg.id !== chat.id)}
-        label={chat.speaking ? 'stop speaking' : 'text to speech'}
-        aria-label='speech'
+        label={chat.speaking ? '読み上げを停止' : 'テキスト読み上げ'}
+        aria-label='読み上げ'
       >
         {chat.speaking ? (
           <SpeakerXMarkIconOutline className='n-size-token-4' />

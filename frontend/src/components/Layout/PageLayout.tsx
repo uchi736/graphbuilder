@@ -33,8 +33,8 @@ const spotlightsforunauthenticated = [
     target: 'loginbutton',
     children: (
       <>
-        <Spotlight.Header>Login with Neo4j</Spotlight.Header>
-        <Spotlight.Body>Using Google Account or Email Address</Spotlight.Body>
+        <Spotlight.Header>Neo4jにログイン</Spotlight.Header>
+        <Spotlight.Body>Googleアカウントまたはメールアドレスでログインできます</Spotlight.Body>
       </>
     ),
   },
@@ -42,8 +42,8 @@ const spotlightsforunauthenticated = [
     target: 'connectbutton',
     children: (
       <>
-        <Spotlight.Header>Connect To Neo4j Database</Spotlight.Header>
-        <Spotlight.Body>Fill out the neo4j credentials and click on connect</Spotlight.Body>
+        <Spotlight.Header>Neo4jデータベースへの接続</Spotlight.Header>
+        <Spotlight.Body>Neo4jの接続情報を入力して「接続」をクリックしてください</Spotlight.Body>
       </>
     ),
   },
@@ -51,8 +51,8 @@ const spotlightsforunauthenticated = [
     target: 'dropzone',
     children: (
       <>
-        <Spotlight.Header>Upload documents </Spotlight.Header>
-        <Spotlight.Body>Upload any unstructured files</Spotlight.Body>
+        <Spotlight.Header>ドキュメントのアップロード</Spotlight.Header>
+        <Spotlight.Body>任意の非構造化ファイルをアップロードできます</Spotlight.Body>
       </>
     ),
   },
@@ -60,7 +60,7 @@ const spotlightsforunauthenticated = [
     target: 'llmdropdown',
     children: (
       <>
-        <Spotlight.Header>Choose The Desired LLM</Spotlight.Header>
+        <Spotlight.Header>使用するLLMの選択</Spotlight.Header>
       </>
     ),
   },
@@ -68,8 +68,8 @@ const spotlightsforunauthenticated = [
     target: 'generategraphbtn',
     children: (
       <>
-        <Spotlight.Header>Start The Extraction Process</Spotlight.Header>
-        <Spotlight.Body>Click On Generate Graph</Spotlight.Body>
+        <Spotlight.Header>抽出処理の開始</Spotlight.Header>
+        <Spotlight.Body>「グラフ生成」をクリックしてください</Spotlight.Body>
       </>
     ),
   },
@@ -77,8 +77,8 @@ const spotlightsforunauthenticated = [
     target: 'visualizegraphbtn',
     children: (
       <>
-        <Spotlight.Header>Visualize The Knowledge Graph</Spotlight.Header>
-        <Spotlight.Body>Select At Least One or More Completed Files From The Table For Visualization</Spotlight.Body>
+        <Spotlight.Header>ナレッジグラフの可視化</Spotlight.Header>
+        <Spotlight.Body>テーブルから処理完了済みのファイルを1つ以上選択して可視化できます</Spotlight.Body>
       </>
     ),
   },
@@ -86,7 +86,7 @@ const spotlightsforunauthenticated = [
     target: 'chatbtn',
     children: (
       <>
-        <Spotlight.Header>Ask Questions Related To Documents</Spotlight.Header>
+        <Spotlight.Header>ドキュメントに関する質問</Spotlight.Header>
       </>
     ),
   },
@@ -96,8 +96,8 @@ const spotlights = [
     target: 'connectbutton',
     children: (
       <>
-        <Spotlight.Header>Connect To Neo4j Database</Spotlight.Header>
-        <Spotlight.Body>Fill out the neo4j credentials and click on connect</Spotlight.Body>
+        <Spotlight.Header>Neo4jデータベースへの接続</Spotlight.Header>
+        <Spotlight.Body>Neo4jの接続情報を入力して「接続」をクリックしてください</Spotlight.Body>
       </>
     ),
   },
@@ -105,8 +105,8 @@ const spotlights = [
     target: 'dropzone',
     children: (
       <>
-        <Spotlight.Header>Upload documents </Spotlight.Header>
-        <Spotlight.Body>Upload any unstructured files</Spotlight.Body>
+        <Spotlight.Header>ドキュメントのアップロード</Spotlight.Header>
+        <Spotlight.Body>任意の非構造化ファイルをアップロードできます</Spotlight.Body>
       </>
     ),
   },
@@ -114,7 +114,7 @@ const spotlights = [
     target: 'llmdropdown',
     children: (
       <>
-        <Spotlight.Header>Choose The Desired LLM</Spotlight.Header>
+        <Spotlight.Header>使用するLLMの選択</Spotlight.Header>
       </>
     ),
   },
@@ -122,8 +122,8 @@ const spotlights = [
     target: 'generategraphbtn',
     children: (
       <>
-        <Spotlight.Header>Start The Extraction Process</Spotlight.Header>
-        <Spotlight.Body>Click On Generate Graph</Spotlight.Body>
+        <Spotlight.Header>抽出処理の開始</Spotlight.Header>
+        <Spotlight.Body>「グラフ生成」をクリックしてください</Spotlight.Body>
       </>
     ),
   },
@@ -131,8 +131,8 @@ const spotlights = [
     target: 'visualizegraphbtn',
     children: (
       <>
-        <Spotlight.Header>Visualize The Knowledge Graph</Spotlight.Header>
-        <Spotlight.Body>Select At Least One or More Completed Files From The Table For Visualization</Spotlight.Body>
+        <Spotlight.Header>ナレッジグラフの可視化</Spotlight.Header>
+        <Spotlight.Body>テーブルから処理完了済みのファイルを1つ以上選択して可視化できます</Spotlight.Body>
       </>
     ),
   },
@@ -140,7 +140,7 @@ const spotlights = [
     target: 'chatbtn',
     children: (
       <>
-        <Spotlight.Header>Ask Questions Related To Documents</Spotlight.Header>
+        <Spotlight.Header>ドキュメントに関する質問</Spotlight.Header>
       </>
     ),
   },
@@ -393,7 +393,7 @@ const PageLayout: React.FC = () => {
             modes: {
               'graph+vector+fulltext': {
                 message:
-                  ' Welcome to the Neo4j Knowledge Graph Chat. You can ask questions related to documents which have been completely processed.',
+                  ' Neo4jナレッジグラフチャットへようこそ。処理が完了したドキュメントに関する質問ができます。',
               },
             },
             user: 'chatbot',

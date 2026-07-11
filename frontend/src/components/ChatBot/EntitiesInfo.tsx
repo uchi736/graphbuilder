@@ -135,7 +135,7 @@ const EntitiesInfo: FC<EntitiesProps> = ({ loading, mode, graphonly_entities, in
         </ul>
       ) : (
         <Typography variant='h6' className='text-center'>
-          No Entities Found
+          エンティティが見つかりません
         </Typography>
       )}
       {openGraphView && (

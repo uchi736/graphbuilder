@@ -133,7 +133,7 @@ export default function DeduplicationTab() {
               <Checkbox
                 ariaLabel='row-checkbox'
                 onChange={row.getToggleSelectedHandler()}
-                htmlAttributes={{ title: 'Select the Row for merging' }}
+                htmlAttributes={{ title: 'マージする行を選択' }}
                 isChecked={row.getIsSelected()}
               />
             </div>
@@ -199,7 +199,7 @@ export default function DeduplicationTab() {
             </Flex>
           );
         },
-        header: () => <span>Labels</span>,
+        header: () => <span>ラベル</span>,
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor((row) => row.documents, {
@@ -218,13 +218,13 @@ export default function DeduplicationTab() {
             </Flex>
           );
         },
-        header: () => <span>Related Documents </span>,
+        header: () => <span>関連ドキュメント </span>,
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor((row) => row.chunkConnections, {
         id: 'Connected Chunks',
         cell: (info) => <i>{info?.getValue()}</i>,
-        header: () => <span>Connected Chunks</span>,
+        header: () => <span>接続チャンク数</span>,
         footer: (info) => info.column.id,
       }),
     ],
@@ -254,24 +254,24 @@ export default function DeduplicationTab() {
     },
   });
   const selectedFilesCheck = mergeAPIloading
-    ? 'Merging...'
+    ? 'マージ中...'
     : table.getSelectedRowModel().rows.length
-      ? `Merge Duplicate Nodes (${table.getSelectedRowModel().rows.length})`
-      : 'Select Node(s) to Merge';
+      ? `重複ノードをマージ (${table.getSelectedRowModel().rows.length})`
+      : 'マージするノードを選択';
   return (
     <>
       <div>
         <Flex justifyContent='space-between' flexDirection='row'>
           <Flex>
             <Typography variant={'subheading-medium'}>
-              Refine Your Knowledge Graph: Merge Duplicate Entities:
+              ナレッジグラフの精緻化: 重複エンティティのマージ:
             </Typography>
             <Typography variant={'body-small'}>
-              Identify and merge similar entries like "Apple" and "Apple Inc." to eliminate redundancy and improve the
-              accuracy and clarity of your knowledge graph.
+              「Apple」と「Apple
+              Inc.」のような類似エントリを特定してマージすることで、冗長性を排除し、ナレッジグラフの精度と明瞭さを向上させます。
             </Typography>
           </Flex>
-          {nodesCount > 0 && <Typography variant={'subheading-medium'}>Total Duplicate Nodes: {nodesCount}</Typography>}
+          {nodesCount > 0 && <Typography variant={'subheading-medium'}>重複ノード総数: {nodesCount}</Typography>}
         </Flex>
         <DataGrid
           ref={tableRef}
@@ -323,16 +323,16 @@ export default function DeduplicationTab() {
             loading={mergeAPIloading}
             text={
               isLoading
-                ? 'Fetching Duplicate Nodes'
+                ? '重複ノードを取得中'
                 : !isLoading && !duplicateNodes.length
-                  ? 'No Nodes Found'
+                  ? 'ノードが見つかりません'
                   : !table.getSelectedRowModel().rows.length
-                    ? 'No Nodes Selected'
+                    ? 'ノードが選択されていません'
                     : mergeAPIloading
-                      ? 'Merging'
-                      : `Merge Selected Nodes (${table.getSelectedRowModel().rows.length})`
+                      ? 'マージ中'
+                      : `選択したノードをマージ (${table.getSelectedRowModel().rows.length})`
             }
-            label='Merge Duplicate Node Button'
+            label='重複ノードのマージボタン'
             disabled={!table.getSelectedRowModel().rows.length}
             placement='top'
           >

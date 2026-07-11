@@ -85,7 +85,7 @@ function ConfirmationDialog({
     >
       <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
         {largeFiles.length === 0 && loading ? (
-          <Typography variant='subheading-large'>Files are under processing</Typography>
+          <Typography variant='subheading-large'>ファイルを処理しています</Typography>
         ) : isLargeDocumentAlert ? (
           <LargeFilesAlert handleToggle={handleToggle} Files={largeFiles} checked={checked}></LargeFilesAlert>
         ) : (
@@ -115,7 +115,7 @@ function ConfirmationDialog({
             (f) => f.createdAt != undefined && checked.includes(f.id) && isExpired(f?.createdAt as Date)
           )}
         >
-          Continue
+          続行
         </Button>
       </Dialog.Actions>
     </Dialog>

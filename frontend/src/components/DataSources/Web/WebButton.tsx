@@ -15,7 +15,7 @@ const WebButton: React.FC<DataComponentProps> = ({ openModal, isLargeDesktop = t
       wrapperclassName='my-2'
       className={isLargeDesktop ? 'webImg' : 'widthunset'}
       isDisabled={isDisabled}
-      title={isLargeDesktop ? 'Web Sources' : ''}
+      title={isLargeDesktop ? 'Webソース' : ''}
     />
   );
 };

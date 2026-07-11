@@ -230,15 +230,15 @@ const SchemaViz: React.FunctionComponent<SchemaViewModalProps> = ({
                       nvlCallbacks={nvlCallbacks}
                     />
                     <IconButtonArray orientation='vertical' isFloating={true} className='absolute bottom-4 right-4'>
-                      <IconButtonWithToolTip label='Zoomin' text='Zoom in' onClick={handleZoomIn} placement='left'>
+                      <IconButtonWithToolTip label='拡大' text='拡大' onClick={handleZoomIn} placement='left'>
                         <MagnifyingGlassPlusIconOutline className='n-size-token-7' />
                       </IconButtonWithToolTip>
-                      <IconButtonWithToolTip label='Zoom out' text='Zoom out' onClick={handleZoomOut} placement='left'>
+                      <IconButtonWithToolTip label='縮小' text='縮小' onClick={handleZoomOut} placement='left'>
                         <MagnifyingGlassMinusIconOutline className='n-size-token-7' />
                       </IconButtonWithToolTip>
                       <IconButtonWithToolTip
-                        label='Zoom to fit'
-                        text='Zoom to fit'
+                        label='全体表示'
+                        text='全体表示'
                         onClick={handleZoomToFit}
                         placement='left'
                       >

@@ -297,7 +297,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                     ...msg,
                     modes: {
                       ...msg.modes,
-                      [mode]: { message: 'Failed to fetch response for this mode.', error: result.reason },
+                      [mode]: { message: 'このモードの応答の取得に失敗しました。', error: result.reason },
                     },
                   }
                 : msg)
@@ -320,7 +320,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
                   isTyping: false,
                   modes: {
                     [chatModes[0]]: {
-                      message: 'An error occurred while processing your request.',
+                      message: 'リクエストの処理中にエラーが発生しました。',
                       error: error.message,
                     },
                   },
@@ -430,7 +430,7 @@ const Chatbot: FC<ChatbotProps> = (props) => {
     <div className='n-bg-palette-neutral-bg-weak flex! flex-col justify-between min-h-full max-h-full overflow-hidden relative'>
       {isDeleteChatLoading && (
         <div className='chatbot-deleteLoader'>
-          <Loader title='Deleting...'></Loader>
+          <Loader title='削除中...'></Loader>
         </div>
       )}
       <div
@@ -591,9 +591,9 @@ const Chatbot: FC<ChatbotProps> = (props) => {
           />
           <SpotlightTarget id='chatbtn' hasPulse={true} indicatorVariant='border'>
             <ButtonWithToolTip
-              label='Q&A Button'
+              label='Q&Aボタン'
               placement='top'
-              text={`Ask a question.`}
+              text={`質問を入力してください。`}
               type='submit'
               disabled={loading || !connectionStatus}
               size='medium'
@@ -618,10 +618,10 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             <IconButton
               size='large'
               htmlAttributes={{
-                title: 'download chat info',
+                title: 'チャット情報をダウンロード',
               }}
               isClean
-              ariaLabel='download chat info'
+              ariaLabel='チャット情報をダウンロード'
               isDisabled={metricsLoading || infoLoading}
               onClick={() => {
                 downloadClickHandler(
@@ -650,9 +650,9 @@ const Chatbot: FC<ChatbotProps> = (props) => {
             <IconButton
               size='large'
               htmlAttributes={{
-                title: 'close pop up',
+                title: 'ポップアップを閉じる',
               }}
-              ariaLabel='close pop up'
+              ariaLabel='ポップアップを閉じる'
               isClean
               onClick={() => setShowInfoModal(false)}
             >

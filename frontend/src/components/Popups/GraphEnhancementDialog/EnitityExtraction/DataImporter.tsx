@@ -98,7 +98,7 @@ const DataImporterSchemaDialog = ({ open, onClose, onApply }: DataImporterDialog
   return (
     <>
       <Dialog isOpen={open} onClose={handleCancel}>
-        <Dialog.Header>JSON Data Graph Extraction Settings</Dialog.Header>
+        <Dialog.Header>JSONデータからのグラフ抽出設定</Dialog.Header>
         <Dialog.Content className='n-flex n-flex-col n-gap-token-6 p-6'>
           <ImporterInput />
           <UploadJsonData
@@ -155,10 +155,10 @@ const DataImporterSchemaDialog = ({ open, onClose, onApply }: DataImporterDialog
           />
           <Dialog.Actions className='n-flex n-justify-end n-gap-token-4 pt-4'>
             <Button onClick={handleCancel} isDisabled={importerPattern.length === 0}>
-              Cancel
+              キャンセル
             </Button>
             <Button onClick={handleImporterCheck} isDisabled={importerPattern.length === 0}>
-              Apply
+              適用
             </Button>
           </Dialog.Actions>
         </Dialog.Content>

@@ -54,11 +54,11 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
     onSuccess: async (codeResponse) => {
       try {
         if (!userCredentials) {
-          showErrorToast('Please connect to database first');
+          showErrorToast('まずデータベースに接続してください');
           return;
         }
         setStatus('info');
-        setStatusMessage('Loading...');
+        setStatusMessage('読み込み中...');
         openGCSModal();
         const apiResponse = await urlScanAPI(
           {
@@ -85,14 +85,14 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
         const apiResCheck = apiResponse?.data?.success_count && apiResponse.data.failed_count;
         if (apiResCheck) {
           showNormalToast(
-            `Successfully Created Source Nodes for ${apiResponse.data.success_count} and Failed for ${apiResponse.data.failed_count} Files`
+            `${apiResponse.data.success_count} 件のファイルのソースノードを作成し、${apiResponse.data.failed_count} 件は失敗しました`
           );
         } else if (apiResponse?.data?.success_count) {
-          showNormalToast(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
+          showNormalToast(`${apiResponse.data.success_count} 件のファイルのソースノードを作成しました`);
         } else if (apiResponse.data.failed_count) {
-          showErrorToast(`Failed to Created Source Node for ${apiResponse.data.failed_count} Files`);
+          showErrorToast(`${apiResponse.data.failed_count} 件のファイルのソースノード作成に失敗しました`);
         } else {
-          showErrorToast(`Invalid Folder Name`);
+          showErrorToast(`フォルダ名が無効です`);
         }
         const copiedFilesData = [...filesData];
         if (apiResponse?.data?.file_name?.length) {
@@ -134,7 +134,7 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
         reset();
       } catch (error) {
         if (showAlert != undefined) {
-          showNormalToast('Some Error Occurred or Please Check your Instance Connection');
+          showNormalToast('エラーが発生しました。インスタンスへの接続を確認してください');
         }
       }
       setTimeout(() => {
@@ -144,7 +144,7 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
     },
     onError: (errorResponse) => {
       showErrorToast(
-        errorResponse.error_description ?? 'Some Error Occurred or Please try signin with your google account'
+        errorResponse.error_description ?? 'エラーが発生しました。Googleアカウントでのサインインをお試しください'
       );
     },
     scope: 'https://www.googleapis.com/auth/devstorage.read_only',
@@ -157,7 +157,7 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
   const submitHandler = () => {
     if (bucketName.trim() === '' || projectId.trim() === '') {
       setStatus('danger');
-      setStatusMessage('Please Fill the Credentials');
+      setStatusMessage('認証情報を入力してください');
       setTimeout(() => {
         setStatus('unknown');
       }, 5000);
@@ -204,12 +204,12 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
               id: 'project id',
               autoFocus: true,
               onKeyDown: handleKeyPress,
-              'aria-label': 'Project ID',
+              'aria-label': 'プロジェクトID',
               placeholder: '',
             }}
             value={projectId}
             isDisabled={false}
-            label='Project ID'
+            label='プロジェクトID'
             isFluid={true}
             isRequired={true}
             onChange={(e) => {
@@ -221,12 +221,12 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
               id: 'bucketname',
               autoFocus: true,
               onKeyDown: handleKeyPress,
-              'aria-label': 'Bucket Name',
+              'aria-label': 'バケット名',
               placeholder: '',
             }}
             value={bucketName}
             isDisabled={false}
-            label='Bucket Name'
+            label='バケット名'
             isFluid={true}
             isRequired={true}
             onChange={(e) => {
@@ -238,13 +238,13 @@ const GCSModal: React.FC<GCSModalProps> = ({ hideModal, open, openGCSModal }) =>
               id: 'foldername',
               autoFocus: true,
               onKeyDown: handleKeyPress,
-              'aria-label': 'Folder Name',
+              'aria-label': 'フォルダ名',
               placeholder: '',
             }}
             value={folderName}
             isDisabled={false}
-            label='Folder Name'
-            helpText='Optional'
+            label='フォルダ名'
+            helpText='任意'
             isFluid={true}
             onChange={(e) => {
               setFolderName(e.target.value);

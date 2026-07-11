@@ -116,8 +116,8 @@ const ResultOverview: React.FunctionComponent<OverViewProps> = ({
               <TextInput
                 htmlAttributes={{
                   type: 'text',
-                  'aria-label': 'search nodes',
-                  placeholder: 'Search On Node Properties',
+                  'aria-label': 'ノードを検索',
+                  placeholder: 'ノードのプロパティで検索',
                 }}
                 value={searchQuery}
                 onChange={(e) => {
@@ -126,7 +126,7 @@ const ResultOverview: React.FunctionComponent<OverViewProps> = ({
                 isFluid={true}
                 leftElement={
                   <IconButton
-                    ariaLabel='Search Icon'
+                    ariaLabel='検索アイコン'
                     isClean={true}
                     size='small'
                     className='-mt-0.5'

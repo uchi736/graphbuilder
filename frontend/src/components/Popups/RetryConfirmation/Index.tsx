@@ -33,10 +33,9 @@ function RetryConfirmationDialog({
         );
   return (
     <Dialog isOpen={open} onClose={onClose}>
-      <Dialog.Header>Reprocess Options</Dialog.Header>
+      <Dialog.Header>再処理オプション</Dialog.Header>
       <Dialog.Description>
-        Clicking "Continue" will mark these files as "Ready to Reprocess." To proceed, click “Generate Graph” to start
-        the reprocessing process.
+        「続行」をクリックすると、これらのファイルは「再処理可能」としてマークされます。その後、「グラフを生成」をクリックすると再処理が開始されます。
       </Dialog.Description>
       <Dialog.Content>
         {alertStatus.showAlert && (
@@ -77,9 +76,9 @@ function RetryConfirmationDialog({
           <Dialog.Actions className='mt-3!'>
             <ButtonWithToolTip
               placement='left'
-              label='Retry action button'
+              label='再処理実行ボタン'
               text={
-                !file?.retryOption.length ? `Please Select One Of The Option` : 'Reset The Status To Ready to Reprocess'
+                !file?.retryOption.length ? `いずれかのオプションを選択してください` : 'ステータスを「再処理可能」にリセット'
               }
               loading={retryLoading}
               disabled={!file?.retryOption.length}
@@ -87,7 +86,7 @@ function RetryConfirmationDialog({
                 retryHandler(file?.name as string, file?.retryOption as string);
               }}
             >
-              Continue
+              続行
             </ButtonWithToolTip>
           </Dialog.Actions>
         </Dialog.Actions>

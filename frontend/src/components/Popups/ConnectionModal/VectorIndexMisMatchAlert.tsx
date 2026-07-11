@@ -26,13 +26,13 @@ export default function VectorIndexMisMatchAlert({
         <div className='whitespace-pre-wrap'>
           <Markdown>
             {isVectorIndexAlreadyExists
-              ? `**Vector Index Incompatibility** 
-The existing Neo4j vector index dimension (${userVectorIndexDimension}) is incompatible with the supported dimension (${applicationDimension}) for this application. 
-To proceed, please choose one of the following options: 
-1.**Recreate Vector Index:** Click "Re-Create Vector Index" to generate a compatible vector index. 
-2.**Use a Different Instance:** Connect to a Neo4j instance with a compatible vector index configuration  `
+              ? `**ベクトルインデックスの互換性がありません**
+既存のNeo4jベクトルインデックスの次元数 (${userVectorIndexDimension}) は、このアプリケーションがサポートする次元数 (${applicationDimension}) と互換性がありません。
+続行するには、次のいずれかを選択してください:
+1.**ベクトルインデックスの再作成:** 「ベクトルインデックスを再作成」をクリックして互換性のあるベクトルインデックスを生成します。
+2.**別のインスタンスの使用:** 互換性のあるベクトルインデックス構成を持つNeo4jインスタンスに接続します  `
               : chunksExists
-                ? `A vector index is essential for performing efficient similarity searches within your data. Without it, some chunks of data will be invisible to queries based on meaning and context. Creating a vector index unlocks the full potential of your data by allowing you to find related information quickly and accurately.`
+                ? `ベクトルインデックスは、データ内で効率的な類似度検索を行うために不可欠です。これがないと、一部のチャンクは意味や文脈に基づくクエリから見えなくなります。ベクトルインデックスを作成することで、関連情報を素早く正確に見つけられるようになり、データの可能性を最大限に引き出せます。`
                 : ''}
           </Markdown>
         </div>
@@ -41,10 +41,10 @@ To proceed, please choose one of the following options:
         <ButtonWithToolTip
           text={
             userCredentials === null
-              ? 'please establish the connection before creating the index'
-              : 'creates the supported vector index'
+              ? 'インデックスを作成する前に接続を確立してください'
+              : 'サポートされているベクトルインデックスを作成します'
           }
-          label='creates the supported vector index'
+          label='サポートされているベクトルインデックスを作成します'
           placement='top'
           loading={vectorIndexLoading}
           onClick={async () => {
@@ -56,7 +56,7 @@ To proceed, please choose one of the following options:
           color='danger'
           disabled={userCredentials === null}
         >
-          {isVectorIndexAlreadyExists ? 'Re-Create Vector Index' : 'Create Vector Index'}
+          {isVectorIndexAlreadyExists ? 'ベクトルインデックスを再作成' : 'ベクトルインデックスを作成'}
         </ButtonWithToolTip>
       </div>
     </Flex>

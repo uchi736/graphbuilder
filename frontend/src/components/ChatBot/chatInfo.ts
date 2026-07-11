@@ -30,7 +30,7 @@ export const handleGraphNodeClick = async (
       setOpenGraphView(true);
       setViewPoint('chatInfoView');
     } else {
-      showNormalToast('No nodes or relationships found for the selected node.');
+      showNormalToast('選択したノードに関連するノードやリレーションシップが見つかりません。');
     }
   } catch (error: any) {
     console.error('Error fetching neighbors:', error);

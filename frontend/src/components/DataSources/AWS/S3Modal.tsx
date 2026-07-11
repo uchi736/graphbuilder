@@ -62,12 +62,12 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
     if (isValid && accessKey.trim() != '' && secretKey.trim() != '') {
       if (!userCredentials) {
         setStatus('danger');
-        setStatusMessage('Please connect to database first');
+        setStatusMessage('まずデータベースに接続してください');
         return;
       }
       try {
         setStatus('info');
-        setStatusMessage('Scanning...');
+        setStatusMessage('スキャン中...');
         const apiResponse = await urlScanAPI(
           {
             urlParam: url.trim(),
@@ -81,7 +81,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         setStatus('success');
         if (apiResponse?.data.status == 'Failed' || !apiResponse.data) {
           setStatus('danger');
-          setStatusMessage('Please Fill The Valid Credentials');
+          setStatusMessage('有効な認証情報を入力してください');
           setTimeout(() => {
             hideModal();
             setStatus('unknown');
@@ -89,7 +89,7 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
           }, 5000);
           return;
         }
-        setStatusMessage(`Successfully Created Source Nodes for ${apiResponse.data.success_count} Files`);
+        setStatusMessage(`${apiResponse.data.success_count} 件のファイルのソースノードを作成しました`);
         const copiedFilesData: CustomFile[] = [...filesData];
         apiResponse?.data?.file_name?.forEach((item: S3File) => {
           const filedataIndex = copiedFilesData.findIndex((filedataitem) => filedataitem?.name === item?.fileName);
@@ -123,11 +123,11 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
         reset();
       } catch (error) {
         setStatus('danger');
-        setStatusMessage('Some Error Occurred or Please Check your Instance Connection');
+        setStatusMessage('エラーが発生しました。インスタンスへの接続を確認してください');
       }
     } else {
       setStatus('warning');
-      setStatusMessage('Please Fill The Valid Credentials');
+      setStatusMessage('有効な認証情報を入力してください');
       setTimeout(() => {
         setStatus('unknown');
       }, 5000);
@@ -174,15 +174,15 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
               autoFocus: true,
               onBlur: () => setValid(validation(bucketUrl) && isFocused),
               onKeyDown: handleKeyDown,
-              'aria-label': 'Bucket URL',
+              'aria-label': 'バケットURL',
               placeholder: 's3://data.neo4j.com/pdf/',
             }}
             value={bucketUrl}
             isDisabled={false}
-            label='Bucket URL'
+            label='バケットURL'
             isFluid={true}
             isRequired={true}
-            errorText={!isValid && isFocused && 'Please Fill The Valid URL'}
+            errorText={!isValid && isFocused && '有効なURLを入力してください'}
             onChange={(e) => {
               setIsFocused(true);
               setBucketUrl(e.target.value);
@@ -194,12 +194,12 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
                 id: 'access key',
                 type: 'password',
                 onKeyDown: handleKeyDown,
-                'aria-label': 'Access Key',
+                'aria-label': 'アクセスキー',
                 placeholder: '',
               }}
               value={accessKey}
               isDisabled={false}
-              label='Access Key'
+              label='アクセスキー'
               className='w-full'
               isFluid={true}
               isRequired={true}
@@ -212,12 +212,12 @@ const S3Modal: React.FC<S3ModalProps> = ({ hideModal, open }) => {
                 id: 'secret key',
                 type: 'password',
                 onKeyDown: handleKeyDown,
-                'aria-label': 'Secret Key',
+                'aria-label': 'シークレットキー',
                 placeholder: '',
               }}
               value={secretKey}
               isDisabled={false}
-              label='Secret Key'
+              label='シークレットキー'
               className='w-full'
               isFluid={true}
               isRequired={true}

@@ -128,55 +128,53 @@ export default function GraphEnhancementDialog({
               alt='graph-enhancement-options-logo'
             />
             <div className='flex flex-col'>
-              <Typography variant={isTablet ? 'h5' : 'h2'}>Graph Settings</Typography>
+              <Typography variant={isTablet ? 'h5' : 'h2'}>グラフ設定</Typography>
               <Typography variant={isTablet ? 'subheading-small' : 'subheading-medium'} className='mb-2'>
                 {isTablet
-                  ? `This set of tools will help you enhance the quality of your Knowledge Graph`
-                  : `This set of tools will help you enhance the quality of your Knowledge Graph by removing possible
-                duplicated entities, disconnected nodes and set a Graph Schema for improving the quality of the entity
-                extraction process`}
+                  ? `これらのツールはナレッジグラフの品質向上に役立ちます`
+                  : `これらのツールを使うと、重複している可能性のあるエンティティや孤立ノードを取り除き、グラフスキーマを設定してエンティティ抽出処理の品質を高めることで、ナレッジグラフの品質を向上させることができます`}
               </Typography>
               <Flex className='pt-2'>
                 <Tabs fill='underline' onChange={setactiveTab} size={isTablet ? 'small' : 'large'} value={activeTab}>
                   <Tabs.Tab
                     tabId={0}
                     htmlAttributes={{
-                      'aria-label': 'Entity Extraction Settings',
+                      'aria-label': 'エンティティ抽出設定',
                     }}
                   >
-                    Entity Extraction Settings
+                    エンティティ抽出設定
                   </Tabs.Tab>
                   <Tabs.Tab
                     tabId={1}
                     htmlAttributes={{
-                      'aria-label': 'Processing Configuration',
+                      'aria-label': '処理設定',
                     }}
                   >
-                    Processing Configuration
+                    処理設定
                   </Tabs.Tab>
                   <Tabs.Tab
                     tabId={2}
                     htmlAttributes={{
-                      'aria-label': 'Disconnected Nodes',
+                      'aria-label': '孤立ノード',
                     }}
                   >
-                    Disconnected Nodes
+                    孤立ノード
                   </Tabs.Tab>
                   <Tabs.Tab
                     tabId={3}
                     htmlAttributes={{
-                      'aria-label': 'Duplication Nodes',
+                      'aria-label': 'ノードの重複排除',
                     }}
                   >
-                    De-Duplication Of Nodes
+                    ノードの重複排除
                   </Tabs.Tab>
                   <Tabs.Tab
                     tabId={4}
                     htmlAttributes={{
-                      'aria-label': 'Post Processing Jobs',
+                      'aria-label': '後処理ジョブ',
                     }}
                   >
-                    Post Processing Jobs
+                    後処理ジョブ
                   </Tabs.Tab>
                 </Tabs>
               </Flex>

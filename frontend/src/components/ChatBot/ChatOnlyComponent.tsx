@@ -60,7 +60,7 @@ const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
       }
     } catch (_err) {
       const message =
-        _err instanceof Error ? _err.message : 'Unable to reach the backend. Please check your connection.';
+        _err instanceof Error ? _err.message : 'バックエンドに接続できません。接続を確認してください。';
       showErrorToast(message);
     }
     return false;
@@ -139,7 +139,7 @@ const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
       }
     } catch (error) {
       setIsDeleteChatLoading(false);
-      showErrorToast(error instanceof Error ? error.message : 'Error clearing chat history');
+      showErrorToast(error instanceof Error ? error.message : 'チャット履歴の削除中にエラーが発生しました');
       setClearHistoryData(false);
     }
   };
@@ -153,7 +153,7 @@ const ChatContent: React.FC<ChatProps> = ({ chatMessages }) => {
           modes: {
             'graph+vector+fulltext': {
               message:
-                'Welcome to the Neo4j Knowledge Graph Chat. You can ask questions related to documents which have been completely processed.',
+                'Neo4jナレッジグラフチャットへようこそ。処理が完了したドキュメントに関する質問ができます。',
             },
           },
           user: 'chatbot',

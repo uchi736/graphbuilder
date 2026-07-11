@@ -28,7 +28,7 @@ export default function WebInput({
       isFocused={isFocused}
       isValid={isValid}
       disabledCheck={Boolean(loading)}
-      label='Website Link'
+      label='Webサイトリンク'
       placeHolder='https://neo4j.com/'
       value={inputVal}
       onChangeHandler={onChangeHandler}

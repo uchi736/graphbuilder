@@ -10,15 +10,15 @@ export default function BreakDownPopOver({ file, isNodeCount = true }: { file: C
     <CustomPopOver Trigger={<InformationCircleIconOutline className='n-size-token-6' />}>
       {isNodeCount ? (
         <ul className='p-2!'>
-          <li>Chunk Nodes: {file.chunkNodeCount}</li>
-          <li>Entity Nodes: {file.entityNodeCount}</li>
-          {isGdsActive && <li>Community Nodes: {file.communityNodeCount}</li>}
+          <li>チャンクノード: {file.chunkNodeCount}</li>
+          <li>エンティティノード: {file.entityNodeCount}</li>
+          {isGdsActive && <li>コミュニティノード: {file.communityNodeCount}</li>}
         </ul>
       ) : (
         <ul className='p-2!'>
-          <li>Chunk Relations: {file.chunkRelCount}</li>
-          <li>Entity Relations: {file.entityEntityRelCount}</li>
-          {isGdsActive && <li>Community Relations: {file.communityRelCount}</li>}
+          <li>チャンクリレーション: {file.chunkRelCount}</li>
+          <li>エンティティリレーション: {file.entityEntityRelCount}</li>
+          {isGdsActive && <li>コミュニティリレーション: {file.communityRelCount}</li>}
         </ul>
       )}
     </CustomPopOver>

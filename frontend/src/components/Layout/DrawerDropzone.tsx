@@ -70,7 +70,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
                   <div className='mx-6 flex! items-center justify-between pb-6'>
                     <Typography variant='body-medium' className='flex items-center gap-1'>
                       <StatusIndicator type={isBackendConnected ? 'success' : 'danger'} />
-                      <span>Backend connection status</span>
+                      <span>バックエンド接続ステータス</span>
                     </Typography>
                   </div>
                 )}
@@ -78,7 +78,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
                   <div className='mx-6 flex items-center justify-between pb-6'>
                     <Typography variant='body-medium' className='flex items-center gap-1'>
                       <StatusIndicator type={connectionStatus ? 'success' : 'danger'} />
-                      <span>Connect to Neo4j to upload documents</span>
+                      <span>ドキュメントをアップロードするにはNeo4jに接続してください</span>
                     </Typography>
                   </div>
                 )}
@@ -138,8 +138,8 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
               <StatusIndicator type={'danger'} />
               <span className='text-center mx-1'>
                 {filesData.length === 0
-                  ? `It seems like you haven't ingested any data yet. Please log in to the main application.`
-                  : 'You must be logged in to process this data. Please log in to the main application'}
+                  ? `まだデータが取り込まれていないようです。メインアプリケーションにログインしてください。`
+                  : 'このデータを処理するにはログインが必要です。メインアプリケーションにログインしてください。'}
               </span>
             </Typography>
             <div className={`h-full cursor-pointer`} onClick={() => loginWithRedirect()}>

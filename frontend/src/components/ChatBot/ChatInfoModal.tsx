@@ -105,8 +105,8 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   const actions: React.ComponentProps<typeof IconButton<'button'>>[] = useMemo(
     () => [
       {
-        title: 'copy',
-        ariaLabel: 'copy',
+        title: 'コピー',
+        ariaLabel: 'コピー',
         children: (
           <>
             {copiedText ? (
@@ -298,7 +298,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
   };
   const MetricsCheckBoxWithCheck = withVisibility(MetricsCheckbox);
   const TextareaWithCheck = withVisibility(() => (
-    <TextArea ref={textAreaRef} isFluid={true} size='large' isOptional={true} label='Reference Answer'></TextArea>
+    <TextArea ref={textAreaRef} isFluid={true} size='large' isOptional={true} label='参照回答'></TextArea>
   ));
   const isMultiModes = useMemo(
     () => activeChatmodes != null && Object.keys(activeChatmodes).length > 1,
@@ -318,17 +318,16 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           alt='Retrieval-logo'
         />
         <div className='flex! flex-col'>
-          <Typography variant='h2'>Retrieval information</Typography>
+          <Typography variant='h2'>検索情報</Typography>
           <Typography variant='body-medium' className='mb-2'>
-            To generate this response, the process took <span className='font-bold'>{response_time} seconds,</span>
-            utilizing <span className='font-bold'>{total_tokens}</span> tokens with the model{' '}
-            <span className='font-bold'>{model}</span> in{' '}
+            この回答の生成には<span className='font-bold'>{response_time} 秒</span>かかり、モデル{' '}
+            <span className='font-bold'>{model}</span>(
             <span className='font-bold'>
               {chatModeReadableLables[mode] !== 'vector'
                 ? chatModeReadableLables[mode].replace(/\+/g, ' & ')
                 : chatModeReadableLables[mode]}
             </span>{' '}
-            mode.
+            モード)で<span className='font-bold'>{total_tokens}</span> トークンを使用しました。
           </Typography>
         </div>
       </div>
@@ -339,30 +338,30 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
       ) : (
         <Tabs size='large' fill='underline' onChange={onChangeTabs} value={activeTab}>
           {mode === chatModeLables['global search+vector+fulltext'] ? (
-            <Tabs.Tab tabId={7}>Communities</Tabs.Tab>
+            <Tabs.Tab tabId={7}>コミュニティ</Tabs.Tab>
           ) : (
             <>
-              {mode != chatModeLables.graph ? <Tabs.Tab tabId={3}>Sources used</Tabs.Tab> : <></>}
-              {mode != chatModeLables.graph ? <Tabs.Tab tabId={5}>Chunks</Tabs.Tab> : <></>}
+              {mode != chatModeLables.graph ? <Tabs.Tab tabId={3}>使用したソース</Tabs.Tab> : <></>}
+              {mode != chatModeLables.graph ? <Tabs.Tab tabId={5}>チャンク</Tabs.Tab> : <></>}
               {mode === chatModeLables['graph+vector'] ||
               mode === chatModeLables.graph ||
               mode === chatModeLables['graph+vector+fulltext'] ||
               mode === chatModeLables['entity search+vector'] ? (
-                <Tabs.Tab tabId={4}>Top Entities used</Tabs.Tab>
+                <Tabs.Tab tabId={4}>使用した主要エンティティ</Tabs.Tab>
               ) : (
                 <></>
               )}
               {mode === chatModeLables.graph && cypher_query?.trim()?.length ? (
-                <Tabs.Tab tabId={6}>Generated Cypher Query</Tabs.Tab>
+                <Tabs.Tab tabId={6}>生成されたCypherクエリ</Tabs.Tab>
               ) : (
                 <></>
               )}
               {mode === chatModeLables['entity search+vector'] && communities.length ? (
-                <Tabs.Tab tabId={7}>Communities</Tabs.Tab>
+                <Tabs.Tab tabId={7}>コミュニティ</Tabs.Tab>
               ) : (
                 <></>
               )}
-              <Tabs.Tab tabId={8}>Evaluation Metrics</Tabs.Tab>
+              <Tabs.Tab tabId={8}>評価メトリクス</Tabs.Tab>
             </>
           )}
         </Tabs>
@@ -377,16 +376,16 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               {!llms.includes(metricmodel) && (
                 <Banner
                   type='warning'
-                  title='LLM Model Not Supported ,Please Choose Different Model'
+                  title='このLLMモデルは未対応です。別のモデルを選択してください'
                   description={
                     <Typography variant='body-medium'>
-                      Currently ragas evaluation works on{' '}
+                      現在、ragas評価は{' '}
                       {llms.map((s, idx) => (
                         <span className='font-bold' key={s}>
                           {capitalizeWithUnderscore(s) + (idx != llms.length - 1 ? ',' : '')}
                         </span>
                       ))}
-                      .
+                      {' '}に対応しています。
                     </Typography>
                   }
                   usage='inline'
@@ -394,10 +393,10 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               )}
               <Box>
                 <Typography variant='body-large'>
-                  We use several key metrics to assess the quality of our chat responses. Click the button below to view
-                  detailed scores for this interaction using <span className='font-bold'>ragas framework</span>. These
-                  scores help us continuously improve the accuracy and helpfulness of our chatbots.This usually takes
-                  about <span className='font-bold'>20 seconds</span> . You'll see detailed scores shortly.
+                  チャット回答の品質を評価するために、いくつかの主要メトリクスを使用しています。下のボタンをクリックすると、
+                  <span className='font-bold'>ragasフレームワーク</span>
+                  によるこのやり取りの詳細スコアを表示できます。これらのスコアは、チャットボットの正確性と有用性を継続的に改善するために役立ちます。処理には通常
+                  <span className='font-bold'>約20秒</span>かかります。しばらくすると詳細スコアが表示されます。
                 </Typography>
               </Box>
             </Stack>
@@ -451,7 +450,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                   className='w-max self-center mt-4'
                   onClick={loadMetrics}
                 >
-                  View Detailed Metrics
+                  詳細メトリクスを表示
                 </Button>
               )}
             {isMultiModes && (isAdditionalMetricsEnabled === false || isAdditionalMetricsEnabled === null) && (
@@ -460,7 +459,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
                 className='w-max self-center mt-4'
                 onClick={loadMetrics}
               >
-                View Detailed Metrics For All Modes
+                全モードの詳細メトリクスを表示
               </Button>
             )}
           </Stack>
@@ -499,7 +498,7 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
           <GraphViewButton
             nodeValues={nodes}
             relationshipValues={relationships}
-            label='Graph Entities used for Answer Generation'
+            label='回答生成に使用したグラフエンティティ'
             viewType='chatInfoView'
           />
         </div>

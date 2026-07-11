@@ -15,7 +15,7 @@ export default function PostProcessingCheckList() {
         <Flex flexDirection='column'>
           <Flex justifyContent='space-between' flexDirection='row'>
             <Typography variant={tablet ? 'subheading-medium' : 'subheading-large'}>
-              These options allow you to fine-tune your knowledge graph for improved performance and deeper analysis
+              これらのオプションを使うと、ナレッジグラフを微調整してパフォーマンスの向上やより深い分析が可能になります
             </Typography>
           </Flex>
           <Flex justifyContent='space-between' flexDirection='column' gap='6'>

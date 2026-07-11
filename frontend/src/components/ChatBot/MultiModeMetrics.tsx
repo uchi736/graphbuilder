@@ -45,7 +45,7 @@ export default function MultiModeMetrics({
             </div>
           );
         },
-        header: () => <span>Mode</span>,
+        header: () => <span>モード</span>,
         footer: (info) => info.column.id,
         maxSize: 150,
       }),
@@ -60,7 +60,7 @@ export default function MultiModeMetrics({
         },
         header: () => (
           <Flex flexDirection='row' alignItems='center'>
-            <span>Relevancy</span>
+            <span>関連性</span>
             <Popover placement='top-middle-bottom-middle' hasAnchorPortal={true}>
               <Popover.Trigger hasButtonWrapper>
                 <IconButton size='small' isClean ariaLabel='infoicon'>
@@ -69,7 +69,7 @@ export default function MultiModeMetrics({
               </Popover.Trigger>
               <Popover.Content className='p-2'>
                 <Typography variant='body-small'>
-                  Determines How well the answer addresses the user's question.
+                  回答がユーザーの質問にどの程度適切に応えているかを示します。
                 </Typography>
               </Popover.Content>
             </Popover>
@@ -88,7 +88,7 @@ export default function MultiModeMetrics({
         },
         header: () => (
           <Flex flexDirection='row' alignItems='center'>
-            <span>Faithful</span>
+            <span>忠実性</span>
             <Popover placement='top-middle-bottom-middle' hasAnchorPortal={true}>
               <Popover.Trigger hasButtonWrapper>
                 <IconButton size='small' isClean ariaLabel='infoicon'>
@@ -97,7 +97,7 @@ export default function MultiModeMetrics({
               </Popover.Trigger>
               <Popover.Content className='p-2'>
                 <Typography variant='body-small'>
-                  Determines How accurately the answer reflects the provided information.
+                  回答が提供された情報をどの程度正確に反映しているかを示します。
                 </Typography>
               </Popover.Content>
             </Popover>
@@ -116,7 +116,7 @@ export default function MultiModeMetrics({
         },
         header: () => (
           <Flex flexDirection='row' alignItems='center'>
-            <span>Context</span>
+            <span>コンテキスト</span>
             <Popover placement='top-middle-bottom-middle' hasAnchorPortal={true}>
               <Popover.Trigger hasButtonWrapper>
                 <IconButton size='small' isClean ariaLabel='infoicon'>
@@ -125,7 +125,7 @@ export default function MultiModeMetrics({
               </Popover.Trigger>
               <Popover.Content className='p-2'>
                 <Typography variant='body-small'>
-                  Determines the recall of entities present in both generated answer and retrieved contexts.
+                  生成された回答と取得されたコンテキストの両方に含まれるエンティティの再現率を示します。
                 </Typography>
               </Popover.Content>
             </Popover>
@@ -144,7 +144,7 @@ export default function MultiModeMetrics({
         },
         header: () => (
           <Flex flexDirection='row' alignItems='center'>
-            <span>Semantic</span>
+            <span>セマンティック</span>
             <Popover placement='top-middle-bottom-middle' hasAnchorPortal={true}>
               <Popover.Trigger hasButtonWrapper>
                 <IconButton size='small' isClean ariaLabel='infoicon'>
@@ -153,7 +153,7 @@ export default function MultiModeMetrics({
               </Popover.Trigger>
               <Popover.Content className='p-2'>
                 <Typography variant='body-small'>
-                  Determines How well the generated answer understands the meaning of the reference answer.
+                  生成された回答が参照回答の意味をどの程度理解しているかを示します。
                 </Typography>
               </Popover.Content>
             </Popover>
@@ -181,7 +181,7 @@ export default function MultiModeMetrics({
               </Popover.Trigger>
               <Popover.Content className='p-2'>
                 <Typography variant='body-small'>
-                  Determines How much the generated answer matches the reference answer, word-for-word.
+                  生成された回答が参照回答と語句レベルでどの程度一致しているかを示します。
                 </Typography>
               </Popover.Content>
             </Popover>
@@ -211,7 +211,7 @@ export default function MultiModeMetrics({
             </div>
           );
         },
-        header: () => <span>Mode</span>,
+        header: () => <span>モード</span>,
         footer: (info) => info.column.id,
         maxSize: 150,
       }),
@@ -226,7 +226,7 @@ export default function MultiModeMetrics({
         },
         header: () => (
           <Flex flexDirection='row' alignItems='center'>
-            <span>Relevancy</span>
+            <span>関連性</span>
             <Popover placement='top-middle-bottom-middle' hasAnchorPortal={true}>
               <Popover.Trigger hasButtonWrapper>
                 <IconButton size='small' isClean ariaLabel='infoicon'>
@@ -235,7 +235,7 @@ export default function MultiModeMetrics({
               </Popover.Trigger>
               <Popover.Content className='p-2'>
                 <Typography variant='body-small'>
-                  Determines How well the answer addresses the user's question.
+                  回答がユーザーの質問にどの程度適切に応えているかを示します。
                 </Typography>
               </Popover.Content>
             </Popover>
@@ -253,7 +253,7 @@ export default function MultiModeMetrics({
         },
         header: () => (
           <Flex flexDirection='row' alignItems='center'>
-            <span>Faithful</span>
+            <span>忠実性</span>
             <Popover placement='top-middle-bottom-middle' hasAnchorPortal={true}>
               <Popover.Trigger hasButtonWrapper>
                 <IconButton size='small' isClean ariaLabel='infoicon'>
@@ -262,7 +262,7 @@ export default function MultiModeMetrics({
               </Popover.Trigger>
               <Popover.Content className='p-2'>
                 <Typography variant='body-small'>
-                  Determines How accurately the answer reflects the provided information.
+                  回答が提供された情報をどの程度正確に反映しているかを示します。
                 </Typography>
               </Popover.Content>
             </Popover>
@@ -280,7 +280,7 @@ export default function MultiModeMetrics({
         },
         header: () => (
           <Flex flexDirection='row' alignItems='center'>
-            <span>Context</span>
+            <span>コンテキスト</span>
             <Popover placement='top-middle-bottom-middle' hasAnchorPortal={true}>
               <Popover.Trigger hasButtonWrapper>
                 <IconButton size='small' isClean ariaLabel='infoicon'>
@@ -289,7 +289,7 @@ export default function MultiModeMetrics({
               </Popover.Trigger>
               <Popover.Content className='p-2'>
                 <Typography variant='body-small'>
-                  Determines the recall of entities present in both generated answer and retrieved contexts.
+                  生成された回答と取得されたコンテキストの両方に含まれるエンティティの再現率を示します。
                 </Typography>
               </Popover.Content>
             </Popover>

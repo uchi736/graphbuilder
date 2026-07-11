@@ -27,7 +27,7 @@ export default function ChatModesSwitch({
         size='small'
         isClean={true}
         onClick={() => switchToOtherMode(currentModeIndex - 1)}
-        ariaLabel='left'
+        ariaLabel='前のモード'
       >
         <ChevronLeftIconSolid className='n-size-token-4' />
       </IconButton>
@@ -43,7 +43,7 @@ export default function ChatModesSwitch({
         size='small'
         isClean={true}
         onClick={() => switchToOtherMode(currentModeIndex + 1)}
-        ariaLabel='right'
+        ariaLabel='次のモード'
       >
         <ChevronRightIconSolid className='n-size-token-4' />
       </IconButton>

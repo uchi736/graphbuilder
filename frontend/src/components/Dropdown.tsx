@@ -32,7 +32,7 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
             type='select'
             label={
               <div className='w-max! flex! gap-1 items-center'>
-                <span>LLM Model for Processing & Chat</span>
+                <span>処理・チャット用LLMモデル</span>
               </div>
             }
             selectProps={{
@@ -49,7 +49,7 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
                       <Tooltip.Trigger>
                         <span className='text-nowrap'>{label}</span>
                       </Tooltip.Trigger>
-                      <Tooltip.Content>Available In Development Version</Tooltip.Content>
+                      <Tooltip.Content>開発版でのみ利用可能</Tooltip.Content>
                     </Tooltip>
                   ) : modelTooltip ? (
                     <Tooltip type='simple' placement={isLargeDesktop ? 'left' : 'right'}>
@@ -65,7 +65,7 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
                   isDisabled: !isModelSupported,
                 };
               }),
-              placeholder: placeholder || 'Select an option',
+              placeholder: placeholder || '選択してください',
               defaultValue: defaultValue
                 ? { label: capitalizeWithUnderscore(defaultValue), value: defaultValue }
                 : undefined,
@@ -76,7 +76,7 @@ const DropdownComponent: React.FC<ReusableDropdownProps> = ({
             size='medium'
             isFluid
             htmlAttributes={{
-              'aria-label': 'A selection dropdown',
+              'aria-label': '選択ドロップダウン',
             }}
           />
         </SpotlightTarget>

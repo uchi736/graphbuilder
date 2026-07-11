@@ -18,12 +18,10 @@ function DeletePopUp({
   const [deleteEntities, setDeleteEntities] = useState<boolean>(true);
   const message =
     view === 'contentView'
-      ? `Are you sure you want to permanently delete ${no_of_files} ${no_of_files > 1 ? 'Files' : 'File'} ${
-          deleteEntities ? 'and associated entities' : ''
-        } from the graph database?`
-      : `Are you sure you want to permanently delete ${no_of_files} ${
-          no_of_files > 1 ? 'Nodes' : 'Node'
-        } from the graph database? `;
+      ? `${no_of_files}件のファイル${
+          deleteEntities ? 'と関連するエンティティ' : ''
+        }をグラフデータベースから完全に削除します。よろしいですか?`
+      : `${no_of_files}件のノードをグラフデータベースから完全に削除します。よろしいですか? `;
   return (
     <Dialog isOpen={open} onClose={deleteCloseHandler}>
       <Dialog.Content>
@@ -31,7 +29,7 @@ function DeletePopUp({
         {view === 'contentView' && (
           <div className='mt-5'>
             <Checkbox
-              label='Delete Entities'
+              label='エンティティも削除'
               isChecked={deleteEntities}
               onChange={(e) => {
                 if (e.target.checked) {
@@ -46,10 +44,10 @@ function DeletePopUp({
       </Dialog.Content>
       <Dialog.Actions className='mt-3'>
         <Button onClick={deleteCloseHandler} isDisabled={loading}>
-          Cancel
+          キャンセル
         </Button>
         <Button onClick={() => deleteHandler(deleteEntities)} isLoading={loading}>
-          Continue
+          続行
         </Button>
       </Dialog.Actions>
     </Dialog>

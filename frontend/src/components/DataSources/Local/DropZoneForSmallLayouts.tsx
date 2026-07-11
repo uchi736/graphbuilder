@@ -89,7 +89,7 @@ export default function DropZoneForSmallLayouts() {
         } catch (error) {
           setIsLoading(false);
           if (error instanceof Error) {
-            showErrorToast('Error  Occurred');
+            showErrorToast('エラーが発生しました');
           }
           setFilesData((prevfiles) =>
             prevfiles.map((curfile) => {
@@ -120,7 +120,7 @@ export default function DropZoneForSmallLayouts() {
         );
         setIsClicked(false);
         setIsLoading(false);
-        showSuccessToast(`${file.name} uploaded successfully`);
+        showSuccessToast(`${file.name} をアップロードしました`);
       }
     };
 
@@ -143,7 +143,7 @@ export default function DropZoneForSmallLayouts() {
     },
     onDropRejected: (e) => {
       if (e.length) {
-        showErrorToast('Failed To Upload, Unsupported file extention');
+        showErrorToast('アップロードに失敗しました。サポートされていないファイル形式です');
       }
     },
     disabled: isLoading,

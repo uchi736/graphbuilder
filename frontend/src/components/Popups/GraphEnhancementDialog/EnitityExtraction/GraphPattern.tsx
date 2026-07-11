@@ -124,7 +124,7 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
   const handleNewValue = (newValue: string, type: 'source' | 'type' | 'target') => {
     const regex = /^[^,]*$/;
     if (!newValue.trim()) {
-      setShowWarning((old) => ({ ...old, [type]: { showError: true, errorMessage: 'Value Must Not Be Empty' } }));
+      setShowWarning((old) => ({ ...old, [type]: { showError: true, errorMessage: '値を入力してください' } }));
       return;
     }
     if (!regex.test(newValue)) {
@@ -132,7 +132,7 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
         ...old,
         [type]: {
           showError: true,
-          errorMessage: 'Please enter text without commas. Commas are not allowed in this field',
+          errorMessage: 'カンマを含まないテキストを入力してください。このフィールドではカンマは使用できません',
         },
       }));
     } else {
@@ -186,7 +186,7 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
         ...old,
         [type]: {
           showError: true,
-          errorMessage: 'Please enter text without commas. Commas are not allowed in this field',
+          errorMessage: 'カンマを含まないテキストを入力してください。このフィールドではカンマは使用できません',
         },
       }));
     } else {
@@ -202,7 +202,7 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
       <div className='flex gap-4 items-end mb-6 mt-3 justify-between'>
         <div className='w-1/4' ref={sourceRef}>
           <Select
-            label='Select/Create Source'
+            label='ソースを選択/作成'
             size='medium'
             errorText={showWarning.source.showError ? showWarning.source.errorMessage : ''}
             selectProps={{
@@ -227,7 +227,7 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
           />
         </div>
         <Select
-          label='Select/Create Type'
+          label='タイプを選択/作成'
           size='medium'
           errorText={showWarning.type.showError ? showWarning.type.errorMessage : ''}
           selectProps={{
@@ -252,7 +252,7 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
           className='w-1/4'
         />
         <Select
-          label='Select/Create Target'
+          label='ターゲットを選択/作成'
           errorText={showWarning.target.showError ? showWarning.target.errorMessage : ''}
           size='medium'
           selectProps={{
@@ -278,14 +278,14 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
         />
         <div className='flex items-center' tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && handleAddPattern()}>
           <ButtonWithToolTip
-            text='Add'
+            text='追加'
             placement='top'
             onClick={handleAddPattern}
-            label='Add Values'
+            label='値を追加'
             size='medium'
             disabled={isDisabled}
           >
-            + Add
+            + 追加
           </ButtonWithToolTip>
         </div>
       </div>

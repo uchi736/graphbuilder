@@ -48,7 +48,7 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) =
                   </Flex>
                   {mode === chatModeLables['global search+vector+fulltext'] && community.score && (
                     <Flex flexDirection='row' gap='2'>
-                      <Typography variant='subheading-medium'>Score : </Typography>
+                      <Typography variant='subheading-medium'>スコア : </Typography>
                       <Typography variant='subheading-medium'>{community.score}</Typography>
                     </Flex>
                   )}
@@ -65,7 +65,7 @@ const CommunitiesInfo: FC<CommunitiesProps> = ({ loading, communities, mode }) =
       ) : (
         <Typography variant='h6' className='text-center'>
           {' '}
-          No Communities Found
+          コミュニティが見つかりません
         </Typography>
       )}
       {openGraphView && (

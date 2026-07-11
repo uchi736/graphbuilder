@@ -76,12 +76,12 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
       } else if (status === 'Failed') {
         showNormalToast(message as string);
       } else {
-        showNormalToast('Please provide meaningful text.');
+        showNormalToast('意味のあるテキストを入力してください。');
       }
     } catch (error: any) {
       setLoading(false);
       console.error('Error processing schema:', error);
-      showNormalToast(error?.message || 'Unexpected error occurred.');
+      showNormalToast(error?.message || '予期しないエラーが発生しました。');
     }
   }, [model, userText, isSchemaText]);
 
@@ -160,11 +160,11 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
           'aria-labelledby': 'form-dialog-title',
         }}
       >
-        <Dialog.Header>Entity Graph Extraction Settings</Dialog.Header>
+        <Dialog.Header>エンティティグラフ抽出設定</Dialog.Header>
         <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
           <TextArea
-            helpText='Analyze the text to extract Entities'
-            label='Document Text'
+            helpText='テキストを解析してエンティティを抽出します'
+            label='ドキュメントテキスト'
             style={{
               resize: 'vertical',
             }}
@@ -183,7 +183,7 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
           />
           <div className='flex justify-between mt-4'>
             <Checkbox
-              label='Text is schema description'
+              label='テキストはスキーマの説明文'
               onChange={(e) => {
                 setIsSchemaText(e.target.checked);
               }}
@@ -191,8 +191,12 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
             />
             <ButtonWithToolTip
               placement='top'
-              label='Analyze button'
-              text={userText.trim() === '' ? 'please fill the text to extract graph schema' : 'Analyze text for schema'}
+              label='解析ボタン'
+              text={
+                userText.trim() === ''
+                  ? 'グラフスキーマを抽出するテキストを入力してください'
+                  : 'テキストを解析してスキーマを抽出'
+              }
               loading={loading}
               disabled={userText.trim() === '' || loading}
               onClick={clickHandler}
@@ -213,10 +217,10 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
               </div>
               <Dialog.Actions className='mt-3'>
                 <Button onClick={handleCancel} isDisabled={schemaTextPattern.length === 0}>
-                  Cancel
+                  キャンセル
                 </Button>
                 <Button onClick={handleSchemaTextApply} isDisabled={schemaTextPattern.length === 0}>
-                  Apply
+                  適用
                 </Button>
               </Dialog.Actions>
             </>

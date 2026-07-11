@@ -127,7 +127,7 @@ export default function NewEntityExtractionSetting({
     updateLocalStorage(userCredentials!, 'selectedNodeLabels', []);
     updateLocalStorage(userCredentials!, 'selectedRelationshipLabels', []);
     updateLocalStorage(userCredentials!, 'selectedPattern', []);
-    showNormalToast(`Successfully Removed the Schema settings`);
+    showNormalToast(`スキーマ設定を削除しました`);
     // Importer clear
     setImporterNodes([]);
     setImporterRels([]);
@@ -135,7 +135,7 @@ export default function NewEntityExtractionSetting({
   };
 
   const handleFinalApply = (pattern: string[], nodeLables: OptionType[], relationshipLabels: OptionType[]) => {
-    showNormalToast(`Successfully applied the schema settings`);
+    showNormalToast(`スキーマ設定を適用しました`);
     if (view === 'Tabs' && closeEnhanceGraphSchemaDialog != undefined) {
       closeEnhanceGraphSchemaDialog();
     }
@@ -200,7 +200,7 @@ export default function NewEntityExtractionSetting({
         if (tupleOptions.length === 0 && tupleOptionsValue.length > 0) {
           setTupleOptions(tupleOptionsValue);
         }
-        showNormalToast('Pattern Already Exists');
+        showNormalToast('このパターンは既に存在します');
       }
       setSource(null);
       setType(null);
@@ -327,12 +327,12 @@ export default function NewEntityExtractionSetting({
     <div>
       <Typography variant='body-medium'>
         <span>
-          1.Predefine the structure of your knowledge graph by selecting specific node and relationship labels.
+          1. 特定のノードラベルとリレーションシップラベルを選択して、ナレッジグラフの構造を事前に定義します。
         </span>
         <br></br>
         <span>
-          2.Focus your analysis by extracting only the relationships and entities that matter most to your use case.
-          Achieve a cleaner and more insightful graph representation tailored to your domain.
+          2.
+          ユースケースにとって重要なリレーションシップとエンティティだけを抽出して分析対象を絞り込みます。ドメインに合わせた、よりクリーンで洞察に富んだグラフ表現を実現できます。
         </span>
       </Typography>
       <div className='mt-4'>
@@ -366,7 +366,7 @@ export default function NewEntityExtractionSetting({
             }}
             ref={schemaBtnRef}
           >
-            Add Schema from ...
+            スキーマの追加元 ...
           </DropdownButton>
           <Menu isOpen={isSchemaMenuOpen} anchorRef={schemaBtnRef} onClose={() => setIsSchemaMenuOpen(false)}>
             <Menu.Items
@@ -377,7 +377,7 @@ export default function NewEntityExtractionSetting({
               <Menu.Item
                 title={
                   <TooltipWrapper hasButtonWrapper={true} placement='right' tooltip={tooltips.predinedSchema}>
-                    Predefined Schema
+                    定義済みスキーマ
                   </TooltipWrapper>
                 }
                 onClick={onPredefinedSchemaCLick}
@@ -385,7 +385,7 @@ export default function NewEntityExtractionSetting({
               <Menu.Item
                 title={
                   <TooltipWrapper hasButtonWrapper={true} placement='right' tooltip={tooltips.useExistingSchema}>
-                    Load Existing Schema
+                    既存スキーマを読み込み
                   </TooltipWrapper>
                 }
                 onClick={onLoadExistingSchemaCLick}
@@ -393,7 +393,7 @@ export default function NewEntityExtractionSetting({
               <Menu.Item
                 title={
                   <TooltipWrapper hasButtonWrapper={true} placement='right' tooltip={tooltips.createSchema}>
-                    Get Schema From Text
+                    テキストからスキーマを取得
                   </TooltipWrapper>
                 }
                 onClick={onSchemaFromTextCLick}
@@ -401,7 +401,7 @@ export default function NewEntityExtractionSetting({
               <Menu.Item
                 title={
                   <TooltipWrapper hasButtonWrapper={true} placement='right' tooltip={tooltips.createSchema}>
-                    Data Importer JSON
+                    Data ImporterのJSON
                   </TooltipWrapper>
                 }
                 onClick={onDataImporterSchemaCLick}
@@ -414,7 +414,7 @@ export default function NewEntityExtractionSetting({
                 text={tooltips.continue}
                 placement='top'
                 onClick={onContinue}
-                label='Continue to extract'
+                label='抽出に進む'
               >
                 {buttonCaptions.continueSettings}
               </ButtonWithToolTip>
@@ -423,7 +423,7 @@ export default function NewEntityExtractionSetting({
                 text={tooltips.clearGraphSettings}
                 placement='top'
                 onClick={handleFinalClear}
-                label='Clear Graph Settings'
+                label='グラフ設定をクリア'
                 disabled={!combinedPatterns.length}
               >
                 {buttonCaptions.clearSettings}
@@ -433,7 +433,7 @@ export default function NewEntityExtractionSetting({
               text={tooltips.applySettings}
               placement='top'
               onClick={() => handleFinalApply(combinedPatterns, combinedNodes, combinedRels)}
-              label='Apply Graph Settings'
+              label='グラフ設定を適用'
               disabled={!combinedPatterns.length}
             >
               {buttonCaptions.applyGraphSchema}

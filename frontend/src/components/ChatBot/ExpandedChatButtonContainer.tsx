@@ -29,16 +29,16 @@ const ExpandedChatButtonContainer: React.FC<IconProps> = ({ closeChatBot, delete
               setshowChatModeOption(true);
             }}
             clean
-            text='Chat mode'
+            text='チャットモード'
             placement='bottom'
-            label='Chat mode'
+            label='チャットモード'
           >
             <RiChatSettingsLine />
           </IconButtonWithToolTip>
         </div>
         <IconButtonWithToolTip
           text={tooltips.clearChat}
-          aria-label='Remove chat history'
+          aria-label='チャット履歴を削除'
           clean
           onClick={deleteOnClick}
           disabled={messages.length === 1}
@@ -47,7 +47,7 @@ const ExpandedChatButtonContainer: React.FC<IconProps> = ({ closeChatBot, delete
         >
           <TrashIconOutline />
         </IconButtonWithToolTip>
-        <IconButton ariaLabel='Remove chatbot' isClean={true} onClick={closeChatBot}>
+        <IconButton ariaLabel='チャットボットを閉じる' isClean={true} onClick={closeChatBot}>
           <XMarkIconOutline className='n-size-token-7' />
         </IconButton>
       </div>

@@ -12,7 +12,7 @@ function MetricsCheckbox({
   return (
     <Checkbox
       isDisabled={isDisabled}
-      label={'Get More Metrics by providing reference answer'}
+      label={'参照回答を入力して追加のメトリクスを取得'}
       isChecked={enableReference}
       onChange={toggleReferenceVisibility}
     />

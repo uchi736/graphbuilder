@@ -13,14 +13,14 @@ export default function GenericButton({ openModal }: DataComponentProps) {
         <Flex gap='0'>
           <div className='align-self-center flex! justify-center'>
             <IconButtonWithToolTip
-              label='Source info'
+              label='対応ソース'
               clean
               text={
                 <Typography variant='body-small'>
                   <Flex gap='3' alignItems='flex-start'>
                     {APP_SOURCES != undefined && APP_SOURCES.includes('youtube') && <span>Youtube</span>}
                     {APP_SOURCES != undefined && APP_SOURCES.includes('wiki') && <span>Wikipedia</span>}
-                    {APP_SOURCES != undefined && APP_SOURCES.includes('web') && <span>Website</span>}
+                    {APP_SOURCES != undefined && APP_SOURCES.includes('web') && <span>Webサイト</span>}
                   </Flex>
                 </Typography>
               }

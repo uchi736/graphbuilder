@@ -12,7 +12,7 @@ export default function NotAvailableMetric() {
           </IconButton>
         </Popover.Trigger>
         <Popover.Content className='p-2'>
-          <Typography variant='body-small'>Some metrics are not available for Gemini model.</Typography>
+          <Typography variant='body-small'>一部のメトリクスはGeminiモデルでは利用できません。</Typography>
         </Popover.Content>
       </Popover>
     </Flex>

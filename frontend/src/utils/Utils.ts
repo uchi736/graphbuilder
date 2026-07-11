@@ -431,21 +431,21 @@ export const capitalizeWithUnderscore = (s: string) => capitalize(s).split('_').
 export const getDescriptionForChatMode = (mode: string): string => {
   switch (mode.toLowerCase()) {
     case chatModeLables.vector:
-      return 'Utilizes vector indexing on text chunks to enable semantic similarity search.';
+      return 'テキストチャンクのベクトルインデックスを利用して意味的類似検索を行います。';
     case chatModeLables.graph:
-      return 'Leverages text-to-cypher translation to query a database and retrieve relevant data, ensuring a highly targeted and contextually accurate response.';
+      return 'テキストからCypherへの変換でデータベースに問い合わせ、的確で文脈に沿った回答を返します。';
     case chatModeLables['graph+vector']:
-      return 'Combines vector indexing on text chunks with graph connections, enhancing search results with contextual relevance by considering relationships between concepts.';
+      return 'チャンクのベクトルインデックスとグラフの関係を組み合わせ、概念間のつながりを考慮した文脈的に関連性の高い検索を行います。';
     case chatModeLables.fulltext:
-      return 'Employs a fulltext index on text chunks for rapid keyword-based search, efficiently identifying documents containing specific words or phrases.';
+      return 'チャンクの全文インデックスによる高速なキーワード検索で、特定の語句を含むドキュメントを効率的に特定します。';
     case chatModeLables['graph+vector+fulltext']:
-      return 'Merges vector indexing, graph connections, and fulltext indexing for a comprehensive search approach, combining semantic similarity, contextual relevance, and keyword-based search for optimal results.';
+      return 'ベクトル・グラフ・全文インデックスを統合し、意味的類似性・文脈的関連性・キーワード検索を組み合わせた網羅的な検索を行います。';
     case chatModeLables['entity search+vector']:
-      return 'Combines entity node vector indexing with graph connections for accurate entity-based search, providing the most relevant response.';
+      return 'エンティティノードのベクトルインデックスとグラフの関係を組み合わせ、エンティティ中心の精度の高い検索を行います。';
     case chatModeLables['global search+vector+fulltext']:
-      return 'Use vector and full-text indexing on community nodes to provide accurate, context-aware answers globally.';
+      return 'コミュニティノードのベクトル・全文インデックスを使い、グラフ全体から文脈に即した回答を生成します。';
     default:
-      return 'Chat mode description not available'; // Fallback description
+      return 'チャットモードの説明はありません'; // Fallback description
   }
 };
 export const getLogo = (mode: string): Record<string, string> => {

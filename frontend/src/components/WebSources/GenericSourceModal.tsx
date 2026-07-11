@@ -47,9 +47,9 @@ export default function GenericModal({
             alt='data-source-logo'
           />
           <div className='flex flex-col'>
-            <Typography variant='h2'>Web Sources</Typography>
+            <Typography variant='h2'>Webソース</Typography>
             <Typography variant='body-medium' className='mb-2'>
-              Convert Any Web Source to Knowledge graph
+              任意のWebソースをナレッジグラフに変換します
             </Typography>
           </div>
         </div>

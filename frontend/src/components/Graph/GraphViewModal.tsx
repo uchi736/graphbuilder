@@ -146,9 +146,13 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       }
       console.error('Error fetching graph data:', error);
       if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-        throw new Error('Request timed out. The dataset might be too large to preview. Try selecting fewer documents.');
+        throw new Error(
+          'リクエストがタイムアウトしました。データセットが大きすぎてプレビューできない可能性があります。選択するドキュメント数を減らしてお試しください。'
+        );
       }
-      throw new Error(error.response?.data?.error || error.message || 'Failed to fetch graph data. Please try again.');
+      throw new Error(
+        error.response?.data?.error || error.message || 'グラフデータの取得に失敗しました。もう一度お試しください。'
+      );
     }
   }, [viewPoint, selectedRows, graphQuery, inspectedName, userCredentials]);
 
@@ -159,15 +163,15 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
 
       // Validate the response structure
       if (!result) {
-        throw new Error('No response received from server. The request may have timed out.');
+        throw new Error('サーバーから応答がありません。リクエストがタイムアウトした可能性があります。');
       }
 
       if (!result.data) {
-        throw new Error('Invalid response format received from server.');
+        throw new Error('サーバーから不正な形式の応答を受信しました。');
       }
 
       if (!result.data.data) {
-        throw new Error(`No data in response. ${result.data.error || 'Please try again.'}`);
+        throw new Error(`応答にデータが含まれていません。${result.data.error || 'もう一度お試しください。'}`);
       }
 
       const { nodes = [], relationships = [] } = result.data.data;
@@ -178,8 +182,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
         const documentCount = viewPoint === graphLabels.showGraphView ? selectedRows?.length || 0 : 1;
         setStatusMessage(
           documentCount > 1
-            ? `No graph data found for the selected ${documentCount} documents. This may be because the documents are still processing or contain no extractable entities.`
-            : `No graph data found for ${inspectedName}. The document may still be processing or contain no extractable entities.`
+            ? `選択した${documentCount}件のドキュメントにグラフデータが見つかりませんでした。ドキュメントがまだ処理中か、抽出可能なエンティティが含まれていない可能性があります。`
+            : `${inspectedName} のグラフデータが見つかりませんでした。ドキュメントがまだ処理中か、抽出可能なエンティティが含まれていない可能性があります。`
         );
         return;
       }
@@ -212,7 +216,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
       console.error('Graph API error:', error);
       setLoading(false);
       setStatus('danger');
-      setStatusMessage(error.message || 'An unexpected error occurred while loading the graph.');
+      setStatusMessage(error.message || 'グラフの読み込み中に予期しないエラーが発生しました。');
     }
   };
 
@@ -453,7 +457,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
           {showLargeDatasetWarning && selectedRows && (
             <Banner
               name='large-dataset-warning'
-              description={`You are previewing ${selectedRows.length} documents. Loading may take longer and could timeout with large datasets. For better performance, try selecting fewer documents (4-8 recommended).`}
+              description={`${selectedRows.length}件のドキュメントをプレビューしています。データセットが大きいと読み込みに時間がかかり、タイムアウトする場合があります。パフォーマンス向上のため、選択するドキュメント数を減らすことをおすすめします(4〜8件推奨)。`}
               type='warning'
               usage='inline'
             />
@@ -492,8 +496,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                     />
                     <IconButtonArray orientation='vertical' isFloating={true} className='absolute top-4 right-4'>
                       <IconButtonWithToolTip
-                        label='Schema View'
-                        text='Schema View'
+                        label='スキーマ表示'
+                        text='スキーマ表示'
                         onClick={() => handleSchemaView(node, relationship)}
                         placement='left'
                       >
@@ -503,8 +507,8 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                     <IconButtonArray orientation='vertical' isFloating={true} className='absolute bottom-4 right-4'>
                       {viewPoint !== 'chatInfoView' && (
                         <IconButtonWithToolTip
-                          label='Refresh'
-                          text='Refresh graph'
+                          label='更新'
+                          text='グラフを更新'
                           onClick={handleRefresh}
                           placement='left'
                           disabled={disableRefresh}
@@ -512,15 +516,15 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                           <ArrowPathIconOutline className='n-size-token-7' />
                         </IconButtonWithToolTip>
                       )}
-                      <IconButtonWithToolTip label='Zoomin' text='Zoom in' onClick={handleZoomIn} placement='left'>
+                      <IconButtonWithToolTip label='拡大' text='拡大' onClick={handleZoomIn} placement='left'>
                         <MagnifyingGlassPlusIconOutline className='n-size-token-7' />
                       </IconButtonWithToolTip>
-                      <IconButtonWithToolTip label='Zoom out' text='Zoom out' onClick={handleZoomOut} placement='left'>
+                      <IconButtonWithToolTip label='縮小' text='縮小' onClick={handleZoomOut} placement='left'>
                         <MagnifyingGlassMinusIconOutline className='n-size-token-7' />
                       </IconButtonWithToolTip>
                       <IconButtonWithToolTip
-                        label='Zoom to fit'
-                        text='Zoom to fit'
+                        label='全体表示'
+                        text='全体表示'
                         onClick={handleZoomToFit}
                         placement='left'
                       >

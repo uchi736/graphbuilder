@@ -110,7 +110,7 @@ export default function AdditionalInstructionsText({
     if (newValue !== null) {
       const parsedValue = Number(newValue.value);
       if (isNaN(parsedValue)) {
-        showNormalToast('Chunk size must be a valid number');
+        showNormalToast('チャンクサイズには有効な数値を指定してください');
         return;
       }
       setSelectedTokenChunkSize(parsedValue);
@@ -120,7 +120,7 @@ export default function AdditionalInstructionsText({
     if (newValue !== null) {
       const parsedValue = Number(newValue.value);
       if (isNaN(parsedValue)) {
-        showNormalToast('Chunk overlap must be a valid number');
+        showNormalToast('チャンクオーバーラップには有効な数値を指定してください');
         return;
       }
       setSelectedChunk_overlap(parsedValue);
@@ -130,7 +130,7 @@ export default function AdditionalInstructionsText({
     if (newValue !== null) {
       const parsedValue = Number(newValue.value);
       if (isNaN(parsedValue)) {
-        showNormalToast('Chunks to combine must be a valid number');
+        showNormalToast('結合するチャンク数には有効な数値を指定してください');
         return;
       }
       setSelectedChunks_to_combine(parsedValue);
@@ -170,7 +170,7 @@ export default function AdditionalInstructionsText({
 
   const applyEmbeddingModelChange = async (value: EmbeddingModelOption) => {
     if (!userCredentials) {
-      showErrorToast('User credentials not available');
+      showErrorToast('ユーザー認証情報が利用できません');
       return;
     }
 
@@ -195,21 +195,21 @@ export default function AdditionalInstructionsText({
 
         const displayLabel = `${value.provider.charAt(0).toUpperCase() + value.provider.slice(1)} ${value.model}`;
         showNormalToast(
-          response.data.message || `Embedding model set to ${displayLabel} (dimension: ${dimensionToStore})`
+          response.data.message || `埋め込みモデルを ${displayLabel} (次元数: ${dimensionToStore}) に設定しました`
         );
       } else {
-        const errorMsg = response?.data?.message || 'Failed to change embedding model';
+        const errorMsg = response?.data?.message || '埋め込みモデルの変更に失敗しました';
         showErrorToast(errorMsg);
       }
     } catch (error) {
       console.error('Error changing embedding model:', error);
-      showErrorToast('Failed to change embedding model. Please try again.');
+      showErrorToast('埋め込みモデルの変更に失敗しました。もう一度お試しください。');
     }
   };
 
   const handleWarningProceed = async (provider: string, model: string) => {
     if (!userCredentials) {
-      showErrorToast('User credentials not available');
+      showErrorToast('ユーザー認証情報が利用できません');
       return;
     }
 
@@ -221,7 +221,7 @@ export default function AdditionalInstructionsText({
       });
 
       if (response?.data?.status === 'Success') {
-        showNormalToast(response.data.message || 'Embedding model changed successfully');
+        showNormalToast(response.data.message || '埋め込みモデルを変更しました');
         if (pendingEmbeddingModel) {
           setSelectedEmbeddingModel(pendingEmbeddingModel);
           setDisplayEmbeddingModel(pendingEmbeddingModel);
@@ -250,7 +250,7 @@ export default function AdditionalInstructionsText({
 
   const handleWarningCancel = async (provider: string, model: string) => {
     if (!userCredentials) {
-      showErrorToast('User credentials not available');
+      showErrorToast('ユーザー認証情報が利用できません');
       return;
     }
 
@@ -268,7 +268,7 @@ export default function AdditionalInstructionsText({
         setShowDimensionWarning(false);
         setDropdownKey((prev) => prev + 1);
       } else {
-        const errorMsg = response?.data?.message || 'Failed to revert embedding model';
+        const errorMsg = response?.data?.message || '埋め込みモデルの差し戻しに失敗しました';
         showErrorToast(errorMsg);
         throw new Error(errorMsg);
       }
@@ -304,7 +304,7 @@ export default function AdditionalInstructionsText({
     });
 
     closeEnhanceGraphSchemaDialog();
-    showNormalToast('Successfully Applied All Settings');
+    showNormalToast('すべての設定を適用しました');
   };
 
   const handleCancel = async () => {
@@ -328,14 +328,14 @@ export default function AdditionalInstructionsText({
             originalValues.embeddingModel.model
           );
         } else {
-          const errorMsg = response?.data?.message || 'Failed to revert embedding model';
+          const errorMsg = response?.data?.message || '埋め込みモデルの差し戻しに失敗しました';
           showErrorToast(errorMsg);
           setIsCancelling(false);
           return;
         }
       } catch (error) {
         console.error('Error reverting embedding model:', error);
-        showErrorToast('Failed to revert embedding model. Please try again.');
+        showErrorToast('埋め込みモデルの差し戻しに失敗しました。もう一度お試しください。');
         setIsCancelling(false);
         return;
       }
@@ -360,7 +360,7 @@ export default function AdditionalInstructionsText({
     });
     setDropdownKey((prev) => prev + 1);
     setIsCancelling(false);
-    showNormalToast('All changes have been reverted');
+    showNormalToast('すべての変更を元に戻しました');
   };
 
   return (
@@ -405,7 +405,7 @@ export default function AdditionalInstructionsText({
           <Flex justifyContent='space-between' flexDirection='column' gap='6'>
             <TextArea
               helpText={buttonCaptions.helpInstructions}
-              label='Processing Configuration'
+              label='処理設定'
               style={{
                 resize: 'vertical',
               }}
@@ -424,7 +424,7 @@ export default function AdditionalInstructionsText({
           </div>
           <Select
             key={dropdownKey}
-            label='Embedding Model'
+            label='埋め込みモデル'
             size='medium'
             type='creatable'
             isDisabled={isEmbeddingReadonly}
@@ -447,13 +447,13 @@ export default function AdditionalInstructionsText({
                       <Tooltip.Content>
                         <div className='flex flex-col gap-1'>
                           <div>
-                            <strong>Provider:</strong> {model.provider}
+                            <strong>プロバイダー:</strong> {model.provider}
                           </div>
                           <div>
-                            <strong>Model:</strong> {model.model}
+                            <strong>モデル:</strong> {model.model}
                           </div>
                           <div>
-                            <strong>Dimension:</strong> {model.dimension}
+                            <strong>次元数:</strong> {model.dimension}
                           </div>
                         </div>
                       </Tooltip.Content>
@@ -472,13 +472,13 @@ export default function AdditionalInstructionsText({
                     <Tooltip.Content>
                       <div className='flex flex-col gap-1'>
                         <div>
-                          <strong>Provider:</strong> {displayEmbeddingModel.provider}
+                          <strong>プロバイダー:</strong> {displayEmbeddingModel.provider}
                         </div>
                         <div>
-                          <strong>Model:</strong> {displayEmbeddingModel.model}
+                          <strong>モデル:</strong> {displayEmbeddingModel.model}
                         </div>
                         <div>
-                          <strong>Dimension:</strong> {displayEmbeddingModel.dimension}
+                          <strong>次元数:</strong> {displayEmbeddingModel.dimension}
                         </div>
                       </div>
                     </Tooltip.Content>
@@ -488,12 +488,12 @@ export default function AdditionalInstructionsText({
             }}
             helpText={
               isEmbeddingReadonly
-                ? 'Embedding model is configured by your administrator and cannot be changed'
-                : 'Select the embedding model to use for vector indexing and similarity searches'
+                ? '埋め込みモデルは管理者によって設定されているため変更できません'
+                : 'ベクトルインデックスと類似検索に使用する埋め込みモデルを選択してください'
             }
           />
           <Select
-            label='Token Count Per Chunk'
+            label='チャンクあたりのトークン数'
             size='medium'
             selectProps={{
               options: defaultTokenChunkSizeOptions.map((value) => ({
@@ -514,10 +514,10 @@ export default function AdditionalInstructionsText({
                 `,
             }}
             type='creatable'
-            helpText='The maximum token limit is 10,000 for LLM processing. The total number of chunks will be calculated as 10,000 divided by the tokens per chunk you select. For example, selecting 500 tokens per chunk results in 20 chunks (10,000 / 500).'
+            helpText='LLM処理のトークン上限は10,000です。チャンクの総数は、10,000を選択したチャンクあたりのトークン数で割って算出されます。例えば、チャンクあたり500トークンを選択すると20チャンク(10,000 / 500)になります。'
           />
           <Select
-            label='Chunk Overlap'
+            label='チャンクオーバーラップ'
             size='medium'
             selectProps={{
               isMulti: false,
@@ -534,7 +534,7 @@ export default function AdditionalInstructionsText({
             type='creatable'
           />
           <Select
-            label='Chunks to combine'
+            label='結合するチャンク数'
             size='medium'
             selectProps={{
               isMulti: false,
@@ -554,23 +554,23 @@ export default function AdditionalInstructionsText({
         <Flex className='mt-6' flexDirection='row' justifyContent='flex-end' gap='4'>
           <ButtonWithToolTip
             placement='top'
-            label='Cancel button'
-            text='Discard all changes and close the dialog'
+            label='キャンセルボタン'
+            text='すべての変更を破棄してダイアログを閉じます'
             onClick={handleCancel}
             fill='outlined'
             loading={isCancelling}
             disabled={!hasChanges || isCancelling}
           >
-            Cancel
+            キャンセル
           </ButtonWithToolTip>
           <ButtonWithToolTip
             placement='top'
-            label='Apply button'
-            text='Save all configuration changes'
+            label='適用ボタン'
+            text='すべての設定変更を保存します'
             onClick={handleApply}
             disabled={!hasChanges}
           >
-            Apply
+            適用
           </ButtonWithToolTip>
         </Flex>
       </div>

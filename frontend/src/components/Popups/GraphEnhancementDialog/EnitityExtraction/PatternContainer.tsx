@@ -34,11 +34,11 @@ const PatternContainer = ({
           <div className='top-0 right-0 flex justify-between z-10 pb-2 '>
             <span className='n-body-small p-1'>
               {nodeCount > 0 || relCount > 0
-                ? `${nodeCount} Node${nodeCount > 1 ? 's' : ''} & ${relCount} Relationship${relCount > 1 ? 's' : ''}`
+                ? `ノード${nodeCount}件 & リレーションシップ${relCount}件`
                 : ''}
             </span>
             <IconButtonWithToolTip
-              label={'Graph Schema'}
+              label={'グラフスキーマ'}
               text={tooltips.visualizeGraph}
               placement='top'
               onClick={() => handleSchemaView()}

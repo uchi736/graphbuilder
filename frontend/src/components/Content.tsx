@@ -139,11 +139,11 @@ const Content: React.FC<ContentProps> = ({
 
   const { updateStatusForLargeFiles } = useServerSideEvent(
     (inMinutes, time, fileName) => {
-      showNormalToast(`${fileName} will take approx ${time} ${inMinutes ? 'Min' : 'Sec'}`);
+      showNormalToast(`${fileName} の処理には約 ${time} ${inMinutes ? '分' : '秒'} かかります`);
       localStorage.setItem('alertShown', JSON.stringify(true));
     },
     (fileName) => {
-      showErrorToast(`${fileName} Failed to process`);
+      showErrorToast(`${fileName} の処理に失敗しました`);
     }
   );
   const childRef = useRef<FileTableHandle>(null);
@@ -216,7 +216,7 @@ const Content: React.FC<ContentProps> = ({
                   });
                 });
               }
-              showSuccessToast('All Q&A functionality is available now.');
+              showSuccessToast('すべてのQ&A機能が利用可能になりました。');
             } else {
               throw new Error(JSON.stringify(response.data));
             }
@@ -426,7 +426,7 @@ const Content: React.FC<ContentProps> = ({
     newCheck: boolean
   ) => {
     const data = [];
-    showNormalToast(`Processing ${batch.length} files at a time.`);
+    showNormalToast(`${batch.length} 件のファイルを同時に処理しています。`);
     for (let i = 0; i < batch.length; i++) {
       if (newCheck) {
         if (batch[i]?.status === 'New' || batch[i].status === 'Ready to Reprocess') {
@@ -458,7 +458,7 @@ const Content: React.FC<ContentProps> = ({
 
         const response = await postProcessing(postProcessingTasks);
         if (response.data.status !== 'Success') {
-          throw new Error('Post-processing failed');
+          throw new Error('後処理に失敗しました');
         }
 
         const communityfiles = response.data?.data;
@@ -484,7 +484,7 @@ const Content: React.FC<ContentProps> = ({
             setFilesData((prev) => prev.map((f) => updateFileData(f, c)));
           });
         }
-        showSuccessToast('All Q&A functionality is available now.');
+        showSuccessToast('すべてのQ&A機能が利用可能になりました。');
       } catch (error) {
         if (error instanceof Error) {
           showSuccessToast(error.message);
@@ -649,7 +649,7 @@ const Content: React.FC<ContentProps> = ({
         modes: {
           'graph+vector+fulltext': {
             message:
-              ' Welcome to the Neo4j Knowledge Graph Chat. You can ask questions related to documents which have been completely processed.',
+              ' Neo4jナレッジグラフチャットへようこそ。処理が完了したドキュメントに関する質問ができます。',
           },
         },
         user: 'chatbot',
@@ -939,7 +939,7 @@ const Content: React.FC<ContentProps> = ({
           flexWrap='wrap'
         >
           <div className='connectionstatus__container'>
-            <span className='h6 px-1'>Neo4j connection {isReadOnlyUser ? '(Read only Mode)' : ''}</span>
+            <span className='h6 px-1'>Neo4j接続 {isReadOnlyUser ? '（読み取り専用モード）' : ''}</span>
             <Typography variant='body-medium'>
               <DatabaseStatusIcon
                 isConnected={connectionStatus}
@@ -952,11 +952,11 @@ const Content: React.FC<ContentProps> = ({
                 <div>
                   {hasSelections ? (
                     <span className='n-body-small'>
-                      {hasSelections} Graph Schema configured
-                      {hasSelections ? `(${selectedNodes.length} Labels + ${selectedRels.length} Rel Types)` : ''}
+                      {hasSelections} グラフスキーマ設定済み
+                      {hasSelections ? `(${selectedNodes.length} ラベル + ${selectedRels.length} リレーションタイプ)` : ''}
                     </span>
                   ) : (
-                    <span className='n-body-small'>No Graph Schema configured</span>
+                    <span className='n-body-small'>グラフスキーマ未設定</span>
                   )}
                 </div>
               </div>
@@ -967,24 +967,24 @@ const Content: React.FC<ContentProps> = ({
               placement='top'
               text={
                 !isAuthenticated && !SKIP_AUTH
-                  ? 'Please log in first'
+                  ? '先にログインしてください'
                   : !connectionStatus
-                    ? 'Please connect to Neo4j'
-                    : 'Enhance graph quality'
+                    ? 'Neo4jに接続してください'
+                    : 'グラフの品質を向上させます'
               }
-              label='Graph Enhancement Settings'
+              label='グラフ拡張設定'
               className='mr-2!'
               onClick={toggleEnhancementDialog}
               disabled={!connectionStatus || isReadOnlyUser}
               size={isTablet ? 'small' : 'medium'}
               alwaysShowTooltip={true}
             >
-              Graph Settings
+              グラフ設定
             </ButtonWithToolTip>
             {!connectionStatus ? (
               <SpotlightTarget id='connectbutton' hasPulse={!connectDisabled} indicatorVariant='border'>
                 <ButtonWithToolTip
-                  text={connectDisabled ? 'Please login first to connect' : buttonCaptions.connectToNeo4j}
+                  text={connectDisabled ? '接続するには先にログインしてください' : buttonCaptions.connectToNeo4j}
                   label={buttonCaptions.connectToNeo4j}
                   disabled={connectDisabled}
                   size={isTablet ? 'small' : 'medium'}
@@ -1040,7 +1040,7 @@ const Content: React.FC<ContentProps> = ({
             <DropdownComponent
               onSelect={handleDropdownChange}
               options={llms ?? ['']}
-              placeholder='Select LLM Model'
+              placeholder='LLMモデルを選択'
               defaultValue={model}
               view='ContentView'
               isDisabled={false}
@@ -1049,9 +1049,9 @@ const Content: React.FC<ContentProps> = ({
           <Flex flexDirection='row' gap='4' className='self-end mb-2.5' flexWrap='wrap'>
             <SpotlightTarget id='generategraphbtn'>
               <ButtonWithToolTip
-                text={!isAuthenticated && !SKIP_AUTH ? 'Please log in first' : tooltips.generateGraph}
+                text={!isAuthenticated && !SKIP_AUTH ? '先にログインしてください' : tooltips.generateGraph}
                 placement='top'
-                label='generate graph'
+                label='グラフを生成'
                 onClick={onClickHandler}
                 disabled={disableCheck || isReadOnlyUser}
                 className='mr-0.5'
@@ -1065,16 +1065,16 @@ const Content: React.FC<ContentProps> = ({
             <ButtonWithToolTip
               text={
                 !isAuthenticated && !SKIP_AUTH
-                  ? 'Please log in first'
+                  ? '先にログインしてください'
                   : !selectedfileslength
-                    ? 'Please select file to delete'
+                    ? '削除するファイルを選択してください'
                     : `${selectedfileslength} ${tooltips.deleteSelectedFiles}`
               }
               placement='top'
               onClick={() => setShowDeletePopUp(true)}
               disabled={!selectedfileslength || isReadOnlyUser}
               className='ml-0.5'
-              label='Delete Files'
+              label='ファイルを削除'
               size={isTablet ? 'small' : 'medium'}
               alwaysShowTooltip={true}
             >
@@ -1086,12 +1086,12 @@ const Content: React.FC<ContentProps> = ({
                 <ButtonWithToolTip
                   text={
                     !selectedfileslength || selectedfileslength === 0
-                      ? 'Please select file to Preview Graph'
+                      ? 'グラフをプレビューするファイルを選択してください'
                       : completedfileNo === 0
-                        ? 'Please select completed file(s) to Preview Graph'
-                        : `${selectedfileslength} selected, ${completedfileNo} file(s) ready to preview`
+                        ? 'プレビューするには処理完了済みのファイルを選択してください'
+                        : `${selectedfileslength} 件選択中、${completedfileNo} 件のファイルをプレビューできます`
                   }
-                  label='Preview Graph'
+                  label='グラフをプレビュー'
                   onClick={handleGraphView}
                   alwaysShowTooltip={true}
                   disabled={showGraphCheck}
@@ -1132,9 +1132,9 @@ const Content: React.FC<ContentProps> = ({
                   id: 'default-menu',
                 }}
               >
-                <Menu.Item title='Graph Schema' onClick={handleSchemaView} isDisabled={!connectionStatus} />
+                <Menu.Item title='グラフスキーマ' onClick={handleSchemaView} isDisabled={!connectionStatus} />
                 <Menu.Item
-                  title='Explore Graph in Neo4j'
+                  title='Neo4jでグラフを探索'
                   onClick={handleOpenGraphClick}
                   isDisabled={!filesData.some((f) => f?.status === 'Completed')}
                 />

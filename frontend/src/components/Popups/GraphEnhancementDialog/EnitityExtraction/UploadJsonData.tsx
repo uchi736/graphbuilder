@@ -44,11 +44,11 @@ const UploadJsonData = ({ onSchemaExtracted }: UploadJsonDataProps) => {
               nodeObjectTypes: graphSchema.nodeObjectTypes,
             });
           } else {
-            showErrorToast('Invalid graphSchema format');
+            showErrorToast('graphSchemaの形式が不正です');
           }
         } catch (err) {
           console.error(err);
-          showErrorToast('Failed to parse JSON file.');
+          showErrorToast('JSONファイルの解析に失敗しました。');
         } finally {
           setIsLoading(false);
         }
@@ -56,13 +56,13 @@ const UploadJsonData = ({ onSchemaExtracted }: UploadJsonDataProps) => {
       fileReader.readAsText(file as File);
     } catch (err) {
       console.error(err);
-      showErrorToast('Error reading file.');
+      showErrorToast('ファイルの読み取り中にエラーが発生しました。');
       setIsLoading(false);
     }
   };
   return (
     <Dropzone
-      loadingComponent={isLoading && <Loader title='Uploading' />}
+      loadingComponent={isLoading && <Loader title='アップロード中' />}
       isTesting={true}
       className='bg-none! dropzoneContainer'
       supportedFilesDescription={
@@ -71,7 +71,7 @@ const UploadJsonData = ({ onSchemaExtracted }: UploadJsonDataProps) => {
             <span>{buttonCaptions.importDropzoneSpan}</span>
             <div className='align-self-center'>
               <IconButtonWithToolTip
-                label='Source info'
+                label='ソース情報'
                 clean
                 text={
                   <Typography variant='body-small'>
@@ -94,7 +94,7 @@ const UploadJsonData = ({ onSchemaExtracted }: UploadJsonDataProps) => {
         onDrop: onDropHandler,
         onDropRejected: (e) => {
           if (e.length) {
-            showErrorToast('Failed To Upload, Unsupported file extension.');
+            showErrorToast('アップロードに失敗しました。サポートされていない拡張子です。');
           }
         },
       }}

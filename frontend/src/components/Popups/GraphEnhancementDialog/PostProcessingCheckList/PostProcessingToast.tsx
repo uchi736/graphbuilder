@@ -12,8 +12,8 @@ export default function PostProcessingToast({
 }) {
   return (
     <Flex flexDirection='column'>
-      <Typography variant='subheading-medium'>Some Q&A functionality will only be available afterwards</Typography>
-      <Typography variant='subheading-small'>Ongoing Post Processing Jobs</Typography>
+      <Typography variant='subheading-medium'>一部のQ&A機能は処理完了後に利用可能になります</Typography>
+      <Typography variant='subheading-small'>実行中の後処理ジョブ</Typography>
       <SelectedJobList postProcessingTasks={postProcessingTasks} isGdsActive={isGdsActive} isSchema={isSchema} />
     </Flex>
   );

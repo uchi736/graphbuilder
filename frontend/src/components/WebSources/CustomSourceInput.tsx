@@ -57,7 +57,7 @@ export default function CustomSourceInput({
             isFluid={true}
             isRequired={true}
             onChange={onChangeHandler}
-            errorText={!isValid && isFocused && 'Please Fill The Valid URL'}
+            errorText={!isValid && isFocused && '有効なURLを入力してください'}
           />
         </div>
       </Box>
@@ -71,10 +71,10 @@ export default function CustomSourceInput({
             size='medium'
             className='mr-4'
           >
-            Reset
+            リセット
           </Button>
           <Button onClick={() => submitHandler(value)} size='medium' isDisabled={disabledCheck}>
-            Submit
+            送信
           </Button>
         </div>
       </Flex>

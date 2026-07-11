@@ -96,7 +96,7 @@ const SourcesInfo: FC<SourcesProps> = ({ loading, mode, chunks, sources }) => {
                           variant='body-medium'
                           className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
                         >
-                          {decodeURIComponent(link).split('/').at(-1)?.split('?')[0] ?? 'GCS File'}
+                          {decodeURIComponent(link).split('/').at(-1)?.split('?')[0] ?? 'GCSファイル'}
                         </Typography>
                       </div>
                     )}
@@ -146,7 +146,7 @@ const SourcesInfo: FC<SourcesProps> = ({ loading, mode, chunks, sources }) => {
                       variant='body-medium'
                       className='text-ellipsis whitespace-nowrap overflow-hidden max-w-lg'
                     >
-                      {decodeURIComponent(link).split('/').at(-1) ?? 'S3 File'}
+                      {decodeURIComponent(link).split('/').at(-1) ?? 'S3ファイル'}
                     </Typography>
                   </div>
                 ) : (
@@ -165,7 +165,7 @@ const SourcesInfo: FC<SourcesProps> = ({ loading, mode, chunks, sources }) => {
           })}
         </ul>
       ) : (
-        <span className='h6 text-center'>No Sources Found</span>
+        <span className='h6 text-center'>ソースが見つかりません</span>
       )}
     </>
   );

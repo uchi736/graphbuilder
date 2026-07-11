@@ -69,7 +69,7 @@ const GraphPropertiesPanel = ({ inspectedItem, newScheme }: GraphPropertiesPanel
   return (
     <>
       <ResizePanelDetails.Title>
-        <h6 className='mr-auto'>{inspectedItemType === 'node' ? 'Node details' : 'Relationship details'}</h6>
+        <h6 className='mr-auto'>{inspectedItemType === 'node' ? 'ノードの詳細' : 'リレーションシップの詳細'}</h6>
       </ResizePanelDetails.Title>
       <ResizePanelDetails.Content>
         <div className='mx-4 flex! flex-row flex-wrap gap-2'>

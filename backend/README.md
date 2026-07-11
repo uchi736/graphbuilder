@@ -1,75 +1,61 @@
-# Project Overview
-Welcome to our project! This project is built using FastAPI framework to create a fast and modern API with Python.
+# バックエンド（FastAPI）
 
-## Prerequisites
+Knowledge Graph Builder のバックエンド。FastAPI 製で、文書の取り込み・チャンク化・エンティティ抽出・Neo4j保存・チャット検索のAPIを提供する。
+エントリポイントは [score.py](score.py)（`score:app`）。
 
-- Python 3.12 or higher
-- pip (Python package manager)
+> 全体構成・起動手順・オンプレ構成の要点はリポジトリルートの [../README.md](../README.md) と [../docs/SYSTEM.md](../docs/SYSTEM.md) を参照。
+> 本ドキュメントはバックエンド単体の開発者向け。
 
-## Feature
-API Endpoint : This project provides various API endpoint to perform specific tasks.
-Data Validation : Utilize FastAPI data validation and serialization feature.
-Interactive Documentation : Access Swagger UI and ReDoc for interactive API documentation.
+## 前提
 
-## Getting Started 
+- Python 3.12 以上
+- Neo4j 5.23 以降（本構成は compose 同梱の 5.26 Community + APOC）
+- 抽出・チャットに使うLLM/埋め込みサービス（オンプレ構成では vLLM chat :8000 / embedding :8003、EDC :8080）
 
-Follow these steps to set up and run the project locally:
+## このフォークの主な追加
 
-1. Clone the Repository:
+| 機能 | 実装 |
+|---|---|
+| EDC抽出エンジン統合（モデル名 `edc`） | [src/edc_extraction.py](src/edc_extraction.py)（チャンク毎に EDC API `/extract` を呼びトリプルを GraphDocument へ変換） |
+| ローカルLLM `gemma4`（vLLM・OpenAI互換） | [src/llm.py](src/llm.py) |
+| vLLM埋め込み `ruri-v3-310m`（768次元） | [src/shared/common_fn.py](src/shared/common_fn.py) の `_get_vllm_embeddings` |
+| 共有グラフ共存ハードニング（保護ラベル除外） | [src/shared/constants.py](src/shared/constants.py) の `PROTECTED_MANAGEMENT_LABELS` ほか |
+| EDC `/convert` によるスキャンPDF前処理 | [src/document_sources/local_file.py](src/document_sources/local_file.py) |
+| 見出しパンくずMarkdownチャンキング | [src/create_chunks.py](src/create_chunks.py) |
 
-> git clone https://github.com/neo4j-labs/llm-graph-builder.git
+## ローカル起動（compose を使わない場合）
 
-> cd llm-graph-builder
+```bash
+cd backend
+python3.12 -m venv venv
+source venv/bin/activate   # Windows: venv\Scripts\activate
+pip install -r requirements.txt
 
-2. Create a virtual environment (recommended):
+# 開発（自動リロード）
+uvicorn score:app --reload
+# 本番相当（compose の CMD と同じ）
+# gunicorn score:app --workers 8 --threads 8 \
+#   --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --timeout 300
+```
 
-> python3.12 -m venv venv
-> source venv/bin/activate  # On Windows: venv\Scripts\activate
+API仕様は起動後 `http://localhost:8000/docs`（Swagger UI）で確認できる。
 
-3. Install Dependency :
+## docker-compose 起動（推奨）
 
-> pip install -r requirements.txt
+ルートの docker-compose 経由で backend / frontend / neo4j を一括起動する（ルート [../README.md](../README.md) 参照）。
+backend はコンテナ内 :8000、ホスト側は **:8440** に公開される。
 
-## Run backend project using unicorn
-Run the server:
-> uvicorn score:app --reload
+## 環境変数（`.env`）
 
-## Run project using docker
-## prerequisite 
-Before proceeding, ensure the following software is installed on your machine
+`.env` は **gitignore 済み**。`example.env` を雛形にコンテナ実行時の値を用意する。オンプレ構成の主要キー:
 
-Docker: https://www.docker.com/
+| 変数 | 用途 |
+|---|---|
+| `NEO4J_URI` / `NEO4J_USERNAME` / `NEO4J_PASSWORD` / `NEO4J_DATABASE` | Neo4j接続 |
+| `LLM_MODEL_CONFIG_GEMMA4` | ローカルLLM `<model>,<base_url>,<api_key>` |
+| `LLM_MODEL_CONFIG_EDC` | EDC API `<base_url>[,<doctype>[,<chunk_method>[,<concurrency>]]]` |
+| `EMBEDDING_PROVIDER=vllm` / `EMBEDDING_MODEL` / `VLLM_EMBEDDING_ENDPOINT` | 埋め込み（ruri-v3-310m） |
+| `ENTITY_EMBEDDING=true` | 名寄せ（重複エンティティ検出）用のエンティティ埋め込み |
+| `EDC_PDF_CONVERT` / `MARKDOWN_CHUNKING` / `GRAPH_SCHEMA_CONSOLIDATION_ENABLED` | 前処理・共有グラフ運用 |
 
-1. Build the docker image
-   > docker build -t your_image_name .
-   
-   Replace `your_image_name` with the meaningful name for your Docker image
-
-2. Run the Docker Container
-   > docker run -it -p 8000:8000 your_image_name
-   
-   Replace `8000` with the desired port.
-
-## Access the API Documentation
-Open your browser and navigate to
-http://127.0.0.1:8000/docs for Swagger UI or
-http://127.0.0.1:8000/redocs for ReDoc.
-
-## Project Structure
-`score.py`: Score entry point for FastAPI application
-
-## Configuration
-
-Update the environment variable in `.env` file. Refer example.env in backend folder for more config.
-
-`OPENAI_API_KEY`: Open AI key to use incase of openai embeddings
-
-`NEO4J_URI` : Neo4j URL
-
-`NEO4J_USERNAME` : Neo4J database username
-
-`NEO4J_PASSWORD` : Neo4j database user password
-
-
-## Contact
-For questions or support, feel free to contact us at christopher.crosbie@neo4j.com or michael.hunger@neo4j.com
+各キーの詳細と全一覧は `example.env` を参照。

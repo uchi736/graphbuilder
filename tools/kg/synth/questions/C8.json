@@ -1,0 +1,1034 @@
+{
+ "questions": [
+  {
+   "qid": "C8-01",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "出荷の後に不適合が見つかった過給機は、社内でどう取り扱うのか。相手方への連絡の期限も知りたい。",
+   "answer": "不適合品処理規定の手続ではなく、QK-TC-84 により苦情として扱う。営業の担当が受けてその日のうちに過検へ伝え、過検が苦情台帳に登録し、受付の時から 48 時間以内に第一報を先方へ出す。",
+   "answer_keys": [
+    "48 時間"
+   ],
+   "entry_doc": "QK-TC-02D.md",
+   "entry_where": "第 1 条（目的及び適用範囲）2 項",
+   "entry_quote": "出荷の後に見つかった不適合は、QK-TC-84 による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "出荷の後に見つかった不適合は、QK-TC-84 による。",
+   "reference_form": "番号だけ（QK-TC-84。項は書いていない）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-84B.md",
+   "answer_where": "第 11 条（苦情の受付及び第一報）",
+   "answer_quote": "過検は、受付の時から 48 時間以内に、営業の担当を通じて、第一報を先方へ出す。",
+   "hops": 1,
+   "wrong_values": [],
+   "avoided_terms": [
+    "苦情",
+    "第一報",
+    "受付",
+    "納入先",
+    "申出",
+    "顧客"
+   ],
+   "rationale": "質問は「出荷の後」「不適合」の語だけで聞いている。「不適合」を持つチャンクは QK-TC-02・QK-TC-81・QK-TC-82 に 50 以上あり、先に並ぶ。答えの条は QK-TC-84 の苦情の条で、「不適合」「出荷」の語を持たず、「苦情」「申出」「先方」と書いている。起点の「QK-TC-84 による」をたどると着く。QK-TC-84 の第 1 条 3 項が「出荷の後に見つかった不適合は、この要領では苦情として扱う」とつないでいる。",
+   "fix_note": "質問に、相手方への連絡の期限を聞く一文を足した。元の質問は手続の全体を聞くのに、answer_keys は第一報の期限（48 時間）だけで、苦情台帳への登録や回答書までを述べた正しい回答でも、期限を書かなければ不正答になった。",
+   "caveat": "起点の参照は番号だけ（QK-TC-84 による）で、答えの第 11 条へは、同要領の第 1 条 3 項（出荷の後に見つかった不適合は、苦情として扱う）を経て着く。"
+  },
+  {
+   "qid": "C8-01d",
+   "type": "control",
+   "twin_of": "C8-01",
+   "question": "QK-TC-84 の第 11 条では、苦情を受け付けてから何時間以内に第一報を出すと定めているか。",
+   "answer": "受付の時から 48 時間以内である。",
+   "answer_keys": [
+    "48 時間"
+   ],
+   "entry_doc": "QK-TC-84B.md",
+   "entry_where": "第 11 条（苦情の受付及び第一報）",
+   "entry_quote": "過検は、受付の時から 48 時間以内に、営業の担当を通じて、第一報を先方へ出す。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-84B.md",
+   "answer_where": "第 11 条（苦情の受付及び第一報）",
+   "answer_quote": "過検は、受付の時から 48 時間以内に、営業の担当を通じて、第一報を先方へ出す。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C8-01 と同じ事実を、答えの条の番号と見出しの語（苦情、第一報）で聞く。"
+  },
+  {
+   "qid": "C8-02",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "顧客の立会検査の運転中に、立会人から異常を指摘されて運転を止めた。止めたあとの過給機はどう扱うのか。",
+   "answer": "QK-TC-02 の第 5 条により、橙色の保留札を付けて保留区画 H-39 へ移す。大きさや質量のために移せない場合は、その場に置いて周りを橙色の綱で囲む。区分 丙でその場で手直しをする場合は除く。",
+   "answer_keys": [
+    "H-39"
+   ],
+   "entry_doc": "QK-TC-84B.md",
+   "entry_where": "第 7 条（立会い中の不適合）1 項",
+   "entry_quote": "止めた後の現品の扱いは、QK-TC-02 の第 5 条による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "止めた後の現品の扱いは、QK-TC-02 の第 5 条による。",
+   "reference_form": "番号と項（QK-TC-02 の第 5 条）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-02D.md",
+   "answer_where": "第 5 条（識別及び隔離）",
+   "answer_quote": "見つけた者は、当該品に橙色の保留札を付け、保留区画 H-39 へ移す。",
+   "hops": 1,
+   "wrong_values": [],
+   "avoided_terms": [
+    "保留",
+    "保留札",
+    "保留区画",
+    "識別",
+    "隔離",
+    "不適合",
+    "移す"
+   ],
+   "rationale": "質問は立会検査の場面の語（立会人、指摘、運転を止めた）で聞いている。答えの条は不適合品処理規定の識別と隔離の条で、立会い・顧客・運転の語を持たない。質問で並ぶのは QK-TC-84 の立会いの条と、運転を止める場面を書いた試運転の基準の節である。起点の「QK-TC-02 の第 5 条による」をたどると着く。"
+  },
+  {
+   "qid": "C8-02d",
+   "type": "control",
+   "twin_of": "C8-02",
+   "question": "QK-TC-02 の第 5 条では、不適合の品に保留札を付けたあと、どの保留区画へ移すと定めているか。",
+   "answer": "保留区画 H-39 へ移す。",
+   "answer_keys": [
+    "H-39"
+   ],
+   "entry_doc": "QK-TC-02D.md",
+   "entry_where": "第 5 条（識別及び隔離）",
+   "entry_quote": "見つけた者は、当該品に橙色の保留札を付け、保留区画 H-39 へ移す。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-02D.md",
+   "answer_where": "第 5 条（識別及び隔離）",
+   "answer_quote": "見つけた者は、当該品に橙色の保留札を付け、保留区画 H-39 へ移す。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C8-02 と同じ事実を、答えの条の番号と見出しの語で聞く。"
+  },
+  {
+   "qid": "C8-03",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "過給機の立会検査で、立会人の求めで同じ計測点を計測し直したとき、後の値は成績表に書く。先の値はどうなるのか。",
+   "answer": "先の値を記した記録は、帳票規定（QK-TC-01）の第 6 条により無効とする。廃棄せず、全面に朱色の斜線を引き、右上に「無効」の文字と理由を記入して、無効記録綴り MK-49 に綴じる。",
+   "answer_keys": [
+    "MK-49"
+   ],
+   "entry_doc": "QK-TC-84B.md",
+   "entry_where": "第 5 条（立会い中の運転及び計測）3 項",
+   "entry_quote": "先の値を記した記録の扱いは、帳票規定の第 6 条による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "先の値を記した記録の扱いは、帳票規定の第 6 条による。",
+   "reference_form": "通称と項（帳票規定の第 6 条。帳票規定は QK-TC-01 の通称で、番号は書いていない）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "第 6 条（無効とする記録）2 項",
+   "answer_quote": "全面に朱色の斜線を引き、右上に「無効」の文字及びその理由を記入したうえ、無効記録綴り MK-49 に綴じる。",
+   "hops": 1,
+   "wrong_values": [],
+   "avoided_terms": [
+    "無効",
+    "綴り",
+    "綴じる",
+    "やり直し",
+    "廃棄",
+    "記録"
+   ],
+   "rationale": "質問は立会いの計測の場面（過給機、立会人、計測点、成績表）で聞いている。先に並ぶのは QK-TC-84 の第 5 条と、計測値のけた数や成績表を書いた試運転・計測の基準の節である。答えは帳票規定の無効とする記録の条で、立会い・計測点の語を持たない。起点は文書を通称で指しており、番号は発行目録の注 1 で分かる。"
+  },
+  {
+   "qid": "C8-03d",
+   "type": "control",
+   "twin_of": "C8-03",
+   "question": "QK-TC-01 の第 6 条では、無効とした記録をどの綴りに綴じると定めているか。",
+   "answer": "無効記録綴り MK-49 に綴じる。",
+   "answer_keys": [
+    "MK-49"
+   ],
+   "entry_doc": "QK-TC-01G.md",
+   "entry_where": "第 6 条（無効とする記録）2 項",
+   "entry_quote": "全面に朱色の斜線を引き、右上に「無効」の文字及びその理由を記入したうえ、無効記録綴り MK-49 に綴じる。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "第 6 条（無効とする記録）2 項",
+   "answer_quote": "全面に朱色の斜線を引き、右上に「無効」の文字及びその理由を記入したうえ、無効記録綴り MK-49 に綴じる。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C8-03 と同じ事実を、答えの条の番号と見出しの語で聞く。"
+  },
+  {
+   "qid": "C8-04",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "同じ型式の過給機の同じ部位について、特別採用の申請が続いている。件数が 3 件に達したら、何が行われるのか。",
+   "answer": "12 か月のうちに 3 件に達すると、予防処置の対象となる。過品管が、対象とした日から 3 週間以内に傾向検討会を開き、関係する部門の長と過検が出席して、原因の見立て、処置の要否及び担当する部門を決める。",
+   "answer_keys": [
+    "傾向検討会"
+   ],
+   "entry_doc": "QK-TC-82C.md",
+   "entry_where": "第 12 条（件数の管理）2 項",
+   "entry_quote": "同じ型式の同じ部位で、12 か月のうちに 3 件に達した場合は、「是正処置及び予防処置規定」に定める予防処置の対象とする。",
+   "bridge_kind": "reference",
+   "bridge_quote": "同じ型式の同じ部位で、12 か月のうちに 3 件に達した場合は、「是正処置及び予防処置規定」に定める予防処置の対象とする。",
+   "reference_form": "名称だけ（番号なし。「是正処置及び予防処置規定」に定める予防処置）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-81D.md",
+   "answer_where": "第 10 条（予防処置）2 項",
+   "answer_quote": "対象とした事項については、過品管が、対象とした日から 3 週間以内に傾向検討会を開く。",
+   "hops": 1,
+   "wrong_values": [],
+   "avoided_terms": [
+    "予防処置",
+    "傾向",
+    "検討会",
+    "是正",
+    "対象"
+   ],
+   "rationale": "質問は特別採用の件数の話で、先に並ぶのは QK-TC-82 の各条である。答えは QK-TC-81 の予防処置の条で、特別採用・型式・部位・件数の語を持たない（「月ごとの集計に現れた傾向」「他の規定により対象とされた事項」と書いている）。起点は文書を名称だけで指しており、番号は発行目録で分かる。"
+  },
+  {
+   "qid": "C8-04d",
+   "type": "control",
+   "twin_of": "C8-04",
+   "question": "QK-TC-81 の第 10 条では、予防処置の対象とした事項について、過品管がどんな会合を開くと定めているか。",
+   "answer": "傾向検討会を、対象とした日から 3 週間以内に開く。",
+   "answer_keys": [
+    "傾向検討会"
+   ],
+   "entry_doc": "QK-TC-81D.md",
+   "entry_where": "第 10 条（予防処置）2 項",
+   "entry_quote": "対象とした事項については、過品管が、対象とした日から 3 週間以内に傾向検討会を開く。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-81D.md",
+   "answer_where": "第 10 条（予防処置）2 項",
+   "answer_quote": "対象とした事項については、過品管が、対象とした日から 3 週間以内に傾向検討会を開く。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C8-04 と同じ事実を、答えの条の番号と見出しの語（予防処置）で聞く。"
+  },
+  {
+   "qid": "C8-05",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "使用する期間を限る条件を付けて出荷された過給機は、納入からいつまで使ってよいのか。",
+   "answer": "使用する期間を限る条件は J-18 で、別表 1 の J-18 の値は 208 である。値は納入の日から数えた週の数なので、納入から 208 週までである。決裁者がこれより厳しい値を付けた場合は、その値による。",
+   "answer_keys": [
+    "208"
+   ],
+   "entry_doc": "QK-TC-82C.md",
+   "entry_where": "第 9 条（条件）",
+   "entry_quote": "(1) J-18: 使用する期間を限る。",
+   "bridge_kind": "reference",
+   "bridge_quote": "期間その他の限度は、別表 1 の記号ごとの値による。",
+   "reference_form": "同じ文書の別表（別表 1 の記号ごとの値。行は、同じ条にある記号 J-18 で決まる）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-82C.md",
+   "answer_where": "別表 1 記号別の値",
+   "answer_quote": "| J-18 | 208 |",
+   "hops": 1,
+   "wrong_values": [
+    "78"
+   ],
+   "avoided_terms": [
+    "特別採用",
+    "特採品",
+    "J-18",
+    "週",
+    "値",
+    "記号"
+   ],
+   "rationale": "答えの別表は記号と数字だけで、単位（週）と起算（納入の日）は起点の第 9 条に書いてある。質問の「使用する期間」「条件」「納入」の語は表に無い。起点の第 9 条で J-18 と「別表 1 の記号ごとの値による」を読み、別表 1 の J-18 の行に着く。J-28 の行（78）を取り違えやすい。質問に「特別採用」の語を入れると、見出しの経路の表題と合って表が 34〜40 位まで上がるので、「条件を付けて出荷された」と聞いている。"
+  },
+  {
+   "qid": "C8-05d",
+   "type": "control",
+   "twin_of": "C8-05",
+   "question": "QK-TC-82 の別表 1 で、記号 J-18 の値はいくつか。",
+   "answer": "208 である。",
+   "answer_keys": [
+    "208"
+   ],
+   "entry_doc": "QK-TC-82C.md",
+   "entry_where": "別表 1 記号別の値",
+   "entry_quote": "| J-18 | 208 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-82C.md",
+   "answer_where": "別表 1 記号別の値",
+   "answer_quote": "| J-18 | 208 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C8-05 と同じ事実を、答えの別表の番号と記号で聞く。"
+  },
+  {
+   "qid": "C8-06",
+   "type": "ref2",
+   "twin_of": null,
+   "question": "過検の文書庫に保管している帳票について、保管の状況は、だれがどうやって確かめるのか。",
+   "answer": "内部品質監査（QK-TC-83）で、監査員が確かめる。文書庫の帳票は、別表 2 の NK-38 により、書架から綴りを 38 冊、乱数で抜き取り、保存区分の表示、年限を過ぎた帳票の有無、持出簿との照合及び綴りの傷みを確かめる。施錠と鍵の管理も併せて確かめる。",
+   "answer_keys": [
+    "38 冊"
+   ],
+   "entry_doc": "QK-TC-01G.md",
+   "entry_where": "第 8 条（保管）3 項",
+   "entry_quote": "保管の状況は、内部品質監査（QK-TC-83）で確認する。",
+   "bridge_kind": "reference",
+   "bridge_quote": "保管の状況は、内部品質監査（QK-TC-83）で確認する。",
+   "reference_form": "かっこ書きの番号（内部品質監査（QK-TC-83））→ 同じ文書の別表と記号（別表 2 の NK-38）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [
+    {
+     "doc": "QK-TC-83E.md",
+     "where": "第 8 条（記録類の確認）2 項",
+     "quote": "文書庫に保管している帳票は、別表 2 の NK-38 により、書架から綴りを抜き取って確かめる。",
+     "kind": "reference"
+    }
+   ],
+   "answer_doc": "QK-TC-83E.md",
+   "answer_where": "別表 2 記号別の数",
+   "answer_quote": "| NK-38 | 38 冊 | 乱数による |",
+   "hops": 2,
+   "wrong_values": [
+    "8 冊",
+    "18 件"
+   ],
+   "avoided_terms": [
+    "監査",
+    "抜き取",
+    "冊",
+    "何冊",
+    "数"
+   ],
+   "rationale": "質問は帳票の保管の語で聞いており、帳票規定の各条が先に並ぶ。起点の第 8 条 3 項がかっこ書きの番号で QK-TC-83 を指し、その第 8 条が「別表 2 の NK-38 により」と指す。答えの別表は記号と数だけで、帳票・文書庫・保管の語を持たない。NK-18（現場の帳票）と NK-28（電子の記録）の行を取り違えやすい。"
+  },
+  {
+   "qid": "C8-06d",
+   "type": "control",
+   "twin_of": "C8-06",
+   "question": "QK-TC-83 の別表 2 で、記号 NK-38 の数は何冊か。",
+   "answer": "38 冊である。",
+   "answer_keys": [
+    "38 冊"
+   ],
+   "entry_doc": "QK-TC-83E.md",
+   "entry_where": "別表 2 記号別の数",
+   "entry_quote": "| NK-38 | 38 冊 | 乱数による |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-83E.md",
+   "answer_where": "別表 2 記号別の数",
+   "answer_quote": "| NK-38 | 38 冊 | 乱数による |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C8-06 と同じ事実を、答えの別表の番号と記号で聞く。"
+  },
+  {
+   "qid": "C8-07",
+   "type": "ref2",
+   "twin_of": null,
+   "question": "過給機の検査で甲の不適合が起きた。原因のある部門へ求めた処置は、いつ完結にできるのか。",
+   "answer": "甲の不適合に対する要求は種別 S-18 で、別表 2 の S-18 の確認の欄は 188 である。処置の完了の日から 188 日のあいだ、同じ不適合が再び起きないことを過品管が確かめたうえで、承認者の承認を受けて完結とする。",
+   "answer_keys": [
+    "188"
+   ],
+   "entry_doc": "QK-TC-02D.md",
+   "entry_where": "第 11 条（是正処置）",
+   "entry_quote": "同じ不適合が 2 回以上起きた場合、及び甲の不適合が起きた場合は、過品管は、原因のある部門に是正処置を求める。",
+   "bridge_kind": "reference",
+   "bridge_quote": "是正処置の手続及び効果の確認は、QK-TC-81 による。",
+   "reference_form": "番号だけ（QK-TC-81）→ 同じ文書の別表（種別ごとの定めは別表 1 及び別表 2。行は種別 S-18 で決まる）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [
+    {
+     "doc": "QK-TC-81D.md",
+     "where": "第 3 条（要求の種別）。同じ条の 3 項に「種別ごとの期限その他の定めは、別表 1 及び別表 2 による。」とある",
+     "quote": "(1) S-18: 甲の不適合に対するもの",
+     "kind": "reference"
+    }
+   ],
+   "answer_doc": "QK-TC-81D.md",
+   "answer_where": "別表 2 種別ごとの数",
+   "answer_quote": "| S-18 | 188 | 728 |",
+   "hops": 2,
+   "wrong_values": [
+    "128",
+    "148",
+    "368",
+    "728",
+    "8 稼働日"
+   ],
+   "avoided_terms": [
+    "是正",
+    "効果の確認",
+    "種別",
+    "日数",
+    "何日",
+    "確認"
+   ],
+   "rationale": "起点の第 11 条が番号だけで QK-TC-81 を指す。QK-TC-81 の第 3 条で甲の不適合に対する要求が種別 S-18 と分かり、同じ条が別表 1 及び別表 2 を指す。答えの別表 2 は種別の記号と数字だけで、確認の欄の数が日数であることは第 8 条に書いてある。質問で並ぶのは過給機・検査・不適合・処置の語を持つ節で、表は下位になる。S-28（128）などの行と、同じ行の監視の欄（728）を取り違えやすい。"
+  },
+  {
+   "qid": "C8-07d",
+   "type": "control",
+   "twin_of": "C8-07",
+   "question": "QK-TC-81 の別表 2 で、種別 S-18 の確認の欄の数はいくつか。",
+   "answer": "188 である。",
+   "answer_keys": [
+    "188"
+   ],
+   "entry_doc": "QK-TC-81D.md",
+   "entry_where": "別表 2 種別ごとの数",
+   "entry_quote": "| S-18 | 188 | 728 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-81D.md",
+   "answer_where": "別表 2 種別ごとの数",
+   "answer_quote": "| S-18 | 188 | 728 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C8-07 と同じ事実を、答えの別表の番号と種別の記号で聞く。"
+  },
+  {
+   "qid": "C8-08",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "特別採用を申請するために過品管へ提出した申請書は、出荷のあといつまで残しておくのか。",
+   "answer": "特別採用申請書は様式 TCF-230 で、QK-TC-01 の別表 2 では区分 K-4、年限は 39 年である。製品の出荷の日から 39 年残す。",
+   "answer_keys": [
+    "39 年"
+   ],
+   "entry_doc": "QK-TC-82C.md",
+   "entry_where": "第 4 条（申請）1 項",
+   "entry_quote": "申請は、特別採用申請書（様式 TCF-230）により行う。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "TCF-230",
+   "bridge_aliases": [
+    "特別採用申請書",
+    "特採申請"
+   ],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "別表 2 様式別の区分",
+   "answer_quote": "| TCF-230 | K-4 | 39 年 | 第 6 書架 |",
+   "hops": 1,
+   "wrong_values": [],
+   "avoided_terms": [
+    "保管",
+    "保存",
+    "年限",
+    "何年",
+    "書架",
+    "TCF-230"
+   ],
+   "rationale": "答えの表は様式番号だけで引く表で、帳票の名称を書いていない。質問の「特別採用」「申請書」の語は表に無く、QK-TC-82 の各条が先に並ぶ。起点の第 4 条に様式番号 TCF-230 が出ており、番号でつなぐと別表 2 の行に着く。QK-TC-82 の第 14 条は「保管は QK-TC-01 による」と書くだけで、年限は書いていない。"
+  },
+  {
+   "qid": "C8-08d",
+   "type": "control",
+   "twin_of": "C8-08",
+   "question": "QK-TC-01 の別表 2 で、様式 TCF-230 の年限は何年か。",
+   "answer": "39 年である。",
+   "answer_keys": [
+    "39 年"
+   ],
+   "entry_doc": "QK-TC-01G.md",
+   "entry_where": "別表 2 様式別の区分",
+   "entry_quote": "| TCF-230 | K-4 | 39 年 | 第 6 書架 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "別表 2 様式別の区分",
+   "answer_quote": "| TCF-230 | K-4 | 39 年 | 第 6 書架 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C8-08 と同じ事実を、答えの別表の番号と様式番号で聞く。"
+  },
+  {
+   "qid": "C8-09",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "過給機の検査の記録の付け方について、内部品質監査で重欠点の指摘を受けた。指摘を受けた部門は、いつまでに、何を過品管へ出さなければならないか。",
+   "answer": "重欠点の指摘には、種別 S-38 の是正処置要求書が発行される。要求書を受けた部門は、原因の調査の結果及び処置の計画を、要求書を受け取った日から 28 稼働日以内に過品管へ報告する。",
+   "answer_keys": [
+    "28 稼働日"
+   ],
+   "entry_doc": "QK-TC-83E.md",
+   "entry_where": "第 10 条（指摘に対する処置）1 項",
+   "entry_quote": "重欠点の指摘に対しては、過品管が、種別 S-38 の是正処置要求書を発行する。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "S-38",
+   "bridge_aliases": [
+    "種別 S-38"
+   ],
+   "path": [],
+   "answer_doc": "QK-TC-81D.md",
+   "answer_where": "別表 1 種別ごとの基準",
+   "answer_quote": "| S-38 | 28 稼働日 | 1 回 |",
+   "hops": 1,
+   "wrong_values": [
+    "10 稼働日",
+    "8 稼働日",
+    "18 稼働日",
+    "38 稼働日"
+   ],
+   "avoided_terms": [
+    "是正",
+    "種別",
+    "報告",
+    "稼働日",
+    "原因の調査"
+   ],
+   "rationale": "答えの別表は種別の記号だけで引く表で、監査・重欠点・指摘の語を持たない。質問で並ぶのは QK-TC-83 の各条である。起点の第 10 条に種別 S-38 が出ており、記号でつなぐと QK-TC-81 の別表 1 の行に着く。起点の同じ条にある軽欠点の期限（10 稼働日）を取り違えやすい。"
+  },
+  {
+   "qid": "C8-09d",
+   "type": "control",
+   "twin_of": "C8-09",
+   "question": "QK-TC-81 の別表 1 で、種別 S-38 の報告の期限は何稼働日か。",
+   "answer": "28 稼働日である。",
+   "answer_keys": [
+    "28 稼働日"
+   ],
+   "entry_doc": "QK-TC-81D.md",
+   "entry_where": "別表 1 種別ごとの基準",
+   "entry_quote": "| S-38 | 28 稼働日 | 1 回 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-81D.md",
+   "answer_where": "別表 1 種別ごとの基準",
+   "answer_quote": "| S-38 | 28 稼働日 | 1 回 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C8-09 と同じ事実を、答えの別表の番号と種別の記号で聞く。"
+  },
+  {
+   "qid": "C8-10",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "納入後に運転の状況を追跡する条件を付けて特別採用とした過給機は、出荷のあと、いつまで様子を見るのか。",
+   "answer": "この条件（J-38）を付けた特採品は、追跡区分 T-28 として過検へ引き継がれる。QK-TC-84 の別表 2 で T-28 の終了は 158 であり、納入の日から 158 週まで、先方への照会を続ける。初回は 18 週、以後は 38 週ごとである。",
+   "answer_keys": [
+    "158"
+   ],
+   "entry_doc": "QK-TC-82C.md",
+   "entry_where": "第 13 条（納入後の追跡）1 項",
+   "entry_quote": "条件 J-38 を付けた特採品は、追跡区分 T-28 として、出荷のときに過検へ引き継ぐ。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "T-28",
+   "bridge_aliases": [
+    "追跡区分 T-28"
+   ],
+   "path": [],
+   "answer_doc": "QK-TC-84B.md",
+   "answer_where": "別表 2 記号別の数",
+   "answer_quote": "| T-28 | 18 | 38 | 158 |",
+   "hops": 1,
+   "wrong_values": [
+    "108",
+    "258"
+   ],
+   "avoided_terms": [
+    "T-28",
+    "J-38",
+    "照会",
+    "終了",
+    "週",
+    "打ち切",
+    "追跡区分"
+   ],
+   "rationale": "答えの別表は追跡区分の記号と数字だけで、特別採用・条件の語を持たない。単位（納入の日から数えた週）は QK-TC-84 の第 14 条に書いてある。質問で並ぶのは QK-TC-82 の条件と追跡の条である。起点の第 13 条に追跡区分 T-28 が出ており、記号でつなぐと別表 2 の行に着く。QK-TC-84 の第 14 条は T-18 と T-38 しか言葉で説明していないので、T-28 がこの場合に当たることは起点でしか分からない。"
+  },
+  {
+   "qid": "C8-10d",
+   "type": "control",
+   "twin_of": "C8-10",
+   "question": "QK-TC-84 の別表 2 で、記号 T-28 の終了の欄の数はいくつか。",
+   "answer": "158 である。",
+   "answer_keys": [
+    "158"
+   ],
+   "entry_doc": "QK-TC-84B.md",
+   "entry_where": "別表 2 記号別の数",
+   "entry_quote": "| T-28 | 18 | 38 | 158 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-84B.md",
+   "answer_where": "別表 2 記号別の数",
+   "answer_quote": "| T-28 | 18 | 38 | 158 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C8-10 と同じ事実を、答えの別表の番号と記号で聞く。"
+  },
+  {
+   "qid": "C8-11",
+   "type": "ent2",
+   "twin_of": null,
+   "question": "納入した過給機の苦情を調べたら、当社の製造に原因があった。回答書を出したあと、原因のある部門がとった処置は、いつ効いたと認められるのか。",
+   "answer": "過検が過品管に是正要求（是正処置要求書）の発行を求める。顧客の苦情に対する要求は種別 S-48 で、別表 2 の S-48 の確認の欄は 368 である。処置の完了の日から 368 日のあいだ、同じ不適合が再び起きないことを確かめて、効果があったと認める。",
+   "answer_keys": [
+    "368"
+   ],
+   "entry_doc": "QK-TC-84B.md",
+   "entry_where": "第 13 条（回答及び是正）2 項",
+   "entry_quote": "当社の製造に原因があると認めた苦情については、過検は、過品管に是正要求の発行を求める。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "是正要求",
+   "bridge_aliases": [
+    "是正処置要求書",
+    "要求書",
+    "TCF-220"
+   ],
+   "path": [
+    {
+     "doc": "QK-TC-81D.md",
+     "where": "第 3 条（要求の種別）。是正要求が是正処置要求書の略であることは第 2 条 (4) にある",
+     "quote": "(4) S-48: 顧客の苦情に対するもの",
+     "kind": "entity"
+    }
+   ],
+   "answer_doc": "QK-TC-81D.md",
+   "answer_where": "別表 2 種別ごとの数",
+   "answer_quote": "| S-48 | 368 | 638 |",
+   "hops": 2,
+   "wrong_values": [
+    "188",
+    "128",
+    "148",
+    "638",
+    "38 稼働日"
+   ],
+   "avoided_terms": [
+    "是正",
+    "効果の確認",
+    "種別",
+    "S-48",
+    "日数",
+    "何日"
+   ],
+   "rationale": "起点は帳票を略称（是正要求）で呼んでいる。QK-TC-81 の第 2 条と第 3 条で、是正要求が是正処置要求書であり、顧客の苦情に対する要求が種別 S-48 であることが分かる。答えの別表は種別の記号と数字だけで、苦情・製造・回答書の語を持たない。質問で並ぶのは QK-TC-84 の苦情の条と QK-TC-81 の効果の確認の条で、表は下位になる。"
+  },
+  {
+   "qid": "C8-11d",
+   "type": "control",
+   "twin_of": "C8-11",
+   "question": "QK-TC-81 の別表 2 で、種別 S-48 の確認の欄の数はいくつか。",
+   "answer": "368 である。",
+   "answer_keys": [
+    "368"
+   ],
+   "entry_doc": "QK-TC-81D.md",
+   "entry_where": "別表 2 種別ごとの数",
+   "entry_quote": "| S-48 | 368 | 638 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-81D.md",
+   "answer_where": "別表 2 種別ごとの数",
+   "answer_quote": "| S-48 | 368 | 638 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C8-11 と同じ事実を、答えの別表の番号と種別の記号で聞く。"
+  },
+  {
+   "qid": "C8-12",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "顧客の立会検査の運転中に、軸受が焼き付いた。再立会いは、社内の再試験に合格してから何日以内に行うのか。",
+   "answer": "軸受の焼付きは区分 甲の不適合である。区分 甲の場合、再立会いは社内の再試験に合格した日から 28 日以内に行う。過ぎる見込みの場合は、営業の担当を通じて顧客の了解を得る。",
+   "answer_keys": [
+    "28 日"
+   ],
+   "entry_doc": "QK-TC-02D.md",
+   "entry_where": "第 3 条（不適合の区分）",
+   "entry_quote": "(1) 甲: 回転体及び軸受に係るもの。釣合い、接触、焼付き及び異常な摩耗を含む。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "甲",
+   "bridge_aliases": [
+    "区分 甲"
+   ],
+   "path": [],
+   "answer_doc": "QK-TC-84B.md",
+   "answer_where": "第 8 条（区分 甲の場合）3 項",
+   "answer_quote": "再立会いは、社内の再試験に合格した日から 28 日以内に行う。",
+   "hops": 1,
+   "wrong_values": [
+    "18 日",
+    "8 日"
+   ],
+   "avoided_terms": [
+    "甲",
+    "区分"
+   ],
+   "rationale": "QK-TC-84 の第 8 条・第 9 条・第 10 条は、区分ごとに同じ書式で値だけが違い、質問で 3 つが並んで上位に来る（点検では 1〜3 位）。条の本文は区分の記号しか書いていないので、軸受の焼付きが区分 甲であることを QK-TC-02 の第 3 条で確かめないと、どの条か決まらない。",
+   "fix_note": "質問から「立会いを打ち切った」を外した。この一句は、答えの第 8 条（区分 甲: 立会検査を打ち切る）の語で、不適合の区分を QK-TC-02 の第 3 条で確かめなくても第 8 条を選ぶ手がかりになっていた。",
+   "caveat": "採点の注意: きょうだいの値を並べただけの回答も answer_keys に当たる。wrong_values を含まないことを正答の条件に足すのが望ましい。"
+  },
+  {
+   "qid": "C8-13",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "量産機の性能の判定で、サージング点が許容範囲を外れた。特別採用を申請できるのは、外れがどこまでの場合か。",
+   "answer": "性能の不合格は区分 乙の不適合である。区分 乙は、外れが基準の許容範囲の幅の 18 % 以内であり、過技性が機関との適合に支障が無いとの見解を出し、条件 J-38 を付ける場合に限り、申請できる。",
+   "answer_keys": [
+    "18 %"
+   ],
+   "entry_doc": "KS-TC-T001F.md",
+   "entry_where": "6.1 性能",
+   "entry_quote": "不合格の場合は、性能に係る不適合（区分 乙）として QK-TC-02 により処置し、原因を究明したのち再運転する。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "区分 乙",
+   "bridge_aliases": [
+    "乙"
+   ],
+   "path": [],
+   "answer_doc": "QK-TC-82C.md",
+   "answer_where": "第 7 条（区分 乙の特別採用）",
+   "answer_quote": "(1) 外れが、基準の許容範囲の幅（注 1）の 18 % 以内であること。",
+   "hops": 1,
+   "wrong_values": [
+    "8 %",
+    "数値の限度は無く、過検が機能及び寿命に影響しないと認めたこと"
+   ],
+   "avoided_terms": [
+    "乙",
+    "区分",
+    "性能開発課",
+    "過技性"
+   ],
+   "rationale": "QK-TC-82 の第 6 条・第 7 条・第 8 条は、区分ごとに同じ書式で限度だけが違い、質問で並んで上位に来る（点検では 甲 1 位、乙 2 位、丙 7 位）。条の本文は区分の記号しか書いていないので、性能の不合格が区分 乙であることを KS-TC-T001 の 6.1（又は QK-TC-02 の第 3 条）で確かめないと、どの条か決まらない。"
+  },
+  {
+   "qid": "C8-14",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "立会検査の運転中に、渦巻室の合せ面から、かに泡の程度を超える空気漏れが見つかった。締め直しても止まらない。立会いは、その日のうちに続けられるか。",
+   "answer": "漏れは区分 丙の不適合である。区分 丙の場合は、立会人の同意を得て、その場で手直しを行い、立会検査を続けることができる。手直しの結果は立会人の確認を受ける。その日のうちに手直しが済まない場合は、その項目だけを再立会いとする。",
+   "answer_keys": [
+    "その場",
+    "手直し"
+   ],
+   "entry_doc": "QK-TC-02D.md",
+   "entry_where": "第 3 条（不適合の区分）",
+   "entry_quote": "(3) 丙: 外観、漏れその他、甲及び乙に当たらないもの。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "丙",
+   "bridge_aliases": [
+    "区分 丙"
+   ],
+   "path": [],
+   "answer_doc": "QK-TC-84B.md",
+   "answer_where": "第 10 条（区分 丙の場合）1 項",
+   "answer_quote": "区分 丙の不適合が見つかった場合は、立会人の同意を得て、その場で手直しを行い、立会検査を続けることができる。",
+   "hops": 1,
+   "wrong_values": [
+    "立会検査を打ち切る",
+    "その日に限り 1 回、計測をやり直す"
+   ],
+   "avoided_terms": [
+    "丙",
+    "区分",
+    "手直し"
+   ],
+   "rationale": "QK-TC-84 の第 8 条・第 9 条・第 10 条が並んで上位に来る（点検では 甲 2 位、丙 4 位、乙 5 位。1 位は KS-TC-T001 の 6.2）。かに泡を超える空気漏れが不適合になることは KS-TC-T001 の 6.2 にあり、漏れが区分 丙であることは QK-TC-02 の第 3 条にある。区分を確かめないと、打切り（甲）と取り違える。",
+   "fix_note": "answer_keys を「その場」「手直し」の 2 語にした。元の句「その場で手直し」は、「その場での手直し」「手直しをその場で行えば」と書いた正しい回答で外れた。",
+   "caveat": "きょうだいの条のうち「続けることができる」と書くのは第 10 条（丙）だけなので、漏れが区分 丙であること（QK-TC-02 の第 3 条）を確かめなくても、質問の「続けられるか」から第 10 条を選びやすい。つなぎの効果を見る問いとしては弱い。採点の注意: きょうだいの値を並べただけの回答も answer_keys に当たる。wrong_values を含まないことを正答の条件に足すのが望ましい。"
+  },
+  {
+   "qid": "C8-15",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "顧客の立会検査では、顧客はどの項目に立ち会うのか。",
+   "answer": "手元の文書には書かれていない。立会いの要否、項目及び範囲は顧客の購入仕様書によると定めており、購入仕様書は文書群に無い。",
+   "answer_keys": [],
+   "entry_doc": "QK-TC-84B.md",
+   "entry_where": "第 3 条（立会いの申入れ及び日程）1 項",
+   "entry_quote": "立会いの要否、立会いの項目及び範囲は、顧客の購入仕様書による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "立会いの要否、立会いの項目及び範囲は、顧客の購入仕様書による。",
+   "reference_form": "手元に無い文書（顧客の購入仕様書）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "",
+   "answer_where": "",
+   "answer_quote": "",
+   "hops": 1,
+   "wrong_values": [
+    "性能試験、全力運転試験、聴音検査など、KS-TC-T001 の 5.1 から 5.7 までの項目"
+   ],
+   "avoided_terms": [],
+   "rationale": "起点は顧客の購入仕様書を指しており、立会いの項目は文書群のどこにも無い。試運転の項目（KS-TC-T001 の 5.）を立会いの項目として答えると誤りである。"
+  },
+  {
+   "qid": "C8-16",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "船級協会の承認図に関わる不適合を特別採用にするとき、協会の承認は、どういう手続で受けるのか。",
+   "answer": "手元の文書には書かれていない。当該の協会の承認も要するとしたうえで、承認の手続は各船級協会の規則によると定めており、その規則は文書群に無い。",
+   "answer_keys": [],
+   "entry_doc": "QK-TC-82C.md",
+   "entry_where": "第 10 条（顧客の同意）3 項",
+   "entry_quote": "承認の手続は、各船級協会の規則による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "承認の手続は、各船級協会の規則による。",
+   "reference_form": "手元に無い文書（各船級協会の規則）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "",
+   "answer_where": "",
+   "answer_quote": "",
+   "hops": 1,
+   "wrong_values": [
+    "営業の担当が申請書の写しを送って同意を求める（顧客の同意の手続）"
+   ],
+   "avoided_terms": [],
+   "rationale": "起点は各船級協会の規則を指しており、協会の承認の手続は文書群のどこにも無い。同じ条にある顧客の同意の手続を答えると誤りである。"
+  },
+  {
+   "qid": "C8-17",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "顧客が、苦情とは関係なく、当社に対して定期に行う監査は、どの部門が、どういう手順で受け入れるのか。",
+   "answer": "手元の文書には書かれていない。内部品質監査規定は事業部の内部の監査だけを対象とし、顧客又は船級協会が行う監査の受入れは全社の品質マニュアル QM-100 によると定めている。QM-100 は文書群に無い。手元の文書にあるのは、苦情の是正に伴って顧客が工程の立入りの調査を求めた場合の定め（QK-TC-81 の第 13 条 3 項。品質保証部長の許可を得て、過品管が立ち会う）までである。",
+   "answer_keys": [],
+   "entry_doc": "QK-TC-83E.md",
+   "entry_where": "第 1 条（目的及び適用範囲）3 項",
+   "entry_quote": "顧客又は船級協会が当社に対して行う監査の受入れは、全社の品質マニュアル QM-100 による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "顧客又は船級協会が当社に対して行う監査の受入れは、全社の品質マニュアル QM-100 による。",
+   "reference_form": "手元に無い文書（全社の品質マニュアル QM-100）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "",
+   "answer_where": "",
+   "answer_quote": "",
+   "hops": 1,
+   "wrong_values": [
+    "過品管が年間計画を作り、主任監査員が実施する（内部品質監査の手順）",
+    "過品管が立ち会"
+   ],
+   "avoided_terms": [],
+   "rationale": "起点は QM-100 を指しており、顧客による監査の受入れは文書群のどこにも無い。内部品質監査の手順を答えると誤りである。",
+   "fix_note": "質問を、苦情と関係なく行う監査に限った。元の質問には、QK-TC-81 の第 13 条 3 項（顧客が工程の立入りの調査を求めた場合は、品質保証部長の許可を得て、過品管が立ち会う）が部分的な答えの材料になり、質問で 2 位に来ていた。この項は苦情の是正に伴う場面の定めである。answer と wrong_values にも書き足した。",
+   "caveat": "QK-TC-81 の第 13 条 3 項は、改めた質問でも 5 位に来る。この項を引いて「過品管が立ち会う」と答えた回答は誤りとする（苦情の是正に伴う立入りの調査の定めであり、監査の受入れの手順ではない）。"
+  },
+  {
+   "qid": "C8-18",
+   "type": "control",
+   "twin_of": null,
+   "question": "内部品質監査の監査員になるための監査員研修は、何時間か。",
+   "answer": "18 時間である。修了して監査員名簿に登録された者が監査員となる。",
+   "answer_keys": [
+    "18 時間"
+   ],
+   "entry_doc": "QK-TC-83E.md",
+   "entry_where": "第 5 条（監査員）1 項",
+   "entry_quote": "監査員は、過品管が行う 18 時間の監査員研修を修了し、監査員名簿に登録された者とする。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-83E.md",
+   "answer_where": "第 5 条（監査員）1 項",
+   "answer_quote": "監査員は、過品管が行う 18 時間の監査員研修を修了し、監査員名簿に登録された者とする。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "質問の語（内部品質監査、監査員、監査員研修）が答えの条にそのままあり、直接引ける。"
+  },
+  {
+   "qid": "C8-19",
+   "type": "control",
+   "twin_of": null,
+   "question": "特別採用が決まった品には、保留札の代わりに何を付けるのか。",
+   "answer": "過検が保留札を外し、青色の特採札を付ける。特採札には、申請書の番号及び条件の記号を記入する。",
+   "answer_keys": [
+    "特採札"
+   ],
+   "entry_doc": "QK-TC-82C.md",
+   "entry_where": "第 11 条（識別及び出荷）1 項",
+   "entry_quote": "特別採用が決まった品は、過検が保留札を外し、代わりに青色の特採札を付ける。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-82C.md",
+   "answer_where": "第 11 条（識別及び出荷）1 項",
+   "answer_quote": "特別採用が決まった品は、過検が保留札を外し、代わりに青色の特採札を付ける。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "質問の語（特別採用、保留札、代わりに）が答えの条にそのままあり、直接引ける。",
+   "fix_note": "answer_keys を「特採札」だけにした（「青い特採札」と書いた正しい回答が「青色」に当たらない）。"
+  },
+  {
+   "qid": "C8-20",
+   "type": "control",
+   "twin_of": null,
+   "question": "苦情の調査のために引き取った現品は、どこに受け入れるのか。",
+   "answer": "返却品置場に受け入れ、受付番号の札を付ける。",
+   "answer_keys": [
+    "返却品置場"
+   ],
+   "entry_doc": "QK-TC-84B.md",
+   "entry_where": "第 12 条（現品の調査）2 項",
+   "entry_quote": "引き取った現品は、返却品置場に受け入れ、受付番号の札を付ける。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-84B.md",
+   "answer_where": "第 12 条（現品の調査）2 項",
+   "answer_quote": "引き取った現品は、返却品置場に受け入れ、受付番号の札を付ける。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "質問の語（苦情、調査、引き取った現品）が答えの条にそのままあり、直接引ける。"
+  },
+  {
+   "qid": "C8-21",
+   "type": "control",
+   "twin_of": null,
+   "question": "是正処置の原因の分類で、基準類又は手順書の不備は、どの記号で記入するのか。",
+   "answer": "GB-38（方法）である。",
+   "answer_keys": [
+    "GB-38"
+   ],
+   "entry_doc": "QK-TC-81D.md",
+   "entry_where": "別表 3 原因の分類",
+   "entry_quote": "| GB-38 | 方法 | 基準類又は手順書の不備 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-81D.md",
+   "answer_where": "別表 3 原因の分類",
+   "answer_quote": "| GB-38 | 方法 | 基準類又は手順書の不備 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "質問の語（原因の分類、基準類又は手順書の不備）が答えの別表にそのままあり、直接引ける。"
+  },
+  {
+   "qid": "C8-22",
+   "type": "control",
+   "twin_of": null,
+   "question": "顧客の立会いのもとで記入した帳票には、いつ、だれの署名を受けるのか。",
+   "answer": "運転の終了の後、その場で立会人の署名を受ける。署名を受けた後は訂正してはならず、訂正を要する場合は、あらためて署名を求める。",
+   "answer_keys": [
+    "立会人"
+   ],
+   "entry_doc": "QK-TC-84B.md",
+   "entry_where": "第 6 条（立会記録）1 項",
+   "entry_quote": "立会記録には、運転の終了の後、その場で立会人の署名を受ける。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-84B.md",
+   "answer_where": "第 6 条（立会記録）1 項",
+   "answer_quote": "立会記録には、運転の終了の後、その場で立会人の署名を受ける。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "QK-TC-01 の第 11 条が「QK-TC-84 の第 6 条による」と指している条を、直接聞く。この参照をたどる問い（別表 1 の区分まで聞く形）は、表が 7〜9 位に来て経路の問いにならなかったので、直接の問いだけを残した。",
+   "fix_note": "answer_keys を「立会人」にした（「立会人から署名を受ける」「立会人に署名してもらう」と書いた正しい回答が「立会人の署名」に当たらない）。"
+  }
+ ]
+}

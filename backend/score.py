@@ -339,6 +339,7 @@ async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_cred
                 raise Exception(error_message)
         tasks = set(map(str.strip, json.loads(tasks)))
         api_name = 'post_processing'
+        reference_summary = None
         count_response = []
         start = time.time()
         if "materialize_text_chunk_similarities" in tasks:
@@ -366,6 +367,16 @@ async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_cred
             else:
                 logging.info('graph_schema_consolidation is disabled by GRAPH_SCHEMA_CONSOLIDATION_ENABLED=false')
             
+        if "link_chunk_references" in tasks:
+            # 本文の「〜による」「〜参照」をたどり、チャンクから参照先のチャンクへ REFERS_TO を張る
+            from src.chunk_references import link_chunk_references
+            api_name = 'post_processing/link_chunk_references'
+            reference_summary = (await asyncio.to_thread(link_chunk_references, graph))["summary"]
+            logging.info('Chunk references linked: %s', json.dumps(reference_summary, ensure_ascii=False))
+            if reference_summary["aborted"] or reference_summary["skipped_documents"]:
+                # LLM が止まっているなどで、文書単位で何も書けなかった。成功として返さない
+                raise Exception(f"link_chunk_references did not complete: {json.dumps(reference_summary, ensure_ascii=False)}")
+
         if "enable_communities" in tasks:
             api_name = 'create_communities'
             await asyncio.to_thread(create_communities, credentials.uri, credentials.userName, credentials.password, credentials.database, credentials.email, embedding_provider, embedding_model)
@@ -392,7 +403,11 @@ async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_cred
                 'email': credentials.email
             }
             logger.log_struct(json_obj)
-        return create_api_response('Success', data=count_response, message='All tasks completed successfully')
+        message = 'All tasks completed successfully'
+        if reference_summary is not None:
+            # 参照リンクの件数と、失敗したチャンクの数を呼び出し側に見せる（失敗分は次回の実行で引き直される）
+            message += f"; chunk references: {json.dumps(reference_summary, ensure_ascii=False)}"
+        return create_api_response('Success', data=count_response, message=message)
     
     except Exception as e:
         job_status = "Failed"
@@ -404,6 +419,12 @@ async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_cred
     finally:
         gc.collect()
                 
+@app.get("/retrieval_settings")
+async def get_retrieval_settings():
+    """チャット検索の設定項目と既定値を返す（画面の設定欄の表示用）。"""
+    from src.rerank_retriever import retrieval_settings_spec
+    return create_api_response('Success', data={"settings": retrieval_settings_spec()})
+
 @app.post("/chat_bot")
 async def chat_bot(
     credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
@@ -413,7 +434,9 @@ async def chat_bot(
     session_id=Form(None),
     mode=Form(None),
     embedding_provider=Form(None),
-    embedding_model=Form(None)
+    embedding_model=Form(None),
+    retrieval_settings=Form(None),
+    history=Form(None)
 ):
     """Run QA chat bot on the graph database."""
     logging.info(f"QA_RAG called at {datetime.now()}")
@@ -426,7 +449,7 @@ async def chat_bot(
         
         graphDb_data_Access = graphDBdataAccess(graph)
         write_access = graphDb_data_Access.check_account_access(database=credentials.database)
-        result = await asyncio.to_thread(QA_RAG, graph=graph, model=model, question=question, document_names=document_names, session_id=session_id, mode=mode, write_access=write_access, email=credentials.email, uri=credentials.uri, embedding_provider=embedding_provider, embedding_model=embedding_model)
+        result = await asyncio.to_thread(QA_RAG, graph=graph, model=model, question=question, document_names=document_names, session_id=session_id, mode=mode, write_access=write_access, email=credentials.email, uri=credentials.uri, embedding_provider=embedding_provider, embedding_model=embedding_model, retrieval_settings=retrieval_settings, use_history=str(history or "true").strip().lower() not in ("false", "0", "no"))
 
         total_call_time = time.time() - qa_rag_start_time
         logging.info(f"Total Response time is  {total_call_time:.2f} seconds")
@@ -443,6 +466,37 @@ async def chat_bot(
         error_message = str(e)
         logging.exception(f'Exception in chat bot:{error_message}')
         return create_api_response(job_status, message=message, error=error_message,data=mode)
+    finally:
+        gc.collect()
+
+@app.post("/retrieve_context")
+async def retrieve_context_api(
+    credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
+    question=Form(None),
+    document_names=Form(None),
+    mode=Form(None),
+    embedding_provider=Form(None),
+    embedding_model=Form(None),
+    retrieval_settings=Form(None),
+    model=Form(None)
+):
+    """/chat_bot と同じ検索だけを行い、チャンク・エンティティとリレーションの ID・整形済みの文脈を返す（LLM を呼ばず、履歴も書かない）。"""
+    start = time.time()
+    try:
+        from src.retrieve_only import retrieve_context
+        graph = create_graph_database_connection(credentials)
+        result = await asyncio.to_thread(retrieve_context, graph=graph, question=question, document_names=document_names, mode=mode, embedding_provider=embedding_provider, embedding_model=embedding_model, retrieval_settings=retrieval_settings, model=model)
+        elapsed_time = time.time() - start
+        json_obj = {'api_name':'retrieve_context','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database, 'question':question,'document_names':document_names,
+                             'mode':mode, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
+        logger.log_struct(json_obj, "INFO")
+        return create_api_response('Success',data=result,message=f"Total elapsed API time {elapsed_time:.2f}")
+    except Exception as e:
+        job_status = "Failed"
+        message="Unable to retrieve context"
+        error_message = str(e)
+        logging.exception(f'Exception in retrieve context:{error_message}')
+        return create_api_response(job_status, message=message, error=error_message)
     finally:
         gc.collect()
 

@@ -1,0 +1,983 @@
+{
+ "questions": [
+  {
+   "qid": "C2-01",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "RK14 の初号機の単独性能確認試験で、サージングに入ってしまい計測点を採り直した。採り直す前の値は、どうすればよいか。",
+   "answer": "無効とする。廃棄せず、全面に朱色の斜線を引き、右上に「無効」の文字と理由を記入して、無効記録綴り MK-49 に綴じる。有効な記録と同じ期間、残す。",
+   "answer_keys": [
+    "MK-49"
+   ],
+   "entry_doc": "KS-TC-T201B.md",
+   "entry_where": "2-1 1 台目の計測（最後の段落）",
+   "entry_quote": "採り直す前の値の取扱いは、帳票規定の第 6 条による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "採り直す前の値の取扱いは、帳票規定の第 6 条による。",
+   "reference_form": "通称と項（帳票規定の第 6 条。帳票規定が QK-TC-01 であることは発行目録の注 1 にある）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "第 6 条（無効とする記録）",
+   "answer_quote": "全面に朱色の斜線を引き、右上に「無効」の文字及びその理由を記入したうえ、無効記録綴り MK-49 に綴じる。",
+   "hops": 1,
+   "wrong_values": [],
+   "avoided_terms": [
+    "無効",
+    "綴り",
+    "綴じる",
+    "廃棄",
+    "記録",
+    "帳票"
+   ],
+   "rationale": "答えの条は帳票の規定のなかの手続で、初号機・サージング・計測点の語を持たない。質問は試験の場面の語だけで聞くので、初号機の要領と計測の基準の節が先に並ぶ。起点の 2-1 にある「帳票規定の第 6 条による」をたどると着く。文書番号でなく通称で書いてある。"
+  },
+  {
+   "qid": "C2-01d",
+   "type": "control",
+   "twin_of": "C2-01",
+   "question": "QK-TC-01 の第 6 条（無効とする記録）では、無効とした記録をどの綴りに綴じると定めているか。",
+   "answer": "無効記録綴り MK-49 に綴じる。",
+   "answer_keys": [
+    "MK-49"
+   ],
+   "entry_doc": "QK-TC-01G.md",
+   "entry_where": "第 6 条（無効とする記録）",
+   "entry_quote": "全面に朱色の斜線を引き、右上に「無効」の文字及びその理由を記入したうえ、無効記録綴り MK-49 に綴じる。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "第 6 条（無効とする記録）",
+   "answer_quote": "全面に朱色の斜線を引き、右上に「無効」の文字及びその理由を記入したうえ、無効記録綴り MK-49 に綴じる。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C2-01 と同じ事実を、答えの節の文書番号・項・見出しの語で直接聞く。"
+  },
+  {
+   "qid": "C2-02",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "RK18 の量産機のチェック回転速度は、何に基づいて決めた値か。",
+   "answer": "過技設の技術連絡書 TN-2732 による暫定の値である。船級協会の審査が済むまで用い、済んだときは過検が表を改める。",
+   "answer_keys": [
+    "TN-2732"
+   ],
+   "entry_doc": "KS-TC-T202D.md",
+   "entry_where": "別表 1 型式別のチェック回転速度（RK18 の行）",
+   "entry_quote": "| RK18 | 37,892（注 3） | 2 点 |",
+   "bridge_kind": "reference",
+   "bridge_quote": "| RK18 | 37,892（注 3） | 2 点 |",
+   "reference_form": "同じ文書の注（表の欄に付けた「（注 3）」）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-T202D.md",
+   "answer_where": "注（注 3）",
+   "answer_quote": "（注 3）この印の付いた欄は、過技設の技術連絡書 TN-2732 による暫定のものである。",
+   "hops": 1,
+   "wrong_values": [
+    "TN-2612"
+   ],
+   "avoided_terms": [
+    "技術連絡書",
+    "暫定",
+    "注",
+    "印",
+    "欄"
+   ],
+   "rationale": "注の節は「この印の付いた欄は…」としか書いておらず、チェック回転速度・回転速度・型式名の語を持たない。別表 1 の RK18 の行に付いた「（注 3）」をたどると着く。注 2（RM24 の行、TN-2612）が同じ書式のきょうだいで、印をたどらなければどちらか決まらない。別表 1 の下の「承認図の値による」だけを読むと取り違える。"
+  },
+  {
+   "qid": "C2-02d",
+   "type": "control",
+   "twin_of": "C2-02",
+   "question": "KS-TC-T202 の注 3 では、印の付いた欄は、どの技術連絡書による暫定のものと書いているか。",
+   "answer": "過技設の技術連絡書 TN-2732 による。",
+   "answer_keys": [
+    "TN-2732"
+   ],
+   "entry_doc": "KS-TC-T202D.md",
+   "entry_where": "注（注 3）",
+   "entry_quote": "（注 3）この印の付いた欄は、過技設の技術連絡書 TN-2732 による暫定のものである。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-T202D.md",
+   "answer_where": "注（注 3）",
+   "answer_quote": "（注 3）この印の付いた欄は、過技設の技術連絡書 TN-2732 による暫定のものである。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C2-02 と同じ事実を、答えの節の文書番号・項・見出しの語で直接聞く。"
+  },
+  {
+   "qid": "C2-03",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "RK16 の量産機で、運転の前にロータを手で回したら引っ掛かりがあった。この過給機は、どうしておけばよいか。",
+   "answer": "運転せず、橙色の保留札を付けて、保留区画 H-39 へ移す。処置が決まるまで保留札は外さない。",
+   "answer_keys": [
+    "H-39"
+   ],
+   "entry_doc": "KS-TC-T202D.md",
+   "entry_where": "4.3 系列に固有の確認項目 a) 手回し",
+   "entry_quote": "引っ掛かりを認めた過給機は、運転せず、品規 9 号の第 5 条により処置する。",
+   "bridge_kind": "reference",
+   "bridge_quote": "引っ掛かりを認めた過給機は、運転せず、品規 9 号の第 5 条により処置する。",
+   "reference_form": "旧番号と項（品規 9 号の第 5 条。品規 9 号が QK-TC-02 であることは発行目録の 6. にある）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-02D.md",
+   "answer_where": "第 5 条（識別及び隔離）",
+   "answer_quote": "見つけた者は、当該品に橙色の保留札を付け、保留区画 H-39 へ移す。",
+   "hops": 1,
+   "wrong_values": [],
+   "avoided_terms": [
+    "保留",
+    "保留札",
+    "保留区画",
+    "識別",
+    "隔離",
+    "不適合"
+   ],
+   "rationale": "答えの条は不適合品の識別と隔離の手続で、ロータ・手回し・運転・過給機の語を持たない。起点の 4.3 a) が旧番号で「品規 9 号の第 5 条により処置する」と書いており、これをたどると着く。"
+  },
+  {
+   "qid": "C2-03d",
+   "type": "control",
+   "twin_of": "C2-03",
+   "question": "QK-TC-02 の第 5 条（識別及び隔離）では、不適合の品に保留札を付けたあと、どの保留区画へ移すと定めているか。",
+   "answer": "保留区画 H-39 へ移す。",
+   "answer_keys": [
+    "H-39"
+   ],
+   "entry_doc": "QK-TC-02D.md",
+   "entry_where": "第 5 条（識別及び隔離）",
+   "entry_quote": "見つけた者は、当該品に橙色の保留札を付け、保留区画 H-39 へ移す。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-02D.md",
+   "answer_where": "第 5 条（識別及び隔離）",
+   "answer_quote": "見つけた者は、当該品に橙色の保留札を付け、保留区画 H-39 へ移す。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C2-03 と同じ事実を、答えの節の文書番号・項・見出しの語で直接聞く。"
+  },
+  {
+   "qid": "C2-04",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "RK10 系列の管理曲線の年次の傾向の確認のために、過去の成績表を借りたい。借りるときに何に書き込み、いつまでに返せばよいか。",
+   "answer": "持出簿に記入して持ち出し、5 稼働日以内に過検の文書庫へ戻す。",
+   "answer_keys": [
+    "持出簿",
+    "5 稼働日"
+   ],
+   "entry_doc": "KS-TC-P204C.md",
+   "entry_where": "4-1 年次の傾向の確認 (3)",
+   "entry_quote": "(3) 過去の成績表を文書庫から持ち出す場合は、QK-TC-01 の第 8 条による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "(3) 過去の成績表を文書庫から持ち出す場合は、QK-TC-01 の第 8 条による。",
+   "reference_form": "番号と項（QK-TC-01 の第 8 条）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "第 8 条（保管）2 項",
+   "answer_quote": "持ち出すときは、持出簿に記入し、5 稼働日以内に戻す。",
+   "hops": 1,
+   "wrong_values": [
+    "3 稼働日以内"
+   ],
+   "avoided_terms": [
+    "持ち出す",
+    "持出簿",
+    "戻す",
+    "文書庫",
+    "保管"
+   ],
+   "rationale": "答えの条は帳票の保管の定めで、管理曲線・傾向・系列の語を持たない。質問は管理曲線の場面の語で聞くので、管理曲線の基準の節が先に並ぶ。起点の 4-1 (3) の「QK-TC-01 の第 8 条による」をたどると着く。同じ規定の第 7 条（承認は 3 稼働日以内）と第 12 条（閲覧及び貸出）が紛らわしい。",
+   "fix_note": "質問を「何に書き込み、いつまでに返すか」の 2 つを聞く形にし、answer_keys を「持出簿」「5 稼働日」の 2 語にした。元の語「5 稼働日以内」は QK-TC-83 の第 14 条（監査報告書の期限）にもあり、全文書の点検で NG になっていた。"
+  },
+  {
+   "qid": "C2-04d",
+   "type": "control",
+   "twin_of": "C2-04",
+   "question": "QK-TC-01 の第 8 条（保管）では、文書庫から帳票を持ち出すとき、何に記入し、何稼働日以内に戻すと定めているか。",
+   "answer": "持出簿に記入し、5 稼働日以内に戻す。",
+   "answer_keys": [
+    "持出簿",
+    "5 稼働日"
+   ],
+   "entry_doc": "QK-TC-01G.md",
+   "entry_where": "第 8 条（保管）2 項",
+   "entry_quote": "持ち出すときは、持出簿に記入し、5 稼働日以内に戻す。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "第 8 条（保管）2 項",
+   "answer_quote": "持ち出すときは、持出簿に記入し、5 稼働日以内に戻す。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C2-04 と同じ事実を、答えの節の文書番号・項・見出しの語で直接聞く。",
+   "fix_note": "元の問い C2-04 に合わせ、記入先と期限の 2 つを聞く形にした（質問から「持出簿」の語を外した）。"
+  },
+  {
+   "qid": "C2-05",
+   "type": "ref2",
+   "twin_of": null,
+   "question": "RM24 の量産機が、管理曲線に照らした性能の判定で不合格になった。この過給機の扱いは、いつまでに決めるのか。",
+   "answer": "性能に係る不適合（区分 乙）なので、見つけた日から 29 稼働日以内に処置を決める。決裁者は品質保証部長で、顧客への通知を要する。",
+   "answer_keys": [
+    "29 稼働日"
+   ],
+   "entry_doc": "KS-TC-T202D.md",
+   "entry_where": "5. 判定基準 5.1 性能",
+   "entry_quote": "管理曲線に対する判定で不合格となった過給機は、性能に係る不適合（区分 乙）として、QK-TC-02 の第 7 条により処置を決定する。",
+   "bridge_kind": "reference",
+   "bridge_quote": "管理曲線に対する判定で不合格となった過給機は、性能に係る不適合（区分 乙）として、QK-TC-02 の第 7 条により処置を決定する。",
+   "reference_form": "番号と項（QK-TC-02 の第 7 条）、続けて別表（別表 1 による）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [
+    {
+     "doc": "QK-TC-02D.md",
+     "where": "第 7 条（処置の決定）2 項",
+     "quote": "2 処置を決める期限及び決裁者は、不適合の区分に応じて、別表 1 による。",
+     "kind": "reference"
+    }
+   ],
+   "answer_doc": "QK-TC-02D.md",
+   "answer_where": "別表 1 区分別の期限及び決裁（乙 の行）",
+   "answer_quote": "| 乙 | 29 稼働日 | 品質保証部長 | 要 |",
+   "hops": 2,
+   "wrong_values": [
+    "19 稼働日",
+    "9 稼働日"
+   ],
+   "avoided_terms": [
+    "期限",
+    "決裁",
+    "区分",
+    "乙",
+    "稼働日",
+    "処置",
+    "不適合"
+   ],
+   "rationale": "答えの別表は「甲・乙・丙」と日数だけの表で、性能・管理曲線・過給機の語を持たない。起点の 5.1 が「区分 乙として QK-TC-02 の第 7 条により」と書き、第 7 条が「別表 1 による」と書いている。区分を取り違えると 19 稼働日（甲）や 9 稼働日（丙）になる。"
+  },
+  {
+   "qid": "C2-05d",
+   "type": "control",
+   "twin_of": "C2-05",
+   "question": "QK-TC-02 の別表 1（区分別の期限及び決裁）で、区分 乙 の不適合の処置を決める期限は、何稼働日か。",
+   "answer": "29 稼働日である。",
+   "answer_keys": [
+    "29 稼働日"
+   ],
+   "entry_doc": "QK-TC-02D.md",
+   "entry_where": "別表 1 区分別の期限及び決裁（乙 の行）",
+   "entry_quote": "| 乙 | 29 稼働日 | 品質保証部長 | 要 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-02D.md",
+   "answer_where": "別表 1 区分別の期限及び決裁（乙 の行）",
+   "answer_quote": "| 乙 | 29 稼働日 | 品質保証部長 | 要 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C2-05 と同じ事実を、答えの節の文書番号・項・見出しの語で直接聞く。"
+  },
+  {
+   "qid": "C2-06",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "RK14 の初号機の単独性能確認試験で、吸込ベルマウスに取り付けて吸込空気温度を計る熱電対は、いつまで使ってよいのか。",
+   "answer": "熱電対 TK-30 は、直近の校正に合格した日から 359 日を過ぎるまで使える（等級 乙、担当 計管）。",
+   "answer_keys": [
+    "359"
+   ],
+   "entry_doc": "KS-TC-T201B.md",
+   "entry_where": "2-5 計測器及び治具 1)",
+   "entry_quote": "吸込空気温度は、ベルマウスの外周の対向する 2 点に熱電対 TK-30 を取り付けて計測する。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "TK-30",
+   "bridge_aliases": [
+    "熱電対"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-P001D.md",
+   "answer_where": "別表 2 管理番号別の区分（TK-30 の行）",
+   "answer_quote": "| TK-30 | 乙 | 359 | 計管 |",
+   "hops": 1,
+   "wrong_values": [
+    "189",
+    "539",
+    "719"
+   ],
+   "avoided_terms": [
+    "周期",
+    "校正",
+    "管理番号",
+    "TK-30",
+    "日数",
+    "等級"
+   ],
+   "rationale": "答えの別表は管理番号と等級・周期・担当だけの表で、計測器の名称も初号機・吸込空気温度の語も持たない。起点の 2-5 に管理番号 TK-30 があり、これで行が決まる。ほかの行（189、539、719 など）と取り違えやすい。"
+  },
+  {
+   "qid": "C2-06d",
+   "type": "control",
+   "twin_of": "C2-06",
+   "question": "KS-TC-P001 の別表 2（管理番号別の区分）で、管理番号 TK-30 の周期はいくつか。",
+   "answer": "359（日）である。",
+   "answer_keys": [
+    "359"
+   ],
+   "entry_doc": "KS-TC-P001D.md",
+   "entry_where": "別表 2 管理番号別の区分（TK-30 の行）",
+   "entry_quote": "| TK-30 | 乙 | 359 | 計管 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-P001D.md",
+   "answer_where": "別表 2 管理番号別の区分（TK-30 の行）",
+   "answer_quote": "| TK-30 | 乙 | 359 | 計管 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C2-06 と同じ事実を、答えの節の文書番号・項・見出しの語で直接聞く。"
+  },
+  {
+   "qid": "C2-07",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "RK16 の量産機の単独試運転で、全力運転のあとに計った惰行時間を書き込んだ用紙は、出荷のあといつまで残しておくのか。",
+   "answer": "惰行時間は組付チェックシート（様式 TCF-120）の備考に記入する。この様式は保存区分 K-2 で、製品の出荷の日から 19 年残す。",
+   "answer_keys": [
+    "19 年"
+   ],
+   "entry_doc": "KS-TC-T202D.md",
+   "entry_where": "4.3 系列に固有の確認項目 b) 惰行時間",
+   "entry_quote": "計測値は、組付チェックシート（様式 TCF-120）の備考に記入する。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "TCF-120",
+   "bridge_aliases": [
+    "組付チェックシート"
+   ],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "別表 2 様式別の区分（TCF-120 の行）",
+   "answer_quote": "| TCF-120 | K-2 | 19 年 | 第 4 書架 |",
+   "hops": 1,
+   "wrong_values": [
+    "9 年",
+    "29 年",
+    "39 年"
+   ],
+   "avoided_terms": [
+    "年限",
+    "保存区分",
+    "保管",
+    "様式番号",
+    "書架",
+    "組付チェックシート",
+    "TCF-120"
+   ],
+   "rationale": "答えの別表は様式番号と区分・年限・書架だけの表で、帳票の名称も惰行時間・試運転の語も持たない。起点の 4.3 b) に様式番号 TCF-120 があり、これで行が決まる。成績表（TCF-110）の 29 年と取り違えやすい。"
+  },
+  {
+   "qid": "C2-07d",
+   "type": "control",
+   "twin_of": "C2-07",
+   "question": "QK-TC-01 の別表 2（様式別の区分）で、様式番号 TCF-120 の年限は何年か。",
+   "answer": "19 年である。",
+   "answer_keys": [
+    "19 年"
+   ],
+   "entry_doc": "QK-TC-01G.md",
+   "entry_where": "別表 2 様式別の区分（TCF-120 の行）",
+   "entry_quote": "| TCF-120 | K-2 | 19 年 | 第 4 書架 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "別表 2 様式別の区分（TCF-120 の行）",
+   "answer_quote": "| TCF-120 | K-2 | 19 年 | 第 4 書架 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C2-07 と同じ事実を、答えの節の文書番号・項・見出しの語で直接聞く。"
+  },
+  {
+   "qid": "C2-08",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "RK16 の量産機の単独試運転でブローバイガス量を計る流量計は、いつまで使ってよいのか。",
+   "answer": "流量計 BM-60 は、直近の校正に合格した日から 269 日を過ぎるまで使える（等級 丙、担当 生技保）。",
+   "answer_keys": [
+    "269"
+   ],
+   "entry_doc": "KS-TC-T202D.md",
+   "entry_where": "4.3 系列に固有の確認項目 d) ブローバイガス量",
+   "entry_quote": "d) ブローバイガス量: 流量計 BM-60 を軸受箱の空気抜き管につなぎ、KS-TC-T001 の 5.6 により計測する。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "BM-60",
+   "bridge_aliases": [
+    "流量計"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-P001D.md",
+   "answer_where": "別表 2 管理番号別の区分（BM-60 の行）",
+   "answer_quote": "| BM-60 | 丙 | 269 | 生技保 |",
+   "hops": 1,
+   "wrong_values": [
+    "419",
+    "359",
+    "189"
+   ],
+   "avoided_terms": [
+    "周期",
+    "校正",
+    "管理番号",
+    "BM-60",
+    "日数",
+    "等級"
+   ],
+   "rationale": "答えの別表は管理番号だけで引く表で、流量計・ブローバイの語を持たない。起点の 4.3 d) に管理番号 BM-60 があり、これで行が決まる。担当が計管でなく生技保である点も、行を取り違えると誤る。"
+  },
+  {
+   "qid": "C2-08d",
+   "type": "control",
+   "twin_of": "C2-08",
+   "question": "KS-TC-P001 の別表 2（管理番号別の区分）で、管理番号 BM-60 の周期はいくつか。",
+   "answer": "269（日）である。",
+   "answer_keys": [
+    "269"
+   ],
+   "entry_doc": "KS-TC-P001D.md",
+   "entry_where": "別表 2 管理番号別の区分（BM-60 の行）",
+   "entry_quote": "| BM-60 | 丙 | 269 | 生技保 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-P001D.md",
+   "answer_where": "別表 2 管理番号別の区分（BM-60 の行）",
+   "answer_quote": "| BM-60 | 丙 | 269 | 生技保 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C2-08 と同じ事実を、答えの節の文書番号・項・見出しの語で直接聞く。"
+  },
+  {
+   "qid": "C2-09",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "RM26 の量産機を第 3 運転台で単独試運転するときに使うオリフィス管は、吐出管の呼び径からどれを選ぶことになるか。そのオリフィス管は、点検に合格してから何日のあいだ使ってよいのか。",
+   "answer": "RM20 系列の吐出管の呼び径は 250A（KS-TC-T202 の 3.）で、KS-TC-P001 の別表 1 により OP-250 を選ぶ。OP-250 は等級 丁で、周期は 1,079 である。直近の点検に合格した日から 1,079 日まで使える。",
+   "answer_keys": [
+    "OP-250",
+    "1,079"
+   ],
+   "entry_doc": "KS-TC-P001D.md",
+   "entry_where": "別表 1 オリフィス管の選定（250A 以下 の行）",
+   "entry_quote": "| 250A 以下 | OP-250 | 0.50 | TB-30、TB-40 |",
+   "bridge_kind": "entity",
+   "bridge_entity": "OP-250",
+   "bridge_aliases": [],
+   "answer_doc": "KS-TC-P001D.md",
+   "answer_where": "別表 2 管理番号別の区分（OP-250 の行）",
+   "answer_quote": "| OP-250 | 丁 | 1,079 | 過組 |",
+   "hops": 1,
+   "wrong_values": [
+    "OP-400",
+    "OP-600",
+    "189",
+    "359",
+    "539"
+   ],
+   "avoided_terms": [
+    "周期",
+    "校正",
+    "管理番号",
+    "OP-250",
+    "日数",
+    "250A"
+   ],
+   "rationale": "答えの別表 2 は管理番号だけで引く表で、オリフィス・吐出管の語を持たない。質問で引くと、系列別の呼び径を書いた KS-TC-T202 の 3.（2 位）とオリフィス管の選定の表（KS-TC-P001 の別表 1。5 位）が上位に来る。別表 1 で 250A 以下が OP-250 と決め、その管理番号で別表 2 を引く。",
+   "also_needs": [
+    {
+     "doc": "KS-TC-T202D.md",
+     "where": "3. 試運転の準備",
+     "quote": "吐出管の呼び径は、RK10 系列が 150A、RM20 系列が 250A である。"
+    }
+   ],
+   "fix_note": "型を ent2 から ent1 に改め、起点を KS-TC-P001 の別表 1 にした。質問を「どれを選ぶか」と「何日のあいだ使えるか」の 2 つを聞く形にし、answer_keys を「OP-250」「1,079」の 2 語にした。元の問いは、別表 2 の OP の 3 行が同じ値（1,079）なので、呼び径から管理番号を決める 1 回目のつなぎが無くても当たった。経路も参照 1 回とエンティティ 1 回の混成だった。質問に「点検に合格してから何日」を入れ、治具の個票の使用の限度（孔の径）と読める余地を無くした。",
+   "caveat": "起点の別表 1 は質問で 5 位である。上位 6 件から外れた場合は、KS-TC-T202 の 3.（別表 1 から選ぶ。2 位）の参照を先に 1 回たどることになり、参照とエンティティの混成になる。対の問い C2-09d は周期だけを聞く。"
+  },
+  {
+   "qid": "C2-09d",
+   "type": "control",
+   "twin_of": "C2-09",
+   "question": "KS-TC-P001 の別表 2（管理番号別の区分）で、管理番号 OP-250 の周期はいくつか。",
+   "answer": "1,079（日）である。",
+   "answer_keys": [
+    "1,079"
+   ],
+   "entry_doc": "KS-TC-P001D.md",
+   "entry_where": "別表 2 管理番号別の区分（OP-250 の行）",
+   "entry_quote": "| OP-250 | 丁 | 1,079 | 過組 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-P001D.md",
+   "answer_where": "別表 2 管理番号別の区分（OP-250 の行）",
+   "answer_quote": "| OP-250 | 丁 | 1,079 | 過組 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C2-09 と同じ事実を、答えの節の文書番号・項・見出しの語で直接聞く。"
+  },
+  {
+   "qid": "C2-10",
+   "type": "ent2",
+   "twin_of": null,
+   "question": "RK16 の量産機の成績表の備考に、駆動空気の入口の圧力と温度を書き込んだ。この成績表は、出荷のあといつまで残しておくのか。",
+   "answer": "成績表は単独運転試験成績表（様式 TCF-110）で、保存区分 K-3、製品の出荷の日から 29 年残す。",
+   "answer_keys": [
+    "29 年"
+   ],
+   "entry_doc": "KS-TC-T202D.md",
+   "entry_where": "6. 記録",
+   "entry_quote": "成績表の様式、記入及び承認は、KS-TC-T001 の 7. による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "成績表の様式、記入及び承認は、KS-TC-T001 の 7. による。",
+   "reference_form": "番号と項（KS-TC-T001 の 7.）。そこで得た様式番号 TCF-110 で別表 2 を引く",
+   "bridge_entity": "TCF-110",
+   "bridge_aliases": [
+    "成績表",
+    "単独運転試験成績表"
+   ],
+   "path": [
+    {
+     "doc": "KS-TC-T001F.md",
+     "where": "7. 成績表及び記録",
+     "quote": "試運転の結果は、単独運転試験成績表（様式 TCF-110）に記入し、検査課長の承認を受ける。",
+     "kind": "entity"
+    }
+   ],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "別表 2 様式別の区分（TCF-110 の行）",
+   "answer_quote": "| TCF-110 | K-3 | 29 年 | 第 9 書架 |",
+   "hops": 2,
+   "wrong_values": [
+    "9 年",
+    "19 年",
+    "39 年"
+   ],
+   "avoided_terms": [
+    "年限",
+    "保存区分",
+    "保管",
+    "様式番号",
+    "書架",
+    "TCF-110"
+   ],
+   "rationale": "起点の 6. は成績表の様式を書かず、「KS-TC-T001 の 7. による」と指すだけである。様式番号 TCF-110 は T001 の 7. にあり、年限は様式番号だけで引く別表 2 にある。別表 2 は帳票の名称も試運転の語も持たない。組付チェックシート（TCF-120）の 19 年と取り違えやすい。",
+   "status": "dropped",
+   "drop_reason": "経路が参照 1 回（KS-TC-T202 の 6. → KS-TC-T001 の 7.）とエンティティ 1 回（様式番号 TCF-110 → QK-TC-01 別表 2）の混成で、ref2 にも ent2 にも数えられない。起点の文書には様式番号も帳票の正式な名称も無く、文書を直さないとどちらかの型にそろえられない。同じ事実（TCF-110 の 29 年）は CORE-06（ent1）が聞いている。"
+  },
+  {
+   "qid": "C2-10d",
+   "type": "control",
+   "twin_of": "C2-10",
+   "question": "QK-TC-01 の別表 2（様式別の区分）で、様式番号 TCF-110 の年限は何年か。",
+   "answer": "29 年である。",
+   "answer_keys": [
+    "29 年"
+   ],
+   "entry_doc": "QK-TC-01G.md",
+   "entry_where": "別表 2 様式別の区分（TCF-110 の行）",
+   "entry_quote": "| TCF-110 | K-3 | 29 年 | 第 9 書架 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "別表 2 様式別の区分（TCF-110 の行）",
+   "answer_quote": "| TCF-110 | K-3 | 29 年 | 第 9 書架 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C2-10 と同じ事実を、答えの節の文書番号・項・見出しの語で直接聞く。",
+   "status": "dropped",
+   "drop_reason": "対の元の問い C2-10 を dropped にしたため（問いそのものに誤りは無い。同じ事実の対の問いは CORE-06d）。"
+  },
+  {
+   "qid": "C2-11",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "RM24 の量産機を単独試運転するとき、潤滑油の供給温度は何度にするか。",
+   "answer": "RM20 系列の潤滑区分は ER（外部給油方式、ころがり軸受）なので、供給温度は 79±10 ℃ とする。",
+   "answer_keys": [
+    "79±10"
+   ],
+   "entry_doc": "KS-TC-T202D.md",
+   "entry_where": "4. 試運転要領（冒頭）",
+   "entry_quote": "潤滑方式の区分は、KS-TC-T001 の別表 1 による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "潤滑方式の区分は、KS-TC-T001 の別表 1 による。",
+   "reference_form": "番号と別表（KS-TC-T001 の別表 1）。そこで得た区分 ER で供給条件の節を選ぶ",
+   "bridge_entity": "ER",
+   "bridge_aliases": [
+    "区分 ER"
+   ],
+   "path": [
+    {
+     "doc": "KS-TC-T001F.md",
+     "where": "別表 1 系列別の区分（RM20 の行）",
+     "quote": "| RM20 | 斜流 | ER | TB-30 | 2 点 | — | ±5 % |",
+     "kind": "entity"
+    }
+   ],
+   "answer_doc": "KS-TC-L001E.md",
+   "answer_where": "3. 潤滑油の供給条件 (3) 区分 ER",
+   "answer_quote": "- 供給温度: 79±10 ℃",
+   "hops": 2,
+   "wrong_values": [
+    "49±10",
+    "59±10",
+    "60±10"
+   ],
+   "avoided_terms": [
+    "ER",
+    "区分",
+    "外部給油方式"
+   ],
+   "rationale": "供給条件の基準は区分ごとに同じ書式の節（SG・EP・ER・EC）を持ち、系列や型式の名前を書いていない。質問で引くと区分 EC や EP の節が並んで上位に来る（点検では EC の節が 1 位、正しい ER の節は 4 位）。RM20 系列が区分 ER であることは、起点の 4. が指す KS-TC-T001 の別表 1 にだけ書いてある。協議の記録にある 60±10 ℃（技術資料の値）も紛らわしい。"
+  },
+  {
+   "qid": "C2-12",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "斜流タービンの系列の性能管理曲線は、どれだけの間隔で定期の見直しを行うのか。",
+   "answer": "斜流タービンの系列は RM20 系列で、管理曲線は 62 か月を超えない間隔で見直す。間隔は直近の承認の日から数える。",
+   "answer_keys": [
+    "62"
+   ],
+   "entry_doc": "KS-TC-T001F.md",
+   "entry_where": "別表 1 系列別の区分（RM20 の行）",
+   "entry_quote": "| RM20 | 斜流 | ER | TB-30 | 2 点 | — | ±5 % |",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "RM20",
+   "bridge_aliases": [
+    "RM20 系列",
+    "斜流"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-P204C.md",
+   "answer_where": "4-2 定期の見直し",
+   "answer_quote": "RK10 系列の管理曲線は 42 か月、RM20 系列の管理曲線は 62 か月を超えない間隔で見直す。",
+   "hops": 1,
+   "wrong_values": [
+    "42",
+    "3 年"
+   ],
+   "avoided_terms": [
+    "RM20",
+    "RM22",
+    "RM24",
+    "RM26"
+   ],
+   "rationale": "答えの節には RK10 系列（42 か月）と RM20 系列（62 か月）が並んでおり、ほかの系列群の同じ節（KS-TC-P104、KS-TC-P304 の 4-2）もきょうだいになる。質問は系列を名前でなくタービンの形式で呼んでいる。斜流が RM20 系列であることは、KS-TC-T001 の別表 1 にだけ書いてある。",
+   "fix_note": "answer_keys を「62」にした（「62 か月」は「62 ヶ月」「62 箇月」と書いた正しい回答で外れる）。wrong_values に他群のきょうだいの値「3 年」を足した。",
+   "caveat": "採点の注意: きょうだいの値を並べただけの回答も answer_keys に当たる。wrong_values を含まないことを正答の条件に足すのが望ましい。"
+  },
+  {
+   "qid": "C2-13",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "RM24 の量産機の性能の判定に使う管理曲線は、いつまでに次の定期の見直しを終えることになっているか。年月日は、2020.01.31 のような書き方で答えてほしい。",
+   "answer": "RM24 の管理曲線の番号は MQ-440 で、次の定期の見直しの期限は 2023.07.22 である。",
+   "answer_keys": [
+    "2023.07.22"
+   ],
+   "entry_doc": "KS-TC-P204C.md",
+   "entry_where": "別表 1 型式別の管理曲線の番号（RM24 の行）",
+   "entry_quote": "| RM24 | MQ-440 |",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "MQ-440",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-P204C.md",
+   "answer_where": "別表 2 番号別の登録の状況（MQ-440 の行）",
+   "answer_quote": "| MQ-440 | A | 2018.06.10 | 2023.07.22 |",
+   "hops": 1,
+   "wrong_values": [
+    "2023.01.12",
+    "2024.12.22",
+    "2023.08.02",
+    "2022.12.02"
+   ],
+   "avoided_terms": [
+    "MQ-440",
+    "番号"
+   ],
+   "rationale": "答えの別表 2 は管理曲線の番号だけで引く表で、型式の名前を書いていない。質問で引くと別表 2 が 1 位に来るが、7 つの行のどれが RM24 かは決まらない。番号 MQ-440 は別表 1 にだけ書いてあり、番号は型式の記号と対応しない。経路の問い（ent1）として作ったが、答えの表が質問で直接引けた（8 位）ので、この型にした。",
+   "fix_note": "質問に、年月日の書き方を指定する一文を足した。answer_keys は文書の書式（2023.07.22）のままで、回答が「2023 年 7 月 22 日」と書くと外れるためである。",
+   "caveat": "採点の側で年月日を正規化していない。書き方の指定に従わない回答（2023 年 7 月 22 日、2023/07/22）は、内容が正しくても外れる。"
+  },
+  {
+   "qid": "C2-14",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "斜流タービンの系列の量産機で、単独試運転の性能の判定に使う管理曲線は、いつまでに作ることになっているか。",
+   "answer": "斜流タービンの系列は RM20 系列で、管理曲線は KS-TC-P204 による。もとにする台数の初号機の試験が終わった日から、12 稼働日以内に作成する。",
+   "answer_keys": [
+    "12 稼働日"
+   ],
+   "entry_doc": "KS-TC-T001F.md",
+   "entry_where": "6.1 性能",
+   "entry_quote": "性能の判定は、系列ごとの性能管理曲線（KS-TC-P104、KS-TC-P204 又は KS-TC-P304 により管理する。）による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "性能の判定は、系列ごとの性能管理曲線（KS-TC-P104、KS-TC-P204 又は KS-TC-P304 により管理する。）による。",
+   "reference_form": "番号だけ（KS-TC-P104、KS-TC-P204 又は KS-TC-P304 と 3 つを並べ、系列を書かない）",
+   "bridge_entity": "RM20",
+   "bridge_aliases": [],
+   "path": [
+    {
+     "doc": "KS-TC-T001F.md",
+     "where": "別表 1 系列別の区分（RM20 の行）",
+     "quote": "| RM20 | 斜流 | ER | TB-30 | 2 点 | — | ±5 % |",
+     "kind": "entity"
+    },
+    {
+     "doc": "KS-TC-A000N.md",
+     "where": "2.2 RK10・RM20 系列",
+     "quote": "| KS-TC-P204 | RK10・RM20 系列過給機 性能管理曲線管理基準 | C | 2020.02.10 | 過検 |",
+     "kind": "entity"
+    }
+   ],
+   "answer_doc": "KS-TC-P204C.md",
+   "answer_where": "2-1 作成の時期",
+   "answer_quote": "管理曲線は、2-2 に定める台数の初号機の試験が終わった日から、12 稼働日以内に作成する。",
+   "hops": 2,
+   "wrong_values": [
+    "31 日",
+    "23 稼働日"
+   ],
+   "avoided_terms": [
+    "RM20",
+    "RM24",
+    "KS-TC-P204"
+   ],
+   "rationale": "共通の試運転基準の 6.1 は、管理曲線の基準を 3 つ並べて指し、どれがどの系列かを書いていない。3 つの基準は同じ見出し（2-1 作成の時期）を持つきょうだいで、質問は系列を名前で呼ばないので、どれが答えか決まらない。斜流が RM20 系列であること（別表 1）と、RM20 系列の基準が KS-TC-P204 であること（発行目録の 2.2）をたどって決まる。共通文書から群の文書への参照（ref1）として作ったが、答えの節が質問で直接引けた（1 位）ので、この型にした。きょうだいの値はほかの群の文書にあり、ここでは分からない。",
+   "fix_note": "質問から「もとにする初号機の試験が済んでから」を外した。この言い回しは KS-TC-P204 の 2-1 の語で、きょうだい（KS-TC-P104、KS-TC-P304 の 2-1）は使わないため、つなぎが無くても正しい節が 1 位に来た。改めた文では、KS-TC-P304 が 1 位、KS-TC-P104 が 3 位、答えの KS-TC-P204 が 4 位に並ぶ。answer_keys は「12 稼働日」とし、wrong_values にきょうだいの値を入れた。",
+   "caveat": "採点の注意: きょうだいの値を並べただけの回答も answer_keys に当たる。wrong_values を含まないことを正答の条件に足すのが望ましい。"
+  },
+  {
+   "qid": "C2-15",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "RK14 の初号機の単独性能確認試験で使う指示回転速度は、それぞれ何 min-1 か。",
+   "answer": "手元の文書には書かれていない。指示回転速度は、過技性の技術資料 TS-0520 に型式ごとに示されるが、同資料は過技性が保管しており、文書群に無い。",
+   "answer_keys": [],
+   "entry_doc": "KS-TC-T201B.md",
+   "entry_where": "2. 単独性能確認試験要領（冒頭）",
+   "entry_quote": "計測する回転速度は、過技性の技術資料 TS-0520 に型式ごとに示された回転速度（以下「指示回転速度」という。）による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "計測する回転速度は、過技性の技術資料 TS-0520 に型式ごとに示された回転速度（以下「指示回転速度」という。）による。",
+   "reference_form": "手元に無い文書（過技性の技術資料 TS-0520）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "",
+   "answer_where": "",
+   "answer_quote": "",
+   "hops": 1,
+   "wrong_values": [
+    "50,332"
+   ],
+   "avoided_terms": [],
+   "rationale": "起点は指示回転速度を技術資料 TS-0520 に委ねており、同資料は文書群に無い。量産機の要領の別表 1 にある RK14 のチェック回転速度（50,332 min-1）は承認図の値であり、指示回転速度ではない。"
+  },
+  {
+   "qid": "C2-16",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "RM24 の量産機を第 3 運転台の架台に固定する取付けボルトの締付けトルクは、いくらか。",
+   "answer": "手元の文書には書かれていない。締付けトルクは機種ごとの組付指示書（過技設発行）によると定められており、その指示書は文書群に無い。",
+   "answer_keys": [],
+   "entry_doc": "KS-TC-T202D.md",
+   "entry_where": "3. 試運転の準備 3.2 取付け",
+   "entry_quote": "取付けボルトの締付けトルクは、機種ごとの組付指示書による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "取付けボルトの締付けトルクは、機種ごとの組付指示書による。",
+   "reference_form": "手元に無い文書（機種ごとの組付指示書）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "",
+   "answer_where": "",
+   "answer_quote": "",
+   "hops": 1,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "起点の 3.2 は締付けトルクを組付指示書に委ねており、組付指示書は文書群に無い。別表 2 には管の呼び径しか無い。"
+  },
+  {
+   "qid": "C2-17",
+   "type": "control",
+   "twin_of": null,
+   "question": "RK16 の量産機の単独試運転で、チェック回転速度は何 min-1 か。",
+   "answer": "43,652 min-1 である。",
+   "answer_keys": [
+    "43,652"
+   ],
+   "entry_doc": "KS-TC-T202D.md",
+   "entry_where": "別表 1 型式別のチェック回転速度（RK16 の行）",
+   "entry_quote": "| RK16 | 43,652 | 2 点 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-T202D.md",
+   "answer_where": "別表 1 型式別のチェック回転速度（RK16 の行）",
+   "answer_quote": "| RK16 | 43,652 | 2 点 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "型式名とチェック回転速度の語が、答えの別表の見出しと行にそのままある。"
+  },
+  {
+   "qid": "C2-18",
+   "type": "control",
+   "twin_of": null,
+   "question": "RK10・RM20 系列の初号機の判定で、サージ誤差は何 % 以内とされているか。",
+   "answer": "±4.2 % 以内である。",
+   "answer_keys": [
+    "4.2 %"
+   ],
+   "entry_doc": "KS-TC-P203A.md",
+   "entry_where": "4. 判定 (1) サージ誤差",
+   "entry_quote": "サージ誤差は、±4.2 % 以内とする。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-P203A.md",
+   "answer_where": "4. 判定 (1) サージ誤差",
+   "answer_quote": "サージ誤差は、±4.2 % 以内とする。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "質問の語（初号機、判定、サージ誤差）が答えの節の見出しと本文にそのままある。",
+   "fix_note": "answer_keys を「4.2 %」にした（「±4.2 %」は「4.2 % 以内」と書いた正しい回答で外れる）。"
+  },
+  {
+   "qid": "C2-19",
+   "type": "control",
+   "twin_of": null,
+   "question": "RK10・RM20 系列の初号機の単独性能確認試験で、規定チェック回転速度は、最高許容回転速度の何 % に最も近い指示回転速度とするか。",
+   "answer": "最高許容回転速度の 82 % に最も近い指示回転速度とする。",
+   "answer_keys": [
+    "82 %"
+   ],
+   "entry_doc": "KS-TC-T201B.md",
+   "entry_where": "2. 単独性能確認試験要領（冒頭）",
+   "entry_quote": "指示回転速度のうち、最高許容回転速度の 82 % に最も近いものを、規定チェック回転速度（Nt）とする。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-T201B.md",
+   "answer_where": "2. 単独性能確認試験要領（冒頭）",
+   "answer_quote": "指示回転速度のうち、最高許容回転速度の 82 % に最も近いものを、規定チェック回転速度（Nt）とする。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "質問の語（規定チェック回転速度、最高許容回転速度、指示回転速度）が答えの節にそのままある。"
+  },
+  {
+   "qid": "C2-20",
+   "type": "control",
+   "twin_of": null,
+   "question": "RM20 系列の量産機の惰行時間は、何秒以上とされているか。",
+   "answer": "52 秒以上である。",
+   "answer_keys": [
+    "52 秒"
+   ],
+   "entry_doc": "KS-TC-T202D.md",
+   "entry_where": "5. 判定基準 5.2 惰行時間",
+   "entry_quote": "4.3 b) の惰行時間は、RK10 系列では 32 秒以上、RM20 系列では 52 秒以上とする。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-T202D.md",
+   "answer_where": "5. 判定基準 5.2 惰行時間",
+   "answer_quote": "4.3 b) の惰行時間は、RK10 系列では 32 秒以上、RM20 系列では 52 秒以上とする。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "質問の語（RM20 系列、惰行時間）が答えの節にそのままある。",
+   "fix_note": "answer_keys を「52 秒」にした（質問が「何秒以上」と聞いているので、「52 秒」と答えた正しい回答が「52 秒以上」に当たらない）。"
+  }
+ ]
+}

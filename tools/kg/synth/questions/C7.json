@@ -1,0 +1,1068 @@
+{
+ "questions": [
+  {
+   "qid": "C7-01",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "単独試運転の成績表の承認者が不在のとき、代行者として承認する者に指名できるのは、どういう者か。",
+   "answer": "承認者（その代行者を含む）となる検査員の資格は、QK-TC-71 による。同規定の別表 3 で、QK-TC-01 の第 7 条の職務には等級 S-37（1 級検査員）が要り、職務に就く前に課程 SC-77 を修了していなければならない。",
+   "answer_keys": [
+    "S-37",
+    "SC-77"
+   ],
+   "entry_doc": "QK-TC-01G.md",
+   "entry_where": "第 7 条（承認）",
+   "entry_quote": "2 承認者となる検査員の資格は、QK-TC-71 による。承認者が不在のときは、あらかじめ指名した代行者が承認する。",
+   "bridge_kind": "reference",
+   "bridge_quote": "2 承認者となる検査員の資格は、QK-TC-71 による。",
+   "reference_form": "番号だけ（QK-TC-71 による）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-71E.md",
+   "answer_where": "別表 3 条別の区分",
+   "answer_quote": "| QK-TC-01 | 第 7 条 | S-37 | SC-77 |",
+   "hops": 1,
+   "wrong_values": [
+    "SC-57",
+    "SC-67",
+    "S-27"
+   ],
+   "avoided_terms": [
+    "検査員",
+    "資格",
+    "等級",
+    "課程",
+    "認定",
+    "QK-TC-01",
+    "第 7 条"
+   ],
+   "rationale": "答えは、検査員の規定の別表 3 にある。この表は、他の規定類の職務を番号と条だけで引く表で、帳票・承認・代行の語を持たない。質問は帳票と承認の語だけなので、帳票の規定の条と成績表の節が先に並ぶ。起点の第 7 条にある「QK-TC-71 による」をたどり、起点自身の番号と条（QK-TC-01 の第 7 条）で行を選ぶと着く。"
+  },
+  {
+   "qid": "C7-02",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "船主から、単独試運転を担当する検査員が資格を持っていることの証明を求められた。どう対応すればよいか。",
+   "answer": "資格認定台帳の当該の頁をもって証明とし、その取扱いは品規 7 号（現行の QK-TC-01）の第 11 条による。原本は社外へ出さず、写しを渡す。写しには右上に「写」の印を押し、過品管が発行番号を付けて、提出簿に記入する。",
+   "answer_keys": [
+    "発行番号"
+   ],
+   "entry_doc": "QK-TC-71E.md",
+   "entry_where": "第 10 条（台帳及び証明）",
+   "entry_quote": "2 顧客又は船級協会から、検査員が資格を有することの証明を求められた場合は、台帳の当該の頁をもって証明とする。その取扱いは、品規 7 号の第 11 条による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "その取扱いは、品規 7 号の第 11 条による。",
+   "reference_form": "旧番号と項（品規 7 号の第 11 条。現行の番号は発行目録の 6. で QK-TC-01 と分かる）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "第 11 条（顧客への提出）",
+   "answer_quote": "2 写しには、右上に「写」の印を押し、過品管が発行番号を付ける。発行番号は、提出簿に記入する。",
+   "hops": 1,
+   "wrong_values": [],
+   "avoided_terms": [
+    "顧客",
+    "提出",
+    "写し",
+    "帳票",
+    "原本",
+    "立会い"
+   ],
+   "rationale": "答えの条は帳票の規定の「顧客への提出」で、検査員・資格・証明の語を持たない。質問は検査員の資格の証明の話なので、検査員の規定の条と試運転の基準の節が先に並ぶ。起点の第 10 条は、旧番号で「品規 7 号の第 11 条による」と書いている。"
+  },
+  {
+   "qid": "C7-03",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "聴音検査で異常音を聞き落とし、あとの工程で軸受の損傷が見つかった。聞き落とした者は、そのあとどうなるのか。",
+   "answer": "過検の長が、その者の認定の効力を停止する。再び検査に就くには、QK-TC-73 の第 8 条により、技教が開く課程 RC-47 を修了しなければならない。所属の長は、停止の日から 7 稼働日以内に再教育の計画を技教へ出す。",
+   "answer_keys": [
+    "RC-47"
+   ],
+   "entry_doc": "QK-TC-74A.md",
+   "entry_where": "第 9 条（効力の停止）",
+   "entry_quote": "過検の長は、認定を受けた者が接触音又は異常音を聞き落とし、後の工程又は出荷の後に当該の異常が判明したときは、その者の認定の効力を停止する。",
+   "bridge_kind": "reference",
+   "bridge_quote": "2 効力を停止された者が、再び検査に就くまでの取扱いは、QK-TC-73 の第 8 条による。",
+   "reference_form": "番号と項（QK-TC-73 の第 8 条）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-73B.md",
+   "answer_where": "第 8 条（再教育）",
+   "answer_quote": "資格又は認定の効力を停止された者は、技教が開く課程 RC-47 を修了しなければ、元の業務に就くことができない。",
+   "hops": 1,
+   "wrong_values": [],
+   "avoided_terms": [
+    "再教育",
+    "教育",
+    "訓練",
+    "課程",
+    "停止",
+    "効力"
+   ],
+   "rationale": "答えの条は教育訓練の要領の「再教育」で、「資格又は認定の効力を停止された者」としか書いておらず、聴音・異常音・軸受の語を持たない。質問は聴音検査の場面の語だけなので、聴音の要領と試運転の基準の節が先に並ぶ。起点の第 9 条の 2 項が、番号と項で指している。"
+  },
+  {
+   "qid": "C7-04",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "運転台のまわりに、まだ認定を受けていない見習いの作業者が混じっていることがある。認定を受けた作業者とは、どこで見分けるのか。",
+   "answer": "見習いであることの表示は、「教育訓練 実施要領」（QK-TC-73）の実技の訓練の定めによる。訓練を受けている者は、訓練のあいだ、若草色の腕章を左の腕に着けるので、腕章で見分ける。",
+   "answer_keys": [
+    "若草色"
+   ],
+   "entry_doc": "QK-TC-72C.md",
+   "entry_where": "第 12 条（認定を受けていない者）",
+   "entry_quote": "2 見習いの進め方、及び見習いであることの表示は、「教育訓練 実施要領」の、実技の訓練の定めによる。",
+   "bridge_kind": "reference",
+   "bridge_quote": "2 見習いの進め方、及び見習いであることの表示は、「教育訓練 実施要領」の、実技の訓練の定めによる。",
+   "reference_form": "名称だけ（番号なし。「教育訓練 実施要領」の、実技の訓練の定め）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-73B.md",
+   "answer_where": "第 7 条（実技の訓練）",
+   "answer_quote": "2 受講者は、訓練のあいだ、若草色の腕章を左の腕に着ける。",
+   "hops": 1,
+   "wrong_values": [],
+   "avoided_terms": [
+    "腕章",
+    "訓練",
+    "受講者",
+    "指導員",
+    "表示"
+   ],
+   "rationale": "答えの条は教育訓練の要領の「実技の訓練」で、受講者・指導員・腕章の語で書いてあり、運転台・見習い・作業者・認定の語を持たない。質問は運転台の作業者の話なので、作業者の規定の条が先に並ぶ。起点の第 12 条は、番号を書かずに名称と定めの名で指している。"
+  },
+  {
+   "qid": "C7-05",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "携帯式振動計の当て方を習わせる加振台は、点検してからいつまで使ってよいのか。",
+   "answer": "加振台の管理番号は KN-730 で、別表 2 の周期は 277 である。直近の点検に合格した日から数えて 277 日を過ぎたら、訓練にも実技試験にも使えない。",
+   "answer_keys": [
+    "277"
+   ],
+   "entry_doc": "QK-TC-73B.md",
+   "entry_where": "第 12 条（訓練用の設備）",
+   "entry_quote": "(3) 加振台 KN-730: 定まった大きさの振動を出し、携帯式振動計の当て方を習わせる。",
+   "bridge_kind": "reference",
+   "bridge_quote": "2 訓練用の設備は、管理番号ごとに別表 2 の区分で管理する。",
+   "reference_form": "同じ文書の別表（別表 2 の区分で管理する）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-73B.md",
+   "answer_where": "別表 2 管理番号別の区分",
+   "answer_quote": "| KN-730 | 第 3 実習室 | 277 | 計管 |",
+   "hops": 1,
+   "wrong_values": [
+    "187",
+    "367",
+    "727"
+   ],
+   "avoided_terms": [
+    "周期",
+    "管理番号",
+    "KN-730",
+    "別表",
+    "訓練",
+    "日数"
+   ],
+   "rationale": "答えは同じ文書の別表 2 にあるが、別表 2 は管理番号だけで引く表で、加振台・振動計の語を持たない。質問は振動計と加振台の語なので、設備を名前で挙げた第 12 条と、振動の計測の節が先に並ぶ。第 12 条の「別表 2 の区分で管理する」と管理番号 KN-730 で行が決まる。"
+  },
+  {
+   "qid": "C7-06",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "聴音検査の認定を受けた者が休暇で不在で、試運転の日程も動かせない。どうすればよいか。",
+   "answer": "「不適合品処理規定」（QK-TC-02）の、基準からの逸脱の事前承認の定め（第 9 条）による。実施する部門の長が、逸脱許可申請書（様式 TCF-240）を実施の予定日の 5 稼働日前までに過品管へ提出し、基準逸脱審査会の承認を受ける。",
+   "answer_keys": [
+    "基準逸脱審査会"
+   ],
+   "entry_doc": "QK-TC-74A.md",
+   "entry_where": "第 10 条（認定を受けた者がいない場合）",
+   "entry_quote": "2 日程を改めることができない場合の取扱いは、「不適合品処理規定」の、基準からの逸脱の事前承認の定めによる。",
+   "bridge_kind": "reference",
+   "bridge_quote": "2 日程を改めることができない場合の取扱いは、「不適合品処理規定」の、基準からの逸脱の事前承認の定めによる。",
+   "reference_form": "名称だけ（番号なし。「不適合品処理規定」の、基準からの逸脱の事前承認の定め）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-02D.md",
+   "answer_where": "第 9 条（基準からの逸脱の事前承認）",
+   "answer_quote": "基準に定める条件又は項目の一部を満たすことができないと、実施の前から見込まれる場合は、実施する部門の長は、逸脱許可申請書（様式 TCF-240）を、実施の予定日の 5 稼働日前までに過品管へ提出し、基準逸脱審査会の承認を受けなければならない。",
+   "hops": 1,
+   "wrong_values": [],
+   "avoided_terms": [
+    "逸脱",
+    "事前承認",
+    "申請",
+    "審査会",
+    "不適合"
+   ],
+   "rationale": "答えの条は不適合品処理規定の手続の話で、聴音・認定・休暇・日程の語を持たない。質問は聴音検査の要員の話なので、聴音の要領と試運転の基準の節が先に並ぶ。起点の第 10 条は、番号を書かずに規定の名称と定めの名で指している。答えの条は共通の問い CORE-01 と同じである。"
+  },
+  {
+   "qid": "C7-07",
+   "type": "ref2",
+   "twin_of": null,
+   "question": "単独試運転で、検査員から回転を下げるよう指示されたのに従わずに運転を続けた作業者は、どういう扱いを受けるのか。",
+   "answer": "過運が、その者の認定の効力を停止する。停止の期間と再開の条件は QK-TC-71 の第 9 条を準用し、同条の (2) に当たるものとして扱う。同規定の別表 2 の (2) により、停止は 117 日で、再開には実技の審査が要る。",
+   "answer_keys": [
+    "117"
+   ],
+   "entry_doc": "QK-TC-72C.md",
+   "entry_where": "第 11 条（効力の停止）",
+   "entry_quote": "(1) 検査員から回転を下げるよう指示を受けたのに、従わずに運転を続けたとき。",
+   "bridge_kind": "reference",
+   "bridge_quote": "2 停止の期間及び再開の条件は、QK-TC-71 の第 9 条を準用する。この場合、前項の (1) 及び (2) は同条の (2) に、前項の (3) は同条の (1) に当たるものとして扱う。",
+   "reference_form": "番号と項（QK-TC-71 の第 9 条を準用）→ 別表（別表 2 による）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [
+    {
+     "doc": "QK-TC-71E.md",
+     "where": "第 9 条（効力の停止及び取消し）",
+     "quote": "措置は、号に応じて別表 2 による。",
+     "kind": "reference"
+    }
+   ],
+   "answer_doc": "QK-TC-71E.md",
+   "answer_where": "別表 2 号別の措置",
+   "answer_quote": "| (2) | 停止 | 117 | 実技の審査 |",
+   "hops": 2,
+   "wrong_values": [
+    "57",
+    "737"
+   ],
+   "avoided_terms": [
+    "停止",
+    "期間",
+    "日数",
+    "措置",
+    "別表"
+   ],
+   "rationale": "答えは検査員の規定の別表 2 で、号の番号だけで引く表である。作業者・回転・指示の語を持たない。質問は試運転の場面の語なので、作業者の規定と試運転の基準の節が先に並ぶ。起点の第 11 条が「QK-TC-71 の第 9 条を準用し、同条の (2) に当たる」と書き、その第 9 条が「別表 2 による」と書いている。"
+  },
+  {
+   "qid": "C7-08",
+   "type": "ent2",
+   "twin_of": null,
+   "question": "帳票の承認者や、その代行者になる者は、それまでに何台の単独試運転に立ち会っていなければならないか。",
+   "answer": "承認者となる検査員の資格は QK-TC-71 による。同規定の別表 3 で、QK-TC-01 の第 7 条の職務には等級 S-37 が要る。別表 1 で S-37 の実績は 407 であり、検査に従事した単独試運転が 407 台に達していなければならない。",
+   "answer_keys": [
+    "407"
+   ],
+   "entry_doc": "QK-TC-01G.md",
+   "entry_where": "第 7 条（承認）",
+   "entry_quote": "2 承認者となる検査員の資格は、QK-TC-71 による。承認者が不在のときは、あらかじめ指名した代行者が承認する。",
+   "bridge_kind": "reference",
+   "bridge_quote": "2 承認者となる検査員の資格は、QK-TC-71 による。",
+   "reference_form": "番号だけ（QK-TC-71 による）",
+   "bridge_entity": "S-37",
+   "bridge_aliases": [
+    "1 級検査員"
+   ],
+   "path": [
+    {
+     "doc": "QK-TC-71E.md",
+     "where": "別表 3 条別の区分",
+     "quote": "| QK-TC-01 | 第 7 条 | S-37 | SC-77 |",
+     "kind": "reference"
+    }
+   ],
+   "answer_doc": "QK-TC-71E.md",
+   "answer_where": "別表 1 記号別の事項",
+   "answer_quote": "| S-37 | 407 | 247 | 学科及び実技 |",
+   "hops": 2,
+   "wrong_values": [
+    "137",
+    "27"
+   ],
+   "avoided_terms": [
+    "実績",
+    "検査員",
+    "等級",
+    "資格",
+    "認定",
+    "S-37"
+   ],
+   "rationale": "答えは検査員の規定の別表 1 で、等級の記号だけで引く表である。帳票・承認の語を持たない。起点の第 7 条の「QK-TC-71 による」をたどると別表 3 に着き、そこで QK-TC-01 の第 7 条の行から記号 S-37 が分かる。その記号で別表 1 を引く。参照を 1 回、エンティティを 1 回たどる。",
+   "status": "dropped",
+   "drop_reason": "経路が参照（QK-TC-01 の第 7 条 → QK-TC-71。番号だけの参照で、別表 3 には第 5 条 2 項を経る）とエンティティ（記号 S-37 → 別表 1）の混成で、ref2 にも ent2 にも数えられない。起点の第 7 条には等級の名称も記号も無く、文書を直さないとどちらかの型にそろえられない。別表 1 の実績が累計か等級ごとに積む台数かも、本文では決まらない。"
+  },
+  {
+   "qid": "C7-09",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "運転台を操作する作業者の認定の結果を登録した台帳の原本は、どこにあるのか。",
+   "answer": "認定の結果は、資格認定台帳（様式 TCF-510）に登録する。QK-TC-01 の別表 2 で、様式 TCF-510 は区分 K-5（永年）、書架は第 7 書架である。過検の文書庫の第 7 書架にある。",
+   "answer_keys": [
+    "第 7 書架"
+   ],
+   "entry_doc": "QK-TC-72C.md",
+   "entry_where": "第 15 条（記録）",
+   "entry_quote": "認定の結果は、技教が資格認定台帳（様式 TCF-510）に登録する。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "TCF-510",
+   "bridge_aliases": [
+    "資格認定台帳",
+    "認定台帳"
+   ],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "別表 2 様式別の区分",
+   "answer_quote": "| TCF-510 | K-5 | 永年 | 第 7 書架 |",
+   "hops": 1,
+   "wrong_values": [
+    "第 9 書架",
+    "第 6 書架",
+    "第 2 書架"
+   ],
+   "avoided_terms": [
+    "書架",
+    "保管",
+    "保存",
+    "様式",
+    "TCF-510",
+    "文書庫"
+   ],
+   "rationale": "答えは帳票の規定の別表 2 で、様式番号だけで引く表である。帳票の名称も、運転台・作業者・認定の語も持たない。起点の第 15 条に様式番号 TCF-510 が書いてあり、それで行が決まる。検査員の規定の第 10 条には「台帳の写しを本館の事務室に備える」とあり、原本の場所と取り違えやすい。"
+  },
+  {
+   "qid": "C7-10",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "聴音検査の認定の実技試験で音を再生する装置は、点検してからいつまで試験に使ってよいのか。",
+   "answer": "実技試験に使うのは聴音訓練装置 KN-710 である。QK-TC-73 の別表 2 で、KN-710 の周期は 187 であり、直近の点検に合格した日から数えて 187 日を過ぎたら使えない。",
+   "answer_keys": [
+    "187"
+   ],
+   "entry_doc": "QK-TC-73B.md",
+   "entry_where": "第 12 条（訓練用の設備）",
+   "entry_quote": "(1) 聴音訓練装置 KN-710: 録音した音を、聴音棒を通して聞かせる。",
+   "bridge_kind": "reference",
+   "bridge_quote": "2 訓練用の設備は、管理番号ごとに別表 2 の区分で管理する。",
+   "reference_form": "同じ文書の別表（別表 2 の区分で管理する）",
+   "path": [],
+   "answer_doc": "QK-TC-73B.md",
+   "answer_where": "別表 2 管理番号別の区分",
+   "answer_quote": "| KN-710 | 第 3 実習室 | 187 | 技教 |",
+   "hops": 1,
+   "wrong_values": [
+    "367",
+    "277",
+    "727"
+   ],
+   "avoided_terms": [
+    "周期",
+    "管理番号",
+    "KN-710",
+    "日数",
+    "聴音訓練装置"
+   ],
+   "rationale": "答えは同じ文書の別表 2 にあるが、別表 2 は管理番号だけで引く表で、聴音・実技試験・装置の語を持たない。設備を名前で挙げた第 12 条が質問で上位に来る。第 12 条の「別表 2 の区分で管理する」と管理番号 KN-710 で行が決まる。",
+   "fix_note": "型を ent1 から ref1 に改め、起点を答えの文書の QK-TC-73 の第 12 条にした。この条は設備の名前と管理番号（聴音訓練装置 KN-710）を挙げ、「別表 2 の区分で管理する」と書いており、質問で 2 位に来る。ここから同じ文書の別表への参照 1 回で着くので、C7-05（ref1）と同じ経路である。",
+   "caveat": "管理番号 KN-710 は QK-TC-74 の第 6 条（元の起点）と第 12 条と答えの行にあるので、エンティティでも 1 回で着く。参照とエンティティの両方で着ける問いである。"
+  },
+  {
+   "qid": "C7-11",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "運転台の操作の認定を受ける前の学科の講習で使う模擬操作盤は、点検してからいつまで講習に使ってよいのか。",
+   "answer": "講習で使う模擬操作盤の管理番号は KN-720 である。QK-TC-73 の別表 2 で、KN-720 の周期は 367 であり、直近の点検に合格した日から数えて 367 日を過ぎたら使えない。",
+   "answer_keys": [
+    "367"
+   ],
+   "entry_doc": "QK-TC-73B.md",
+   "entry_where": "第 12 条（訓練用の設備）",
+   "entry_quote": "(2) 模擬操作盤 KN-720: 運転台の操作盤を模し、警報及び計器の動きを再現する。",
+   "bridge_kind": "reference",
+   "bridge_quote": "2 訓練用の設備は、管理番号ごとに別表 2 の区分で管理する。",
+   "reference_form": "同じ文書の別表（別表 2 の区分で管理する）",
+   "path": [],
+   "answer_doc": "QK-TC-73B.md",
+   "answer_where": "別表 2 管理番号別の区分",
+   "answer_quote": "| KN-720 | 第 1 実習室 | 367 | 生技保 |",
+   "hops": 1,
+   "wrong_values": [
+    "187",
+    "277",
+    "727"
+   ],
+   "avoided_terms": [
+    "周期",
+    "管理番号",
+    "KN-720",
+    "日数"
+   ],
+   "rationale": "答えは同じ文書の別表 2 にあるが、別表 2 は管理番号だけで引く表で、運転台・学科・模擬操作盤の語を持たない。設備を名前で挙げた第 12 条が質問で 1 位に来る。第 12 条の「別表 2 の区分で管理する」と管理番号 KN-720 で行が決まる。",
+   "fix_note": "型を ent1 から ref1 に改め、起点を答えの文書の QK-TC-73 の第 12 条にした。この条は設備の名前と管理番号（模擬操作盤 KN-720）を挙げ、「別表 2 の区分で管理する」と書いており、質問で 1 位に来る（元の起点の QK-TC-72 の第 9 条は 2 位）。ここから同じ文書の別表への参照 1 回で着くので、C7-05（ref1）と同じ経路である。",
+   "caveat": "管理番号 KN-720 は QK-TC-72 の第 9 条（元の起点）と第 12 条と答えの行にあるので、エンティティでも 1 回で着く。参照とエンティティの両方で着ける問いである。"
+  },
+  {
+   "qid": "C7-12",
+   "type": "ent2",
+   "twin_of": null,
+   "question": "聴音検査の認定を受けようとする者は、それまでに何台の単独試運転に立ち会っていなければならないか。",
+   "answer": "聴音検査の認定を受けるには、2 級検査員以上の資格が要る。QK-TC-71 の第 3 条で 2 級検査員の記号は S-27、別表 1 で S-27 の実績は 137 であり、検査に従事した単独試運転が 137 台に達していなければならない。",
+   "answer_keys": [
+    "137"
+   ],
+   "entry_doc": "QK-TC-74A.md",
+   "entry_where": "第 4 条（受験の要件）",
+   "entry_quote": "聴音検査又は振動診断の認定を受けようとする者は、2 級検査員以上の資格を有し、かつ、所属の長の推薦を受けた者でなければならない。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "2 級検査員",
+   "bridge_aliases": [
+    "S-27"
+   ],
+   "path": [
+    {
+     "doc": "QK-TC-71E.md",
+     "where": "第 3 条（等級）",
+     "quote": "(2) 2 級検査員（記号 S-27）",
+     "kind": "entity"
+    }
+   ],
+   "answer_doc": "QK-TC-71E.md",
+   "answer_where": "別表 1 記号別の事項",
+   "answer_quote": "| S-27 | 137 | 97 | 学科及び実技 |",
+   "hops": 2,
+   "wrong_values": [
+    "407",
+    "27 台"
+   ],
+   "avoided_terms": [
+    "実績",
+    "等級",
+    "2 級検査員",
+    "S-27",
+    "資格"
+   ],
+   "rationale": "起点の第 4 条には等級の名称（2 級検査員）だけがあり、記号は無い。名称から記号 S-27 を引けるのは検査員の規定の第 3 条で、台数は記号だけで引く別表 1 にある。別表 1 は聴音の語も等級の名称も持たない。",
+   "fix_note": "wrong_values の「27」を「27 台」にした（正しい回答が書く記号「S-27」に当たるため）。"
+  },
+  {
+   "qid": "C7-13",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "HX40 系列の過給機を運転する運転台の操作の認定を受けるには、見習いとして何時間、操作に就かなければならないか。",
+   "answer": "HX40 系列の運転台は TB-40 で、その操作の認定は区分 U-47 である。区分 U-47 の認定を受けた者の監督のもとで、217 時間以上、操作に就く。",
+   "answer_keys": [
+    "217 時間"
+   ],
+   "entry_doc": "KS-TC-T001F.md",
+   "entry_where": "別表 1 系列別の区分",
+   "entry_quote": "| HX40 | ラジアル | EP | TB-40 | 4 点 | — | ±3 % |",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "TB-40",
+   "bridge_aliases": [
+    "U-47"
+   ],
+   "path": [],
+   "answer_doc": "QK-TC-72C.md",
+   "answer_where": "第 7 条（区分 U-47）",
+   "answer_quote": "(1) 見習い: 区分 U-47 の認定を受けた者の監督のもとで、217 時間以上、当該の運転台の操作に就く。",
+   "hops": 1,
+   "wrong_values": [
+    "257 時間",
+    "167 時間",
+    "127 時間"
+   ],
+   "avoided_terms": [
+    "TB-40",
+    "U-47",
+    "区分"
+   ],
+   "rationale": "作業者の規定は、区分ごとに同じ書式の条（第 4 条から第 7 条）を持ち、運転台の番号だけを書いて系列の名前を書いていない。質問で引くと 4 つの条が並んで上位に来る。HX40 系列の運転台が TB-40 であることは、試運転の基準の別表 1 にだけ書いてある。"
+  },
+  {
+   "qid": "C7-14",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "自己給油方式の過給機を運転する運転台の操作の認定を受けるには、見習いとして何時間、操作に就かなければならないか。",
+   "answer": "自己給油方式は潤滑区分 SG で、区分 SG の過給機を運転する運転台は TB-20 である。TB-20 の操作の認定は区分 U-27 で、区分 U-27 の認定を受けた者の監督のもとで、167 時間以上、操作に就く。",
+   "answer_keys": [
+    "167 時間"
+   ],
+   "entry_doc": "KS-TC-L001E.md",
+   "entry_where": "9. 運転台と供給設備の対応",
+   "entry_quote": "区分 SG の過給機を運転する TB-20 では、LU-20 を運転台の暖機及び停止後の冷却にだけ用いる。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "TB-20",
+   "bridge_aliases": [
+    "U-27",
+    "SG"
+   ],
+   "path": [
+    {
+     "doc": "KS-TC-L001E.md",
+     "where": "2. 潤滑方式の区分",
+     "quote": "| SG | 自己給油方式 | ころがり軸受 | 軸受箱の油溜りから、軸端のポンプ円板でくみ上げる。 |",
+     "kind": "entity"
+    }
+   ],
+   "answer_doc": "QK-TC-72C.md",
+   "answer_where": "第 5 条（区分 U-27）",
+   "answer_quote": "(1) 見習い: 区分 U-27 の認定を受けた者の監督のもとで、167 時間以上、当該の運転台の操作に就く。",
+   "hops": 2,
+   "wrong_values": [
+    "257 時間",
+    "217 時間",
+    "127 時間"
+   ],
+   "avoided_terms": [
+    "TB-20",
+    "U-27",
+    "SG",
+    "NA30"
+   ],
+   "rationale": "区分ごとの条は運転台の番号だけを書いており、潤滑の方式を書いていない。質問で引くと 4 つの条が並んで上位に来る。自己給油方式が区分 SG であること、区分 SG を運転する運転台が TB-20 であることは、供給条件の基準の 2. と 9. に書いてある。"
+  },
+  {
+   "qid": "C7-15",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "帳票の承認者を務めている者は、何か月ごとに更新を受けなければならないか。",
+   "answer": "承認者となる検査員の資格は QK-TC-71 による。同規定の第 8 条で、資格の効力は認定の日から 47 月であり、効力の切れる日までに更新を受ける。",
+   "answer_keys": [
+    "47"
+   ],
+   "entry_doc": "QK-TC-01G.md",
+   "entry_where": "第 7 条（承認）",
+   "entry_quote": "2 承認者となる検査員の資格は、QK-TC-71 による。承認者が不在のときは、あらかじめ指名した代行者が承認する。",
+   "bridge_kind": "reference",
+   "bridge_quote": "2 承認者となる検査員の資格は、QK-TC-71 による。",
+   "reference_form": "番号だけ（QK-TC-71 による）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-71E.md",
+   "answer_where": "第 8 条（更新）",
+   "answer_quote": "資格の効力は、認定の日から 47 月とする。",
+   "hops": 1,
+   "wrong_values": [
+    "27 月",
+    "27 か月",
+    "27ヶ月",
+    "17 月",
+    "17 か月",
+    "17ヶ月"
+   ],
+   "avoided_terms": [
+    "検査員",
+    "資格",
+    "認定",
+    "QK-TC-71"
+   ],
+   "rationale": "更新の条は、検査員の規定（47 月）、作業者の規定（27 月）、聴音の要領（17 月）に同じ書式で 1 つずつある。質問は「帳票の承認者」としか言っていないので、どの規定の更新かは決まらない。承認者の資格が検査員の規定によることは、帳票の規定の第 7 条にだけ書いてある。",
+   "fix_note": "answer_keys を「47」にした。元の「47 月」は、質問（何か月ごと）に対する自然な回答「47 か月」「47 ヶ月」に一致せず、正答が不正答になった。",
+   "caveat": "採点の注意: きょうだいの値を並べただけの回答も answer_keys に当たる。wrong_values を含まないことを正答の条件に足すのが望ましい。"
+  },
+  {
+   "qid": "C7-16",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "聴音検査の認定の実技試験で、エア運転中の過給機を使って聴音をするとき、過給機は何回転で回すのか。",
+   "answer": "手元の文書には書かれていない。そのときの回転速度は、機種ごとの組付指示書（過技設発行）によると定められており、その指示書は文書群に無い。",
+   "answer_keys": [],
+   "entry_doc": "QK-TC-74A.md",
+   "entry_where": "第 6 条（区分 D-17 の実技試験）",
+   "entry_quote": "このときに過給機を回す回転速度は、機種ごとの組付指示書による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "このときに過給機を回す回転速度は、機種ごとの組付指示書による。",
+   "reference_form": "手元に無い文書（機種ごとの組付指示書）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "",
+   "answer_where": "",
+   "answer_quote": "",
+   "hops": 1,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "起点の第 6 条は回転速度を組付指示書に委ねており、組付指示書は文書群に無い。この回転速度の値は、文書群のどこにも書いていない。"
+  },
+  {
+   "qid": "C7-17",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "検査員が社外で取得した資格は、社内の検査員の等級にどう読み替えるのか。",
+   "answer": "手元の文書には書かれていない。読み替える場合の取扱いは、全社の品質マニュアル QM-100 によると定められており、QM-100 は文書群に無い。",
+   "answer_keys": [],
+   "entry_doc": "QK-TC-71E.md",
+   "entry_where": "第 13 条（社外の資格及び顧客の要求）",
+   "entry_quote": "検査員が社外で取得した資格を、この規定の等級に読み替える場合の取扱いは、全社の品質マニュアル QM-100 による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "検査員が社外で取得した資格を、この規定の等級に読み替える場合の取扱いは、全社の品質マニュアル QM-100 による。",
+   "reference_form": "手元に無い文書（全社の品質マニュアル QM-100）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "",
+   "answer_where": "",
+   "answer_quote": "",
+   "hops": 1,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "起点の第 13 条は読み替えの取扱いを QM-100 に委ねており、QM-100 は文書群に無い。読み替えの対応は、文書群のどこにも書いていない。"
+  },
+  {
+   "qid": "C7-18",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "顧客の立会いのもとで行う試運転で、運転台を操作する作業者に顧客が求める条件は何か。",
+   "answer": "手元の文書には書かれていない。顧客が別の条件を求める場合は顧客の購入仕様書によると定められており、購入仕様書は文書群に無い。文書群から分かるのは、立会いの試運転では見習いを操作に就かせないことだけである。",
+   "answer_keys": [],
+   "entry_doc": "QK-TC-72C.md",
+   "entry_where": "第 14 条（顧客の立会い）",
+   "entry_quote": "2 立会いの試運転に就く作業者について、顧客が別の条件を求める場合は、顧客の購入仕様書による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "2 立会いの試運転に就く作業者について、顧客が別の条件を求める場合は、顧客の購入仕様書による。",
+   "reference_form": "手元に無い文書（顧客の購入仕様書）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "",
+   "answer_where": "",
+   "answer_quote": "",
+   "hops": 1,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "起点の第 14 条は顧客の求める条件を購入仕様書に委ねており、購入仕様書は文書群に無い。顧客ごとの条件は、文書群のどこにも書いていない。"
+  },
+  {
+   "qid": "C7-19",
+   "type": "control",
+   "twin_of": null,
+   "question": "検査員の資格認定の学科試験は、何点以上で合格か。",
+   "answer": "100 点を満点とし、77 点以上を合格とする。",
+   "answer_keys": [
+    "77 点"
+   ],
+   "entry_doc": "QK-TC-71E.md",
+   "entry_where": "第 7 条（認定の手続）",
+   "entry_quote": "学科試験は 100 点を満点とし、77 点以上を合格とする。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-71E.md",
+   "answer_where": "第 7 条（認定の手続）",
+   "answer_quote": "学科試験は 100 点を満点とし、77 点以上を合格とする。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "検査員の規定の第 7 条に、質問と同じ語（学科試験、合格）で書いてある。"
+  },
+  {
+   "qid": "C7-20",
+   "type": "control",
+   "twin_of": null,
+   "question": "聴音検査の認定を受ける者の聴力は、どのような基準で合格とするのか。",
+   "answer": "1,000 Hz 及び 4,000 Hz の純音について、両耳とも聴力レベルが 27 dB 以下であることを合格とする。",
+   "answer_keys": [
+    "27 dB"
+   ],
+   "entry_doc": "QK-TC-74A.md",
+   "entry_where": "第 5 条（聴力の確認）",
+   "entry_quote": "2 確認は、1,000 Hz 及び 4,000 Hz の純音について行い、両耳とも聴力レベルが 27 dB 以下であることを合格とする。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-74A.md",
+   "answer_where": "第 5 条（聴力の確認）",
+   "answer_quote": "2 確認は、1,000 Hz 及び 4,000 Hz の純音について行い、両耳とも聴力レベルが 27 dB 以下であることを合格とする。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "聴音の要領の第 5 条に、質問と同じ語（聴力、合格）で書いてある。"
+  },
+  {
+   "qid": "C7-21",
+   "type": "control",
+   "twin_of": null,
+   "question": "教育訓練の年間計画は、誰が、いつまでに作るのか。",
+   "answer": "技教（技能教育センター）が、毎年 2 月末までに翌年度の年間計画を作り、品質保証部長の承認を受ける。",
+   "answer_keys": [
+    "2 月"
+   ],
+   "entry_doc": "QK-TC-73B.md",
+   "entry_where": "第 4 条（年間計画）",
+   "entry_quote": "技教は、毎年 2 月末までに、翌年度の教育及び訓練の年間計画を作り、品質保証部長の承認を受ける。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-73B.md",
+   "answer_where": "第 4 条（年間計画）",
+   "answer_quote": "技教は、毎年 2 月末までに、翌年度の教育及び訓練の年間計画を作り、品質保証部長の承認を受ける。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "教育訓練の要領の第 4 条に、質問と同じ語（年間計画）で書いてある。",
+   "fix_note": "answer_keys を「2 月」にした（「2 月の末まで」と書いた正しい回答が「2 月末」に当たらない）。"
+  },
+  {
+   "qid": "C7-22",
+   "type": "control",
+   "twin_of": null,
+   "question": "QK-TC-73 の別表 1 で、番号 QK-TC-01 の教育の所要はいくつか。",
+   "answer": "147 である（1 回の教育に充てる時間を分で示したもの）。",
+   "answer_keys": [
+    "147"
+   ],
+   "entry_doc": "QK-TC-73B.md",
+   "entry_where": "別表 1 番号別の区分",
+   "entry_quote": "| QK-TC-01 | Y-17、Y-27 | 147 | 筆記 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-73B.md",
+   "answer_where": "別表 1 番号別の区分",
+   "answer_quote": "| QK-TC-01 | Y-17、Y-27 | 147 | 筆記 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "教育訓練の要領の別表 1 を、表の名前と番号で直接聞く。"
+  },
+  {
+   "qid": "C7-01d",
+   "type": "control",
+   "twin_of": "C7-01",
+   "question": "QK-TC-71 の別表 3 で、番号 QK-TC-01 の第 7 条の行の記号と摘要は何か。",
+   "answer": "記号は S-37、摘要は SC-77 である。",
+   "answer_keys": [
+    "S-37",
+    "SC-77"
+   ],
+   "entry_doc": "QK-TC-71E.md",
+   "entry_where": "別表 3 条別の区分",
+   "entry_quote": "| QK-TC-01 | 第 7 条 | S-37 | SC-77 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-71E.md",
+   "answer_where": "別表 3 条別の区分",
+   "answer_quote": "| QK-TC-01 | 第 7 条 | S-37 | SC-77 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C7-01 と同じ事実を、答えの節の番号と見出しの語で聞く。"
+  },
+  {
+   "qid": "C7-02d",
+   "type": "control",
+   "twin_of": "C7-02",
+   "question": "QK-TC-01 の第 11 条では、顧客へ提出する帳票の写しに、過品管が何を付けると定めているか。",
+   "answer": "右上に「写」の印を押し、過品管が発行番号を付ける。発行番号は提出簿に記入する。",
+   "answer_keys": [
+    "発行番号"
+   ],
+   "entry_doc": "QK-TC-01G.md",
+   "entry_where": "第 11 条（顧客への提出）",
+   "entry_quote": "2 写しには、右上に「写」の印を押し、過品管が発行番号を付ける。発行番号は、提出簿に記入する。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "第 11 条（顧客への提出）",
+   "answer_quote": "2 写しには、右上に「写」の印を押し、過品管が発行番号を付ける。発行番号は、提出簿に記入する。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C7-02 と同じ事実を、答えの節の番号と見出しの語で聞く。"
+  },
+  {
+   "qid": "C7-03d",
+   "type": "control",
+   "twin_of": "C7-03",
+   "question": "QK-TC-73 の第 8 条では、資格又は認定の効力を停止された者は、どの課程を修了しなければ元の業務に就けないと定めているか。",
+   "answer": "技教が開く課程 RC-47 である。",
+   "answer_keys": [
+    "RC-47"
+   ],
+   "entry_doc": "QK-TC-73B.md",
+   "entry_where": "第 8 条（再教育）",
+   "entry_quote": "資格又は認定の効力を停止された者は、技教が開く課程 RC-47 を修了しなければ、元の業務に就くことができない。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-73B.md",
+   "answer_where": "第 8 条（再教育）",
+   "answer_quote": "資格又は認定の効力を停止された者は、技教が開く課程 RC-47 を修了しなければ、元の業務に就くことができない。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C7-03 と同じ事実を、答えの節の番号と見出しの語で聞く。"
+  },
+  {
+   "qid": "C7-04d",
+   "type": "control",
+   "twin_of": "C7-04",
+   "question": "QK-TC-73 の第 7 条では、実技の訓練の受講者は、訓練のあいだ何色の腕章を着けると定めているか。",
+   "answer": "若草色の腕章を左の腕に着ける。",
+   "answer_keys": [
+    "若草色"
+   ],
+   "entry_doc": "QK-TC-73B.md",
+   "entry_where": "第 7 条（実技の訓練）",
+   "entry_quote": "2 受講者は、訓練のあいだ、若草色の腕章を左の腕に着ける。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-73B.md",
+   "answer_where": "第 7 条（実技の訓練）",
+   "answer_quote": "2 受講者は、訓練のあいだ、若草色の腕章を左の腕に着ける。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C7-04 と同じ事実を、答えの節の番号と見出しの語で聞く。"
+  },
+  {
+   "qid": "C7-05d",
+   "type": "control",
+   "twin_of": "C7-05",
+   "question": "QK-TC-73 の別表 2 で、管理番号 KN-730 の周期はいくつか。",
+   "answer": "277 である。",
+   "answer_keys": [
+    "277"
+   ],
+   "entry_doc": "QK-TC-73B.md",
+   "entry_where": "別表 2 管理番号別の区分",
+   "entry_quote": "| KN-730 | 第 3 実習室 | 277 | 計管 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-73B.md",
+   "answer_where": "別表 2 管理番号別の区分",
+   "answer_quote": "| KN-730 | 第 3 実習室 | 277 | 計管 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C7-05 と同じ事実を、答えの節の番号と見出しの語で聞く。"
+  },
+  {
+   "qid": "C7-06d",
+   "type": "control",
+   "twin_of": "C7-06",
+   "question": "QK-TC-02 の第 9 条では、基準からの逸脱があらかじめ見込まれる場合に、逸脱許可申請書を出して、どこの承認を受けると定めているか。",
+   "answer": "基準逸脱審査会の承認を受ける。",
+   "answer_keys": [
+    "基準逸脱審査会"
+   ],
+   "entry_doc": "QK-TC-02D.md",
+   "entry_where": "第 9 条（基準からの逸脱の事前承認）",
+   "entry_quote": "基準に定める条件又は項目の一部を満たすことができないと、実施の前から見込まれる場合は、実施する部門の長は、逸脱許可申請書（様式 TCF-240）を、実施の予定日の 5 稼働日前までに過品管へ提出し、基準逸脱審査会の承認を受けなければならない。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-02D.md",
+   "answer_where": "第 9 条（基準からの逸脱の事前承認）",
+   "answer_quote": "基準に定める条件又は項目の一部を満たすことができないと、実施の前から見込まれる場合は、実施する部門の長は、逸脱許可申請書（様式 TCF-240）を、実施の予定日の 5 稼働日前までに過品管へ提出し、基準逸脱審査会の承認を受けなければならない。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C7-06 と同じ事実を、答えの節の番号と見出しの語で聞く。"
+  },
+  {
+   "qid": "C7-07d",
+   "type": "control",
+   "twin_of": "C7-07",
+   "question": "QK-TC-71 の別表 2 で、号 (2) の措置と期間は何か。",
+   "answer": "措置は停止、期間は 117 である。",
+   "answer_keys": [
+    "117"
+   ],
+   "entry_doc": "QK-TC-71E.md",
+   "entry_where": "別表 2 号別の措置",
+   "entry_quote": "| (2) | 停止 | 117 | 実技の審査 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-71E.md",
+   "answer_where": "別表 2 号別の措置",
+   "answer_quote": "| (2) | 停止 | 117 | 実技の審査 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C7-07 と同じ事実を、答えの節の番号と見出しの語で聞く。"
+  },
+  {
+   "qid": "C7-08d",
+   "type": "control",
+   "twin_of": "C7-08",
+   "question": "QK-TC-71 の別表 1 で、記号 S-37 の実績はいくつか。",
+   "answer": "407 である。",
+   "answer_keys": [
+    "407"
+   ],
+   "entry_doc": "QK-TC-71E.md",
+   "entry_where": "別表 1 記号別の事項",
+   "entry_quote": "| S-37 | 407 | 247 | 学科及び実技 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-71E.md",
+   "answer_where": "別表 1 記号別の事項",
+   "answer_quote": "| S-37 | 407 | 247 | 学科及び実技 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C7-08 と同じ事実を、答えの節の番号と見出しの語で聞く。",
+   "status": "dropped",
+   "drop_reason": "対の元の問い C7-08 を dropped にしたため（問いそのものに誤りは無い）。"
+  },
+  {
+   "qid": "C7-09d",
+   "type": "control",
+   "twin_of": "C7-09",
+   "question": "QK-TC-01 の別表 2 で、様式 TCF-510 の書架はどこか。",
+   "answer": "第 7 書架である。",
+   "answer_keys": [
+    "第 7 書架"
+   ],
+   "entry_doc": "QK-TC-01G.md",
+   "entry_where": "別表 2 様式別の区分",
+   "entry_quote": "| TCF-510 | K-5 | 永年 | 第 7 書架 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "別表 2 様式別の区分",
+   "answer_quote": "| TCF-510 | K-5 | 永年 | 第 7 書架 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C7-09 と同じ事実を、答えの節の番号と見出しの語で聞く。"
+  },
+  {
+   "qid": "C7-10d",
+   "type": "control",
+   "twin_of": "C7-10",
+   "question": "QK-TC-73 の別表 2 で、管理番号 KN-710 の周期はいくつか。",
+   "answer": "187 である。",
+   "answer_keys": [
+    "187"
+   ],
+   "entry_doc": "QK-TC-73B.md",
+   "entry_where": "別表 2 管理番号別の区分",
+   "entry_quote": "| KN-710 | 第 3 実習室 | 187 | 技教 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-73B.md",
+   "answer_where": "別表 2 管理番号別の区分",
+   "answer_quote": "| KN-710 | 第 3 実習室 | 187 | 技教 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C7-10 と同じ事実を、答えの節の番号と見出しの語で聞く。"
+  },
+  {
+   "qid": "C7-11d",
+   "type": "control",
+   "twin_of": "C7-11",
+   "question": "QK-TC-73 の別表 2 で、管理番号 KN-720 の周期はいくつか。",
+   "answer": "367 である。",
+   "answer_keys": [
+    "367"
+   ],
+   "entry_doc": "QK-TC-73B.md",
+   "entry_where": "別表 2 管理番号別の区分",
+   "entry_quote": "| KN-720 | 第 1 実習室 | 367 | 生技保 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-73B.md",
+   "answer_where": "別表 2 管理番号別の区分",
+   "answer_quote": "| KN-720 | 第 1 実習室 | 367 | 生技保 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C7-11 と同じ事実を、答えの節の番号と見出しの語で聞く。"
+  },
+  {
+   "qid": "C7-12d",
+   "type": "control",
+   "twin_of": "C7-12",
+   "question": "QK-TC-71 の別表 1 で、記号 S-27 の実績はいくつか。",
+   "answer": "137 である。",
+   "answer_keys": [
+    "137"
+   ],
+   "entry_doc": "QK-TC-71E.md",
+   "entry_where": "別表 1 記号別の事項",
+   "entry_quote": "| S-27 | 137 | 97 | 学科及び実技 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-71E.md",
+   "answer_where": "別表 1 記号別の事項",
+   "answer_quote": "| S-27 | 137 | 97 | 学科及び実技 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C7-12 と同じ事実を、答えの節の番号と見出しの語で聞く。"
+  }
+ ]
+}

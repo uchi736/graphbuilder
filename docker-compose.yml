@@ -8,6 +8,7 @@ services:
     volumes:
       - ./backend:/code
       - ~/.config/gcloud:/root/.config/gcloud:ro
+      - ${EDC_SCHEMAS_HOST_DIR:-/home/uchida/ai-stack/EDC/schemas}:/edc_schemas:ro
     env_file:
       - ./backend/.env
     environment:
@@ -39,6 +40,11 @@ services:
       - LLM_MODEL_CONFIG_GEMMA4=${LLM_MODEL_CONFIG_GEMMA4-}
       - LLM_MODEL_CONFIG_EDC=${LLM_MODEL_CONFIG_EDC-}
       - EDC_EXTRACTION_TIMEOUT=${EDC_EXTRACTION_TIMEOUT-}
+      - EDC_ENRICH_SCHEMA=${EDC_ENRICH_SCHEMA-false}
+      - EDC_FOLD_UNKNOWN_RELATIONS=${EDC_FOLD_UNKNOWN_RELATIONS-false}
+      - EDC_DROP_SENTENCE_NAMES=${EDC_DROP_SENTENCE_NAMES-false}
+      - EDC_SCHEMAS_DIR=/edc_schemas
+      - EDC_PROPOSALS_DIR=${EDC_PROPOSALS_DIR-}
       - GRAPH_SCHEMA_CONSOLIDATION_ENABLED=${GRAPH_SCHEMA_CONSOLIDATION_ENABLED-}
       - EDC_PDF_CONVERT=${EDC_PDF_CONVERT-}
       - EDC_CONVERT_TIMEOUT=${EDC_CONVERT_TIMEOUT-}
@@ -49,6 +55,10 @@ services:
       - EMBEDDING_PROVIDER=${EMBEDDING_PROVIDER-}
       - VLLM_EMBEDDING_ENDPOINT=${VLLM_EMBEDDING_ENDPOINT-}
       - MAX_TOKEN_CHUNK_SIZE=${MAX_TOKEN_CHUNK_SIZE-}
+      - DEFAULT_TOKEN_CHUNK_SIZE=${VITE_TOKENS_PER_CHUNK-}
+      - DEFAULT_CHUNK_OVERLAP=${VITE_CHUNK_OVERLAP-}
+      - DEFAULT_CHUNKS_TO_COMBINE=${VITE_CHUNK_TO_COMBINE-}
+      - LOCAL_LLM_MAX_TOKENS=${LOCAL_LLM_MAX_TOKENS-}
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/application_default_credentials.json
       - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT-}
     container_name: backend

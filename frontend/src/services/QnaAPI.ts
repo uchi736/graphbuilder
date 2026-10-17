@@ -1,5 +1,6 @@
 import api from '../API/Index';
 import { getEmbeddingProvider, getEmbeddingModel } from '../utils/EmbeddingConfigUtils';
+import { getRetrievalSettings } from '../utils/RetrievalSettingsUtils';
 
 export const chatBotAPI = async (
   question: string,
@@ -19,6 +20,10 @@ export const chatBotAPI = async (
     const embeddingModel = getEmbeddingModel();
     formData.append('embedding_provider', embeddingProvider);
     formData.append('embedding_model', embeddingModel);
+    const retrievalSettings = getRetrievalSettings();
+    if (retrievalSettings) {
+      formData.append('retrieval_settings', JSON.stringify(retrievalSettings));
+    }
     const startTime = Date.now();
     const response = await api.post(`/chat_bot`, formData, {
       headers: {

@@ -1,3 +1,5 @@
+import os
+
 from pydantic import BaseModel, Field
 from fastapi import Form
 from typing import Optional
@@ -25,6 +27,16 @@ class SourceScanExtractParams(BaseModel):
     additional_instructions: Optional[str] = Field(None, description="Additional instructions")
     embedding_provider: Optional[str] = Field(None, description="Embedding provider")
     embedding_model: Optional[str] = Field(None, description="Embedding model")
+
+def _or_default(value: Optional[int], env_name: str, fallback: int) -> int:
+    """取り込みの引数が省かれたときの既定値。画面を通さず API を直接呼んでも同じ大きさになるようにする"""
+    if value is not None:
+        return value
+    try:
+        return int(os.environ.get(env_name) or fallback)
+    except ValueError:
+        return fallback
+
 
 def get_source_scan_extract_params(
     source_url: Optional[str] = Form(None),
@@ -65,9 +77,9 @@ def get_source_scan_extract_params(
         file_name=file_name,
         allowedNodes=allowedNodes,
         allowedRelationship=allowedRelationship,
-        token_chunk_size=token_chunk_size,
-        chunk_overlap=chunk_overlap,
-        chunks_to_combine=chunks_to_combine,
+        token_chunk_size=_or_default(token_chunk_size, "DEFAULT_TOKEN_CHUNK_SIZE", 512),
+        chunk_overlap=_or_default(chunk_overlap, "DEFAULT_CHUNK_OVERLAP", 50),
+        chunks_to_combine=_or_default(chunks_to_combine, "DEFAULT_CHUNKS_TO_COMBINE", 1),
         language=language,
         retry_condition=retry_condition,
         additional_instructions=additional_instructions,

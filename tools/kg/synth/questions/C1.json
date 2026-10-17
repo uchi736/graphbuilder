@@ -1,0 +1,1208 @@
+{
+ "questions": [
+  {
+   "qid": "C1-01",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "NA36 の量産機で、消音器の納入が間に合わない。代わりに吸込ベルマウスを付けて単独試運転をしたいが、どうすればよいか。",
+   "answer": "量産機は消音器を取り付けた状態で運転するのが定めなので、あらかじめ QK-TC-02 の第 9 条の手続をとる。実施する部門の長が、逸脱許可申請書（様式 TCF-240）を実施の予定日の 5 稼働日前までに過品管へ提出し、基準逸脱審査会の承認を受ける。運転した場合は、その旨と治具の記号を成績表の備考に記入する。",
+   "answer_keys": [
+    "基準逸脱審査会"
+   ],
+   "entry_doc": "KS-TC-T102E.md",
+   "entry_where": "3. 試運転の準備 3.1 運転台及び治具 b)",
+   "entry_quote": "消音器の納入が遅れるなどの理由で、消音器に代えて吸込ベルマウス JG-110 を取り付けて運転しようとする場合は、あらかじめ QK-TC-02 の第 9 条の手続をとる。",
+   "bridge_kind": "reference",
+   "bridge_quote": "消音器の納入が遅れるなどの理由で、消音器に代えて吸込ベルマウス JG-110 を取り付けて運転しようとする場合は、あらかじめ QK-TC-02 の第 9 条の手続をとる。",
+   "reference_form": "番号と項（QK-TC-02 の第 9 条）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-02D.md",
+   "answer_where": "第 9 条（基準からの逸脱の事前承認）",
+   "answer_quote": "基準に定める条件又は項目の一部を満たすことができないと、実施の前から見込まれる場合は、実施する部門の長は、逸脱許可申請書（様式 TCF-240）を、実施の予定日の 5 稼働日前までに過品管へ提出し、基準逸脱審査会の承認を受けなければならない。",
+   "hops": 1,
+   "wrong_values": [],
+   "avoided_terms": [
+    "逸脱",
+    "事前承認",
+    "逸脱許可",
+    "審査会",
+    "申請"
+   ],
+   "rationale": "答えの条は不適合品処理規定の中の手続の話で、消音器・ベルマウス・量産機・試運転の語を持たない。質問は取付けの場面の語だけで聞いているので、量産機の要領と初号機の要領の治具の節が先に並ぶ。起点の 3.1 b) にある「QK-TC-02 の第 9 条の手続をとる」をたどると着く。"
+  },
+  {
+   "qid": "C1-01d",
+   "type": "control",
+   "twin_of": "C1-01",
+   "question": "QK-TC-02 の第 9 条では、基準に定める条件を満たせないと実施の前から見込まれる場合に、逸脱許可申請書を提出したうえで、どこの承認を受けると定めているか。",
+   "answer": "基準逸脱審査会の承認を受ける。",
+   "answer_keys": [
+    "基準逸脱審査会"
+   ],
+   "entry_doc": "QK-TC-02D.md",
+   "entry_where": "第 9 条（基準からの逸脱の事前承認）",
+   "entry_quote": "基準に定める条件又は項目の一部を満たすことができないと、実施の前から見込まれる場合は、実施する部門の長は、逸脱許可申請書（様式 TCF-240）を、実施の予定日の 5 稼働日前までに過品管へ提出し、基準逸脱審査会の承認を受けなければならない。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-02D.md",
+   "answer_where": "第 9 条（基準からの逸脱の事前承認）",
+   "answer_quote": "基準に定める条件又は項目の一部を満たすことができないと、実施の前から見込まれる場合は、実施する部門の長は、逸脱許可申請書（様式 TCF-240）を、実施の予定日の 5 稼働日前までに過品管へ提出し、基準逸脱審査会の承認を受けなければならない。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C1-01 と同じ事実を、答えの条の番号と見出しの語で聞く。"
+  },
+  {
+   "qid": "C1-02",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "NA54 の量産機をチェック回転速度で運転中、強サージング点を探っていてサージングに入り、その計測点を取り直した。取り直す前の値はどう扱うのか。",
+   "answer": "取り直す前に採取した計測値は、帳票規定（QK-TC-01）の第 6 条により無効とする。廃棄せず、全面に朱色の斜線を引き、右上に「無効」の文字と理由を記入して、無効記録綴り MK-49 に綴じ、有効な記録と同じ期間残す。",
+   "answer_keys": [
+    "MK-49"
+   ],
+   "entry_doc": "KS-TC-T102E.md",
+   "entry_where": "4. 試運転要領 4.1 チェック回転速度での運転 c)",
+   "entry_quote": "強サージング点を探るうちにサージングに入り、その計測点を取り直した場合、取り直す前に採取した計測値の取扱いは、帳票規定の第 6 条による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "強サージング点を探るうちにサージングに入り、その計測点を取り直した場合、取り直す前に採取した計測値の取扱いは、帳票規定の第 6 条による。",
+   "reference_form": "通称と項（帳票規定の第 6 条。帳票規定が QK-TC-01 を指すことは、発行目録の注 1 にある）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "第 6 条（無効とする記録）",
+   "answer_quote": "全面に朱色の斜線を引き、右上に「無効」の文字及びその理由を記入したうえ、無効記録綴り MK-49 に綴じる。",
+   "hops": 1,
+   "wrong_values": [],
+   "avoided_terms": [
+    "無効",
+    "記録",
+    "綴り",
+    "帳票",
+    "廃棄",
+    "やり直し"
+   ],
+   "rationale": "答えの条は帳票の規定で、サージング・チェック回転速度・量産機の語を持たない。質問は運転の場面の語で聞いているので、量産機の要領と換算の基準の節が先に並ぶ。起点の 4.1 c) は規定を通称（帳票規定）で指しており、番号は書いていない。"
+  },
+  {
+   "qid": "C1-02d",
+   "type": "control",
+   "twin_of": "C1-02",
+   "question": "QK-TC-01 の第 6 条では、やり直しの結果に置き換えて無効とした記録を、どの綴りに綴じると定めているか。",
+   "answer": "無効記録綴り MK-49 に綴じる。",
+   "answer_keys": [
+    "MK-49"
+   ],
+   "entry_doc": "QK-TC-01G.md",
+   "entry_where": "第 6 条（無効とする記録）",
+   "entry_quote": "全面に朱色の斜線を引き、右上に「無効」の文字及びその理由を記入したうえ、無効記録綴り MK-49 に綴じる。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "第 6 条（無効とする記録）",
+   "answer_quote": "全面に朱色の斜線を引き、右上に「無効」の文字及びその理由を記入したうえ、無効記録綴り MK-49 に綴じる。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C1-02 と同じ事実を、答えの条の番号と見出しの語で聞く。"
+  },
+  {
+   "qid": "C1-03",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "NA54 の量産機の単独試運転で、サージング点の空気量比と回転速度比の合否は何に照らして決めるのか。その曲線の、各部門へ配った写しでない元の 1 部は、どこに置くことになっているか。",
+   "answer": "系列ごとの性能管理曲線に照らして判定する。NA54 は NA50 系列なので、管理曲線は KS-TC-P104 で管理されており、管理台帳と管理曲線の正本は、過検の文書庫の棚 R-21 を定位置としている。",
+   "answer_keys": [
+    "R-21"
+   ],
+   "entry_doc": "KS-TC-T001F.md",
+   "entry_where": "6. 判定基準 6.1 性能",
+   "entry_quote": "性能の判定は、系列ごとの性能管理曲線（KS-TC-P104、KS-TC-P204 又は KS-TC-P304 により管理する。）による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "性能の判定は、系列ごとの性能管理曲線（KS-TC-P104、KS-TC-P204 又は KS-TC-P304 により管理する。）による。",
+   "reference_form": "番号だけ（3 つを並べ、系列を書かない。KS-TC-P104 が NA50 系列の基準であることは、表題か発行目録で決まる）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-P104D.md",
+   "answer_where": "3 管理台帳",
+   "answer_quote": "管理台帳及び管理曲線の正本は、過検の文書庫の棚 R-21 を定位置とする。",
+   "hops": 1,
+   "wrong_values": [],
+   "avoided_terms": [
+    "管理曲線",
+    "管理台帳",
+    "正本",
+    "原本",
+    "原図",
+    "文書庫",
+    "棚",
+    "保管"
+   ],
+   "rationale": "共通文書から群の文書への参照である。答えの節は管理曲線の台帳の話で、サージング点・空気量比・回転速度・量産機・試運転の語を持たない。質問は判定の場面の語で聞いているので、試運転の基準、換算の基準、量産機の要領の節が先に並ぶ。起点の 6.1 は番号を 3 つ並べているだけで、どれが NA54 のものかは書いていない。",
+   "fix_note": "質問の 2 文目を改めた。元の「その大もとは、どこにあるか」は、根拠の基準、もとにした計画性能曲線、作成に用いた計測値とも読め、置き場所を聞いていることが伝わらなかった。"
+  },
+  {
+   "qid": "C1-03d",
+   "type": "control",
+   "twin_of": "C1-03",
+   "question": "KS-TC-P104 の 3 では、管理台帳及び管理曲線の正本の定位置を、文書庫のどの棚と定めているか。",
+   "answer": "過検の文書庫の棚 R-21 である。",
+   "answer_keys": [
+    "R-21"
+   ],
+   "entry_doc": "KS-TC-P104D.md",
+   "entry_where": "3 管理台帳",
+   "entry_quote": "管理台帳及び管理曲線の正本は、過検の文書庫の棚 R-21 を定位置とする。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-P104D.md",
+   "answer_where": "3 管理台帳",
+   "answer_quote": "管理台帳及び管理曲線の正本は、過検の文書庫の棚 R-21 を定位置とする。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C1-03 と同じ事実を、答えの節の番号と見出しの語で聞く。"
+  },
+  {
+   "qid": "C1-04",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "NA54 の単独試運転の途中で、吸込空気の温度を測る熱電対が 1 本断線した。残りの点だけで計測を続けてよいか。続けた場合、そのことを成績表のどこに、どう書き残すのか。",
+   "answer": "続けてよい。NA54 は NA50 系列で、吸込温度の計測点数は 6 点である。計測点数が 6 の系列に限り、1 点少ない 5 点で吸込温度を求めてよく、その場合は備考に符号 Z-31 を記入する。計測点数が 4 の系列（NA30 系列）では認められない。",
+   "answer_keys": [
+    "備考",
+    "Z-31"
+   ],
+   "entry_doc": "KS-TC-P103B.md",
+   "entry_where": "3. 換算の細目 (1) 吸込温度",
+   "entry_quote": "計測の途中で熱電対が断線するなどして、一部の点の値が得られなかった場合は、注 2 による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "計測の途中で熱電対が断線するなどして、一部の点の値が得られなかった場合は、注 2 による。",
+   "reference_form": "同じ文書の注（注 2 による）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-P103B.md",
+   "answer_where": "注（注 2）",
+   "answer_quote": "（注 2）n が 6 の系列に限り、n−1 点で T1 を求めてよい。この場合は、備考に符号 Z-31 を記入する。",
+   "hops": 1,
+   "wrong_values": [
+    "Z-41"
+   ],
+   "avoided_terms": [
+    "換算",
+    "判定",
+    "備考",
+    "符号",
+    "平均",
+    "計測点数"
+   ],
+   "rationale": "答えの注は記号（n、T1）だけで書いてあり、熱電対・断線・吸込空気・試運転の語を持たない。質問は運転の場面の語で聞いているので、吸込温度の項、計測の基準の温度の項が先に並ぶ。起点の (1) にある「注 2 による」をたどると着く。n が 6 であることは、注 1 から KS-TC-T001 の別表 1 を見て決まる。",
+   "fix_note": "質問に、続けた場合の書き残し方を聞く一文を足し、answer_keys を「備考」「Z-31」の 2 語にした。元の質問は可否だけを聞いており、符号 Z-31 を書かない正しい回答が不正答になった。2 語にしたので、品目 BZ-316 との部分一致による点検の NG も消える。"
+  },
+  {
+   "qid": "C1-04d",
+   "type": "control",
+   "twin_of": "C1-04",
+   "question": "KS-TC-P103 の注 2 では、n−1 点で T1 を求めた場合に、備考へどの符号を記入すると定めているか。",
+   "answer": "符号 Z-31 を記入する。",
+   "answer_keys": [
+    "Z-31"
+   ],
+   "entry_doc": "KS-TC-P103B.md",
+   "entry_where": "注（注 2）",
+   "entry_quote": "（注 2）n が 6 の系列に限り、n−1 点で T1 を求めてよい。この場合は、備考に符号 Z-31 を記入する。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-P103B.md",
+   "answer_where": "注（注 2）",
+   "answer_quote": "（注 2）n が 6 の系列に限り、n−1 点で T1 を求めてよい。この場合は、備考に符号 Z-31 を記入する。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C1-04 と同じ事実を、答えの注の番号と記号で聞く。"
+  },
+  {
+   "qid": "C1-05",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "NA50 系列の初号機 3 台の計測値から作成し、4 台目以降の単独性能の判定に用いているものが、あとで改められた。それまでのものは、どう扱うのか。",
+   "answer": "初号機 3 台の計測値から作成するのは管理曲線であり、その配布などは「性能管理曲線管理基準」（KS-TC-P104）による。旧版は、新しい版を配布した日から 11 稼働日以内に過検が回収し、1 部だけを旧版綴り KT-11 に綴じ、残りは裁断する。",
+   "answer_keys": [
+    "KT-11"
+   ],
+   "entry_doc": "KS-TC-T101C.md",
+   "entry_where": "3. 管理曲線の作成",
+   "entry_quote": "管理曲線の番号の付け方、台帳、見直し及び配布は、「性能管理曲線管理基準」による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "管理曲線の番号の付け方、台帳、見直し及び配布は、「性能管理曲線管理基準」による。",
+   "reference_form": "名称だけ（番号なし。「性能管理曲線管理基準」）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-P104D.md",
+   "answer_where": "5 配布及び旧版の回収",
+   "answer_quote": "回収した旧版は、1 部だけを旧版綴り KT-11 に綴じ、残りは裁断する。",
+   "hops": 1,
+   "wrong_values": [],
+   "avoided_terms": [
+    "管理曲線",
+    "旧版",
+    "回収",
+    "配布",
+    "綴り",
+    "裁断",
+    "廃止"
+   ],
+   "rationale": "答えの節は管理曲線の配布と回収の話で、初号機・計測値・4 台目以降の語を持たない。質問は初号機の要領の 3. の言葉で聞いているので、初号機の要領と、管理基準の作成の節が先に並ぶ。起点の 3. は基準の名称だけで参照しており、番号は書いていない。"
+  },
+  {
+   "qid": "C1-05d",
+   "type": "control",
+   "twin_of": "C1-05",
+   "question": "KS-TC-P104 の 5 では、回収した性能管理曲線の旧版を、どの綴りに綴じると定めているか。",
+   "answer": "1 部だけを旧版綴り KT-11 に綴じ、残りは裁断する。",
+   "answer_keys": [
+    "KT-11"
+   ],
+   "entry_doc": "KS-TC-P104D.md",
+   "entry_where": "5 配布及び旧版の回収",
+   "entry_quote": "回収した旧版は、1 部だけを旧版綴り KT-11 に綴じ、残りは裁断する。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-P104D.md",
+   "answer_where": "5 配布及び旧版の回収",
+   "answer_quote": "回収した旧版は、1 部だけを旧版綴り KT-11 に綴じ、残りは裁断する。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C1-05 と同じ事実を、答えの節の番号と見出しの語で聞く。"
+  },
+  {
+   "qid": "C1-06",
+   "type": "ref2",
+   "twin_of": null,
+   "question": "NA54 の量産機の単独試運転で、性能が管理曲線から外れて不合格になった。この過給機の処置は、いつまでに決めなければならないか。",
+   "answer": "性能の判定で不合格となった場合は、区分 乙の不適合として QK-TC-02 の第 7 条により処置を決める。期限は同規定の別表 1 により、見つけた日から起算して 29 稼働日である。決裁は品質保証部長で、顧客への通知を要する。",
+   "answer_keys": [
+    "29 稼働日"
+   ],
+   "entry_doc": "KS-TC-T102E.md",
+   "entry_where": "5. 判定基準 5.1 性能",
+   "entry_quote": "判定の結果、不合格となった場合は、区分 乙の不適合として、QK-TC-02 の第 7 条により処置を決定する。",
+   "bridge_kind": "reference",
+   "bridge_quote": "判定の結果、不合格となった場合は、区分 乙の不適合として、QK-TC-02 の第 7 条により処置を決定する。",
+   "reference_form": "番号と項（QK-TC-02 の第 7 条）から、同じ文書の別表（別表 1 による）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [
+    {
+     "doc": "QK-TC-02D.md",
+     "where": "第 7 条（処置の決定）",
+     "quote": "2 処置を決める期限及び決裁者は、不適合の区分に応じて、別表 1 による。",
+     "kind": "reference"
+    }
+   ],
+   "answer_doc": "QK-TC-02D.md",
+   "answer_where": "別表 1 区分別の期限及び決裁",
+   "answer_quote": "| 乙 | 29 稼働日 | 品質保証部長 | 要 |",
+   "hops": 2,
+   "wrong_values": [
+    "19 稼働日",
+    "9 稼働日"
+   ],
+   "avoided_terms": [
+    "期限",
+    "稼働日",
+    "区分",
+    "乙",
+    "決裁",
+    "不適合"
+   ],
+   "rationale": "起点の 5.1 は「区分 乙」と「QK-TC-02 の第 7 条」を示す。第 7 条は期限を書かず「別表 1 による」とし、別表 1 は区分の記号だけの表で、性能・管理曲線・量産機の語を持たない。区分が乙であることを起点で押さえないと、甲の 19 稼働日や丙の 9 稼働日と取り違える。"
+  },
+  {
+   "qid": "C1-06d",
+   "type": "control",
+   "twin_of": "C1-06",
+   "question": "QK-TC-02 の別表 1 で、区分 乙の期限は何稼働日か。",
+   "answer": "29 稼働日である。",
+   "answer_keys": [
+    "29 稼働日"
+   ],
+   "entry_doc": "QK-TC-02D.md",
+   "entry_where": "別表 1 区分別の期限及び決裁",
+   "entry_quote": "| 乙 | 29 稼働日 | 品質保証部長 | 要 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-02D.md",
+   "answer_where": "別表 1 区分別の期限及び決裁",
+   "answer_quote": "| 乙 | 29 稼働日 | 品質保証部長 | 要 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C1-06 と同じ事実を、答えの別表の番号と区分の記号で聞く。"
+  },
+  {
+   "qid": "C1-07",
+   "type": "ref2",
+   "twin_of": null,
+   "question": "NE65 の初号機の 1 台目で、吐出絞り弁を閉じていく途中に、逆流の手前で圧力の脈動だけが出た。弁の目盛を控えて記録したが、この記録はあとでどう扱うのか。",
+   "answer": "プレサージ点を記録した場合の判定での扱いは、KS-TC-P103 の 4. の (1) により、同基準の注 5 による。プレサージ点の値をサージ点の値として用い、備考に符号 Z-41 を記入する。",
+   "answer_keys": [
+    "Z-41"
+   ],
+   "entry_doc": "KS-TC-T101C.md",
+   "entry_where": "2. 単独性能確認試験要領 2-1 1 台目の計測",
+   "entry_quote": "プレサージ点を記録した場合の、判定での扱いは、KS-TC-P103 の 4. の (1) による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "プレサージ点を記録した場合の、判定での扱いは、KS-TC-P103 の 4. の (1) による。",
+   "reference_form": "番号と項（KS-TC-P103 の 4. の (1)）から、同じ文書の注（注 5 による）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [
+    {
+     "doc": "KS-TC-P103B.md",
+     "where": "4. 判定 (1) サージ誤差",
+     "quote": "プレサージ点が記録されている場合の扱いは、注 5 による。",
+     "kind": "reference"
+    }
+   ],
+   "answer_doc": "KS-TC-P103B.md",
+   "answer_where": "注（注 5）",
+   "answer_quote": "（注 5）s' があるときは、s' の値を s の値として用いる。この場合は、備考に符号 Z-41 を記入する。",
+   "hops": 2,
+   "wrong_values": [
+    "Z-31"
+   ],
+   "avoided_terms": [
+    "サージ誤差",
+    "判定",
+    "備考",
+    "符号",
+    "注"
+   ],
+   "rationale": "答えの注は記号（s'、s）だけで書いてあり、プレサージ点・脈動・絞り弁・初号機の語を持たない。起点の 2-1 は換算及び判定の基準の 4. の (1) を番号と項で指し、その (1) が注 5 を指す。質問は「プレサージ点」の語を使わず、起点の 2-1 にだけある場面の語（逆流、脈動、弁の目盛）で聞いているので、中継の (1) は質問では上位に来ない。",
+   "fix_note": "質問の言い回しを、起点の節（KS-TC-T101 の 2-1）にだけある語に改めた。元の文は「プレサージ点」の語を持ち、中継の節（KS-TC-P103 の 4.(1)）が質問だけで 3 位に来て、参照 1 回で着けた。改めた文では中継は 33 位で、参照を 2 回たどる必要がある。"
+  },
+  {
+   "qid": "C1-07d",
+   "type": "control",
+   "twin_of": "C1-07",
+   "question": "KS-TC-P103 の注 5 では、s' の値を s の値として用いた場合に、備考へどの符号を記入すると定めているか。",
+   "answer": "符号 Z-41 を記入する。",
+   "answer_keys": [
+    "Z-41"
+   ],
+   "entry_doc": "KS-TC-P103B.md",
+   "entry_where": "注（注 5）",
+   "entry_quote": "（注 5）s' があるときは、s' の値を s の値として用いる。この場合は、備考に符号 Z-41 を記入する。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-P103B.md",
+   "answer_where": "注（注 5）",
+   "answer_quote": "（注 5）s' があるときは、s' の値を s の値として用いる。この場合は、備考に符号 Z-41 を記入する。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C1-07 と同じ事実を、答えの注の番号と記号で聞く。"
+  },
+  {
+   "qid": "C1-08",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "NA56 の初号機の単独性能確認試験は消音器を付けずに吸込ベルマウスで運転するが、そのとき大気圧力から差し引く値はいくらか。",
+   "answer": "吸込ベルマウス JG-110 を用いた場合は、消音器を取り付けた状態の値（別表 1 の a 欄）に代えて、全型式とも 0.11 kPa を差し引く。",
+   "answer_keys": [
+    "0.11 kPa"
+   ],
+   "entry_doc": "KS-TC-T101C.md",
+   "entry_where": "2. 単独性能確認試験要領 2-5 計測器及び治具 b.",
+   "entry_quote": "b. 初号機の計測では、消音器を取り付けず、吸込ベルマウス JG-110 を取り付けて運転する。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "JG-110",
+   "bridge_aliases": [
+    "吸込ベルマウス",
+    "ベルマウス"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-P103B.md",
+   "answer_where": "注（注 3）",
+   "answer_quote": "（注 3）JG-110 を用いた場合は、a 欄の値に代えて、全型式とも 0.11 kPa とする。",
+   "hops": 1,
+   "wrong_values": [
+    "0.21 kPa",
+    "0.31 kPa",
+    "0.41 kPa",
+    "0.51 kPa",
+    "0.61 kPa",
+    "係数 k"
+   ],
+   "avoided_terms": [
+    "JG-110",
+    "a 欄",
+    "損失",
+    "吸込全圧",
+    "換算"
+   ],
+   "rationale": "答えの注は治具の記号 JG-110 と「a 欄」だけで書いてあり、吸込ベルマウス・消音器・初号機・大気圧力の語を持たない。記号 JG-110 が吸込ベルマウスであることは、起点の 2-5 b.（と量産機の要領の 3.1）に書いてある。記号を知らなければ、別表 1 の a 欄の型式別の値（0.21〜0.61 kPa）と取り違える。",
+   "fix_note": "質問に型式（NA56）を入れた。元の質問は系列を書いておらず、吸込ベルマウス使用時の吸込側の損失は群ごとに定めが違う（C1 は 0.11 kPa、C2 は係数 k × 動圧、C3 は 0）ので、正答が決まらなかった。",
+   "caveat": "質問だけでは、KS-TC-P203 の 3.(2)（1 位）と KS-TC-P303 の 3.(1)（2 位）が起点（3 位）より上に来る。型式を見ずに他系列の定めで答えると誤りになる。"
+  },
+  {
+   "qid": "C1-08d",
+   "type": "control",
+   "twin_of": "C1-08",
+   "question": "KS-TC-P103 の注 3 で、JG-110 を用いた場合に a 欄の値に代える値はいくらか。",
+   "answer": "全型式とも 0.11 kPa である。",
+   "answer_keys": [
+    "0.11 kPa"
+   ],
+   "entry_doc": "KS-TC-P103B.md",
+   "entry_where": "注（注 3）",
+   "entry_quote": "（注 3）JG-110 を用いた場合は、a 欄の値に代えて、全型式とも 0.11 kPa とする。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-P103B.md",
+   "answer_where": "注（注 3）",
+   "answer_quote": "（注 3）JG-110 を用いた場合は、a 欄の値に代えて、全型式とも 0.11 kPa とする。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C1-08 と同じ事実を、答えの注の番号と記号で聞く。"
+  },
+  {
+   "qid": "C1-09",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "NA50 系列の初号機の単独性能確認試験で大気圧力を読む気圧計は、校正に合格してからいつまで使ってよいのか。",
+   "answer": "気圧計 BR-80 は等級 乙で、直近の校正に合格した日から 719 日まで使える。",
+   "answer_keys": [
+    "719"
+   ],
+   "entry_doc": "KS-TC-T101C.md",
+   "entry_where": "2. 単独性能確認試験要領 2-5 計測器及び治具 c.",
+   "entry_quote": "大気圧力は、気圧計 BR-80 により、計測点ごとに読む。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "BR-80",
+   "bridge_aliases": [
+    "気圧計",
+    "大気圧計"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-P001D.md",
+   "answer_where": "別表 2 管理番号別の区分",
+   "answer_quote": "| BR-80 | 乙 | 719 | 計管 |",
+   "hops": 1,
+   "wrong_values": [
+    "189",
+    "359",
+    "539",
+    "419",
+    "389"
+   ],
+   "avoided_terms": [
+    "周期",
+    "日数",
+    "管理番号",
+    "等級",
+    "区分"
+   ],
+   "rationale": "答えの別表は管理番号と等級・周期・担当だけの表で、計測器の名称も初号機・大気圧力の語も持たない。管理番号 BR-80 は起点の 2-5 c. に出てくる（計測の共通基準の 3-2 にもある）。番号を知らなければ、ほかの行の日数と取り違える。"
+  },
+  {
+   "qid": "C1-09d",
+   "type": "control",
+   "twin_of": "C1-09",
+   "question": "KS-TC-P001 の別表 2 で、管理番号 BR-80 の周期はいくつか。",
+   "answer": "719 である。",
+   "answer_keys": [
+    "719"
+   ],
+   "entry_doc": "KS-TC-P001D.md",
+   "entry_where": "別表 2 管理番号別の区分",
+   "entry_quote": "| BR-80 | 乙 | 719 | 計管 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-P001D.md",
+   "answer_where": "別表 2 管理番号別の区分",
+   "answer_quote": "| BR-80 | 乙 | 719 | 計管 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C1-09 と同じ事実を、答えの別表の番号と管理番号で聞く。"
+  },
+  {
+   "qid": "C1-10",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "NA50 系列の量産機の単独試運転でブローバイガス量を測る流量計は、校正してからいつまで使ってよいのか。",
+   "answer": "流量計 BM-60 は等級 丙で、直近の校正に合格した日から 269 日まで使える。担当は生技保である。",
+   "answer_keys": [
+    "269"
+   ],
+   "entry_doc": "KS-TC-T102E.md",
+   "entry_where": "4. 試運転要領 4.3 系列に固有の確認項目 b)",
+   "entry_quote": "b) NA50 系列及び NE60 系列: ブローバイガス量を、流量計 BM-60 で計測する（同 5.6）。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "BM-60",
+   "bridge_aliases": [
+    "ブローバイ流量計",
+    "流量計"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-P001D.md",
+   "answer_where": "別表 2 管理番号別の区分",
+   "answer_quote": "| BM-60 | 丙 | 269 | 生技保 |",
+   "hops": 1,
+   "wrong_values": [
+    "189",
+    "359",
+    "539",
+    "419",
+    "719"
+   ],
+   "avoided_terms": [
+    "周期",
+    "日数",
+    "管理番号",
+    "等級",
+    "区分"
+   ],
+   "rationale": "答えの別表は管理番号だけで引く表で、ブローバイガス・流量計・量産機の語を持たない。管理番号 BM-60 は起点の 4.3 b) に出てくる（試運転の共通基準の 5.6 にもある）。番号を知らなければ、ほかの行の日数と取り違える。"
+  },
+  {
+   "qid": "C1-10d",
+   "type": "control",
+   "twin_of": "C1-10",
+   "question": "KS-TC-P001 の別表 2 で、管理番号 BM-60 の周期はいくつか。",
+   "answer": "269 である。",
+   "answer_keys": [
+    "269"
+   ],
+   "entry_doc": "KS-TC-P001D.md",
+   "entry_where": "別表 2 管理番号別の区分",
+   "entry_quote": "| BM-60 | 丙 | 269 | 生技保 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-P001D.md",
+   "answer_where": "別表 2 管理番号別の区分",
+   "answer_quote": "| BM-60 | 丙 | 269 | 生技保 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C1-10 と同じ事実を、答えの別表の番号と管理番号で聞く。"
+  },
+  {
+   "qid": "C1-11",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "NA50 系列の性能管理曲線を改廃したときに、関係部門へ内容を知らせるのに使う票は、いつまで、どこに残しておくのか。",
+   "answer": "関係部門へ通知するのに使うのは協議・通知票（様式 TCF-010）である。同様式は保存区分 K-1 で、年限は 9 年、書架は第 1 書架である。",
+   "answer_keys": [
+    "9 年",
+    "第 1 書架"
+   ],
+   "entry_doc": "KS-TC-P104D.md",
+   "entry_where": "5 配布及び旧版の回収",
+   "entry_quote": "配布にあたっては、協議・通知票（様式 TCF-010）により、改廃の内容を通知する。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "TCF-010",
+   "bridge_aliases": [
+    "協議・通知票",
+    "協議票"
+   ],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "別表 2 様式別の区分",
+   "answer_quote": "| TCF-010 | K-1 | 9 年 | 第 1 書架 |",
+   "hops": 1,
+   "wrong_values": [
+    "19 年",
+    "29 年",
+    "39 年",
+    "第 2 書架",
+    "第 6 書架"
+   ],
+   "avoided_terms": [
+    "年限",
+    "保存区分",
+    "保管",
+    "様式番号",
+    "書架",
+    "TCF-010",
+    "協議・通知票"
+   ],
+   "rationale": "答えの別表は様式番号と区分・年限・書架だけの表で、帳票の名称も管理曲線の語も持たない。様式番号 TCF-010 は起点の 5 に出てくる。番号を知らなければ、同じ区分 K-1 のほかの行（第 2 書架）や、ほかの年限と取り違える。"
+  },
+  {
+   "qid": "C1-11d",
+   "type": "control",
+   "twin_of": "C1-11",
+   "question": "QK-TC-01 の別表 2 で、様式 TCF-010 の年限は何年で、書架はどこか。",
+   "answer": "年限は 9 年、書架は第 1 書架である。",
+   "answer_keys": [
+    "9 年",
+    "第 1 書架"
+   ],
+   "entry_doc": "QK-TC-01G.md",
+   "entry_where": "別表 2 様式別の区分",
+   "entry_quote": "| TCF-010 | K-1 | 9 年 | 第 1 書架 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "別表 2 様式別の区分",
+   "answer_quote": "| TCF-010 | K-1 | 9 年 | 第 1 書架 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C1-11 と同じ事実を、答えの別表の番号と様式番号で聞く。"
+  },
+  {
+   "qid": "C1-12",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "NA36 の量産機の単独試運転で使うオリフィス管は、吐出管の呼び径からどれを選ぶことになるか。そのオリフィス管は、点検に合格してから何日のあいだ試運転に使ってよいのか。",
+   "answer": "NA36 の吐出管の呼び径は 350A（KS-TC-T102 の別表 2）で、300A から 400A の範囲に入るので、オリフィス管は OP-400 を選ぶ。OP-400 は等級 丁で、周期は 1,079 である。直近の点検に合格した日から 1,079 日まで使える。",
+   "answer_keys": [
+    "OP-400",
+    "1,079"
+   ],
+   "entry_doc": "KS-TC-P001D.md",
+   "entry_where": "別表 1 オリフィス管の選定",
+   "entry_quote": "| 300A から 400A | OP-400 | 0.60 | TB-20、TB-40 |",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "bridge_entity": "OP-400",
+   "bridge_aliases": [],
+   "answer_doc": "KS-TC-P001D.md",
+   "answer_where": "別表 2 管理番号別の区分",
+   "answer_quote": "| OP-400 | 丁 | 1,079 | 過組 |",
+   "hops": 1,
+   "wrong_values": [
+    "OP-250",
+    "OP-600",
+    "189",
+    "359",
+    "539",
+    "269"
+   ],
+   "avoided_terms": [
+    "周期",
+    "日数",
+    "管理番号",
+    "等級",
+    "OP-400",
+    "350A"
+   ],
+   "rationale": "答えの別表 2 は管理番号だけで引く表で、NA36・吐出管・オリフィス管の語を持たない。質問で引くと、型式別の呼び径の表（KS-TC-T102 の別表 2。3 位）とオリフィス管の選定の表（KS-TC-P001 の別表 1。6 位）が上位に来る。別表 1 で 350A が OP-400 に当たることを決め、その管理番号で別表 2 を引く。",
+   "also_needs": [
+    {
+     "doc": "KS-TC-T102E.md",
+     "where": "別表 2 型式別の取付け及び計測の条件",
+     "quote": "| NA36 | GA-320 | 350A | 空冷 |"
+    }
+   ],
+   "fix_note": "型を ent2 から ent1 に改め、起点を KS-TC-P001 の別表 1 にした。質問を「どれを選ぶか」と「何日のあいだ使えるか」の 2 つを聞く形にし、answer_keys を「OP-400」「1,079」の 2 語にした。元の問いは、別表 2 の OP の 3 行が同じ値（1,079）なので、呼び径から管理番号を決める 1 回目のつなぎが無くても当たった。また、呼び径 350A は別表 1 に出てこないので、1 回目はエンティティではなく範囲の当てはめである。質問に「点検に合格してから何日」を入れ、治具の個票の使用の限度（孔の径）と読める余地を無くした。",
+   "caveat": "起点の別表 1 は質問で 6 位である。上位 6 件から外れた場合は、KS-TC-T102 の 3.1（別表 1 から選ぶ。2 位）の参照を先に 1 回たどることになり、参照とエンティティの混成になる。対の問い C1-12d は周期だけを聞く。"
+  },
+  {
+   "qid": "C1-12d",
+   "type": "control",
+   "twin_of": "C1-12",
+   "question": "KS-TC-P001 の別表 2 で、管理番号 OP-400 の周期はいくつか。",
+   "answer": "1,079 である。",
+   "answer_keys": [
+    "1,079"
+   ],
+   "entry_doc": "KS-TC-P001D.md",
+   "entry_where": "別表 2 管理番号別の区分",
+   "entry_quote": "| OP-400 | 丁 | 1,079 | 過組 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-P001D.md",
+   "answer_where": "別表 2 管理番号別の区分",
+   "answer_quote": "| OP-400 | 丁 | 1,079 | 過組 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C1-12 と同じ事実を、答えの別表の番号と管理番号で聞く。"
+  },
+  {
+   "qid": "C1-13",
+   "type": "ent2",
+   "twin_of": null,
+   "question": "初号機のコンプレッサ単独性能確認試験に用いる計測器のうち、吐出空気温度を測るものは、校正に合格してからいつまで使ってよいのか。",
+   "answer": "計測器は KS-TC-T001 の 5.3 に掲げるものを用いる。吐出空気温度は熱電対 TK-30 で計測し、TK-30 は等級 乙で、直近の校正に合格した日から 359 日まで使える。",
+   "answer_keys": [
+    "359"
+   ],
+   "entry_doc": "KS-TC-T101C.md",
+   "entry_where": "2. 単独性能確認試験要領 2-5 計測器及び治具 c.",
+   "entry_quote": "c. 計測器は、KS-TC-T001 の 5.3 に掲げるものを用いる。",
+   "bridge_kind": "reference",
+   "bridge_quote": "c. 計測器は、KS-TC-T001 の 5.3 に掲げるものを用いる。",
+   "reference_form": "番号と項（KS-TC-T001 の 5.3）から、管理番号 TK-30 のエンティティ",
+   "bridge_entity": "TK-30",
+   "bridge_aliases": [
+    "熱電対"
+   ],
+   "path": [
+    {
+     "doc": "KS-TC-T001F.md",
+     "where": "5. 確認項目及び要領 5.3 計測項目",
+     "quote": "| 吐出空気温度 | ℃ | コンプレッサ出口 | 熱電対 TK-30 |",
+     "kind": "reference"
+    }
+   ],
+   "answer_doc": "KS-TC-P001D.md",
+   "answer_where": "別表 2 管理番号別の区分",
+   "answer_quote": "| TK-30 | 乙 | 359 | 計管 |",
+   "hops": 2,
+   "wrong_values": [
+    "189",
+    "539",
+    "719",
+    "419"
+   ],
+   "avoided_terms": [
+    "周期",
+    "日数",
+    "管理番号",
+    "等級",
+    "熱電対",
+    "TK-30"
+   ],
+   "rationale": "起点の 2-5 c. は計測器を書かず、試運転の共通基準の 5.3 を番号と項で指す。5.3 の表で吐出空気温度の計測器が熱電対 TK-30 と分かり、日数は管理番号だけで引く計測の共通基準の別表 2 にある。参照を 1 回、エンティティを 1 回たどる。",
+   "status": "dropped",
+   "drop_reason": "起点（KS-TC-T101 の 2-5 c.）が質問で上位に来ない（8 位。型式 NE65 を書き足しても 9 位）。きょうだいの節 KS-TC-T301 の 2-5 が「計測器を使用できる日数は、計測共通の別表 2 による」と答えの表を直接指して 1 位に来るので、設計した経路を通らずに参照 1 回で着く。設計した経路も、参照 1 回（T101 2-5 c. → T001 5.3）とエンティティ 1 回（TK-30 → 別表 2）の混成で、ent2 ではない。KS-TC-T301 の 2-5 の参照を直さないと成り立たない。同じ事実（TK-30 の 359）は C2-06・C3-09 が聞いている。"
+  },
+  {
+   "qid": "C1-13d",
+   "type": "control",
+   "twin_of": "C1-13",
+   "question": "KS-TC-P001 の別表 2 で、管理番号 TK-30 の周期はいくつか。",
+   "answer": "359 である。",
+   "answer_keys": [
+    "359"
+   ],
+   "entry_doc": "KS-TC-P001D.md",
+   "entry_where": "別表 2 管理番号別の区分",
+   "entry_quote": "| TK-30 | 乙 | 359 | 計管 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-P001D.md",
+   "answer_where": "別表 2 管理番号別の区分",
+   "answer_quote": "| TK-30 | 乙 | 359 | 計管 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C1-13 と同じ事実を、答えの別表の番号と管理番号で聞く。",
+   "status": "dropped",
+   "drop_reason": "対の元の問い C1-13 を dropped にしたため（問いそのものに誤りは無い。同文の対の問い C3-09d が残る）。"
+  },
+  {
+   "qid": "C1-14",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "運転台 TB-20 で運転する系列の初号機では、規定チェック回転速度を、最高許容回転速度に何を乗じた値に最も近い指示回転速度とするのか。",
+   "answer": "TB-20 で運転するのは NA30 系列であり、最高許容回転速度に 0.81 を乗じた値に最も近い指示回転速度を、規定チェック回転速度とする。",
+   "answer_keys": [
+    "0.81"
+   ],
+   "entry_doc": "KS-TC-T001F.md",
+   "entry_where": "別表 1 系列別の区分",
+   "entry_quote": "| NA30 | 軸流 | SG | TB-20 | 4 点 | タービン側軸受ふた | ±5 % |",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "TB-20",
+   "bridge_aliases": [
+    "NA30",
+    "第 2 運転台"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-T101C.md",
+   "answer_where": "2. 単独性能確認試験要領",
+   "answer_quote": "| NA30 | 0.81 | 5 |",
+   "hops": 1,
+   "wrong_values": [
+    "0.71",
+    "0.91"
+   ],
+   "avoided_terms": [
+    "NA30",
+    "NA50",
+    "NE60"
+   ],
+   "rationale": "初号機の要領の 2. は系列ごとの割合を 1 つの表に並べており、質問で引くとこの節が上位に来るが、表には運転台が書かれていない。TB-20 で運転するのが NA30 系列であることは、試運転の共通基準の別表 1（及び初号機の要領の 2-5、量産機の要領の 3.1）に書いてある。系列を取り違えると 0.71 や 0.91 と答える。"
+  },
+  {
+   "qid": "C1-15",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "NA58 の量産機の空気量を計測するオリフィス管は、絞り径比がいくつのものか。",
+   "answer": "NA58 の吐出管の呼び径は 600A で、450A から 600A の範囲に入るので、オリフィス管は OP-600、絞り径比は 0.70 である。",
+   "answer_keys": [
+    "0.70"
+   ],
+   "entry_doc": "KS-TC-T102E.md",
+   "entry_where": "別表 2 型式別の取付け及び計測の条件",
+   "entry_quote": "| NA58 | GA-520 | 600A | 水冷 |",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "600A",
+   "bridge_aliases": [
+    "450A から 600A"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-P001D.md",
+   "answer_where": "別表 1 オリフィス管の選定",
+   "answer_quote": "| 450A から 600A | OP-600 | 0.70 | TB-10 |",
+   "hops": 1,
+   "wrong_values": [
+    "0.50",
+    "0.60"
+   ],
+   "avoided_terms": [
+    "600A",
+    "OP-600",
+    "呼び径"
+   ],
+   "rationale": "計測の共通基準の別表 1 は呼び径ごとにオリフィス管と絞り径比を並べた表で、質問で引くと上位に来るが、型式は書かれていない。NA58 の吐出管が 600A であることは、量産機の要領の別表 2 にだけ書いてある。呼び径を取り違えると 0.50 や 0.60 と答える。"
+  },
+  {
+   "qid": "C1-16",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "NE60 系列の量産機のうち、吐出管の呼び径が 600A の型式は、チェック回転速度が何 min-1 か。",
+   "answer": "NE60 系列で吐出管の呼び径が 600A の型式は NE67 であり、チェック回転速度は 13,401 min-1 である。",
+   "answer_keys": [
+    "13,401"
+   ],
+   "entry_doc": "KS-TC-T102E.md",
+   "entry_where": "別表 2 型式別の取付け及び計測の条件",
+   "entry_quote": "| NE67 | GA-620 | 600A | 空冷 |",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "NE67",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-T102E.md",
+   "answer_where": "別表 1 型式別のチェック回転速度",
+   "answer_quote": "| NE67 | 13,401 | 3 点 |",
+   "hops": 1,
+   "wrong_values": [
+    "10,801",
+    "15,601",
+    "18,201",
+    "21,601"
+   ],
+   "avoided_terms": [
+    "NE67"
+   ],
+   "rationale": "別表 1 は型式ごとのチェック回転速度を並べた表で、質問で引くと上位に来るが、吐出管の呼び径は書かれていない。NE60 系列で 600A の型式が NE67 であることは、別表 2 にだけ書いてある。同じ 600A の NA58（10,801 min-1）や、NE60 系列のほかの型式と取り違えやすい。"
+  },
+  {
+   "qid": "C1-17",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "NE60 系列の初号機で 4 台目以降の計測をするとき、データ収録装置の収録の条件は何番を呼び出すか。",
+   "answer": "4 台目以降の計測は別表 1 の符号 C によるので、条件の欄の番号 J-11 を呼び出す。",
+   "answer_keys": [
+    "J-11"
+   ],
+   "entry_doc": "KS-TC-T101C.md",
+   "entry_where": "2. 単独性能確認試験要領 2-3 4 台目以降の計測",
+   "entry_quote": "4 台目以降の計測は、別表 1 の符号 C による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "4 台目以降の計測は、別表 1 の符号 C による。",
+   "reference_form": "同じ文書の別表（別表 1 の符号 C による）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-T101C.md",
+   "answer_where": "別表 1 計測点の符号",
+   "answer_quote": "| C | S、L | — | M | J-11 |",
+   "hops": 1,
+   "wrong_values": [
+    "J-31",
+    "J-21"
+   ],
+   "avoided_terms": [
+    "符号",
+    "符号 C"
+   ],
+   "rationale": "別表 1 は符号 A・B・C ごとに計測点と条件の番号を並べた表で、質問で引くと上位に来るが、何台目がどの符号かは書かれていない。4 台目以降が符号 C であることは、2-3 にだけ書いてある。符号を取り違えると J-31 や J-21 と答える。もとは同じ文書の別表への参照（ref1）として作ったが、別表が質問で直接引ける（3〜6 位）ので、この型にした。"
+  },
+  {
+   "qid": "C1-18",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "NA54 の初号機のコンプレッサ性能を計測するとき、潤滑油の供給圧力はいくらにするか。",
+   "answer": "計測時の運転条件は KS-TC-L001 による。NA54 は NA50 系列で、潤滑区分は EP（KS-TC-T001 の別表 1）なので、供給圧力は 149±20 kPa とする。",
+   "answer_keys": [
+    "149±20"
+   ],
+   "entry_doc": "KS-TC-T101C.md",
+   "entry_where": "2. 単独性能確認試験要領 2-4 計測時の運転条件",
+   "entry_quote": "性能を計測するときの過給機の運転条件は、KS-TC-L001 による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "性能を計測するときの過給機の運転条件は、KS-TC-L001 による。",
+   "reference_form": "番号だけ（KS-TC-L001）。どの区分の節かは、KS-TC-T001 の別表 1 で決まる",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [
+    {
+     "doc": "KS-TC-T001F.md",
+     "where": "別表 1 系列別の区分",
+     "quote": "| NA50 | 軸流 | EP | TB-10 | 6 点 | — | ±3 % |",
+     "kind": "entity"
+    }
+   ],
+   "answer_doc": "KS-TC-L001E.md",
+   "answer_where": "3. 潤滑油の供給条件 (2) 区分 EP",
+   "answer_quote": "- 供給圧力: 149±20 kPa",
+   "hops": 2,
+   "wrong_values": [
+    "329±20",
+    "219±20"
+   ],
+   "avoided_terms": [
+    "EP",
+    "外部給油方式",
+    "区分"
+   ],
+   "rationale": "供給条件の基準は区分ごとに同じ書式の節（区分 EP・ER・EC）を持ち、系列の名前を書いていない。質問で引くと 3 つの節が並んで上位に来る。初号機の要領の 2-4 は基準の番号だけを指し、NA50 系列が区分 EP であることは、試運転の共通基準の別表 1 にだけ書いてある。"
+  },
+  {
+   "qid": "C1-19",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "NE65 の初号機の単独性能確認試験で計測する指示回転速度は、それぞれ何 min-1 か。",
+   "answer": "手元の文書には書かれていない。指示回転速度は、過技性が発行する技術資料 TS-0520 に型式ごとに指示されている。手元の文書から分かるのは、NE60 系列の指示回転速度が 6 種類であることと、規定チェック回転速度が最高許容回転速度に 0.91 を乗じた値に最も近い指示回転速度であることまでである。",
+   "answer_keys": [],
+   "entry_doc": "KS-TC-T101C.md",
+   "entry_where": "2. 単独性能確認試験要領",
+   "entry_quote": "計測する回転速度は、技術資料 TS-0520 に型式ごとに指示された回転速度（以下「指示回転速度」という。）による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "計測する回転速度は、技術資料 TS-0520 に型式ごとに指示された回転速度（以下「指示回転速度」という。）による。",
+   "reference_form": "手元に無い文書（技術資料 TS-0520。他部門の資料）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "",
+   "answer_where": "",
+   "answer_quote": "",
+   "hops": 1,
+   "wrong_values": [
+    "15,601"
+   ],
+   "avoided_terms": [
+    "TS-0520"
+   ],
+   "rationale": "起点の 2. は指示回転速度の値を書かず、技術資料 TS-0520 を指す。同資料は文書群に無い。量産機の要領の別表 1 にある NE65 のチェック回転速度（15,601 min-1）は別の値であり、これを答えるのは誤りである。"
+  },
+  {
+   "qid": "C1-20",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "NA36 の量産機を運転台に取り付けたあと、運転の前に軸受箱へ入れる油は何 L か。",
+   "answer": "手元の文書には書かれていない。外部から給油しない型式の給油量は、過技設が機種ごとに発行する組付指示書による。",
+   "answer_keys": [],
+   "entry_doc": "KS-TC-T102E.md",
+   "entry_where": "3. 試運転の準備 3.2 取付け c)",
+   "entry_quote": "給油量は、機種ごとの組付指示書による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "給油量は、機種ごとの組付指示書による。",
+   "reference_form": "手元に無い文書（機種ごとの組付指示書。他部門の資料）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "",
+   "answer_where": "",
+   "answer_quote": "",
+   "hops": 1,
+   "wrong_values": [
+    "39 L",
+    "9 L",
+    "19 L"
+   ],
+   "avoided_terms": [
+    "組付指示書",
+    "給油量"
+   ],
+   "rationale": "起点の 3.2 c) は給油量を書かず、組付指示書を指す。同指示書は文書群に無い。供給条件の基準にある油量の目安（軸受 1 箇所につき毎分 39 L など）は、外部から給油する区分の値であり、これを答えるのは誤りである。"
+  },
+  {
+   "qid": "C1-21",
+   "type": "control",
+   "twin_of": null,
+   "question": "KS-TC-T102 の別表 1 で、NA54 のチェック回転速度は何 min-1 か。",
+   "answer": "14,401 min-1 である。性能は 3 点を計測する。",
+   "answer_keys": [
+    "14,401"
+   ],
+   "entry_doc": "KS-TC-T102E.md",
+   "entry_where": "別表 1 型式別のチェック回転速度",
+   "entry_quote": "| NA54 | 14,401 | 3 点 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-T102E.md",
+   "answer_where": "別表 1 型式別のチェック回転速度",
+   "answer_quote": "| NA54 | 14,401 | 3 点 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "型式名と表の見出しの語で聞いており、別表 1 が直接引ける。"
+  },
+  {
+   "qid": "C1-22",
+   "type": "control",
+   "twin_of": null,
+   "question": "NA30 系列の量産機の単独試運転で、惰走時間は何秒以上でなければならないか。",
+   "answer": "141 秒以上である。",
+   "answer_keys": [
+    "141 秒"
+   ],
+   "entry_doc": "KS-TC-T102E.md",
+   "entry_where": "5. 判定基準 5.2 系列に固有の項目 a)",
+   "entry_quote": "a) NA30 系列: 惰走時間は、141 秒以上とする。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-T102E.md",
+   "answer_where": "5. 判定基準 5.2 系列に固有の項目 a)",
+   "answer_quote": "a) NA30 系列: 惰走時間は、141 秒以上とする。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "系列名と項目の名前（惰走時間）で聞いており、5.2 が直接引ける。"
+  },
+  {
+   "qid": "C1-23",
+   "type": "control",
+   "twin_of": null,
+   "question": "NA30・NA50・NE60 系列の性能管理曲線は、初号機の 3 台目の計測を終えた日から何日以内に作成するのか。",
+   "answer": "31 日以内に作成する。",
+   "answer_keys": [
+    "31 日"
+   ],
+   "entry_doc": "KS-TC-P104D.md",
+   "entry_where": "2 管理曲線の作成 2-1 作成の時期",
+   "entry_quote": "管理曲線は、初号機の 3 台目の計測を終えた日から 31 日以内に作成する。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-P104D.md",
+   "answer_where": "2 管理曲線の作成 2-1 作成の時期",
+   "answer_quote": "管理曲線は、初号機の 3 台目の計測を終えた日から 31 日以内に作成する。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "基準の表題の語と節の言葉で聞いており、2-1 が直接引ける。"
+  },
+  {
+   "qid": "C1-24",
+   "type": "control",
+   "twin_of": null,
+   "question": "KS-TC-P103 の計算例では、NA54 の量産機のサージ点について、換算回転速度 Nc は何 min-1 になっているか。",
+   "answer": "14,531 min-1 である。",
+   "answer_keys": [
+    "14,531"
+   ],
+   "entry_doc": "KS-TC-P103B.md",
+   "entry_where": "5. 計算例",
+   "entry_quote": "- 換算: Nc は 14,531 min-1、Qc は 9.651 m3/s",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-P103B.md",
+   "answer_where": "5. 計算例",
+   "answer_quote": "- 換算: Nc は 14,531 min-1、Qc は 9.651 m3/s",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "基準の番号と節の見出しの語（計算例）で聞いており、5. が直接引ける。"
+  }
+ ]
+}

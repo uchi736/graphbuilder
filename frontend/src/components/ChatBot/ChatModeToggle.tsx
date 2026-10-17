@@ -5,7 +5,9 @@ import { chatModeLables, chatModes as AvailableModes, chatModeReadableLables } f
 import { capitalize } from '@mui/material';
 import { capitalizeWithPlus } from '../../utils/Utils';
 import { useCredentials } from '../../context/UserCredentials';
-import { JSXElementConstructor, ReactElement, ReactNode, ReactPortal, useMemo } from 'react';
+import { JSXElementConstructor, ReactElement, ReactNode, ReactPortal, useMemo, useState } from 'react';
+import RetrievalSettingsDialog from './RetrievalSettingsDialog';
+import { getRetrievalSettings } from '../../utils/RetrievalSettingsUtils';
 
 export default function ChatModeToggle({
   menuAnchor,
@@ -25,6 +27,7 @@ export default function ChatModeToggle({
   isRoot: boolean;
 }) {
   const { setchatModes, chatModes, postProcessingTasks } = useFileContext();
+  const [showRetrievalSettings, setShowRetrievalSettings] = useState<boolean>(false);
   const isCommunityAllowed = postProcessingTasks.includes('enable_communities');
   const { isGdsActive } = useCredentials();
   if (!chatModes.length) {
@@ -97,7 +100,38 @@ export default function ChatModeToggle({
       }
     );
   }, [chatModes, memoizedChatModes]);
+  const itemsWithSettings = useMemo(() => {
+    const settingsItem = {
+      id: 'retrieval-settings',
+      title: (
+        <div>
+          <Typography variant='subheading-small'>検索の詳細設定</Typography>
+          <div>
+            <Typography variant='body-small'>
+              候補の数、起点のエンティティの上限、展開の上限、文脈に入れる行の条件を変更します
+            </Typography>
+          </div>
+        </div>
+      ),
+      onClick: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+        setShowRetrievalSettings(true);
+        e.stopPropagation();
+      },
+      disabledCondition: false,
+      description: <span>{getRetrievalSettings() ? '変更あり' : ''}</span>,
+    };
+    return [...(menuItems ?? []), settingsItem];
+  }, [menuItems, showRetrievalSettings]);
   return (
-    <CustomMenu isRoot={isRoot} closeHandler={closeHandler} open={open} anchorOrigin={menuAnchor} items={menuItems} />
+    <>
+      <CustomMenu
+        isRoot={isRoot}
+        closeHandler={closeHandler}
+        open={open}
+        anchorOrigin={menuAnchor}
+        items={itemsWithSettings}
+      />
+      <RetrievalSettingsDialog open={showRetrievalSettings} onClose={() => setShowRetrievalSettings(false)} />
+    </>
   );
 }

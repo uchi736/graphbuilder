@@ -94,13 +94,13 @@ export const chatModes = import.meta.env?.VITE_CHAT_MODES?.trim()
 export const chunkSize = import.meta.env.VITE_CHUNK_SIZE ? Number(import.meta.env.VITE_CHUNK_SIZE) : 1 * 1024 * 1024;
 export const tokenchunkSize = import.meta.env.VITE_TOKENS_PER_CHUNK
   ? Number(import.meta.env.VITE_TOKENS_PER_CHUNK)
-  : 100;
-export const chunkOverlap = import.meta.env.VITE_CHUNK_OVERLAP ? Number(import.meta.env.VITE_CHUNK_OVERLAP) : 20;
+  : 512;
+export const chunkOverlap = import.meta.env.VITE_CHUNK_OVERLAP ? Number(import.meta.env.VITE_CHUNK_OVERLAP) : 50;
 export const chunksToCombine = import.meta.env.VITE_CHUNK_TO_COMBINE
   ? Number(import.meta.env.VITE_CHUNK_TO_COMBINE)
   : 1;
-export const defaultTokenChunkSizeOptions = [50, 100, 200, 400, 1000];
-export const defaultChunkOverlapOptions = [10, 20, 30, 40, 50];
+export const defaultTokenChunkSizeOptions = [256, 512, 1024];
+export const defaultChunkOverlapOptions = [0, 25, 50, 100];
 export const defaultChunksToCombineOptions = [1, 2, 3, 4, 5, 6];
 
 export interface EmbeddingModelOption {

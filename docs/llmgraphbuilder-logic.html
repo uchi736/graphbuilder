@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="稼働中のLLM Graph Builderを実装から解説。top-k、エンティティ選択、グラフ展開、参照追跡、文字数予算まで。">
+<title>LLM Graph Builder — 検索・構築ロジック詳細</title>
+<style>
+:root{--bg:#f4f1e8;--paper:#fffdf7;--ink:#172a22;--muted:#56685d;--line:#d5dccf;--green:#176547;--lime:#dbec98;--blue:#29658d;--orange:#a94c26;--red:#a13632;--violet:#76508c}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:22px}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.9 system-ui,"Yu Gothic",sans-serif}a{color:var(--green);text-underline-offset:3px}button,input,select{font:inherit}button{cursor:pointer}code{font: .86em/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere;background:#e9eee3;padding:2px 5px;border-radius:3px}pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:20px;background:#192e25;color:#ecf3e6;line-height:1.7;font-size:13px;border-radius:5px}pre code{background:none;padding:0;color:inherit}strong{font-weight:750}p{margin:12px 0}ul,ol{padding-left:23px}li{margin:6px 0}h1,h2,h3,h4{line-height:1.35;letter-spacing:-.025em}h1{font-size:clamp(34px,4.3vw,66px);margin:16px 0 22px;font-weight:800}h2{font-size:clamp(28px,3vw,42px);margin:10px 0 18px}h3{font-size:21px;margin:28px 0 12px}h4{font-size:17px;margin:0 0 9px}.layout{display:grid;grid-template-columns:240px minmax(0,1fr)}aside{position:sticky;top:0;height:100vh;padding:28px 20px;background:var(--paper);border-right:1px solid var(--line);overflow:auto}.brand{font-size:16px;font-weight:800;line-height:1.45}.brand span{display:block;color:var(--green);font:11px ui-monospace,monospace;letter-spacing:.1em;margin-top:6px}nav{margin-top:25px}nav a{display:block;text-decoration:none;padding:7px 10px;font-size:13px;color:var(--muted);border-left:2px solid transparent}nav a:hover,nav a.active{border-color:var(--green);background:#e7eddf;color:var(--ink)}.navnote{font-size:11px;color:var(--muted);margin-top:28px}main{min-width:0}header,section,footer{padding:56px clamp(24px,5vw,80px);border-bottom:1px solid var(--line)}header{background:radial-gradient(ellipse at top right,#dfecc1,transparent 55%),var(--paper)}.eyebrow{font:700 11px ui-monospace,monospace;letter-spacing:.13em;color:var(--green);text-transform:uppercase}.lead{font-size:19px;max-width:850px;color:#385343}.note{font-size:13px;color:var(--muted)}.badge{display:inline-block;font-size:11px;padding:3px 8px;border-radius:3px;background:#e0ecdb;color:var(--green);font-weight:700}.badge.cut{background:#f6e3db;color:var(--orange)}.badge.alt{background:#e9e1f0;color:var(--violet)}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:28px 0}.stat{padding:18px 20px;background:var(--paper);border:1px solid var(--line)}.stat b{display:block;font:800 38px ui-monospace,monospace;color:var(--green)}.stat small{font-size:12px;display:block;color:var(--muted);line-height:1.5}.notice{padding:18px 22px;border-left:4px solid var(--green);background:#e7eee1;margin:24px 0}.notice.warn{background:#f6e7df;border-color:var(--orange)}.notice p{margin:4px 0}.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}.card{background:var(--paper);padding:22px;border:1px solid var(--line);border-radius:5px;min-width:0}.card p:last-child{margin-bottom:0}.tablewrap{overflow:auto;margin:20px 0;border:1px solid var(--line);border-radius:4px}table{border-collapse:collapse;width:100%;background:var(--paper);font-size:13px;min-width:630px}th,td{text-align:left;vertical-align:top;padding:12px 14px;border-bottom:1px solid var(--line)}th{background:#e7ecdf;font-size:12px;color:#35523e}tr:last-child td{border-bottom:0}td:first-child{font-weight:600}td code{font-size:11px}.source{font-size:12px;color:var(--muted);margin-top:15px;overflow-wrap:anywhere}.source a{font-family:ui-monospace,monospace}.diagram{padding:20px;background:var(--paper);border:1px solid var(--line);overflow-x:auto;border-radius:5px;margin:24px 0}.diagram svg{display:block;width:100%;min-width:760px;height:auto}.diagram text{font-family:system-ui,"Yu Gothic",sans-serif;fill:var(--ink)}.diagram .small{font-size:12px;fill:var(--muted)}.diagram .title{font-size:16px;font-weight:700}.diagram .wire{fill:none;stroke:#7e9384;stroke-width:1.8;marker-end:url(#arrow)}.diagram .wire2{fill:none;stroke:#7e9384;stroke-width:1.8;marker-end:url(#arrow2)}.diagram .group{fill:#edf1e7;stroke:#cfdbc8}.diagram .box{fill:#fffdf7;stroke:#aabca8}.diagram .accent{fill:#dcebc3;stroke:#5e8b54}.timeline{counter-reset:flow;display:grid;gap:0;margin:26px 0}.stage{display:grid;grid-template-columns:42px 1fr;column-gap:18px;position:relative}.stage::before{counter-increment:flow;content:counter(flow,decimal-leading-zero);background:var(--green);color:white;font:700 12px ui-monospace,monospace;border-radius:50%;width:36px;height:36px;display:grid;place-items:center;z-index:1}.stage::after{content:"";position:absolute;left:17px;top:36px;bottom:0;border-left:2px solid #ccd8c4}.stage:last-child::after{display:none}.stage>div{padding:0 0 28px}.stage h3{margin:0 0 8px;font-size:19px}.stage p{margin:6px 0}.loss{font-size:13px;color:var(--orange);margin-top:8px}.formula{padding:16px 20px;background:#e4eddb;color:#204f36;font:600 14px/1.8 ui-monospace,monospace;margin:18px 0;overflow-wrap:anywhere}.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 15px}.tabs button,.preset{border:1px solid #a6b89c;padding:8px 13px;border-radius:5px;background:var(--paper);color:var(--ink)}.tabs button[aria-selected="true"],.preset:hover{background:var(--green);border-color:var(--green);color:white}.tab-panel[hidden]{display:none}.controls{display:flex;flex-wrap:wrap;gap:18px;align-items:center;margin:18px 0}.controls label{display:flex;gap:9px;align-items:center;font-size:13px}.controls input[type=range]{accent-color:var(--green);width:180px}.controls input[type=number]{width:105px;padding:6px;border:1px solid var(--line);border-radius:4px}.controls select{max-width:100%;padding:6px;border:1px solid var(--line)}.result{background:#e5eeda;padding:16px 20px;border:1px solid #bbd4a9;font-size:15px;min-height:70px}.sim-counts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.sim-counts div{background:#edf2e6;padding:12px;font-size:12px}.sim-counts b{font:800 28px ui-monospace,monospace;display:block}.bar{height:16px;background:#d6dccc;display:flex;overflow:hidden;border-radius:3px;margin:15px 0}.bar .bodybar{background:var(--green)}.bar .linebar{background:#a8c658}details{border:1px solid var(--line);background:var(--paper);padding:14px 18px;margin:12px 0}summary{font-weight:700;cursor:pointer}details p{font-size:14px}.reference-list{font-size:13px}.reference-list li{padding:8px 0;border-bottom:1px solid var(--line)}.jump{font-size:13px}.matrix-code{font-size:12px}.mock{color:var(--orange);font-size:12px}.scroll-hint{display:none}footer{font-size:12px;color:var(--muted)}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #d38639;outline-offset:3px}
+@media(min-width:1600px){main{max-width:1450px}}
+@media(max-width:1050px){.layout{grid-template-columns:195px minmax(0,1fr)}aside{padding:20px 12px}.stats{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}header,section{padding:40px 28px}}
+@media(max-width:720px){.layout{display:block}aside{position:relative;height:auto;padding:16px 20px;border-right:0;border-bottom:1px solid var(--line)}nav{display:flex;overflow-x:auto;margin-top:12px;gap:2px}nav a{white-space:nowrap;font-size:12px}.navnote{display:none}header,section,footer{padding:32px 20px}.stats{gap:8px}.stat{padding:14px}.stat b{font-size:31px}.lead{font-size:17px}.stage{grid-template-columns:30px 1fr;column-gap:12px}.stage::before{width:28px;height:28px;font-size:10px}.stage::after{left:13px;top:28px}.diagram{padding:12px}.scroll-hint{display:block;font-size:11px;color:var(--muted)}.sim-counts{grid-template-columns:1fr}.controls{gap:12px}}
+@media print{aside,.tabs,.controls,.jump{display:none}.layout{display:block}body{font-size:11px;background:white}header,section{padding:22px 0;break-inside:auto}.card,.diagram,table{break-inside:avoid}.diagram svg{min-width:0}.tablewrap{overflow:visible}table{min-width:0;font-size:10px}.tab-panel[hidden]{display:block}.tab-panel{margin:20px 0}h1{font-size:32px}.stats{grid-template-columns:repeat(4,1fr)}a{color:inherit}pre{background:#eee;color:#111}.notice{break-inside:avoid}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside>
+<div class="brand">LLM Graph Builder<span>IMPLEMENTATION FIELD GUIDE</span></div>
+<nav aria-label="解説の目次">
+<a href="#overview">01 結論と現在の数値</a>
+<a href="#system">02 システム構成図</a>
+<a href="#retrieval">03 検索フローの全段階</a>
+<a href="#hybrid">04 top-k と点数の内訳</a>
+<a href="#entities">05 エンティティ・ホップ</a>
+<a href="#references">06 参照先の追加</a>
+<a href="#budget">07 行・文字数・最終制限</a>
+<a href="#modes">08 モード別・旧経路</a>
+<a href="#ingest">09 取り込みと抽出</a>
+<a href="#settings">10 設定値の一覧</a>
+<a href="#diagnose">11 根拠が消える場所</a>
+<a href="#sources">12 コードと確認範囲</a>
+</nav>
+<p class="navnote">対象：この環境のカスタムフォーク<br>確認日：2026-10-16（日本時間）<br>オフラインでも読める単体HTML</p>
+</aside>
+<main>
+<header id="overview">
+<div class="eyebrow">Source code × running backend</div>
+<h1>20件から6件へ。<br>その後、何が残るのか。</h1>
+<p class="lead">文書検索 → チャンク再順位付け → 参照追加 → エンティティ選択 → グラフ展開 → 行の選別 → 回答生成。この各段階には、別々の順位・上限・切り捨て条件がある。</p>
+<p>主に、現在の既定モード <code>graph_vector_fulltext</code> と、有効になっているリランク経路を説明する。数値は稼働中バックエンドの設定APIとコンテナ環境を照合した値。検索に使う主要3ファイルも、ローカルとコンテナ内で内容が一致することを確認した。</p>
+<div class="stats">
+<div class="stat"><b>20 → 6</b><small>候補チャンク → リランクで残す上限</small></div>
+<div class="stat"><b>+2</b><small>REFERS_TOから追加する上限<br>現在は target 方式</small></div>
+<div class="stat"><b>40</b><small>文書ごとの起点エンティティ上限<br>展開後の総数ではない</small></div>
+<div class="stat"><b>120 / 8</b><small>グラフ行の総上限 / 最終文書ブロック上限</small></div>
+</div>
+<div class="notice warn"><strong>先に押さえる3点</strong><p>① 14,000文字は厳密な総入力上限ではない。本文を残し、余りでグラフ行を追加する予算。<br>② <code>CHAT_PROMPT_TOKEN_CUTOFF=8</code> は「8トークン」ではなく「最大8文書ブロック」。<br>③ 取得・画面表示されたエンティティと、実際にLLMへ渡した行は一致するとは限らない。</p></div>
+<p class="note">ブラウザの「検索の詳細設定」で変更した値はリクエストごとに上書きされる。その個別値はこの確認では取得していない。以下の「現在値」は、画面からの上書きがない場合のサーバー既定値。</p>
+<a class="jump" href="#retrieval">検索フローを読む ↓</a>
+</header>
+
+<section id="system">
+<div class="eyebrow">02 / system architecture</div><h2>システムはどうつながるか</h2>
+<p>取り込み時に作るグラフを、質問時に検索する。LLMは「抽出」「質問の書き換え」「回答生成」で使われ、埋め込みモデルとリランカーは別の役割を持つ。</p>
+<div class="diagram">
+<svg viewBox="0 0 1040 500" role="img" aria-labelledby="sys-title sys-desc">
+<title id="sys-title">LLM Graph Builderのシステム構成とデータの流れ</title>
+<desc id="sys-desc">ブラウザからFastAPIへ。取り込みは読み込み、分割、埋め込み、LLMまたはEDC抽出を経てNeo4jへ保存。質問はNeo4j検索、リランク、グラフ展開、文脈整形、回答LLMへ進む。</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#7e9384"/></marker></defs>
+<rect class="group" x="12" y="14" width="1016" height="82" rx="8"/>
+<text class="small" x="32" y="38">BROWSER / FRONTEND</text>
+<rect class="box" x="32" y="47" width="263" height="34" rx="5"/><text x="47" y="70" font-size="14">文書アップロード・取り込み設定</text>
+<rect class="box" x="470" y="47" width="264" height="34" rx="5"/><text x="486" y="70" font-size="14">質問・モード・検索の詳細設定</text>
+<rect class="box" x="795" y="47" width="210" height="34" rx="5"/><text x="811" y="70" font-size="14">回答・出典・グラフ表示</text>
+<path class="wire" d="M166 81V132"/><path class="wire" d="M600 81V132"/><path class="wire" d="M922 132V81"/>
+<rect class="group" x="12" y="118" width="1016" height="252" rx="8"/>
+<text class="small" x="32" y="142">FASTAPI / backend/score.py</text>
+<rect class="box" x="32" y="155" width="265" height="47" rx="5"/><text class="title" x="48" y="180">/extract → processing_source</text>
+<rect class="box" x="32" y="222" width="265" height="53" rx="5"/><text x="48" y="244" font-size="14">Loader → Chunk → Embedding</text><text class="small" x="48" y="264">PDF / Markdown / Web など</text>
+<rect class="box" x="32" y="295" width="265" height="53" rx="5"/><text x="48" y="317" font-size="14">EDC または LLMでグラフ抽出</text><text class="small" x="48" y="336">GraphDocument → 保存・HAS_ENTITY</text>
+<path class="wire" d="M165 202V222"/><path class="wire" d="M165 275V295"/>
+<rect class="accent" x="348" y="220" width="130" height="128" rx="8"/><text class="title" x="382" y="249">Neo4j</text><text class="small" x="365" y="276">Document / Chunk</text><text class="small" x="367" y="297">Entity / 関係</text><text class="small" x="363" y="320">vector / keyword</text>
+<path class="wire" d="M297 321H348"/>
+<rect class="box" x="520" y="155" width="265" height="47" rx="5"/><text class="title" x="536" y="180">/chat_bot → QA_RAG</text>
+<rect class="box" x="520" y="222" width="265" height="53" rx="5"/><text x="536" y="245" font-size="14">検索 → リランク → グラフ展開</text><text class="small" x="536" y="264">候補20 → 本文6 + 参照最大2</text>
+<rect class="box" x="520" y="295" width="265" height="53" rx="5"/><text x="536" y="318" font-size="14">行選別 → 文脈整形 → 回答LLM</text><text class="small" x="536" y="337">120行 / 14,000文字予算 / 8ブロック</text>
+<path class="wire" d="M653 202V222"/><path class="wire" d="M653 275V295"/><path class="wire" d="M478 248H520"/>
+<path class="wire" d="M785 321H922V132"/>
+<text class="small" x="809" y="256">/retrieve_context</text><text class="small" x="809" y="277">は回答生成を省略</text>
+<rect class="group" x="12" y="392" width="1016" height="94" rx="8"/>
+<text class="small" x="32" y="416">MODEL SERVICES / それぞれ独立したHTTPサービス</text>
+<rect class="box" x="32" y="429" width="204" height="37" rx="4"/><text x="47" y="453" font-size="13">EDC / OCR（取り込み）</text>
+<rect class="box" x="253" y="429" width="227" height="37" rx="4"/><text x="268" y="453" font-size="13">ruri 埋め込み（検索・保存）</text>
+<rect class="box" x="497" y="429" width="235" height="37" rx="4"/><text x="512" y="453" font-size="13">ruri リランカー（並べ替え）</text>
+<rect class="box" x="749" y="429" width="256" height="37" rx="4"/><text x="764" y="453" font-size="13">gemma4等（抽出・質問・回答）</text>
+<path class="wire" d="M165 348V392"/><path class="wire" d="M653 348V392"/>
+</svg>
+</div><p class="scroll-hint">図は横にスクロールできます。</p>
+<div class="two">
+<div class="card"><h4>3種類の「Document」を区別する</h4><p><strong>Neo4jのDocumentノード</strong>は登録ファイル。<strong>LangChainのDocument</strong>は本文＋メタデータの入れ物。<strong>回答用の文書ブロック</strong>は検索で選んだチャンクを元文書単位に束ねたもの。8件の上限が掛かるのは最後のブロック。</p></div>
+<div class="card"><h4>2種類のグラフ関係</h4><p><code>PART_OF</code>・<code>HAS_ENTITY</code>は根拠への接続。<code>Entity → Entity</code>は意味的な関係。<code>REFERS_TO</code>は文章中の「別表参照」などを表し、検索で追加本文を取りに行くために使う。</p></div>
+</div>
+<p class="source">根拠：<a href="#src-api">score.py</a>、<a href="#src-main">main.py</a>、<a href="#src-rerank">rerank_retriever.py</a></p>
+</section>
+
+<section id="retrieval">
+<div class="eyebrow">03 / complete retrieval pipeline</div><h2>質問から回答まで、順番に追う</h2>
+<p><span class="badge">現在の標準経路</span> <code>graph_vector_fulltext</code> ＋ <code>CHAT_RERANK_ENABLED=true</code>。件数は取得数の保証ではなく上限。該当データ・点数・参照関係の有無で減る。</p>
+<div class="timeline">
+<article class="stage"><div><h3>質問・履歴・検索設定を受け取る</h3><p>画面から <code>/chat_bot</code> へ質問、モデル、モード、文書選択、検索の変更値を送る。履歴を含めたメッセージが1件なら原文の質問を使い、複数件ならLLMで検索用の質問に書き換える。</p><p class="note">以降の埋め込み・リランク・エンティティ類似度には、この検索用質問を使う。回答生成には元の質問と会話履歴を渡す。</p></div></article>
+<article class="stage"><div><h3>ベクトル検索と全文検索を統合し、最大20候補</h3><p>ベクトル索引に <strong>20 × 5 = 100件</strong>を要求し、その枝を20件までにする。全文索引は最大20件。各枝で点数を最大点により正規化し、同じノードは高い方の点数を採用して、統合後に上位20件へ切る。</p><div class="loss">切り捨て①：各枝のtop-k、および統合後top-k。詳細は <a href="#hybrid">ハイブリッド検索図</a>。</div></div></article>
+<article class="stage"><div><h3>候補点数が0.5未満なら除外</h3><p><code>candidate_min_score=0.5</code>。20件を得た後にフィルタする。例えば7件が閾値未満なら残り13件になり、落ちた7件の補充検索はしない。</p><div class="loss">切り捨て②：候補検索の点数 &lt; 0.5。リランカーの点数ではない。</div></div></article>
+<article class="stage"><div><h3>本文をリランクし、最大6チャンクを選ぶ</h3><p>各候補本文と質問の組をクロスエンコーダで採点する。各本文は<strong>先頭3,000文字だけ</strong>を採点に使い、点数順の上位6件を残す。チャンク採用用のリランク最低点は別途設けていない。</p><div class="loss">切り捨て③：順位7位以下。採点に使わない部分：3,001文字目以降。採用後の本文はこの文字数では切られない。</div></div></article>
+<article class="stage"><div><h3>参照先本文を最大2チャンク追加</h3><p>現在は <code>reference_select=target</code>。6件の選択チャンクから <code>REFERS_TO</code> を1回たどり、未選択の参照先Chunkを最大100行取得。参照先本文を質問でリランクし、上位2件を追加する。</p><div class="loss">切り捨て④：参照先の取得上限100、そこから上位2件。参照先がなければ追加0件。標準設定では直接6＋参照2＝最大8チャンク相当。</div></div></article>
+<article class="stage"><div><h3>文書単位で束ね、起点エンティティを40件へ</h3><p>直接選択＋参照追加チャンクを所属Documentごとにまとめる。その中の <code>HAS_ENTITY</code> 接続先を候補にし、質問との埋め込み類似度順、同点なら選択チャンク内での出現数順に並べる。<strong>各文書の上位40起点</strong>を残す。</p><div class="loss">切り捨て⑤：選択チャンクに接続していないエンティティは起点にならない。各文書の起点候補41位以下も落ちる。</div></div></article>
+<article class="stage"><div><h3>起点の類似度で0・1・2ホップを決める</h3><p>0.3未満は起点自身だけ。0.3〜0.9または埋め込みなしなら0〜1ホップ。0.9超なら0〜2ホップ。現在、1ホップ経路数は無制限、2ホップは起点ごと最大40経路。取得後にノード・関係の重複を除く。</p><div class="loss">切り捨て⑥：ホップ範囲、除外関係・終点ラベル、2ホップの経路上限。展開先の全ノードを類似度で再フィルタする処理はない。</div></div></article>
+<article class="stage"><div><h3>本文を確保し、グラフ行を採点して詰める</h3><p>文書を「含まれる選択チャンクの最大リランク点数」で並べる。本文はすべて残す。エンティティ行・関係行を全文書から集め、同一文字列を重複除去し、質問でリランク。点数順に<strong>最大120行</strong>、本文との合計が<strong>14,000文字予算</strong>に収まる範囲で加える。</p><div class="loss">切り捨て⑦：行の点数下限、120行、次の行が文字予算に入らない時点で全体終了。本文だけで予算を超えても本文は残る。</div></div></article>
+<article class="stage"><div><h3>最大8文書ブロックにし、回答を生成</h3><p><code>format_documents()</code> でもう一度文書スコア順に並べ、最大8ブロックへ切る。出典付きの <code>Document start … Document end</code> 形式でLLMへ渡す。現在のローカルLLM設定では出力は最大4,096トークン。</p><div class="loss">切り捨て⑧：9ブロック目以降。4,096は出力側の制限で、検索文脈の文字数・トークン数制限ではない。</div></div></article>
+</div>
+<div class="notice"><strong>検索だけを確かめる入口：</strong> <code>/retrieve_context</code> は同じ検索・整形を行い、<code>context</code>、チャンク、entity/relationship ID、参照情報を返す。回答用LLM・履歴の読み書きは使わない。ただし埋め込みとリランカーは使う。<code>graph</code> モードは検索自体にLLMが必要なので対象外。</div>
+<p class="source">根拠：<a href="#src-qa">QA_integration.py:182, 311, 421, 711</a>、<a href="#src-rerank">rerank_retriever.py:612, 925, 1000</a>、<a href="#src-retrieve">retrieve_only.py:117</a></p>
+</section>
+
+<section id="hybrid">
+<div class="eyebrow">04 / top-k and score semantics</div><h2>「top-kはいくつ？」の正確な答え</h2>
+<p>アプリの <code>candidate_k=20</code> と、索引内部で多めに取る件数は別。インストール済みの <code>langchain-neo4j 0.9.0</code> / <code>neo4j-graphrag 1.22.0</code> の実装も確認した。</p>
+<div class="diagram">
+<svg viewBox="0 0 980 360" role="img" aria-labelledby="hy-title hy-desc">
+<title id="hy-title">ハイブリッド検索の件数と切り捨て</title><desc id="hy-desc">ベクトル索引100件要求から20件、全文索引最大20件。それぞれ正規化し、統合と重複除去で最大20件、0.5閾値、リランクで最大6件。</desc>
+<defs><marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#7e9384"/></marker></defs>
+<rect class="box" x="15" y="30" width="285" height="100" rx="6"/><text class="title" x="34" y="58">ベクトル索引</text><text x="34" y="85" font-size="14">queryNodes(k × ratio) = 100件要求</text><text class="small" x="34" y="111">WITH … LIMIT 20 → 枝内最大点で割る</text>
+<rect class="box" x="15" y="179" width="285" height="100" rx="6"/><text class="title" x="34" y="207">全文索引 keyword</text><text x="34" y="234" font-size="14">queryNodes(limit=20)</text><text class="small" x="34" y="260">最大20件 → 枝内最大点で割る</text>
+<path class="wire2" d="M300 80H330V151H355"/><path class="wire2" d="M300 230H330V151H355"/>
+<rect class="accent" x="355" y="102" width="244" height="100" rx="6"/><text class="title" x="374" y="130">統合 → ノードで重複除去</text><text x="374" y="157" font-size="14">同一ノードは max(score)</text><text class="small" x="374" y="184">点数順・同点はelementId → 最大20件</text>
+<path class="wire2" d="M599 151H636"/>
+<rect class="box" x="636" y="103" width="145" height="98" rx="6"/><text class="title" x="654" y="132">点数 ≥ 0.5</text><text class="small" x="654" y="159">最大20件</text><text class="small" x="654" y="183">補充なし</text>
+<path class="wire2" d="M781 151H814"/>
+<rect class="accent" x="814" y="103" width="150" height="98" rx="6"/><text class="title" x="831" y="132">リランク</text><text x="831" y="162" font-size="20" font-weight="800">最大6件</text><text class="small" x="831" y="184">新しい点数で選ぶ</text>
+<text class="small" x="21" y="327">100件を直接LLMに送るわけではない。20件ずつ合計40件をそのままリランクするわけでもない。</text>
+</svg>
+</div>
+<div class="formula">hybrid_score(node) = max(vector_score / max_vector_score,<br>　　　　　　　　　　　　 fulltext_score / max_fulltext_score)<br>→ 上位20件 → score ≥ 0.5 → リランク → 上位6件</div>
+<p>これは加重平均やRRFではなく、各枝内で正規化した点数の <code>max</code> を使う方式。0.5は「回答が正しい確率50%」を意味しない。ベクトル単独モードの場合は全文枝もこの正規化統合もなく、Neo4jが返すベクトル点数に閾値を掛ける。</p>
+<div class="tablewrap"><table><thead><tr><th>点数</th><th>何と何を比べるか</th><th>使い道</th></tr></thead><tbody>
+<tr><td>候補検索 score</td><td>質問とチャンクのベクトル／全文検索</td><td>統合top-20と0.5閾値</td></tr>
+<tr><td>チャンクのリランク score</td><td>検索用質問 × チャンク本文の先頭3,000文字</td><td>上位6件、文書ブロックの順位</td></tr>
+<tr><td>エンティティ qsim</td><td>検索用質問embedding × Entity.embedding</td><td>文書別40起点の順序、0/1/2ホップ分岐</td></tr>
+<tr><td>グラフ行のリランク score</td><td>検索用質問 × Entity/Relationshipを文字列化した行</td><td>120行・残り文字予算への採用順</td></tr>
+<tr><td>参照リンク score</td><td>検索用質問 × 参照の一文など（link方式）</td><td>参照をたどるか。現在のtarget方式とは別</td></tr>
+</tbody></table></div>
+<details><summary>文書を選択して絞った場合は？</summary><p><code>vector</code> / <code>graph_vector</code> は文書フィルタを使える。ライブラリはその場合、フィルタ条件に合うノードの厳密なベクトル類似度を計算してtop-kを取る経路へ変わるため、上図の「索引100件要求」をそのまま当てはめない。<code>fulltext</code> / <code>graph_vector_fulltext</code> は文書フィルタ非対応で、文書選択があるとQA側が解除を促して検索しない。</p></details>
+<p class="source">根拠：<a href="#src-library">インストール済み検索ライブラリ</a>、<a href="#src-rerank">rerank_retriever.py:612</a>、<a href="#src-qa">QA_integration.py:737</a></p>
+</section>
+
+<section id="entities">
+<div class="eyebrow">05 / entity selection and traversal</div><h2>どのエンティティを起点にするか</h2>
+<p>現在のグラフ＋ベクトル検索では、最初から全エンティティの中を検索しない。まず本文チャンクを選び、そのチャンクに付いたエンティティから起点を決める。全エンティティのベクトル索引を先に検索するのは別の <code>entity_vector</code> モード。</p>
+<pre><code>選択チャンク（直接＋参照）
+  └─ PART_OF → 元Documentでグループ分け
+       └─ HAS_ENTITY → 起点候補 e
+            qsim = vector.similarity.cosine(query_vector, e.embedding)
+            numChunks = count(*)  // この選択チャンク群との接続数
+            ORDER BY coalesce(qsim, -1) DESC, numChunks DESC
+            LIMIT 40             // 文書ごと。全検索合計ではない
+                └─ 起点のqsimでホップ数を決めて展開
+                     └─ 文書ごとにノード・関係の重複を除去</code></pre>
+<div class="two">
+<div class="card"><h4>40の単位は「起点／文書」</h4><p>例えば3文書からチャンクが採用されれば、起点は最大40×3件の枠を持つ。近傍展開で追加したノードはこの40件に含まれず、展開後のエンティティ総数は40を超え得る。複数文書に同じ起点があれば重なる。</p></div>
+<div class="card"><h4>出現数は全文書の頻度ではない</h4><p><code>numChunks=count(*)</code> は今選んだチャンクとそのエンティティの接続数。データベース全体での出現頻度ではない。<code>entity_order=count</code> に変えるとこれを優先するが、同数時の順序は指定されていない。</p></div>
+</div>
+<h3>ホップの判定表</h3>
+<div class="tablewrap"><table><thead><tr><th>起点の類似度 qsim</th><th>現在の展開</th><th>注意点</th></tr></thead><tbody>
+<tr><td>埋め込みなし / null</td><td>0〜1ホップ</td><td>起点選択の順位は後ろになるが、選ばれると1ホップ展開</td></tr>
+<tr><td>qsim &lt; 0.3</td><td>0ホップ：起点のみ</td><td>エンティティ自体を削除する条件ではない</td></tr>
+<tr><td>0.3 ≤ qsim ≤ 0.9</td><td>0〜1ホップ</td><td>0.3と0.9ちょうどを含む。現在の経路上限0＝無制限</td></tr>
+<tr><td>qsim &gt; 0.9</td><td>0〜2ホップ</td><td>起点ごと最大40経路。<code>two_hop=false</code>なら1ホップ</td></tr>
+</tbody></table></div>
+<div class="card">
+<h4>数値を動かして分岐を確認</h4><p class="mock">説明用の分岐デモ。実際のグラフ検索や設定変更は行いません。</p>
+<div class="controls"><label for="qsim">起点のqsim <input id="qsim" type="range" min="0" max="1" step="0.01" value="0.90"><output id="qsim-value" for="qsim">0.90</output></label><label><input id="embedding-missing" type="checkbox">埋め込みなし</label><label><input id="two-hop" type="checkbox" checked>2ホップを有効にする</label></div>
+<div class="result" id="hop-result" aria-live="polite"></div>
+</div>
+<h3>展開は「経路」を取ってからノードを集める</h3>
+<pre><code>1ホップの形：
+(e)(()-[rels:!HAS_ENTITY&amp;!PART_OF]-()){0,1}(:!Chunk&amp;!Document&amp;!__Community__)
+
+2ホップの形：
+(e)(()-[rels:!HAS_ENTITY&amp;!PART_OF]-()){0,2}(:!Chunk&amp;!Document&amp;!__Community__)
+RETURN path LIMIT 40</code></pre>
+<p>無方向にたどるため、関係の向きが逆でも到達できる。<code>HAS_ENTITY</code> と <code>PART_OF</code> は展開に使わない。終点はChunk・Document・Community以外だが、この終点条件がすべての中間ノードにも掛かっているわけではない。</p>
+<div class="notice warn"><strong>「40経路」は「関連度の高い40ノード」ではない。</strong><p>0ホップの起点自身も経路に含む。経路取得に <code>ORDER BY</code> はなく、関連度順・作成順は保証されない。類似度判定をするのは起点で、近傍ノード一つ一つを質問との類似度で落とす処理はない。上限を変えると、あとでグラフ行のリランクに渡る情報量が変わる。</p></div>
+<p class="source">根拠：<a href="#src-rerank">rerank_retriever.py:228–268</a>、<a href="#src-constants">constants.py:368, 465</a></p>
+</section>
+
+<section id="references">
+<div class="eyebrow">06 / following document references</div><h2>「別表による」をどうたどるか</h2>
+<p><code>REFERS_TO</code> はエンティティのホップ展開とは別の機能。参照先の<strong>本文チャンクを追加</strong>し、それもエンティティ選択・展開の起点にする。リンクは取り込み後の <code>link_chunk_references</code> 後処理などで事前に作られている必要がある。</p>
+<div class="tabs" role="tablist" aria-label="参照方式の説明">
+<button id="tab-target" role="tab" aria-selected="true" aria-controls="panel-target" data-panel="panel-target">target：現在の設定</button>
+<button id="tab-link" role="tab" aria-selected="false" aria-controls="panel-link" data-panel="panel-link" tabindex="-1">link：参照文で選ぶ</button>
+<button id="tab-both" role="tab" aria-selected="false" aria-controls="panel-both" data-panel="panel-both" tabindex="-1">both：両方使う</button>
+</div>
+<div class="tab-panel card" id="panel-target" role="tabpanel" aria-labelledby="tab-target">
+<h4>参照先本文と質問の近さで選ぶ</h4>
+<ol><li>選択6件から出る、Chunk向けの <code>REFERS_TO</code> を1回たどる。Documentノード向け参照は対象外。</li><li>直接選択済みを除き、<code>DISTINCT … LIMIT 100</code>。この100行の取得には順序指定がない。文書フィルタがあればここでも適用する。</li><li>参照先本文を質問でリランクし、最大2件を追加する。</li></ol>
+<div class="notice"><strong>0.3の参照点数下限はtargetでは使わない。</strong><p><code>reference_min_score</code> や <code>reference_depth</code> はlink方式向け。現在のtarget方式では、本文リランクの上位2件を採る。参照リンクがなければ追加しない。</p></div>
+<p>参照先は通常の文書ブロックとしてまとまる。採用した先は返却できるが、target方式の参照記録には「どのquoteからたどったか」が残らない。</p>
+</div>
+<div class="tab-panel card" id="panel-link" role="tabpanel" aria-labelledby="tab-link" hidden>
+<h4>質問に関係する「参照の一文」を選んでたどる</h4>
+<ol><li>参照リンクを最大2,000行取得（順序指定なし）。参照元・quote・locator・種別でまとめる。</li><li>「見出し＋直前の一文（末尾最大200文字）＋参照の一文」をリランク。直前文が別の参照文なら付けない。</li><li>点数×改正履歴の重みが0.3以上、かつ正のものを上位から最大2参照採用。参照先が重複すれば一つにする。</li><li>参照が複数Chunkを指す場合は「質問＋quote」で再採点して一つにする。Documentだけを指す場合は、文書内の埋め込み上位30候補／文書から本文を再採点し、下限以上の最良1件を選ぶ。</li></ol>
+<p><code>reference_depth=2</code> なら、1回目の追加チャンクごとに最大1件だけさらに追加。2回目はChunk向けリンクのみ。判定点数は1回目の点数×2回目の点数×履歴重みで、同じ下限を使う。</p>
+<p><code>reference_presentation=inline</code> なら参照先本文を参照元の直後へ移す。移動した本文は単独文書の順位を押し上げず、参照元ブロックに同居する。<code>reference_prompt=true</code> は回答指示に参照の扱いを追加する独立設定。</p>
+</div>
+<div class="tab-panel card" id="panel-both" role="tabpanel" aria-labelledby="tab-both" hidden>
+<h4>上限はtargetとlinkで別々に使う</h4>
+<p>link方式の追加に加えてtarget方式の上位分も追加し、同じチャンクだけ重複除去する。</p>
+<div class="formula">reference_max = 2 / rerank_top_n = 6<br>depth=1：直接6 + link最大2 + target最大2 = 最大10<br>depth=2：上記 + linkの2回目最大2 = 最大12</div>
+<p>これはチャンクの選択段階の上限。その後の文書ブロック数・行予算で情報が落ち得るため、全部が最終プロンプトに残る保証ではない。</p>
+</div>
+<p class="source">根拠：<a href="#src-rerank">rerank_retriever.py:52, 619, 647, 753, 925</a>、<a href="#src-api">score.py:370</a></p>
+</section>
+
+<section id="budget">
+<div class="eyebrow">07 / what is cut from the final context</div><h2>文字数と行数で、何を捨てるか</h2>
+<p>グラフ展開の結果を文章に直すと、本文・エンティティ行・関係行の3つの節になる。現在はエンティティ行と関係行を混ぜてリランクするため、「必ず関係行を優先」とは限らない。</p>
+<pre><code>Text Content:
+採用されたチャンク本文 …
+----
+Entities:
+Procedure:点検手順 (説明 …)
+Equipment:ポンプA
+----
+Relationships:
+Procedure:点検手順 APPLIES_TO Equipment:ポンプA</code></pre>
+<p class="mock">上の名称・内容は形式を示す架空例です。</p>
+<h3>現在の行選別アルゴリズム</h3>
+<pre><code>used = 全文書の本文部分の文字数合計
+pool = 全文書の関係行・エンティティ行
+pool = 同一文字列を重複除去（最初の文書に所属）
+scores = rerank(検索用質問, pool)
+kept = 0
+
+for 行 in scores降順:
+    if score &lt; 0.0: break          // line_min_score
+    if kept &gt;= 120: break          // line_max
+    if used + len(行) + 1 &gt; 14000:
+        break                     // 短い下位行を探さず全体終了
+    行を元の文書へ追加
+    used += len(行) + 1
+    kept += 1
+
+本文は削らない
+各文書にEntities / Relationships見出しを付け直す</code></pre>
+<div class="two">
+<div class="card"><h4>本文が16,000文字なら？</h4><p>14,000文字をすでに超えていても、本文はそのまま残る。追加のグラフ行は0件になる。本文を14,000文字に切る処理ではない。</p></div>
+<div class="card"><h4>予算に含まれないもの</h4><p>再追加する節見出し、出典付きDocumentラッパー、システム指示、質問、会話履歴はこの14,000文字に含まれない。文字数はトークン数でもない。</p></div>
+</div>
+<h3>文字数予算の動作を試す</h3>
+<div class="card">
+<p class="mock">説明用シミュレーター。架空の200グラフ行を、すでに点数順に並んでいるものとして計算します。実際の検索結果ではありません。</p>
+<div class="controls">
+<label for="demo-body">本文合計 <input id="demo-body" type="number" min="0" max="100000" step="500" value="8000">文字</label>
+<label for="demo-line">各行の長さ <input id="demo-line" type="number" min="1" max="5000" value="60">文字</label>
+<label for="demo-limit">行数上限 <input id="demo-limit" type="number" min="0" max="5000" value="120"></label>
+<label><input id="demo-long" type="checkbox">10位の行だけ3,000文字</label>
+</div>
+<div class="controls"><button class="preset" data-body="8000">本文8,000文字</button><button class="preset" data-body="16000">本文16,000文字</button><span class="note">予算は14,000文字。行末の1文字も加算。</span></div>
+<div class="bar" aria-hidden="true"><div class="bodybar" id="body-bar"></div><div class="linebar" id="line-bar"></div></div>
+<div class="sim-counts"><div>残す本文 <b id="body-count"></b></div><div>採用グラフ行 <b id="line-count"></b></div><div>予算内で計上した文字数 <b id="used-count"></b></div></div>
+<p class="result" id="budget-result" aria-live="polite"></p>
+</div>
+<h3>最後の「8ブロック」は、この処理の後</h3>
+<p><code>format_documents()</code> は文書スコア順の <code>documents[:8]</code> を使う。リランク経路では通常、元文書ごとのブロックなので、同一文書から6チャンクを取っても1ブロックにまとまる。現在の直接6＋target2なら通常は8文書以内であり、最後の8件制限が追加の切り捨てを起こすとは限らない。</p>
+<p>上限を増やした場合やboth参照で文書が増える場合には、9文書目以降が丸ごと消える。行予算の計算は先に済んでいるため、最後に消える文書のグラフ行が、途中では文字予算を使っている場合もある。</p>
+<div class="notice warn"><strong>画面にグラフが見えても、LLMがその関係を読んだとは限らない。</strong><p>行の選別後も <code>metadata.entities.entityids</code> / <code>relationshipids</code> は展開時の値のまま。根拠を精査するなら、ID一覧だけでなく最終 <code>context</code> の文字列を見る必要がある。</p></div>
+<details><summary>行リランクOFF時と、リランカー故障時は？</summary><p><code>CHAT_LINE_RERANK_ENABLED=false</code> なら関係行→エンティティ行の順に、文書間で順番に1行ずつ配る。この経路では <code>line_max</code> / <code>line_min_score</code> は使わない。本文を残す方針は同じ。</p><p>チャンクのリランクが通信エラーなどで使えなければ検索点数の順へ戻る。行のリランク失敗は元の行順へ戻る。複数バッチの一部だけが失敗した場合は、そのバッチが0点のままになることもある。通常のリランクは1回200件の束、タイムアウト120秒。</p></details>
+<p class="source">根拠：<a href="#src-rerank">rerank_retriever.py:289, 339, 377, 962</a>、<a href="#src-qa">QA_integration.py:182</a></p>
+</section>
+
+<section id="modes">
+<div class="eyebrow">08 / retrieval modes</div><h2>モードが変わると、同じ数値は使わない</h2>
+<div class="tablewrap"><table><thead><tr><th>mode</th><th>最初の索引と件数</th><th>グラフ展開</th><th>文書選択</th></tr></thead><tbody>
+<tr><td><code>vector</code></td><td>Chunk vector。現在20候補→6</td><td>エンティティ展開なし。参照追加は設定に従う</td><td>可</td></tr>
+<tr><td><code>fulltext</code></td><td>Chunk vector＋keyword。現在20→6</td><td>エンティティ展開なし</td><td>不可</td></tr>
+<tr><td><code>graph_vector</code></td><td>Chunk vector。現在20→6</td><td>選択Chunk→起点40／文書→0〜2ホップ</td><td>可</td></tr>
+<tr><td><code>graph_vector_fulltext</code></td><td>Chunk vector＋keyword。現在20→6</td><td>このページの主経路</td><td>不可</td></tr>
+<tr><td><code>entity_vector</code></td><td>Entity vector のtop-k=10</td><td>Chunk上位3、Community上位3、選択Entity間の関係、外部近傍上位10など</td><td>不可</td></tr>
+<tr><td><code>global_vector</code></td><td>Community vector＋keyword のtop-k=10</td><td>コミュニティ要約を使う。利用には対応データ・索引が必要</td><td>不可</td></tr>
+<tr><td><code>graph</code></td><td>LLMがCypher生成。QAChainのtop_k=3</td><td>生成したクエリの結果を回答LLMへ</td><td>通常の文書フィルタ経路ではない</td></tr>
+</tbody></table></div>
+<div class="notice"><strong>名称に注意：</strong> この実装の <code>fulltext</code> は全文検索だけではなく、keyword指定により <code>search_type="hybrid"</code> でベクトルと全文を併用する。<code>global_vector</code> はコードに存在するモードで、画面に必ず有効表示されるという意味ではない。</div>
+<h3>リランク無効時の旧経路</h3>
+<pre><code>Chunkモード：
+modeの top_k=5 で検索（文書単位の集約・展開はretrieval_query内）
+  → 文書行の検索点数に0.5閾値
+  → TokenTextSplitterで3,000トークンの断片へ（overlap=0）
+  → EmbeddingsFilterで質問との類似度0.10により断片を選別
+  → format_documentsで最大8断片（現在の環境値）
+  → 回答生成</code></pre>
+<p>旧グラフ展開では起点を出現数順の40件にし、0.3／0.9の分岐は同様だが、1ホップ20経路・2ホップ40経路。現在の新経路の「類似度順・1ホップ無制限・行リランク予算」と同じではない。</p>
+<p><code>entity_vector</code> と <code>global_vector</code> は索引ラベルがChunkではないため、<code>CHAT_RERANK_ENABLED=true</code> でもChunk用の20→6経路には入らず、従来の断片分割・埋め込みフィルタを通る。Entityモードの「外部近傍10」は隣接ノード群の上限で、厳密に関係10本という意味ではない。選択Entity同士の関係にはこのクエリ上、件数上限がない。</p>
+<p class="source">根拠：<a href="#src-constants">constants.py:338, 362, 543, 712, 751</a>、<a href="#src-qa">QA_integration.py:311, 401, 421, 583</a></p>
+</section>
+
+<section id="ingest">
+<div class="eyebrow">09 / ingestion and extraction</div><h2>検索の前に、何が保存されているか</h2>
+<p>検索を広げても、取り込みで保存されなかった本文・抽出されなかった関係は取り戻せない。検索側の制限とは分けて見る。</p>
+<div class="diagram">
+<svg viewBox="0 0 1000 310" role="img" aria-labelledby="ing-title ing-desc">
+<title id="ing-title">文書取り込みの処理順と抽出分岐</title><desc id="ing-desc">ソース読み込みからチャンク分割、文書上限による切り捨て、ノード保存と埋め込みへ。EDCかLLMで抽出し、正規化してNeo4jへ保存する。</desc>
+<rect class="box" x="14" y="25" width="190" height="92" rx="5"/><text class="title" x="28" y="52">ソース読み込み</text><text class="small" x="28" y="78">PDF → Markdown / OCR</text><text class="small" x="28" y="100">.md / Web / 他のloader</text>
+<path class="wire2" d="M204 70H237"/>
+<rect class="box" x="237" y="25" width="220" height="92" rx="5"/><text class="title" x="252" y="52">分割＋文書上限</text><text class="small" x="252" y="78">512 token / overlap 50</text><text class="small" x="252" y="100">MAX_TOKEN_CHUNK_SIZE=200000</text>
+<path class="wire2" d="M457 70H491"/>
+<rect class="accent" x="491" y="25" width="226" height="92" rx="5"/><text class="title" x="506" y="52">Chunk保存・埋め込み</text><text class="small" x="506" y="78">PART_OF / NEXT_CHUNK</text><text class="small" x="506" y="100">20チャンクずつ処理</text>
+<path class="wire2" d="M717 70H755V174H717"/>
+<rect class="box" x="491" y="146" width="226" height="60" rx="5"/><text class="title" x="506" y="172">抽出：EDC / 汎用LLM</text><text class="small" x="506" y="193">結合数1 → GraphDocument</text>
+<path class="wire2" d="M491 176H457"/>
+<rect class="box" x="237" y="146" width="220" height="60" rx="5"/><text class="title" x="252" y="172">正規化・保存・根拠リンク</text><text class="small" x="252" y="193">Entity / 関係 / HAS_ENTITY</text>
+<path class="wire2" d="M237 176H204"/>
+<rect class="accent" x="14" y="146" width="190" height="60" rx="5"/><text class="title" x="28" y="172">進捗・件数を更新</text><text class="small" x="28" y="193">Completed / Cancelled等</text>
+<rect class="group" x="14" y="237" width="966" height="57" rx="5"/><text x="30" y="262" font-size="14">後処理：全文索引・Entity埋め込み・SIMILAR・REFERS_TO・Communityなど（選択したタスク）</text><text class="small" x="30" y="282">すべてが毎回自動実行されるわけではない。索引やリンクの存在が検索の可否・追加本文に影響する。</text>
+</svg>
+</div>
+<h3>読み込みとチャンキング</h3>
+<p>現在の <code>PDF_CHUNK_STRATEGY=markdown</code> では、ローカルPDFをMarkdown化する経路を先に試す。文字層がない、または変換できない場合は、設定に応じたEDCのOCR変換、その後PyMuPDFへフォールバックする。</p>
+<div class="tablewrap"><table><thead><tr><th>項目</th><th>確認値</th><th>実際の処理</th></tr></thead><tbody>
+<tr><td>チャンクサイズ</td><td>512 token</td><td>リポジトリのフロント用設定値。画面設定・リクエストで変わり得る</td></tr>
+<tr><td>重なり / 結合数</td><td>50 token / 1</td><td>前後の重なりを指定。抽出前の結合は現在1チャンク。増やすと複数本文を一括抽出</td></tr>
+<tr><td>Markdownの長さ計測</td><td>ruri tokenizer</td><td>現在はローカルtokenizer.jsonを使用。通常のTokenTextSplitter経路と同じ数え方とは限らない</td></tr>
+<tr><td>見出しパンくず</td><td>最大チャンクサイズの1/4</td><td>文書名・見出し階層を本文先頭へ追加し、その分本文容量を減らす。表を分割するときは列見出しを付け直す</td></tr>
+<tr><td>文書単位の上限</td><td>200,000</td><td>通常経路は floor(200000 / 512)=390チャンクで切る。Markdownはbody_tokensの累計で判定する</td></tr>
+<tr><td>処理バッチ</td><td>20チャンク</td><td>各バッチで埋め込み→抽出→保存→処理数更新。バッチ境界でキャンセル状態を確認</td></tr>
+</tbody></table></div>
+<p class="note">通常経路の390チャンクは「元本文の重複なし200,000トークン」の保証ではない。Markdown経路では上限を超えたチャンクごと、その先を切り捨てる。上限なしの設定・一部ユーザー条件の例外もコードにある。</p>
+<h3>EDCと汎用LLMの分岐</h3>
+<div class="two">
+<div class="card"><h4>EDC</h4><p><code>/health</code>を確認し、doctype=autoなら <code>/classify</code>。呼び出し対象の先頭3結合チャンク、最大3,000文字を使う。その後 <code>/extract</code> を同時数制限付きで呼ぶ（構成の既定は2）。</p><p>トリプルをNode・Relationshipへ変換。主語・関係・目的語が欠ければトリプル全体を除く。同一トリプルを重複除去し、型情報を優先する。</p><p>現在は <code>enrich_schema=true</code>、未知関係の折り畳みと文のような名称の除外も有効。すべてが単純な「統制スキーマのみ」になるとは限らない。画面の許可ノード・許可関係はこのEDC分岐では使わず、EDC側のdoctype管理を使う。</p></div>
+<div class="card"><h4>汎用LLM / gemma4など</h4><p><code>LLMGraphTransformer</code> に許可ノード・許可関係・追加指示を渡す。構造化出力が使えるモデルではdescriptionも対象にする。</p><p>結合チャンクごとに非同期変換し、一部の失敗はスキップする。ローカル互換LLMの出力上限は現在4,096トークン。これはこのローカル経路の値で、EDCサイドカー内部の生成設定とは別。</p><p>元のチャンクID一覧を抽出結果に持たせ、保存後に <code>HAS_ENTITY</code> を作る。結合数を増やした場合、抽出結果は結合元の複数チャンクへ紐付く。</p></div>
+</div>
+<div class="notice warn"><strong>Completedでも、全チャンクから全関係を抽出できたとは限らない。</strong><p>EDC・汎用LLMとも、一部の抽出エラーはスキップして続行し、バッチの処理済み件数は進む。全部失敗したバッチはエラーになる。EDCが返すtruncated/noise/droppedの情報はログに記録される。抽出失敗でも本文・埋め込みが先に保存されていれば本文検索の対象にはなり得る。</p></div>
+<details><summary>実装上の細部：分類・ID・後処理</summary><p>EDCの分類関数のコメントは「ファイルで1回」だが、呼び出しは処理バッチごとなので、実際には各バッチの先頭サンプルで再分類され得る。</p><p>Chunk IDは本文SHA-1。異なる文書でも本文が完全一致すれば同一IDとなり、<code>MERGE</code>で共有され得る。そのため上で説明した「通常1チャンク1文書」「6＋2で最大8文書」は一般的な構成での目安で、複数PART_OF接続があると厳密には変わる。</p><p>後処理には索引、Entity埋め込み、類似関係、参照リンク、Community作成などがある。Entity埋め込みがないと検索時のqsimがnullになり、選ばれた起点は1ホップ分岐に入る。現在 <code>GRAPH_SCHEMA_CONSOLIDATION_ENABLED=false</code>。</p></details>
+<p class="source">根拠：<a href="#src-chunks">create_chunks.py:52, 111, 209</a>、<a href="#src-load">local_file.py:85</a>、<a href="#src-main">main.py:470, 664</a>、<a href="#src-extract">llm.py:203, 274 / edc_extraction.py:134, 188, 240</a></p>
+</section>
+
+<section id="settings">
+<div class="eyebrow">10 / actual configuration</div><h2>数値・単位・適用箇所の一覧</h2>
+<p>優先順位は<strong>有効なリクエスト上書き → サーバー環境変数 → コード既定値</strong>。フロントは変更値を <code>localStorage.retrievalSettings</code> に保存し、次の質問へ送る。型・選択肢・範囲が不正な上書きは採用されない。</p>
+<div class="tablewrap"><table><thead><tr><th>設定名（リクエストキー）</th><th>現在値</th><th>コード既定</th><th>単位・範囲・適用箇所</th></tr></thead><tbody>
+<tr><td><code>candidate_k</code></td><td>20</td><td>20</td><td>候補取得k。上書き1〜200</td></tr>
+<tr><td><code>candidate_min_score</code></td><td>0.5</td><td>0.5</td><td>候補検索点数の下限。0〜1</td></tr>
+<tr><td><code>rerank_top_n</code></td><td>6</td><td>6</td><td>直接選択チャンク。1〜50</td></tr>
+<tr><td><code>reference_max</code></td><td>2</td><td>0</td><td>方式ごとの追加参照数。0〜20、0で無効</td></tr>
+<tr><td><code>entity_order</code></td><td>similarity</td><td>similarity</td><td>similarity / count</td></tr>
+<tr><td><code>entity_limit</code></td><td>40</td><td>40</td><td>起点数／文書。0〜1000、0で無制限</td></tr>
+<tr><td><code>sim_min / sim_max</code></td><td>0.3 / 0.9</td><td>同じ</td><td>展開開始・2ホップ切替の起点qsim</td></tr>
+<tr><td><code>two_hop</code></td><td>true</td><td>true</td><td>2ホップ展開を許可</td></tr>
+<tr><td><code>one_hop_limit</code></td><td>0</td><td>0</td><td>経路数／起点。0で無制限。旧経路は20</td></tr>
+<tr><td><code>two_hop_limit</code></td><td>40</td><td>40</td><td>経路数／起点。0で無制限</td></tr>
+<tr><td><code>line_min_score</code></td><td>0</td><td>0</td><td>行リランクの下限。行リランク有効時のみ</td></tr>
+<tr><td><code>line_max</code></td><td>120</td><td>120</td><td>全体の採用グラフ行数。0〜5000、0で無制限</td></tr>
+<tr><td><code>char_budget</code></td><td>14,000</td><td>14,000</td><td>本文＋グラフ行の予算。1,000〜200,000。本文は切らない</td></tr>
+<tr><td><code>reference_select</code></td><td>target</td><td>target</td><td>target / link / both</td></tr>
+<tr><td><code>reference_min_score</code></td><td>0.3</td><td>0.3</td><td>linkの参照採否。targetでは不使用</td></tr>
+<tr><td><code>reference_depth</code></td><td>1</td><td>1</td><td>linkの追跡1〜2回</td></tr>
+<tr><td><code>reference_documents</code></td><td>true</td><td>true</td><td>linkで文書向け参照も追う</td></tr>
+<tr><td><code>reference_history_weight</code></td><td>1.0</td><td>1.0</td><td>改正履歴内の参照スコアの重み。0〜1</td></tr>
+<tr><td><code>reference_presentation</code></td><td>separate</td><td>separate</td><td>文書ごと / inlineで参照元直後</td></tr>
+<tr><td><code>reference_prompt</code></td><td>false</td><td>false</td><td>参照に関する回答指示の追加</td></tr>
+</tbody></table></div>
+<h3>環境変数・固定値で決まる別の上限</h3>
+<div class="tablewrap"><table><thead><tr><th>名前</th><th>現在の実効値</th><th>意味</th></tr></thead><tbody>
+<tr><td><code>CHAT_RERANK_ENABLED</code></td><td>true（コード既定false）</td><td>Chunkの新検索経路を有効にする</td></tr>
+<tr><td><code>CHAT_LINE_RERANK_ENABLED</code></td><td>true</td><td>グラフ行のリランク</td></tr>
+<tr><td><code>EFFECTIVE_SEARCH_RATIO</code></td><td>5（未設定、既定適用）</td><td>索引要求の倍率。候補k自体を5倍にはしない</td></tr>
+<tr><td><code>CHAT_RERANK_MAX_CHARS</code></td><td>3,000（コード既定1,500）</td><td>リランクへ渡す各テキストの先頭文字数</td></tr>
+<tr><td><code>CHAT_RERANK_BATCH</code></td><td>200（未設定、既定適用）</td><td>リランクHTTP要求1回あたりのテキスト数</td></tr>
+<tr><td><code>CHAT_PROMPT_TOKEN_CUTOFF</code></td><td>8</td><td>最終文書ブロック件数。未設定ならモデル別で通常4、特定モデル28/2</td></tr>
+<tr><td><code>LOCAL_LLM_MAX_TOKENS</code></td><td>4,096（コード既定8,192）</td><td>ローカル互換LLMの出力トークン上限</td></tr>
+<tr><td>target参照取得 / link参照取得</td><td>100 / 2,000</td><td>Cypher内の固定取得上限。順序指定なし</td></tr>
+<tr><td>Document参照の本文候補</td><td>30／文書</td><td>linkで参照先文書から本文を選ぶ際の前段候補数</td></tr>
+</tbody></table></div>
+<p class="source">現在値：<code>GET /retrieval_settings</code> とコンテナの非秘密設定のみを照合。定義：<a href="#src-rerank">rerank_retriever.py:102–238</a>、<a href="#src-front">RetrievalSettingsDialog.tsx / QnaAPI.ts</a></p>
+</section>
+
+<section id="diagnose">
+<div class="eyebrow">11 / evidence loss map</div><h2>欲しい根拠が出ないとき、どこを見るか</h2>
+<p>どの上限を上げればよいかは、情報が落ちた場所で変わる。最後の出力だけから「top-kを増やせば直る」とは決められない。</p>
+<div class="tablewrap"><table><thead><tr><th>状態</th><th>考えられる段階</th><th>確認するもの</th></tr></thead><tbody>
+<tr><td>本文自体がDBにない</td><td>取り込み上限、PDF変換・読み込み</td><td>Documentのチャンク数、末尾の保存、MAX_TOKEN_CHUNK_SIZE</td></tr>
+<tr><td>本文はあるが候補にならない</td><td>ベクトル／全文top-k、文書フィルタ、0.5閾値</td><td>候補検索。candidate_kとcandidate_min_scoreは別の制限</td></tr>
+<tr><td>候補にはあるが直接選ばれない</td><td>チャンクリランクのtop-6</td><td>rerank pickedログ。採点に使う先頭3,000文字の範囲</td></tr>
+<tr><td>別表・参照先に届かない</td><td>REFERS_TO未作成、target100→2、Document参照対象外</td><td>参照関係の存在、reference_select、reference_max、references記録</td></tr>
+<tr><td>本文は採用されたがEntityがない</td><td>抽出時の失敗・除外、HAS_ENTITY未接続、起点40</td><td>抽出ログ、HAS_ENTITY、起点の並び方と上限</td></tr>
+<tr><td>Entityはあるが先の関係がない</td><td>qsim&lt;0.3、ホップ数、経路40、関係・終点の除外</td><td>Entity.embeddingと起点qsim、実際に採った経路</td></tr>
+<tr><td>グラフ画面にはあるが回答に使われない</td><td>行リランク、120行、残り文字予算、最終8文書</td><td>最終contextの文字列。ID一覧だけで判断しない</td></tr>
+<tr><td>同じ質問で設定の見え方が違う</td><td>ブラウザ保存の上書き、履歴による検索質問変換</td><td>検索の詳細設定、応答info.retrieval_settings、会話履歴</td></tr>
+</tbody></table></div>
+<div class="notice"><strong>確認する順番：</strong> 保存された本文 → 検索候補 → 直接・参照採用チャンク → 起点 → 展開結果 → 行の採用 → 最終context → 回答。前の段階で失った情報を、後の上限だけ増やしても回復できない。</div>
+<p class="note">このページはロジックと設定の調査結果。業務文書に対する追加検索やLLM生成、グラフの変更は実行していないため、実データで各段階に何件残ったかという測定結果は含めていない。</p>
+</section>
+
+<section id="sources">
+<div class="eyebrow">12 / implementation references</div><h2>説明をコードに戻して確認する</h2>
+<p>以下はリポジトリ基準の相対パスと読み始める行。未コミットのカスタマイズを含む、この環境の実装に対応する。一般的な本家LLM Graph Builderの説明とは数値や経路が異なる。</p>
+<ol class="reference-list">
+<li id="src-api"><code>backend/score.py</code> — 206行：/extract、330行：後処理、421行付近：/retrieval_settings、428行：/chat_bot、472行：/retrieve_context。</li>
+<li id="src-rerank"><code>backend/src/rerank_retriever.py</code> — 102行：設定仕様、228行：起点・展開テンプレート、289行：リランク要求、339/377行：文字予算、612行：候補検索、619行：target参照、753行：link参照、925行：検索全体、1000行：Retriever生成。</li>
+<li id="src-qa"><code>backend/src/QA_integration.py</code> — 182行：最終ブロック数制限、238行：回答プロンプトと返却情報、311行：質問変換・旧断片フィルタ、421行：リランク分岐、583行：Cypher QA、711行：QA_RAG。</li>
+<li id="src-constants"><code>backend/src/shared/constants.py</code> — 255行：旧検索閾値、338行：Chunk top-kと集約、362行：旧展開上限、465行：グラフ文字列化、543行：Entity検索、712行：Community検索、751行：モード一覧。</li>
+<li id="src-library"><code>langchain_neo4j/vectorstores/neo4j_vector.py</code> の <code>similarity_search_with_score_by_vector()</code> と、<code>neo4j_graphrag.neo4j_queries</code> の <code>_get_hybrid_query()</code>。確認時バージョン：langchain-neo4j 0.9.0 / neo4j-graphrag 1.22.0。</li>
+<li id="src-retrieve"><code>backend/src/retrieve_only.py:117</code> — 回答生成を省いた検索・最終context返却。</li>
+<li id="src-main"><code>backend/src/main.py:470 / 664 / 712</code> — 取り込み共通処理、埋め込み・抽出・保存の順序、チャンク生成と再開。</li>
+<li id="src-chunks"><code>backend/src/create_chunks.py:52 / 111 / 209</code> — 通常チャンク、Markdownチャンク、トークナイザ。</li>
+<li id="src-load"><code>backend/src/document_sources/local_file.py:85</code> と <code>pdf_markdown.py</code> — PDF・Markdown読み込み。</li>
+<li id="src-extract"><code>backend/src/llm.py:203 / 274</code>、<code>backend/src/edc_extraction.py:134 / 188 / 240</code> — LLMとEDCの抽出、正規化、失敗時処理。</li>
+<li id="src-save"><code>backend/src/make_relationships.py:12 / 35 / 60</code> — 根拠リンク、埋め込み、Chunk IDと順序。</li>
+<li id="src-front"><code>frontend/src/components/ChatBot/RetrievalSettingsDialog.tsx</code>、<code>frontend/src/utils/RetrievalSettingsUtils.ts</code>、<code>frontend/src/services/QnaAPI.ts</code> — 設定API読み込み、ブラウザ保存、リクエストへの上書き。</li>
+</ol>
+<div class="notice"><strong>確認範囲：</strong> 稼働バックエンドの設定API、非秘密の環境設定、インストール済み検索ライブラリ、ローカル実装。検索の主要3ファイル（rerank_retriever / QA_integration / constants）はコンテナ内とSHA-256が一致。ブラウザ個別の保存設定・質問ごとの実測件数は未確認。</div>
+<a class="jump" href="#overview">先頭へ戻る ↑</a>
+</section>
+<footer>LLM Graph Builder ロジック詳細 / 2026-10-16確認。デモ操作はこの解説ページ内だけに反映されます。サーバー設定やデータベースは変更しません。</footer>
+</main></div>
+<script>
+(function(){
+  const byId = id => document.getElementById(id);
+  function updateHop(){
+    const sim = Number(byId('qsim').value), missing = byId('embedding-missing').checked, two = byId('two-hop').checked;
+    byId('qsim-value').textContent = sim.toFixed(2);
+    let text;
+    if(missing) text = '埋め込みなし → 0〜1ホップ。起点選択では後ろへ並ぶが、選ばれると近傍も展開する。現在は経路数の上限なし。';
+    else if(sim < .3) text = 'qsim < 0.3 → 起点自身だけ（0ホップ）。エンティティ自体はここでは削除しない。';
+    else if(two && sim > .9) text = 'qsim > 0.9 → 0〜2ホップ、最大40経路／起点。40ノードではなく、自己経路も含む経路数。';
+    else text = '0〜1ホップを展開。' + (!two && sim > .9 ? '2ホップが無効なので、0.9超でも1ホップまで。' : '0.3以上・0.9以下はこの分岐。') + ' 現在は経路数の上限なし。';
+    byId('hop-result').textContent=text;
+  }
+  ['qsim','embedding-missing','two-hop'].forEach(id=>byId(id).addEventListener('input',updateHop));updateHop();
+  function updateBudget(){
+    const body=Math.max(0,Number(byId('demo-body').value)||0);
+    const len=Math.max(1,Number(byId('demo-line').value)||1);
+    const cap=Math.max(0,Number(byId('demo-limit').value)||0);
+    const long=byId('demo-long').checked;
+    let used=body,kept=0,reason='';
+    if(used>=14000) reason='本文だけで予算以上。本文はそのまま残り、グラフ行は追加しない。';
+    else {
+      for(let rank=0;rank<200;rank++){
+        if(cap>0 && kept>=cap){reason='行数上限に到達。ここで終了。';break;}
+        const current=(long && rank===9)?3000:len;
+        if(used+current+1>14000){reason=(rank+1)+'位の行（'+current+'文字＋改行）が残り予算に入らず終了。短い下位行を探して詰め直す処理はない。';break;}
+        used+=current+1;kept++;
+      }
+      if(!reason) reason='例の全200行を採用。';
+    }
+    byId('body-count').textContent=body.toLocaleString();
+    byId('line-count').textContent=kept+' / 200';
+    byId('used-count').textContent=used.toLocaleString();
+    byId('budget-result').textContent=reason+' 出典ラッパー・節見出し・質問・履歴などの文字数は別途加わる。';
+    const scale=Math.max(14000,used);
+    byId('body-bar').style.width=(body/scale*100)+'%';
+    byId('line-bar').style.width=((used-body)/scale*100)+'%';
+  }
+  ['demo-body','demo-line','demo-limit','demo-long'].forEach(id=>byId(id).addEventListener('input',updateBudget));
+  document.querySelectorAll('[data-body]').forEach(b=>b.addEventListener('click',()=>{byId('demo-body').value=b.dataset.body;updateBudget()}));updateBudget();
+  const tabs=Array.from(document.querySelectorAll('[role=tab]'));
+  function activateTab(tab){tabs.forEach(t=>{const active=t===tab;t.setAttribute('aria-selected',String(active));t.tabIndex=active?0:-1;byId(t.dataset.panel).hidden=!active;});}
+  tabs.forEach((tab,index)=>{tab.addEventListener('click',()=>activateTab(tab));tab.addEventListener('keydown',e=>{let next=index;if(e.key==='ArrowRight')next=(index+1)%tabs.length;else if(e.key==='ArrowLeft')next=(index+tabs.length-1)%tabs.length;else if(e.key==='Home')next=0;else if(e.key==='End')next=tabs.length-1;else return;e.preventDefault();activateTab(tabs[next]);tabs[next].focus();});});
+  const links=Array.from(document.querySelectorAll('nav a'));
+  if('IntersectionObserver' in window){const observer=new IntersectionObserver(entries=>{entries.forEach(entry=>{if(entry.isIntersecting)links.forEach(a=>a.classList.toggle('active',a.hash==='#'+entry.target.id));});},{rootMargin:'-10% 0px -70% 0px'});links.forEach(a=>observer.observe(document.querySelector(a.hash)));}
+})();
+</script>
+</body>
+</html>

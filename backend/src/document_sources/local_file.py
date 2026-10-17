@@ -86,6 +86,19 @@ def load_document_content(file_path):
     file_extension = Path(file_path).suffix.lower()
     encoding_flag = False
     if file_extension == '.pdf':
+        from src.shared.common_fn import get_value_from_env
+        if (str(get_value_from_env("PDF_CHUNK_STRATEGY", "token")).strip().lower() == "markdown"
+                and get_value_from_env("MARKDOWN_CHUNKING", "true", "bool")):
+            # Markdown に変換し、.md と同じ経路で分割する。
+            # 文字の層が無い PDF は None が返り、下の従来の読み込みに進む。
+            try:
+                from src.document_sources.pdf_markdown import load_pdf_as_markdown
+                markdown_pages = load_pdf_as_markdown(file_path)
+            except Exception as exc:
+                logging.warning("PDF to Markdown conversion failed (%s); falling back to the default loader", exc)
+                markdown_pages = None
+            if markdown_pages:
+                return ListLoader(markdown_pages), True
         edc_pages = convert_pdf_via_edc(file_path)
         if edc_pages is not None:
             return ListLoader(edc_pages), False
@@ -97,7 +110,7 @@ def load_document_content(file_path):
         encoding = detect_encoding(file_path)
         with open(file_path, encoding=encoding, errors="replace") as f:
             content = f.read()
-        loader = ListLoader([Document(page_content=content, metadata={"source": str(file_path)})])
+        loader = ListLoader([Document(page_content=content, metadata={"source": str(file_path), "markdown": True})])
         return loader, True
     if file_extension == ".txt":
         encoding = detect_encoding(file_path)

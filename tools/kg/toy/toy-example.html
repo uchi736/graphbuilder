@@ -1,0 +1,127 @@
+<title>既定モードの動き方の例</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{color-scheme:light;--bg:#FFFFFF;--panel:#F4F6F8;--ink:#1B2430;--ink2:#4A5665;--ink3:#7A8794;--rule:#C9D2DA;--rule2:#E4E9EE;--acc:#2a78d6;--acc-soft:#EAF2FC;--ok:#2E7D4F;--ok-soft:#E2F1E7;--ng:#B23A2E;--ng-soft:#F8E4E1;--mid:#C98500;--mid-soft:#FFF6E5;
+--head:"BIZ UDPGothic","Noto Sans JP","Hiragino Sans","Yu Gothic",sans-serif;--body:"Noto Sans JP","Hiragino Sans","Yu Gothic",system-ui,sans-serif;--mono:"IBM Plex Mono","Noto Sans JP",ui-monospace,Menlo,monospace}
+*{box-sizing:border-box} body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.8;margin:0}
+.wrap{max-width:1000px;margin:0 auto;padding-inline:20px;padding-block:36px 72px}
+h1,h2,h3{font-family:var(--head);margin:0;line-height:1.35;text-wrap:balance} h1{font-size:27px}
+h2{font-size:20px;margin-top:46px;margin-bottom:12px;padding-bottom:7px;border-bottom:2px solid var(--ink)} h3{font-size:15.5px}
+p{margin:0 0 10px;max-width:48em;text-wrap:pretty}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--ink2);margin-bottom:8px}
+.why{display:grid;grid-template-columns:6em 1fr;border:1px solid var(--rule);margin-top:18px} .why dt,.why dd{margin:0;padding:9px 14px;border-bottom:1px solid var(--rule2)}
+.why dt{font-family:var(--head);font-weight:700;background:var(--panel);color:var(--ink2)} .why dt:last-of-type,.why dd:last-of-type{border-bottom:none}
+@media (max-width:560px){.why{grid-template-columns:1fr}.why dt{border-bottom:none;padding-bottom:0}}
+.q{border-left:4px solid var(--ink);background:var(--panel);padding:10px 14px;margin:8px 0 14px;max-width:none}
+.tbl{overflow-x:auto;border:1px solid var(--rule)} table{border-collapse:collapse;width:100%;font-size:13.5px} .tbl table{min-width:620px}
+th,td{padding:7px 10px;border-bottom:1px solid var(--rule2);text-align:left;vertical-align:top} thead th{font-family:var(--head);font-size:12.5px;color:var(--ink2);background:var(--panel);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none} td.num{font-family:var(--mono);text-align:right;white-space:nowrap} .src,td.src{color:var(--ink2);font-size:13px}
+td.ok{color:var(--ok);font-weight:700;white-space:nowrap} td.ng{color:var(--ng);font-weight:700;white-space:nowrap}
+.barcell{white-space:nowrap} .bar{display:inline-block;height:14px;border:1px solid;border-radius:2px;vertical-align:middle;margin-right:8px} .mono{font-family:var(--mono);font-size:12.5px}
+figure{margin:0} figcaption{font-size:13px;color:var(--ink2);margin-top:8px;max-width:52em}
+.scroll{overflow-x:auto;border:1px solid var(--rule);padding:8px} .scroll svg{display:block;width:100%;min-width:900px;height:auto} .scroll svg text{font-family:var(--body)}
+.stage{display:grid;grid-template-columns:7.5em 1fr;border:1px solid var(--rule);margin-top:12px} .stage .lab{background:var(--panel);padding:12px 14px;font-family:var(--head);font-weight:700;font-size:14px}
+.stage .lab small{display:block;font-family:var(--body);font-weight:400;font-size:12px;color:var(--ink2);margin-top:4px} .stage .body{padding:12px 14px;min-width:0} .stage .body p{max-width:none;margin-bottom:6px}
+.stage.yes .lab{border-left:5px solid var(--acc)} .stage.no .lab{border-left:5px solid var(--rule)} .stage.mid .lab{border-left:5px solid var(--mid)}
+@media (max-width:620px){.stage{grid-template-columns:1fr}}
+pre{font-family:var(--mono);font-size:12.5px;line-height:1.6;background:var(--panel);border:1px solid var(--rule2);padding:10px 12px;margin:6px 0 8px;overflow-x:auto;white-space:pre-wrap}
+pre .hit{background:#FFF1B8}
+ul.notes{margin:6px 0 0;padding-left:1.2em} ul.notes li{margin-bottom:7px;max-width:52em}
+.legend{font-size:13px;color:var(--ink2);margin:8px 0} .legend i{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:middle;margin:0 4px 0 10px}
+footer{margin-top:52px;padding-top:12px;border-top:1px solid var(--rule);font-size:12.5px;color:var(--ink3);line-height:1.8} footer p{max-width:none;margin:0}
+</style>
+<div class="wrap">
+<header>
+  <div class="eyebrow">NEO4J LLM GRAPH BUILDER ／ 既定モードの検索 ／ 架空の例による説明 ／ 2026-10-07</div>
+  <h1>既定モードの動き方の例</h1>
+  <dl class="why">
+    <dt>目的</dt><dd>本家 Graph Builder の既定モードが、質問から LLM へ渡す文脈を組み立てる手順を、架空の小さな例で追う。</dd>
+    <dt>前提</dt><dd>文書と数値は説明のために作ったものである。手順と既定値は本家コードのとおりである。</dd>
+    <dt>要点</dt><dd>質問を見て選ぶのはチャンクの検索と断片の選別だけである。起点のエンティティと 1 ホップ先の 19 本は、質問と無関係に決まる。検索で落ちたチャンクの事実は、トリプルの行に書き写されている場合だけ届く。</dd>
+  </dl>
+</header>
+
+<h2>材料</h2>
+<div class="tbl"><table><thead><tr><th>文書</th><th>チャンク</th><th>本文の要点</th></tr></thead><tbody>
+<tr><td>出張規程</td><td>A1</td><td>海外出張の日当は課長 8,000 円、部長 10,000 円とする</td></tr>
+<tr><td>出張規程</td><td>A2</td><td>航空券の手配は総務部が行う。座席のクラスは承認権限表による</td></tr>
+<tr><td>承認権限表</td><td>B1</td><td>航空券のビジネスクラスは部長の承認を要する</td></tr>
+<tr><td>経費規程</td><td>C1</td><td>宿泊費の上限は 1 泊 12,000 円とする</td></tr>
+</tbody></table></div>
+<p style="margin-top:12px">抽出済みのグラフは次のとおりである。</p>
+<figure><div class="scroll"><svg viewBox="0 0 960 330" role="img" aria-label="架空の社内規定 3 本から作ったグラフ。チャンク 4 個、エンティティ 11 個、文書番号のエンティティ「出張規程」に 60 本の線が集まる。"><defs><marker id="ar" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#4A5665"/></marker></defs><rect x="40" y="20" width="150" height="28" rx="4" fill="#F4F6F8" stroke="#7A8794" stroke-width="1.3"/><text x="115.0" y="38.5" text-anchor="middle" font-size="12" fill="#1B2430">A1 日当の条文</text><rect x="230" y="20" width="170" height="28" rx="4" fill="#F4F6F8" stroke="#7A8794" stroke-width="1.3"/><text x="315.0" y="38.5" text-anchor="middle" font-size="12" fill="#1B2430">A2 航空券の手配の条文</text><rect x="470" y="20" width="190" height="28" rx="4" fill="#F4F6F8" stroke="#7A8794" stroke-width="1.3"/><text x="565.0" y="38.5" text-anchor="middle" font-size="12" fill="#1B2430">B1 ビジネスクラスの承認</text><rect x="720" y="20" width="150" height="28" rx="4" fill="#F4F6F8" stroke="#7A8794" stroke-width="1.3"/><text x="795.0" y="38.5" text-anchor="middle" font-size="12" fill="#1B2430">C1 宿泊費の上限</text><text x="40" y="12" font-size="10.5" fill="#7A8794">チャンク</text><rect x="40" y="110" width="110" height="28" rx="14" fill="#FFF6E5" stroke="#C98500" stroke-width="1.3"/><text x="95.0" y="128.5" text-anchor="middle" font-size="12" fill="#1B2430">出張規程</text><rect x="170" y="110" width="70" height="28" rx="14" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1.3"/><text x="205.0" y="128.5" text-anchor="middle" font-size="12" fill="#1B2430">日当</text><rect x="255" y="110" width="70" height="28" rx="14" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1.3"/><text x="290.0" y="128.5" text-anchor="middle" font-size="12" fill="#1B2430">課長</text><rect x="345" y="110" width="80" height="28" rx="14" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1.3"/><text x="385.0" y="128.5" text-anchor="middle" font-size="12" fill="#1B2430">航空券</text><rect x="445" y="110" width="80" height="28" rx="14" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1.3"/><text x="485.0" y="128.5" text-anchor="middle" font-size="12" fill="#1B2430">総務部</text><rect x="545" y="110" width="70" height="28" rx="14" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1.3"/><text x="580.0" y="128.5" text-anchor="middle" font-size="12" fill="#1B2430">部長</text><rect x="640" y="110" width="110" height="28" rx="14" fill="#EAF2FC" stroke="#2a78d6" stroke-width="1.3"/><text x="695.0" y="128.5" text-anchor="middle" font-size="12" fill="#1B2430">承認権限表</text><rect x="770" y="110" width="100" height="28" rx="14" fill="#EAF2FC" stroke="#2a78d6" stroke-width="1.3"/><text x="820.0" y="128.5" text-anchor="middle" font-size="12" fill="#1B2430">経費規程</text><rect x="880" y="110" width="70" height="28" rx="14" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1.3"/><text x="915.0" y="128.5" text-anchor="middle" font-size="12" fill="#1B2430">宿泊費</text><text x="40" y="100" font-size="10.5" fill="#7A8794">エンティティ（HAS_ENTITY は破線）</text><line x1="115.0" y1="48" x2="95.0" y2="110" stroke="#7A8794" stroke-width="1.4" stroke-dasharray="4 3"/><line x1="115.0" y1="48" x2="205.0" y2="110" stroke="#7A8794" stroke-width="1.4" stroke-dasharray="4 3"/><line x1="115.0" y1="48" x2="290.0" y2="110" stroke="#7A8794" stroke-width="1.4" stroke-dasharray="4 3"/><line x1="315.0" y1="48" x2="95.0" y2="110" stroke="#7A8794" stroke-width="1.4" stroke-dasharray="4 3"/><line x1="315.0" y1="48" x2="385.0" y2="110" stroke="#7A8794" stroke-width="1.4" stroke-dasharray="4 3"/><line x1="315.0" y1="48" x2="485.0" y2="110" stroke="#7A8794" stroke-width="1.4" stroke-dasharray="4 3"/><line x1="315.0" y1="48" x2="695.0" y2="110" stroke="#7A8794" stroke-width="1.4" stroke-dasharray="4 3"/><line x1="565.0" y1="48" x2="385.0" y2="110" stroke="#7A8794" stroke-width="1.4" stroke-dasharray="4 3"/><line x1="565.0" y1="48" x2="580.0" y2="110" stroke="#7A8794" stroke-width="1.4" stroke-dasharray="4 3"/><line x1="565.0" y1="48" x2="695.0" y2="110" stroke="#7A8794" stroke-width="1.4" stroke-dasharray="4 3"/><line x1="795.0" y1="48" x2="820.0" y2="110" stroke="#7A8794" stroke-width="1.4" stroke-dasharray="4 3"/><line x1="795.0" y1="48" x2="915.0" y2="110" stroke="#7A8794" stroke-width="1.4" stroke-dasharray="4 3"/><path d="M385.0,138 L385.0,175 L485.0,175 L485.0,140" fill="none" stroke="#4A5665" stroke-width="1.4" marker-end="url(#ar)"/><text x="435.0" y="171" text-anchor="middle" font-size="10.5" fill="#4A5665" paint-order="stroke" stroke="#FFFFFF" stroke-width="3">手配</text><path d="M385.0,138 L385.0,197 L580.0,197 L580.0,140" fill="none" stroke="#2E7D4F" stroke-width="1.4" marker-end="url(#ar)"/><text x="482.5" y="193" text-anchor="middle" font-size="10.5" fill="#2E7D4F" paint-order="stroke" stroke="#FFFFFF" stroke-width="3">クラスの承認</text><path d="M95.0,138 L95.0,219 L205.0,219 L205.0,140" fill="none" stroke="#4A5665" stroke-width="1.4" marker-end="url(#ar)"/><text x="150.0" y="215" text-anchor="middle" font-size="10.5" fill="#4A5665" paint-order="stroke" stroke="#FFFFFF" stroke-width="3">規定</text><path d="M820.0,138 L820.0,175 L915.0,175 L915.0,140" fill="none" stroke="#4A5665" stroke-width="1.4" marker-end="url(#ar)"/><text x="867.5" y="171" text-anchor="middle" font-size="10.5" fill="#4A5665" paint-order="stroke" stroke="#FFFFFF" stroke-width="3">規定</text><line x1="95" y1="138" x2="65" y2="276" stroke="#C98500" stroke-width="1.2"/><text x="65" y="290" text-anchor="middle" font-size="10.5" fill="#4A5665">第1条</text><line x1="95" y1="138" x2="95" y2="276" stroke="#C98500" stroke-width="1.2"/><text x="95" y="290" text-anchor="middle" font-size="10.5" fill="#4A5665">第2条</text><line x1="95" y1="138" x2="125" y2="276" stroke="#C98500" stroke-width="1.2"/><text x="125" y="290" text-anchor="middle" font-size="10.5" fill="#4A5665">第3条</text><line x1="95" y1="138" x2="165" y2="276" stroke="#C98500" stroke-width="1.2"/><text x="165" y="290" text-anchor="middle" font-size="10.5" fill="#4A5665">…</text><line x1="95" y1="138" x2="205" y2="276" stroke="#C98500" stroke-width="1.2"/><text x="205" y="290" text-anchor="middle" font-size="10.5" fill="#4A5665">第60条</text><text x="250" y="292" font-size="11" fill="#C98500">出張規程には全条文から 60 本の線が集まる</text><text x="560" y="292" font-size="11" fill="#2E7D4F">緑の線が答え 2 を持つトリプル</text><text x="40" y="322" font-size="10.5" fill="#7A8794">水色は文書番号のエンティティ、黄色は線の多いエンティティ。線の種類名と向きは抽出時に LLM が決める。</text></svg></div>
+<figcaption>図 1　チャンクはエンティティに HAS_ENTITY で接続し、エンティティ同士はトリプルで結ばれる。文書番号のエンティティ「出張規程」には、全条文から 60 本の線が集まっている。</figcaption></figure>
+<p class="q" style="margin-top:18px">質問: 課長が海外出張するとき、日当はいくらで、航空券のクラスは誰の承認が要るか。</p>
+<p>答えは 2 つである。答え 1 の 8,000 円は A1 に、答え 2 の部長は B1 にある。</p>
+
+<h2>9 段の動き</h2>
+<p class="legend">左の帯の色: <i style="background:var(--acc)"></i>質問の内容を見る　<i style="background:var(--mid)"></i>展開するかの判定にだけ使う　<i style="background:var(--rule)"></i>質問を見ない</p>
+
+<div class="stage yes"><div class="lab">段 1・2<small>チャンクの検索と、しきい値</small></div><div class="body">
+<p>質問の埋め込みと全文検索でチャンクを並べ、上位 4 件を取る。点数は最上位を 1.00 として正規化し、0.5 未満を捨てる。</p>
+<div class="tbl"><table><thead><tr><th>チャンク</th><th>正規化した点数</th><th>結果</th><th>理由</th></tr></thead><tbody><tr><td>A1 日当の条文</td><td class="barcell"><div class="bar" style="width:260px;background:#E2F1E7;border-color:#2E7D4F"></div><span class="mono">1.00</span></td><td class="ok">渡る</td><td class="src">質問の語「日当」「課長」「海外出張」と重なる</td></tr><tr><td>A2 航空券の手配の条文</td><td class="barcell"><div class="bar" style="width:208px;background:#E2F1E7;border-color:#2E7D4F"></div><span class="mono">0.80</span></td><td class="ok">渡る</td><td class="src">「航空券」が重なる</td></tr><tr><td>C1 宿泊費の上限</td><td class="barcell"><div class="bar" style="width:156px;background:#E2F1E7;border-color:#2E7D4F"></div><span class="mono">0.60</span></td><td class="ok">渡る</td><td class="src">「出張」の話題で近い。答えとは無関係</td></tr><tr><td>B1 ビジネスクラスの承認</td><td class="barcell"><div class="bar" style="width:117px;background:#F8E4E1;border-color:#B23A2E"></div><span class="mono">0.45</span></td><td class="ng">落ちる</td><td class="src">質問に「ビジネスクラス」の語がなく点数が低い。しきい値 0.5 未満</td></tr></tbody></table></div>
+<p style="margin-top:8px"><b>答え 2 を持つ B1 はここで落ちる。</b>以後、B1 の本文は二度と現れない。</p></div></div>
+
+<div class="stage no"><div class="lab">段 3<small>起点のエンティティ</small></div><div class="body">
+<p>残った 3 件のチャンクを文書ごとにまとめる。文書ごとに、そのチャンク群に HAS_ENTITY で付いているエンティティを集め、「そのチャンク群のうち何件に付いているか」が多い順に並べ、先頭から最大 40 個を起点にする。質問との近さは見ない。</p>
+<div class="tbl"><table><thead><tr><th>出張規程の区画のエンティティ</th><th>付いているチャンク</th><th>件数</th><th>順位</th></tr></thead><tbody>
+<tr><td>出張規程</td><td>A1、A2</td><td class="num">2</td><td>1 位</td></tr>
+<tr><td>日当、課長、海外出張</td><td>A1</td><td class="num">1</td><td>2 位以降。同数の順は決まっていない</td></tr>
+<tr><td>航空券、総務部、承認権限表、部長</td><td>A2</td><td class="num">1</td><td>同上</td></tr>
+</tbody></table></div>
+<p style="margin-top:8px">8 個しかないので上限 40 には届かず、全部が起点になる。上限が効くのは、1 つの文書から選ばれたチャンク群に 40 個を超えるエンティティが付いているときである。その場合、同数のエンティティのどれが残るかは決まっておらず、質問とも無関係である。</p>
+<p>経費規程の区画は C1 だけなので、起点は経費規程、宿泊費、上限の 3 個である。答えと無関係な「宿泊費」も起点になる。</p></div></div>
+
+<div class="stage mid"><div class="lab">段 4<small>展開するかの判定</small></div><div class="body">
+<p>起点ごとに、質問との類似度で分岐する。0.3 未満は展開しない。0.3 から 0.9 は 1 ホップを 20 本まで。0.9 超は 2 ホップを 40 本まで。この例では全起点が 0.3 から 0.9 の範囲とする。</p>
+<p class="src">実際の値の分布は埋め込みモデルで変わる。当方の ruri では 0.3 未満は起きず、0.9 超が質問に近い起点で起こる。</p></div></div>
+
+<div class="stage no"><div class="lab">段 5<small>1 ホップ先の 19 本</small></div><div class="body">
+<p>起点ごとに隣の線を取る。経路 20 本のうち 1 本は起点自身なので、線は 19 本である。並び替えがなく、どの 19 本かは作成順で決まる。</p>
+<div class="tbl"><table><thead><tr><th>起点</th><th>線の本数</th><th>取れる本数</th><th>結果</th></tr></thead><tbody>
+<tr><td>航空券</td><td class="num">3</td><td class="num">3</td><td><b>「航空券 —クラスの承認→ 部長」が入る。</b>B1 から抽出された答え 2 のトリプルである</td></tr>
+<tr><td>宿泊費</td><td class="num">2</td><td class="num">2</td><td>無関係な行が入る</td></tr>
+<tr><td>出張規程</td><td class="num">60</td><td class="num">19</td><td>第 1 条から第 19 条の線だけが入る。第 25 条の線は入らない</td></tr>
+</tbody></table></div>
+<figure style="margin-top:10px"><div class="scroll"><svg viewBox="0 0 960 120" role="img" aria-label="起点「出張規程」の 60 本の線を作成順に並べ、先頭 19 本だけが取り出される。必要な第 25 条の線は 25 番目で入らない。"><rect x="20.0" y="34" width="11" height="34" rx="2" fill="#E2F1E7" stroke="#2E7D4F" stroke-width="1"/><text x="25.5" y="86" text-anchor="middle" font-size="10" fill="#4A5665">1</text><rect x="35.3" y="34" width="11" height="34" rx="2" fill="#E2F1E7" stroke="#2E7D4F" stroke-width="1"/><rect x="50.6" y="34" width="11" height="34" rx="2" fill="#E2F1E7" stroke="#2E7D4F" stroke-width="1"/><rect x="65.9" y="34" width="11" height="34" rx="2" fill="#E2F1E7" stroke="#2E7D4F" stroke-width="1"/><rect x="81.2" y="34" width="11" height="34" rx="2" fill="#E2F1E7" stroke="#2E7D4F" stroke-width="1"/><rect x="96.5" y="34" width="11" height="34" rx="2" fill="#E2F1E7" stroke="#2E7D4F" stroke-width="1"/><rect x="111.80000000000001" y="34" width="11" height="34" rx="2" fill="#E2F1E7" stroke="#2E7D4F" stroke-width="1"/><rect x="127.10000000000001" y="34" width="11" height="34" rx="2" fill="#E2F1E7" stroke="#2E7D4F" stroke-width="1"/><rect x="142.4" y="34" width="11" height="34" rx="2" fill="#E2F1E7" stroke="#2E7D4F" stroke-width="1"/><rect x="157.70000000000002" y="34" width="11" height="34" rx="2" fill="#E2F1E7" stroke="#2E7D4F" stroke-width="1"/><rect x="173.0" y="34" width="11" height="34" rx="2" fill="#E2F1E7" stroke="#2E7D4F" stroke-width="1"/><rect x="188.3" y="34" width="11" height="34" rx="2" fill="#E2F1E7" stroke="#2E7D4F" stroke-width="1"/><rect x="203.60000000000002" y="34" width="11" height="34" rx="2" fill="#E2F1E7" stroke="#2E7D4F" stroke-width="1"/><rect x="218.9" y="34" width="11" height="34" rx="2" fill="#E2F1E7" stroke="#2E7D4F" stroke-width="1"/><rect x="234.20000000000002" y="34" width="11" height="34" rx="2" fill="#E2F1E7" stroke="#2E7D4F" stroke-width="1"/><rect x="249.5" y="34" width="11" height="34" rx="2" fill="#E2F1E7" stroke="#2E7D4F" stroke-width="1"/><rect x="264.8" y="34" width="11" height="34" rx="2" fill="#E2F1E7" stroke="#2E7D4F" stroke-width="1"/><rect x="280.1" y="34" width="11" height="34" rx="2" fill="#E2F1E7" stroke="#2E7D4F" stroke-width="1"/><rect x="295.40000000000003" y="34" width="11" height="34" rx="2" fill="#E2F1E7" stroke="#2E7D4F" stroke-width="1"/><text x="300.90000000000003" y="86" text-anchor="middle" font-size="10" fill="#4A5665">19</text><rect x="310.7" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="326.0" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="341.3" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="356.6" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="371.90000000000003" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="387.20000000000005" y="34" width="11" height="34" rx="2" fill="#F8E4E1" stroke="#B23A2E" stroke-width="1.6"/><text x="392.70000000000005" y="86" text-anchor="middle" font-size="10" fill="#B23A2E">25</text><rect x="402.5" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="417.8" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="433.1" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="448.40000000000003" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="463.70000000000005" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="479.0" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="494.3" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="509.6" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="524.9000000000001" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="540.2" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="555.5" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="570.8000000000001" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="586.1" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="601.4" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="616.7" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="632.0" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="647.3000000000001" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="662.6" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="677.9" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="693.2" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="708.5" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="723.8000000000001" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="739.1" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="754.4000000000001" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="769.7" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="785.0" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="800.3000000000001" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="815.6" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="830.9000000000001" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="846.2" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="861.5" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="876.8000000000001" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="892.1" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="907.4000000000001" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><rect x="922.7" y="34" width="11" height="34" rx="2" fill="#FFFFFF" stroke="#C9D2DA" stroke-width="1"/><text x="928.2" y="86" text-anchor="middle" font-size="10" fill="#4A5665">60</text><text x="20" y="22" font-size="11.5" fill="#1B2430">起点「出張規程」の線 60 本を作成順に並べたもの</text><text x="20" y="110" font-size="11" fill="#2E7D4F">緑: 取り出される 19 本</text><text x="200" y="110" font-size="11" fill="#B23A2E">赤: 答えに必要な第 25 条の線。25 番目なので入らない</text><text x="620" y="110" font-size="11" fill="#7A8794">順序は質問と無関係で、毎回同じ</text></svg></div>
+<figcaption>図 2　線の多い起点では、必要な線が入るかどうかが作成順で決まる。質問を変えても同じ 19 本である。</figcaption></figure>
+<p style="margin-top:8px">答え 2 が「出張規程」側の線にしか付いていなければ、この抽選に漏れて届かない。どちらに付くかは、抽出のときに LLM が決める。</p></div></div>
+
+<div class="stage no"><div class="lab">段 6<small>文字列化</small></div><div class="body">
+<p>本文と、集めたエンティティとトリプルを、文書ごとに 1 つの文字列にする。エンティティは「種類:名前 (説明)」、トリプルは「種類:名前 線の種類 種類:名前」の行である。行は五十音順に並び、どのチャンクから来たかは残らない。</p>
+<pre>Document start
+This Document belongs to the source 出張規程
+Content: Text Content:
+海外出張の日当は課長 8,000 円、部長 10,000 円とする
+----
+航空券の手配は総務部が行う。座席のクラスは承認権限表による
+----
+Entities:
+Entity:航空券 (出張時の交通手段)
+Entity:課長
+Entity:部長
+…（約 30 行）
+----
+Relationships:
+<span class="hit">Entity:航空券 クラスの承認 Entity:部長</span>
+Entity:航空券 手配 Entity:総務部
+Entity:出張規程 規定 Entity:第1条
+…（約 40 行）
+Document end</pre></div></div>
+
+<div class="stage yes"><div class="lab">段 7〜9<small>断片への分割と選別</small></div><div class="body">
+<p>文書ごとの文字列を 3,000 トークンで割る。出張規程は 2 断片、経費規程は 1 断片になった。質問との類似度が 0.10 未満の断片を捨て、類似度順に上位 4 断片を LLM に渡す。この例は 3 断片なので全部が渡る。</p>
+<p class="src">出張規程の行が長くて 5 断片に割れ、答えの行が 5 番目の断片にあれば、断片ごと落ちる。分割の位置は内容と無関係で、行の途中で切れることもある。</p></div></div>
+
+<div class="stage yes"><div class="lab">回答<small>LLM</small></div><div class="body">
+<p>LLM は、日当 8,000 円を A1 の本文から読み、承認者の部長を「航空券 クラスの承認 部長」の行から読む。B1 の本文は届いていないが、トリプルに書き写されていたので答えられた。</p></div></div>
+
+<h2>この例から分かること</h2>
+<ul class="notes">
+  <li><b>質問を見て選ぶのは、段 1・2 と段 7〜9 だけである。</b>段 3 の起点と段 5 の 19 本は、質問と無関係に決まる。</li>
+  <li><b>検索で落ちたチャンクの事実は、トリプルの行として届く場合だけ答えられる。</b>本文は届かない。トリプルが「誰の承認か」のような短い事実なら足りるが、手順や説明の文章は運べない。</li>
+  <li><b>線の多いエンティティでは、必要なトリプルが入るかが作成順で決まる。</b>文書番号や「初号機」のような共通語がこれに当たる。</li>
+  <li><b>最後の断片の選別で、取り出した行が丸ごと落ちることがある。</b>行が多い文書ほど断片が増え、答えの行が後ろの断片に入る確率が上がる。</li>
+</ul>
+<footer><p>手順と既定値は本家 main（5ff7af3、2026-07-30）の backend/src/QA_integration.py と shared/constants.py による。文書、点数、本数は説明のための架空の値である。実データでの同じ手順の追跡は「既定モードのグラフ展開」のページにある。</p></footer>
+</div>

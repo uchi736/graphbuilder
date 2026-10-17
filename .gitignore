@@ -178,3 +178,19 @@ startupfrontend.sh
 /crab
 # Claude Code local settings
 .claude/settings.local.json
+/backend/edc_proposals
+/backend/line_dumps
+/backend/tokenizers
+
+# 評価の生データ（社内文書の PDF・本文・グラフの全文ダンプ・キャッシュ）はリポジトリに入れない
+tools/kg/hs/runs/
+tools/kg/**/graph_dump*.json
+tools/kg/hs/qa2/corpus_index.tsv
+tools/kg/hs/qa2/probe/chunks.json
+tools/kg/hs/qa2/graph_summary/
+tools/kg/**/measure_cache.json
+tools/kg/**/emb_cache.json
+.env.bak.*
+tools/**/pdf/
+tools/**/*.pdf
+tools/**/*.png

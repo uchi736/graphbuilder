@@ -1,0 +1,936 @@
+{
+ "questions": [
+  {
+   "qid": "C6-01",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "納入された潤滑油のドラムの封印が破れていた。そのドラムはどう取り扱えばよいか。",
+   "answer": "荷受けせず、品規 9 号（現行の QK-TC-02 不適合品処理規定）の第 13 条により処置する。過検が不適合報告書を起票して資購へ回付し、資購が購入先に連絡して、返品、選別又は手直しのいずれかを求める。",
+   "answer_keys": [
+    "返品",
+    "選別"
+   ],
+   "entry_doc": "KS-TC-L601C.md",
+   "entry_where": "4. 受入 (1) 受入検査",
+   "entry_quote": "c. 封印の破れ、缶の変形又は漏れを認めたドラムは、荷受けせず、品規 9 号の第 13 条により処置する。",
+   "bridge_kind": "reference",
+   "bridge_quote": "c. 封印の破れ、缶の変形又は漏れを認めたドラムは、荷受けせず、品規 9 号の第 13 条により処置する。",
+   "reference_form": "改正前の番号と項（品規 9 号の第 13 条。現行の番号は発行目録の 6. で QK-TC-02 に読み替える）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-02D.md",
+   "answer_where": "第 13 条（購入品の不適合）",
+   "answer_quote": "資購は、購入先に連絡し、返品、選別又は手直しのいずれかを求める。",
+   "hops": 1,
+   "wrong_values": [],
+   "avoided_terms": [
+    "返品",
+    "購入品",
+    "不適合",
+    "購入先",
+    "受入検査"
+   ],
+   "rationale": "答えの条は不適合品処理規定の中の購入品の話で、潤滑油・ドラム・封印の語を持たない。質問は油の受入の場面の語だけで聞いているので、潤滑油の受入、貯蔵、張込みの節が先に並ぶ。起点の 4. の (1) は旧番号（品規 9 号）で参照しており、現行の番号は書いていない。",
+   "fix_note": "answer_keys を「返品」「選別」の 2 語にした。「返品」だけでは、参照をたどらなくても「購入先へ返品する」と常識で書けば当たった。2 語がそろうのは QK-TC-02 の第 13 条だけである。",
+   "caveat": "第 13 条の「返品、選別又は手直しのいずれか」を「返品など」と縮めた回答は外れる。"
+  },
+  {
+   "qid": "C6-01d",
+   "type": "control",
+   "twin_of": "C6-01",
+   "question": "QK-TC-02 の第 13 条では、受入検査で見つかった購入品の不適合について、資購は購入先に何を求めると定めているか。",
+   "answer": "返品、選別又は手直しのいずれかを求める。",
+   "answer_keys": [
+    "返品",
+    "選別"
+   ],
+   "entry_doc": "QK-TC-02D.md",
+   "entry_where": "第 13 条（購入品の不適合）",
+   "entry_quote": "資購は、購入先に連絡し、返品、選別又は手直しのいずれかを求める。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-02D.md",
+   "answer_where": "第 13 条（購入品の不適合）",
+   "answer_quote": "資購は、購入先に連絡し、返品、選別又は手直しのいずれかを求める。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C6-01 と同じ事実を、答えの条の番号と見出しの語で聞く。",
+   "fix_note": "元の問い C6-01 に合わせ、answer_keys を「返品」「選別」にした。"
+  },
+  {
+   "qid": "C6-02",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "冷却水循環装置の導電率計が連続して採っている値は、そのあとどう扱うのか。",
+   "answer": "電子の原記録として扱い、帳票規定（QK-TC-01）の第 9 条により、作成した日のうちに部門の共有サーバの保管域 SV-29 へ複写する。機器の内部に残したままにしない。",
+   "answer_keys": [
+    "SV-29"
+   ],
+   "entry_doc": "KS-TC-L604A.md",
+   "entry_where": "9. 記録",
+   "entry_quote": "導電率計が連続して記録した値は、電子の原記録とし、その取扱いは、帳票規定の第 9 条による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "導電率計が連続して記録した値は、電子の原記録とし、その取扱いは、帳票規定の第 9 条による。",
+   "reference_form": "通称と項（帳票規定の第 9 条。帳票規定は QK-TC-01 の通称で、発行目録の注 1 にある）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "第 9 条（電子記録）",
+   "answer_quote": "電子の原記録は、作成した日のうちに、部門の共有サーバの保管域 SV-29 へ複写する。",
+   "hops": 1,
+   "wrong_values": [],
+   "avoided_terms": [
+    "原記録",
+    "電子",
+    "複写",
+    "サーバ",
+    "保管域",
+    "記録"
+   ],
+   "rationale": "答えの条は帳票の規定で、冷却水・導電率・装置の語を持たない。質問は冷却水の装置の語で聞いているので、冷却水の水質の節が先に並ぶ。起点の 9. は通称（帳票規定）と条で参照しており、番号は書いていない。"
+  },
+  {
+   "qid": "C6-02d",
+   "type": "control",
+   "twin_of": "C6-02",
+   "question": "帳票規定（QK-TC-01）の第 9 条では、電子の原記録を、作成した日のうちに共有サーバのどの保管域へ複写すると定めているか。",
+   "answer": "保管域 SV-29 へ複写する。",
+   "answer_keys": [
+    "SV-29"
+   ],
+   "entry_doc": "QK-TC-01G.md",
+   "entry_where": "第 9 条（電子記録）",
+   "entry_quote": "電子の原記録は、作成した日のうちに、部門の共有サーバの保管域 SV-29 へ複写する。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "第 9 条（電子記録）",
+   "answer_quote": "電子の原記録は、作成した日のうちに、部門の共有サーバの保管域 SV-29 へ複写する。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C6-02 と同じ事実を、答えの条の番号と見出しの語で聞く。"
+  },
+  {
+   "qid": "C6-03",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "試運転には、どのタービン油を使うのか。また、受入検査に合格したあと、その油のドラムは、油庫のどこに置いておくのか。",
+   "answer": "ISO 粘度グレード 68 のタービン油を使う（規格は JIS K 2213）。受入検査に合格したドラムは、KS-TC-L601 の別表 3 により、油庫の区画 D-26 に置く（札は緑）。",
+   "answer_keys": [
+    "D-26"
+   ],
+   "entry_doc": "KS-TC-L601C.md",
+   "entry_where": "4. 受入 (2) 貯蔵",
+   "entry_quote": "a. ドラムは、粘度グレードごとに、別表 3 の区画に置き、同表の色の札を付ける。",
+   "bridge_kind": "reference",
+   "bridge_quote": "a. ドラムは、粘度グレードごとに、別表 3 の区画に置き、同表の色の札を付ける。",
+   "reference_form": "同じ文書の別表（別表 3 の区画に置き）。行は、KS-TC-L001 の 6. にあるグレード 68 で決まる",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-L601C.md",
+   "answer_where": "別表 3 グレード別の区分",
+   "answer_quote": "| 68 | D-26 | 緑 |",
+   "hops": 1,
+   "wrong_values": [
+    "D-16",
+    "D-36",
+    "仮置場"
+   ],
+   "avoided_terms": [
+    "区画",
+    "グレード",
+    "粘度グレード",
+    "札",
+    "68",
+    "貯蔵"
+   ],
+   "rationale": "答えの別表はグレードの数字と区画・札だけの表で、タービン油・ドラム・油庫の語を持たない。質問で引くと、試運転に使う油のグレードを書いた KS-TC-L001 の 6.（1 位）と、ドラムの置き方を書いた KS-TC-L601 の 4.(2)（2 位）が上位に来る。4.(2) の「別表 3 の区画に置き」をたどり、グレード 68 の行を読む。受入の基準は常用油のグレードを書いていないので、グレードは KS-TC-L001 の 6. で決まる。ほかの行の D-16、D-36 と取り違えやすい。",
+   "also_needs": [
+    {
+     "doc": "KS-TC-L001E.md",
+     "where": "6. 使用油",
+     "quote": "試運転には、ISO 粘度グレード 68 のタービン油を用いる。"
+    }
+   ],
+   "fix_note": "質問の後半を、受入検査に合格した後の置き場所に限った。元の「新しいドラム」は、検査を終えるまで置く「油庫の仮置場」（KS-TC-L601 の 4.(1)）とも読めた。起点を KS-TC-L601 の 4.(2)（別表 3 の区画に置き）に改めた。この節は質問で 2 位に来るので、ここから同じ文書の別表への参照 1 回で着く。元の起点（KS-TC-L001 の 6.。番号だけの参照）から数えると 2 回になり、同じ形を 2 回と数える C8-06・C8-07 と食い違っていた。"
+  },
+  {
+   "qid": "C6-03d",
+   "type": "control",
+   "twin_of": "C6-03",
+   "question": "KS-TC-L601 の別表 3 で、グレード 68 の区画はどこか。",
+   "answer": "D-26 である。",
+   "answer_keys": [
+    "D-26"
+   ],
+   "entry_doc": "KS-TC-L601C.md",
+   "entry_where": "別表 3 グレード別の区分",
+   "entry_quote": "| 68 | D-26 | 緑 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-L601C.md",
+   "answer_where": "別表 3 グレード別の区分",
+   "answer_quote": "| 68 | D-26 | 緑 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C6-03 と同じ事実を、答えの別表の番号と見出しの語で聞く。"
+  },
+  {
+   "qid": "C6-04",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "潤滑油の配管に使う可とう管の予備は、どこに置いているか。",
+   "answer": "可とう管は品目 FH-516 で、別表 1 により、予備は消耗品庫の棚 R-56 に 2 本置く。",
+   "answer_keys": [
+    "R-56"
+   ],
+   "entry_doc": "KS-TC-L603D.md",
+   "entry_where": "4. 品目別の交換要領 (9) 品目 FH-516",
+   "entry_quote": "- 種別: 可とう管。ゴム製、金属の編組つき",
+   "bridge_kind": "reference",
+   "bridge_quote": "- 注意: 予備の品の置き場所及び使用の限度は、別表 1 による。",
+   "reference_form": "同じ文書の別表（別表 1 による）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-L603D.md",
+   "answer_where": "別表 1 品目別の区分",
+   "answer_quote": "| FH-516 | R-56 | 2 | 56 |",
+   "hops": 1,
+   "wrong_values": [
+    "R-16",
+    "R-26",
+    "R-36",
+    "R-46",
+    "R-66",
+    "R-76"
+   ],
+   "avoided_terms": [
+    "棚",
+    "品目",
+    "消耗品庫",
+    "FH-516",
+    "限度"
+   ],
+   "rationale": "答えの別表は品目の記号と棚・数・限度だけの表で、可とう管の名称も配管の語も持たない。品目の記号 FH-516 は起点の節の見出しにしか出てこない。起点の節は「別表 1 による」と同じ文書の別表を指している。記号を知らなければ、ほかの行の棚と取り違える。"
+  },
+  {
+   "qid": "C6-04d",
+   "type": "control",
+   "twin_of": "C6-04",
+   "question": "KS-TC-L603 の別表 1 で、品目 FH-516 の棚はどこか。",
+   "answer": "R-56 である。",
+   "answer_keys": [
+    "R-56"
+   ],
+   "entry_doc": "KS-TC-L603D.md",
+   "entry_where": "別表 1 品目別の区分",
+   "entry_quote": "| FH-516 | R-56 | 2 | 56 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-L603D.md",
+   "answer_where": "別表 1 品目別の区分",
+   "answer_quote": "| FH-516 | R-56 | 2 | 56 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C6-04 と同じ事実を、答えの別表の番号と品目の記号で聞く。"
+  },
+  {
+   "qid": "C6-05",
+   "type": "ref2",
+   "twin_of": null,
+   "question": "試運転の途中で、給油ユニットの油タンクの油面が上がり、油が白く濁ってきた。油冷却器から水が漏れたらしい。この油の処置は、いつまでに終えなければならないか。",
+   "answer": "運転を止め、KS-TC-L601 の 6. により判定する。外観の濁りは区分 ハ に当たり、別表 2 により、猶予は 146 時間である（判定の日の翌日の始業の時から数える）。処置は更油で、終えるまで運転してはならない。",
+   "answer_keys": [
+    "146"
+   ],
+   "entry_doc": "KS-TC-L602B.md",
+   "entry_where": "3. 運用の共通事項 (4) 異常時の処置",
+   "entry_quote": "c. 油タンクの油面が上がり、又は油が白く濁った場合は、油冷却器からの水の漏れを疑う。運転を止め、KS-TC-L601 の 6. により判定する。",
+   "bridge_kind": "reference",
+   "bridge_quote": "c. 油タンクの油面が上がり、又は油が白く濁った場合は、油冷却器からの水の漏れを疑う。運転を止め、KS-TC-L601 の 6. により判定する。",
+   "reference_form": "番号と項（KS-TC-L601 の 6.）→ 同じ文書の別表（別表 2 による）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [
+    {
+     "doc": "KS-TC-L601C.md",
+     "where": "6. 管理値",
+     "quote": "処置の内容は 7. に、処置を終えるまでの猶予は別表 2 による。",
+     "kind": "reference"
+    }
+   ],
+   "answer_doc": "KS-TC-L601C.md",
+   "answer_where": "別表 2 区分別の猶予",
+   "answer_quote": "| ハ | 146 | 赤 |",
+   "hops": 2,
+   "wrong_values": [
+    "386",
+    "936"
+   ],
+   "avoided_terms": [
+    "猶予",
+    "区分",
+    "管理値",
+    "外観",
+    "期限",
+    "更油"
+   ],
+   "rationale": "答えの別表は区分の記号（イ・ロ・ハ）と猶予・札だけの表で、濁りや油タンクの語を持たない。濁りが区分 ハ に当たることは中継の 6. の表にある。起点の (4) は番号と項で 6. を指し、6. は別表 2 を指す。区分を知らなければ、ほかの行の 386、936 と取り違える。"
+  },
+  {
+   "qid": "C6-05d",
+   "type": "control",
+   "twin_of": "C6-05",
+   "question": "KS-TC-L601 の別表 2 で、区分 ハ の猶予はいくつか。",
+   "answer": "146 である（判定の日の翌日の始業の時から数える時間）。",
+   "answer_keys": [
+    "146"
+   ],
+   "entry_doc": "KS-TC-L601C.md",
+   "entry_where": "別表 2 区分別の猶予",
+   "entry_quote": "| ハ | 146 | 赤 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-L601C.md",
+   "answer_where": "別表 2 区分別の猶予",
+   "answer_quote": "| ハ | 146 | 赤 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C6-05 と同じ事実を、答えの別表の番号と区分の記号で聞く。"
+  },
+  {
+   "qid": "C6-06",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "潤滑油供給ユニットの出口に置いた油流量計は、校正してからいつまで使ってよいのか。",
+   "answer": "油流量計 FM-70 は等級 丙で、直近の校正に合格した日から 269 日まで使える。",
+   "answer_keys": [
+    "269"
+   ],
+   "entry_doc": "KS-TC-L602B.md",
+   "entry_where": "3. 運用の共通事項 (2) 起動",
+   "entry_quote": "c. ユニットの出口に置いた油流量計 FM-70 の指示が落ち着いたことを確かめる。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "FM-70",
+   "bridge_aliases": [
+    "油流量計",
+    "潤滑油流量計",
+    "流量計"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-P001D.md",
+   "answer_where": "別表 2 管理番号別の区分",
+   "answer_quote": "| FM-70 | 丙 | 269 | 生技保 |",
+   "hops": 1,
+   "wrong_values": [
+    "189",
+    "359",
+    "419",
+    "719"
+   ],
+   "avoided_terms": [
+    "周期",
+    "日数",
+    "管理番号",
+    "等級"
+   ],
+   "rationale": "答えの別表は管理番号と等級・周期・担当だけの表で、計測器の名称も潤滑油の語も持たない。管理番号 FM-70 は起点の (2) に出てくる（計測の共通基準の 3-6 と試運転の共通基準の 5.3 にもある）。番号を知らなければ、ほかの行の日数と取り違える。"
+  },
+  {
+   "qid": "C6-06d",
+   "type": "control",
+   "twin_of": "C6-06",
+   "question": "KS-TC-P001 の別表 2 で、管理番号 FM-70 の周期はいくつか。",
+   "answer": "269 である（直近の校正に合格した日から数える日数）。",
+   "answer_keys": [
+    "269"
+   ],
+   "entry_doc": "KS-TC-P001D.md",
+   "entry_where": "別表 2 管理番号別の区分",
+   "entry_quote": "| FM-70 | 丙 | 269 | 生技保 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-P001D.md",
+   "answer_where": "別表 2 管理番号別の区分",
+   "answer_quote": "| FM-70 | 丙 | 269 | 生技保 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C6-06 と同じ事実を、答えの別表の番号と管理番号で聞く。"
+  },
+  {
+   "qid": "C6-07",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "冷却水循環装置の循環ポンプの吸込側にあるストレーナは、予備をどこに置いているか。",
+   "answer": "ストレーナは品目 WS-616 で、予備は消耗品庫の棚 R-66 に 1 個置く。",
+   "answer_keys": [
+    "R-66"
+   ],
+   "entry_doc": "KS-TC-L604A.md",
+   "entry_where": "3. 装置の構成",
+   "entry_quote": "b. 循環ポンプ: 常用 1 台、予備 1 台。吸込側にストレーナ（品目 WS-616）を置く。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "WS-616",
+   "bridge_aliases": [
+    "品目 WS-616"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-L603D.md",
+   "answer_where": "別表 1 品目別の区分",
+   "answer_quote": "| WS-616 | R-66 | 1 | — |",
+   "hops": 1,
+   "wrong_values": [
+    "R-16",
+    "R-26",
+    "R-36",
+    "R-46",
+    "R-56",
+    "R-76"
+   ],
+   "avoided_terms": [
+    "棚",
+    "品目",
+    "消耗品庫",
+    "保管"
+   ],
+   "rationale": "答えの別表は品目の記号と棚・数・限度だけの表で、ストレーナの名称も冷却水の語も持たない。品目の記号 WS-616 は起点の 3. に出てくる。記号を知らなければ、どの行か決まらない。"
+  },
+  {
+   "qid": "C6-07d",
+   "type": "control",
+   "twin_of": "C6-07",
+   "question": "KS-TC-L603 の別表 1 で、品目 WS-616 の棚はどこか。",
+   "answer": "R-66 である。",
+   "answer_keys": [
+    "R-66"
+   ],
+   "entry_doc": "KS-TC-L603D.md",
+   "entry_where": "別表 1 品目別の区分",
+   "entry_quote": "| WS-616 | R-66 | 1 | — |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-L603D.md",
+   "answer_where": "別表 1 品目別の区分",
+   "answer_quote": "| WS-616 | R-66 | 1 | — |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C6-07 と同じ事実を、答えの別表の番号と品目の記号で聞く。"
+  },
+  {
+   "qid": "C6-08",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "潤滑油の分析の結果を記入した管理票は、承認のあと、どこにしまうのか。",
+   "answer": "潤滑油性状管理票（様式 TCF-410）は保存区分 K-1 で、過検の文書庫の第 2 書架に置く。",
+   "answer_keys": [
+    "第 2 書架"
+   ],
+   "entry_doc": "KS-TC-L601C.md",
+   "entry_where": "10. 記録",
+   "entry_quote": "受入検査及び分析の結果は、潤滑油性状管理票（様式 TCF-410）に記入し、試運転係長の承認を受ける。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "TCF-410",
+   "bridge_aliases": [
+    "潤滑油性状管理票",
+    "油性状票"
+   ],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "別表 2 様式別の区分",
+   "answer_quote": "| TCF-410 | K-1 | 9 年 | 第 2 書架 |",
+   "hops": 1,
+   "wrong_values": [
+    "第 1 書架",
+    "第 4 書架",
+    "第 6 書架",
+    "第 9 書架"
+   ],
+   "avoided_terms": [
+    "書架",
+    "保存区分",
+    "年限",
+    "様式番号",
+    "文書庫",
+    "保管"
+   ],
+   "rationale": "答えの別表は様式番号と区分・年限・書架だけの表で、帳票の名称も潤滑油の語も持たない。様式番号 TCF-410 は起点の 10. に出てくる。番号を知らなければ、どの行か決まらない。"
+  },
+  {
+   "qid": "C6-08d",
+   "type": "control",
+   "twin_of": "C6-08",
+   "question": "QK-TC-01 の別表 2 で、様式 TCF-410 の書架はどこか。",
+   "answer": "第 2 書架である。",
+   "answer_keys": [
+    "第 2 書架"
+   ],
+   "entry_doc": "QK-TC-01G.md",
+   "entry_where": "別表 2 様式別の区分",
+   "entry_quote": "| TCF-410 | K-1 | 9 年 | 第 2 書架 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "別表 2 様式別の区分",
+   "answer_quote": "| TCF-410 | K-1 | 9 年 | 第 2 書架 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C6-08 と同じ事実を、答えの別表の番号と様式番号で聞く。"
+  },
+  {
+   "qid": "C6-09",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "冷却水に入れる防錆剤の予備は、ふだんどこにしまってあるか。",
+   "answer": "防錆剤は薬剤 K-16 で、予備は薬品庫の区画 C-26 に置く（数は 4）。",
+   "answer_keys": [
+    "C-26"
+   ],
+   "entry_doc": "KS-TC-L604A.md",
+   "entry_where": "6. 薬剤 (1) 薬剤 K-16",
+   "entry_quote": "- 用途: 防錆剤。亜硝酸塩系",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "K-16",
+   "bridge_aliases": [
+    "薬剤 K-16"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-L603D.md",
+   "answer_where": "別表 2 記号別の区画",
+   "answer_quote": "| K-16 | C-26 | 4 |",
+   "hops": 1,
+   "wrong_values": [
+    "C-36",
+    "C-46"
+   ],
+   "avoided_terms": [
+    "区画",
+    "薬品庫",
+    "薬剤",
+    "記号",
+    "数"
+   ],
+   "rationale": "答えの別表は薬剤の記号と区画・数だけの表で、防錆剤の名称も冷却水の語も持たない。防錆剤が薬剤 K-16 であることは、起点の 6. の (1) にだけ書いてある。記号を知らなければ、ほかの行の C-36、C-46 と取り違える。"
+  },
+  {
+   "qid": "C6-09d",
+   "type": "control",
+   "twin_of": "C6-09",
+   "question": "KS-TC-L603 の別表 2 で、記号 K-16 の区画はどこか。",
+   "answer": "C-26 である。",
+   "answer_keys": [
+    "C-26"
+   ],
+   "entry_doc": "KS-TC-L603D.md",
+   "entry_where": "別表 2 記号別の区画",
+   "entry_quote": "| K-16 | C-26 | 4 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-L603D.md",
+   "answer_where": "別表 2 記号別の区画",
+   "answer_quote": "| K-16 | C-26 | 4 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C6-09 と同じ事実を、答えの別表の番号と薬剤の記号で聞く。"
+  },
+  {
+   "qid": "C6-10",
+   "type": "ref2",
+   "twin_of": null,
+   "question": "3 号給油ユニットの送り先を TB-30 から TB-40 へ切り替えた。運転の前に調べる油は、どれだけ要るのか。",
+   "answer": "切替えの後の採油は KS-TC-L601 の 5. の (1) により区分 S-36 を用いる。別表 1 により、136 mL を 2 本採取する（ラインフィルタの出口から）。",
+   "answer_keys": [
+    "136 mL"
+   ],
+   "entry_doc": "KS-TC-L602B.md",
+   "entry_where": "5. LU-30 の切替え",
+   "entry_quote": "d. 切替えの後の採油は、KS-TC-L601 の 5. の (1) による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "d. 切替えの後の採油は、KS-TC-L601 の 5. の (1) による。",
+   "reference_form": "番号と項（KS-TC-L601 の 5. の (1)）から、同じ文書の別表（別表 1 の区分に従って採取する）。行は (1) の b. の区分 S-36 で決まる",
+   "bridge_entity": "S-36",
+   "bridge_aliases": [
+    "区分 S-36"
+   ],
+   "path": [
+    {
+     "doc": "KS-TC-L601C.md",
+     "where": "5. 性状の分析 (1) 採油（同じ項の b. で、切替えの後は区分 S-36 と決まる）",
+     "quote": "分析に用いる油は、別表 1 の区分に従って採取する。",
+     "kind": "reference"
+    }
+   ],
+   "answer_doc": "KS-TC-L601C.md",
+   "answer_where": "別表 1 区分別の採取",
+   "answer_quote": "| S-36 | 136 mL | 2 | 専用の清浄瓶 |",
+   "hops": 2,
+   "wrong_values": [
+    "256 mL",
+    "516 mL",
+    "1,016 mL"
+   ],
+   "avoided_terms": [
+    "採取",
+    "採油",
+    "区分",
+    "S-36",
+    "量",
+    "本数"
+   ],
+   "rationale": "参照を 2 回たどる。起点の 5. は番号と項で KS-TC-L601 の 5. の (1) を指すだけで、区分の記号を書いていない。中継の (1) は「別表 1 の区分に従って採取する」と別表を指し、切替えの後は区分 S-36 と定めている。量は記号だけで引く別表 1 にある。別表 1 は切替えや運転台の語を持たない。ほかの行の量と取り違えやすい。",
+   "fix_note": "型を ent2 から ref2 に改めた。1 回目は番号と項の参照（KS-TC-L601 の 5. の (1) による）、2 回目は中継の (1) にある「別表 1 の区分に従って採取する」の参照で、行は同じ (1) の区分 S-36 で決まる。C6-05（ref2）と同じ形である。起点と中継は記号を共有しないので、エンティティだけでは 1 回目を越えられない。質問の「抜き取る」は、この文書群では油タンクの油を抜く意味で使われているので、「どれだけ要るのか」に改めた。"
+  },
+  {
+   "qid": "C6-10d",
+   "type": "control",
+   "twin_of": "C6-10",
+   "question": "KS-TC-L601 の別表 1 で、区分 S-36 の量は何 mL か。",
+   "answer": "136 mL である。",
+   "answer_keys": [
+    "136 mL"
+   ],
+   "entry_doc": "KS-TC-L601C.md",
+   "entry_where": "別表 1 区分別の採取",
+   "entry_quote": "| S-36 | 136 mL | 2 | 専用の清浄瓶 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-L601C.md",
+   "answer_where": "別表 1 区分別の採取",
+   "answer_quote": "| S-36 | 136 mL | 2 | 専用の清浄瓶 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C6-10 と同じ事実を、答えの別表の番号と区分の記号で聞く。"
+  },
+  {
+   "qid": "C6-11",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "TB-40 で過給機を運転するときに使う潤滑油供給ユニットは、油タンクに油が何 L 入るのか。",
+   "answer": "TB-40 で用いるのは LU-30 であり、油タンクの容量は 1,116 L である。",
+   "answer_keys": [
+    "1,116"
+   ],
+   "entry_doc": "KS-TC-L001E.md",
+   "entry_where": "9. 運転台と供給設備の対応",
+   "entry_quote": "| TB-40 | LU-30 | CW-10 | EP、EC |",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "LU-30",
+   "bridge_aliases": [
+    "第 3 潤滑油供給ユニット",
+    "3 号給油ユニット"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-L602B.md",
+   "answer_where": "4. 個票 (3) LU-30",
+   "answer_quote": "- 油タンクの容量: 1,116 L",
+   "hops": 1,
+   "wrong_values": [
+    "3,216",
+    "616"
+   ],
+   "avoided_terms": [
+    "LU-30",
+    "第 3 潤滑油供給ユニット"
+   ],
+   "rationale": "運用要領はユニットごとに同じ書式の個票（LU-10・LU-20・LU-30）を持ち、個票には運転台を書いていない。質問で引くと 3 つの個票が並んで上位に来る。TB-40 で用いるのが LU-30 であることは、供給条件の基準の 9. の表（と運用要領の 5.）にある。",
+   "fix_note": "answer_keys から単位の「L」を外した（「リットル」と書いた正しい回答で外れる）。"
+  },
+  {
+   "qid": "C6-12",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "LU-30 のラインフィルタのエレメントは、差圧がいくらになったら交換するのか。",
+   "answer": "LU-30 のエレメントは品目 EL-136 であり、差圧が 86 kPa に達したとき（又は使用 6 か月の早い方）に交換する。",
+   "answer_keys": [
+    "86 kPa"
+   ],
+   "entry_doc": "KS-TC-L602B.md",
+   "entry_where": "4. 個票 (3) LU-30",
+   "entry_quote": "- ラインフィルタ: 2 連切替式。エレメントは品目 EL-136",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "EL-136",
+   "bridge_aliases": [
+    "品目 EL-136"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-L603D.md",
+   "answer_where": "4. 品目別の交換要領 (3) 品目 EL-136",
+   "answer_quote": "- 交換の時期: 差圧が 86 kPa に達したとき、又は使用 6 か月の、早い方",
+   "hops": 1,
+   "wrong_values": [
+    "106 kPa",
+    "66 kPa"
+   ],
+   "avoided_terms": [
+    "EL-136",
+    "品目"
+   ],
+   "rationale": "交換基準は品目ごとに同じ書式の節を持ち、ラインフィルタのエレメントは EL-116・EL-126・EL-136 の 3 つがある。節にはユニットの番号を書いていない。質問で引くと 3 つの節が並んで上位に来る。LU-30 のエレメントが EL-136 であることは、運用要領の個票にだけ書いてある。"
+  },
+  {
+   "qid": "C6-13",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "NA30 系列の過給機を運転する運転台の潤滑油供給ユニットは、油タンクの容量が何 L か。",
+   "answer": "NA30 系列は TB-20 で運転し、TB-20 の潤滑油供給ユニットは LU-20 である。LU-20 の油タンクの容量は 616 L である。",
+   "answer_keys": [
+    "616 L"
+   ],
+   "entry_doc": "KS-TC-T001F.md",
+   "entry_where": "別表 1 系列別の区分",
+   "entry_quote": "| NA30 | 軸流 | SG | TB-20 | 4 点 | タービン側軸受ふた | ±5 % |",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "TB-20",
+   "bridge_aliases": [
+    "LU-20",
+    "第 2 潤滑油供給ユニット",
+    "2 号給油ユニット"
+   ],
+   "path": [
+    {
+     "doc": "KS-TC-L001E.md",
+     "where": "9. 運転台と供給設備の対応",
+     "quote": "| TB-20 | LU-20 | CW-10 | SG |",
+     "kind": "entity"
+    }
+   ],
+   "answer_doc": "KS-TC-L602B.md",
+   "answer_where": "4. 個票 (2) LU-20",
+   "answer_quote": "- 油タンクの容量: 616 L",
+   "hops": 2,
+   "wrong_values": [
+    "3,216 L",
+    "1,116 L"
+   ],
+   "avoided_terms": [
+    "TB-20",
+    "LU-20",
+    "第 2 運転台"
+   ],
+   "rationale": "個票は同じ書式で 3 つ並び、系列も運転台も書いていない。NA30 系列が TB-20 であることは試運転の共通基準の別表 1 に、TB-20 のユニットが LU-20 であることは供給条件の基準の 9. にある。つなぎを 2 つたどらないと、どの個票か決まらない。"
+  },
+  {
+   "qid": "C6-14",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "顧客が銘柄を指定した油で試運転をする場合、使用中の油の酸価は、いくらまで許されるか。",
+   "answer": "手元の文書には書かれていない。顧客が指定した銘柄の油の管理値は、購入仕様書による（KS-TC-L601 の 6. の表の値を当てはめてはならない）。",
+   "answer_keys": [],
+   "entry_doc": "KS-TC-L601C.md",
+   "entry_where": "6. 管理値",
+   "entry_quote": "顧客が指定した銘柄の油を用いる場合の管理値は、購入仕様書による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "顧客が指定した銘柄の油を用いる場合の管理値は、購入仕様書による。",
+   "reference_form": "手元に無い文書（顧客の購入仕様書）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "",
+   "answer_where": "",
+   "answer_quote": "",
+   "hops": 1,
+   "wrong_values": [
+    "0.36 mgKOH/g"
+   ],
+   "avoided_terms": [],
+   "rationale": "6. の表には常用油の酸価の管理値があるが、顧客が指定した銘柄の油には当てはめないと明記している。値は購入仕様書にあり、文書群のどこにも無い。表の値を答えると誤りになる。"
+  },
+  {
+   "qid": "C6-15",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "ラインフィルタのエレメントを交換したあと、ふたはどれだけのトルクで締め付けるのか。",
+   "answer": "手元の文書には書かれていない。ふたの締付けトルクは、製造者の取扱説明書による。取扱説明書は生技保が保管している。",
+   "answer_keys": [],
+   "entry_doc": "KS-TC-L603D.md",
+   "entry_where": "4. 品目別の交換要領 (1) 品目 EL-116（(2) と (3) にも同じ文がある）",
+   "entry_quote": "- 注意: ふたの締付けトルクは、製造者の取扱説明書による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "- 注意: ふたの締付けトルクは、製造者の取扱説明書による。",
+   "reference_form": "手元に無い文書（設備の製造者の取扱説明書）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "",
+   "answer_where": "",
+   "answer_quote": "",
+   "hops": 1,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "エレメントの節は締付けトルクを製造者の取扱説明書に委ねており、値は文書群のどこにも無い。"
+  },
+  {
+   "qid": "C6-16",
+   "type": "control",
+   "twin_of": null,
+   "question": "使用中の潤滑油の水分の管理値は、いくらか。",
+   "answer": "506 ppm 以下である。",
+   "answer_keys": [
+    "506 ppm"
+   ],
+   "entry_doc": "KS-TC-L601C.md",
+   "entry_where": "6. 管理値",
+   "entry_quote": "| 水分 | 100 ppm 以下 | 506 ppm 以下 | ハ |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-L601C.md",
+   "answer_where": "6. 管理値",
+   "answer_quote": "| 水分 | 100 ppm 以下 | 506 ppm 以下 | ハ |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "答えの節の語（水分、管理値）でそのまま聞く。"
+  },
+  {
+   "qid": "C6-17",
+   "type": "control",
+   "twin_of": null,
+   "question": "冷却水循環装置 CW-10 が装置の全体で保有する水の量は、いくらか。",
+   "answer": "2,416 L である。",
+   "answer_keys": [
+    "2,416"
+   ],
+   "entry_doc": "KS-TC-L604A.md",
+   "entry_where": "3. 装置の構成",
+   "entry_quote": "a. 貯水タンク: ステンレス鋼製。装置の全体で保有する水の量は、2,416 L とする。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-L604A.md",
+   "answer_where": "3. 装置の構成",
+   "answer_quote": "a. 貯水タンク: ステンレス鋼製。装置の全体で保有する水の量は、2,416 L とする。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "答えの節の語（CW-10、保有する水の量）でそのまま聞く。",
+   "fix_note": "answer_keys から単位の「L」を外した（「リットル」と書いた正しい回答で外れる）。"
+  },
+  {
+   "qid": "C6-18",
+   "type": "control",
+   "twin_of": null,
+   "question": "LU-10 の油タンクの容量は、何 L か。",
+   "answer": "3,216 L である。",
+   "answer_keys": [
+    "3,216"
+   ],
+   "entry_doc": "KS-TC-L602B.md",
+   "entry_where": "4. 個票 (1) LU-10",
+   "entry_quote": "- 油タンクの容量: 3,216 L",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-L602B.md",
+   "answer_where": "4. 個票 (1) LU-10",
+   "answer_quote": "- 油タンクの容量: 3,216 L",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "個票の見出しの管理番号と項目の名でそのまま聞く。",
+   "fix_note": "answer_keys から単位の「L」を外した（「リットル」と書いた正しい回答で外れる）。"
+  },
+  {
+   "qid": "C6-19",
+   "type": "control",
+   "twin_of": null,
+   "question": "顧客の指定で、いつもと違う銘柄の油を試運転に使うとき、社内の届出は、使う日の何稼働日前までに行うのか。",
+   "answer": "用いる日の 26 稼働日前までに、協議・通知票により過検及び過技設へ届け出る。",
+   "answer_keys": [
+    "26 稼働日"
+   ],
+   "entry_doc": "KS-TC-L601C.md",
+   "entry_where": "9. 届出",
+   "entry_quote": "4. の (1) に定める品を改めるとき、及びこれと異なる品を一時的に用いるときは、試運転係長は、用いる日の 26 稼働日前までに、協議・通知票により過検及び過技設へ届け出る。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-L601C.md",
+   "answer_where": "9. 届出",
+   "answer_quote": "4. の (1) に定める品を改めるとき、及びこれと異なる品を一時的に用いるときは、試運転係長は、用いる日の 26 稼働日前までに、協議・通知票により過検及び過技設へ届け出る。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "答えの節は油や銘柄の語を持たないが、届出の語で聞けば直接引ける。経路の問いとして試したときも 2 位だったので、直接の問いにした。"
+  }
+ ]
+}

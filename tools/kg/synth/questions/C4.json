@@ -1,0 +1,1052 @@
+{
+ "questions": [
+  {
+   "qid": "C4-01",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "運転台 TB-10 で空気量を計るのに使うオリフィス管は、どうなったら使えなくなるのか。",
+   "answer": "TB-10 に適用するオリフィス管は OP-600 で、点検は KS-TC-M403 による。OP-600 の個票の使用の限度は、孔の径が刻印の値に 0.24 mm を加えた値を超えないことであり、これを超えたものは使えない。このほか、孔の縁に傷又は丸みがあるものも用いてはならない（計測共通の注 1）。",
+   "answer_keys": [
+    "0.24 mm"
+   ],
+   "entry_doc": "KS-TC-P001D.md",
+   "entry_where": "別表 1 オリフィス管の選定",
+   "entry_quote": "オリフィス管の保管及び点検は、KS-TC-M403 による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "オリフィス管の保管及び点検は、KS-TC-M403 による。",
+   "reference_form": "番号だけ（KS-TC-M403）。個票は、同じ別表 1 の行にある管理番号 OP-600 で決まる",
+   "bridge_entity": "OP-600",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M403B.md",
+   "answer_where": "5. 治具個票 OP-600",
+   "answer_quote": "- 使用の限度: 孔の径が、刻印の値に 0.24 mm を加えた値を超えないこと。",
+   "hops": 1,
+   "wrong_values": [
+    "0.04 mm",
+    "0.14 mm"
+   ],
+   "avoided_terms": [
+    "使用の限度",
+    "孔の径",
+    "刻印",
+    "治具",
+    "個票",
+    "OP-600"
+   ],
+   "rationale": "答えの個票は見出しが管理番号だけで、本文にオリフィス管・運転台・空気量の語が無い。同じ書式の個票が 7 つ並び、OP-250 と OP-400 は値だけが違う。起点の別表 1 が TB-10 に OP-600 を当て、「保管及び点検は KS-TC-M403 による」と指しているので、そこから OP-600 の個票に着く。傷と丸みの定め（計測共通の注 1）は直接引けるが、寸法の限度は個票にしか無い。"
+  },
+  {
+   "qid": "C4-01d",
+   "type": "control",
+   "twin_of": "C4-01",
+   "question": "KS-TC-M403 の治具個票で、OP-600 の使用の限度は、孔の径が刻印の値に何 mm を加えた値までか。",
+   "answer": "0.24 mm である（孔の径が、刻印の値に 0.24 mm を加えた値を超えないこと）。",
+   "answer_keys": [
+    "0.24 mm"
+   ],
+   "entry_doc": "KS-TC-M403B.md",
+   "entry_where": "5. 治具個票 OP-600",
+   "entry_quote": "- 使用の限度: 孔の径が、刻印の値に 0.24 mm を加えた値を超えないこと。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M403B.md",
+   "answer_where": "5. 治具個票 OP-600",
+   "answer_quote": "- 使用の限度: 孔の径が、刻印の値に 0.24 mm を加えた値を超えないこと。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C4-01 と同じ事実を、答えの節の番号と見出しの語で直接聞く。これだけ正答できれば、C4-01 の失敗は経路の側にある。",
+   "fix_note": "answer を、元の問いの写しをやめ、聞いたことだけにした（質問と answer_keys は変えていない）。"
+  },
+  {
+   "qid": "C4-02",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "過給機を据え付けるのに定盤のボルト穴の位置が合わず、穴を追加したい。どうすればよいか。",
+   "answer": "同じ基準の 4.5 による。生技保が設備改造票 SK-44 を起票し、生産技術部長の決裁を受けてから着手する。",
+   "answer_keys": [
+    "SK-44"
+   ],
+   "entry_doc": "KS-TC-M401C.md",
+   "entry_where": "4.3 据付け",
+   "entry_quote": "定盤に穴を追加し、又は定盤を削る必要がある場合は、4.5 による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "定盤に穴を追加し、又は定盤を削る必要がある場合は、4.5 による。",
+   "reference_form": "同じ文書の項（4.5 による）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M401C.md",
+   "answer_where": "4.5 改造",
+   "answer_quote": "運転台の構造又は能力を変える工事（以下「改造」という。）は、生技保が設備改造票 SK-44 を起票し、生産技術部長の決裁を受けてから着手する。",
+   "hops": 1,
+   "wrong_values": [
+    "HZ-14"
+   ],
+   "avoided_terms": [
+    "改造",
+    "工事",
+    "構造",
+    "能力",
+    "決裁",
+    "起票"
+   ],
+   "rationale": "答えの 4.5 は改造の手続の話で、据付け・定盤・ボルト穴の語を持たない。となりの 4.4（封印、届 HZ-14）が同じ書式で並ぶ。起点の 4.3 にある「4.5 による」をたどると着く。"
+  },
+  {
+   "qid": "C4-02d",
+   "type": "control",
+   "twin_of": "C4-02",
+   "question": "KS-TC-M401 の 4.5 では、運転台の改造に着手する前に、何を起票してだれの決裁を受けると定めているか。",
+   "answer": "生技保が設備改造票 SK-44 を起票し、生産技術部長の決裁を受ける。",
+   "answer_keys": [
+    "SK-44"
+   ],
+   "entry_doc": "KS-TC-M401C.md",
+   "entry_where": "4.5 改造",
+   "entry_quote": "運転台の構造又は能力を変える工事（以下「改造」という。）は、生技保が設備改造票 SK-44 を起票し、生産技術部長の決裁を受けてから着手する。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M401C.md",
+   "answer_where": "4.5 改造",
+   "answer_quote": "運転台の構造又は能力を変える工事（以下「改造」という。）は、生技保が設備改造票 SK-44 を起票し、生産技術部長の決裁を受けてから着手する。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C4-02 と同じ事実を、答えの節の番号と見出しの語で直接聞く。これだけ正答できれば、C4-02 の失敗は経路の側にある。",
+   "fix_note": "answer を、元の問いの写しをやめ、聞いたことだけにした（質問と answer_keys は変えていない）。"
+  },
+  {
+   "qid": "C4-03",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "点火の前に確かめたら、燃焼器の燃料の圧力が個票の範囲から外れていた。調節弁を合わせ直すには、どうすればよいか。",
+   "answer": "調節弁には生技保の封印があるので、「単独運転装置 設備管理基準」（KS-TC-M401）の封印の定め（4.4）による。あらかじめ封印解除届（保全様式 HZ-14）を生技保へ出し、設備保全課長の承認を受ける。承認の後、生技保の担当者が封印を切り、作業に立ち会う。",
+   "answer_keys": [
+    "HZ-14"
+   ],
+   "entry_doc": "KS-TC-M404A.md",
+   "entry_where": "4.1 点火前の確認",
+   "entry_quote": "調節弁を合わせ直す場合は、「単独運転装置 設備管理基準」の、封印の定めによる。",
+   "bridge_kind": "reference",
+   "bridge_quote": "調節弁を合わせ直す場合は、「単独運転装置 設備管理基準」の、封印の定めによる。",
+   "reference_form": "名称だけ（番号なし。「単独運転装置 設備管理基準」の、封印の定め）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M401C.md",
+   "answer_where": "4.4 封印",
+   "answer_quote": "(1) 封印を切る必要がある者は、あらかじめ封印解除届（保全様式 HZ-14）を生技保へ出し、設備保全課長の承認を受ける。",
+   "hops": 1,
+   "wrong_values": [
+    "SK-44"
+   ],
+   "avoided_terms": [
+    "封印",
+    "届",
+    "承認",
+    "台帳",
+    "立会い"
+   ],
+   "rationale": "答えの 4.4 は設備管理基準の封印の手続で、燃焼器・燃料・圧力・調節弁の語を持たない。起点は番号を書かず、基準の名称と定めの名前だけで指している。となりの 4.5（改造、SK-44）と取り違えやすい。同じ参照は 5.3（圧力開閉器）にもある。"
+  },
+  {
+   "qid": "C4-03d",
+   "type": "control",
+   "twin_of": "C4-03",
+   "question": "KS-TC-M401 の 4.4 で、設備の封印を切る必要がある者は、あらかじめ何を出してだれの承認を受けるのか。",
+   "answer": "封印解除届（保全様式 HZ-14）を生技保へ出し、設備保全課長の承認を受ける。",
+   "answer_keys": [
+    "HZ-14"
+   ],
+   "entry_doc": "KS-TC-M401C.md",
+   "entry_where": "4.4 封印",
+   "entry_quote": "(1) 封印を切る必要がある者は、あらかじめ封印解除届（保全様式 HZ-14）を生技保へ出し、設備保全課長の承認を受ける。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M401C.md",
+   "answer_where": "4.4 封印",
+   "answer_quote": "(1) 封印を切る必要がある者は、あらかじめ封印解除届（保全様式 HZ-14）を生技保へ出し、設備保全課長の承認を受ける。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C4-03 と同じ事実を、答えの節の番号と見出しの語で直接聞く。これだけ正答できれば、C4-03 の失敗は経路の側にある。",
+   "fix_note": "answer を、元の問いの写しをやめ、聞いたことだけにした（質問と answer_keys は変えていない）。"
+  },
+  {
+   "qid": "C4-04",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "運転台へ据え付ける作業の途中で、過給機に打痕を付けてしまった。まず何をすればよいか。",
+   "answer": "品規 9 号（現行の QK-TC-02）の第 4 条による。作業を止め、直ちに職場の長に報告する。職場の長が過検へ連絡する（そのあと、過検がその日のうちに現品を確認し、不適合報告書を起票する）。",
+   "answer_keys": [
+    "職場の長",
+    "報告"
+   ],
+   "entry_doc": "KS-TC-M401C.md",
+   "entry_where": "4.3 据付け",
+   "entry_quote": "(3) 据付けの作業で過給機に傷又は打痕を付けた場合は、品規 9 号の第 4 条により報告する。",
+   "bridge_kind": "reference",
+   "bridge_quote": "(3) 据付けの作業で過給機に傷又は打痕を付けた場合は、品規 9 号の第 4 条により報告する。",
+   "reference_form": "旧番号と条（品規 9 号の第 4 条。現行は QK-TC-02）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-02D.md",
+   "answer_where": "第 4 条（発見時の報告）",
+   "answer_quote": "不適合を見つけた者は、作業を止め、直ちに職場の長に報告する。",
+   "hops": 1,
+   "wrong_values": [],
+   "avoided_terms": [
+    "不適合",
+    "報告",
+    "連絡",
+    "職場",
+    "起票",
+    "現品"
+   ],
+   "rationale": "答えの条は不適合品処理規定の報告の手続で、据付け・打痕・運転台の語を持たない。起点は旧番号（品規 9 号）で指しており、現行の番号は発行目録の対照でわかる。",
+   "fix_note": "answer_keys を「職場の長」「報告」にした。元の「TCF-210」は、質問（まず何をすればよいか）が聞いていない、過検が起票する報告書の様式番号である。「職場の長」だけにすると QK-TC-02 の第 14 条と重なるので、同じ文の「報告」と組にした。"
+  },
+  {
+   "qid": "C4-04d",
+   "type": "control",
+   "twin_of": "C4-04",
+   "question": "QK-TC-02 の第 4 条では、不適合を見つけた者は、まず何をすると定めているか。",
+   "answer": "作業を止め、直ちに職場の長に報告する。職場の長は、過検へ連絡する。",
+   "answer_keys": [
+    "職場の長",
+    "報告"
+   ],
+   "entry_doc": "QK-TC-02D.md",
+   "entry_where": "第 4 条（発見時の報告）",
+   "entry_quote": "不適合を見つけた者は、作業を止め、直ちに職場の長に報告する。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-02D.md",
+   "answer_where": "第 4 条（発見時の報告）",
+   "answer_quote": "不適合を見つけた者は、作業を止め、直ちに職場の長に報告する。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C4-04 と同じ事実を、答えの節の番号と見出しの語で直接聞く。これだけ正答できれば、C4-04 の失敗は経路の側にある。",
+   "fix_note": "元の問い C4-04 に合わせ、質問を「まず何をするか」に、answer_keys を「職場の長」「報告」に改めた。answer は、元の問いの写しをやめ、聞いたことだけにした。"
+  },
+  {
+   "qid": "C4-05",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "空気量の計測に使うオリフィス管は、点検に合格してから、いつまで試運転に使ってよいのか。",
+   "answer": "計測共通（KS-TC-P001）に定める計測器の周期による。OP-250・OP-400・OP-600 はいずれも等級 丁で、周期は 1,079（直近の校正に合格した日から数える日数）である。",
+   "answer_keys": [
+    "1,079"
+   ],
+   "entry_doc": "KS-TC-M403B.md",
+   "entry_where": "4.2 定期点検",
+   "entry_quote": "オリフィス管（OP-250、OP-400 及び OP-600）の定期点検の間隔は、別表 1 によらず、計測共通に定める計測器の周期による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "オリフィス管（OP-250、OP-400 及び OP-600）の定期点検の間隔は、別表 1 によらず、計測共通に定める計測器の周期による。",
+   "reference_form": "通称（「計測共通」= KS-TC-P001。番号も項も書いていない）。行は起点に出る管理番号で決まる",
+   "bridge_entity": "OP-600",
+   "bridge_aliases": [
+    "OP-250",
+    "OP-400"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-P001D.md",
+   "answer_where": "別表 2 管理番号別の区分",
+   "answer_quote": "| OP-600 | 丁 | 1,079 | 過組 |",
+   "hops": 1,
+   "wrong_values": [
+    "364",
+    "184",
+    "539",
+    "189"
+   ],
+   "avoided_terms": [
+    "周期",
+    "等級",
+    "区分",
+    "管理番号",
+    "日数",
+    "校正",
+    "間隔"
+   ],
+   "rationale": "答えの別表は管理番号と等級・周期だけの表で、オリフィス管の名称を持たない。治具の基準の別表 1（間隔 364・184 など）と取り違えやすい。起点の 4.2 が通称「計測共通」で指し、同じ文に管理番号がある。"
+  },
+  {
+   "qid": "C4-05d",
+   "type": "control",
+   "twin_of": "C4-05",
+   "question": "KS-TC-P001 の別表 2 で、管理番号 OP-600 の周期はいくつか。",
+   "answer": "計測共通（KS-TC-P001）に定める計測器の周期による。OP-250・OP-400・OP-600 はいずれも等級 丁で、周期は 1,079（直近の校正に合格した日から数える日数）である。",
+   "answer_keys": [
+    "1,079"
+   ],
+   "entry_doc": "KS-TC-P001D.md",
+   "entry_where": "別表 2 管理番号別の区分",
+   "entry_quote": "| OP-600 | 丁 | 1,079 | 過組 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-P001D.md",
+   "answer_where": "別表 2 管理番号別の区分",
+   "answer_quote": "| OP-600 | 丁 | 1,079 | 過組 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C4-05 と同じ事実を、答えの節の番号と見出しの語で直接聞く。これだけ正答できれば、C4-05 の失敗は経路の側にある。"
+  },
+  {
+   "qid": "C4-06",
+   "type": "ref2",
+   "twin_of": null,
+   "question": "同じ日に 2 回失火した燃焼器は、そのあとどう扱うのか。",
+   "answer": "区分 F-1 の不具合として KS-TC-M402 の 6.2 により処置し、決裁及び報告は 6.3 による。生産技術部長の決裁を受けるまで使用しない。生技保が、見つけた日から 14 稼働日以内に、原因及び対策を設備不具合報告（保全様式 HF-24）にまとめる。",
+   "answer_keys": [
+    "HF-24",
+    "14 稼働日"
+   ],
+   "entry_doc": "KS-TC-M404A.md",
+   "entry_where": "4.5 失火時の処置",
+   "entry_quote": "(3) 同じ日に 2 回失火した燃焼器は、その日の運転を打ち切り、区分 F-1 の不具合として KS-TC-M402 の 6.2 により処置する。",
+   "bridge_kind": "reference",
+   "bridge_quote": "(3) 同じ日に 2 回失火した燃焼器は、その日の運転を打ち切り、区分 F-1 の不具合として KS-TC-M402 の 6.2 により処置する。",
+   "reference_form": "番号と項（KS-TC-M402 の 6.2）、続けて同じ文書の項（6.3 による）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [
+    {
+     "doc": "KS-TC-M402E.md",
+     "where": "6.2 不具合の区分",
+     "quote": "区分ごとの決裁及び報告は、6.3 による。",
+     "kind": "reference"
+    }
+   ],
+   "answer_doc": "KS-TC-M402E.md",
+   "answer_where": "6.3 決裁及び報告",
+   "answer_quote": "(1) F-1 は、生産技術部長の決裁を受けるまで、使用してはならない。生技保は、見つけた日から 14 稼働日以内に、原因及び対策を設備不具合報告（保全様式 HF-24）にまとめる。",
+   "hops": 2,
+   "wrong_values": [
+    "44 稼働日",
+    "設備保全課長"
+   ],
+   "avoided_terms": [
+    "決裁",
+    "報告",
+    "区分",
+    "再開",
+    "稼働日",
+    "原因",
+    "対策"
+   ],
+   "rationale": "答えの 6.3 は区分の記号ごとの決裁と報告の定めで、失火・燃焼器の語を持たない。起点の 4.5 が「区分 F-1 の不具合として KS-TC-M402 の 6.2 により」と書き、6.2 が「区分ごとの決裁及び報告は、6.3 による」と書いている。区分を取り違えると、設備保全課長の決裁・44 稼働日（F-2）になる。"
+  },
+  {
+   "qid": "C4-06d",
+   "type": "control",
+   "twin_of": "C4-06",
+   "question": "KS-TC-M402 の 6.3 では、区分 F-1 の設備について、原因及び対策を、何稼働日以内に、何にまとめると定めているか。",
+   "answer": "見つけた日から 14 稼働日以内に、設備不具合報告（保全様式 HF-24）にまとめる。",
+   "answer_keys": [
+    "HF-24",
+    "14 稼働日"
+   ],
+   "entry_doc": "KS-TC-M402E.md",
+   "entry_where": "6.3 決裁及び報告",
+   "entry_quote": "(1) F-1 は、生産技術部長の決裁を受けるまで、使用してはならない。生技保は、見つけた日から 14 稼働日以内に、原因及び対策を設備不具合報告（保全様式 HF-24）にまとめる。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M402E.md",
+   "answer_where": "6.3 決裁及び報告",
+   "answer_quote": "(1) F-1 は、生産技術部長の決裁を受けるまで、使用してはならない。生技保は、見つけた日から 14 稼働日以内に、原因及び対策を設備不具合報告（保全様式 HF-24）にまとめる。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C4-06 と同じ事実を、答えの節の番号と見出しの語で直接聞く。これだけ正答できれば、C4-06 の失敗は経路の側にある。",
+   "fix_note": "質問を、answer_keys（HF-24、14 稼働日）に合う形にした。元の質問は決裁者とまとめる先を聞くのに、answer_keys は聞いていない期限を求め、聞いている決裁者を求めていなかった。answer は、元の問いの写しをやめ、聞いたことだけにした。"
+  },
+  {
+   "qid": "C4-07",
+   "type": "ref2",
+   "twin_of": null,
+   "question": "点火を 3 回試みても着火しなかった燃焼器は、そのあとどう扱うのか。",
+   "answer": "区分 F-2 の不具合として KS-TC-M402 の 6.2 により処置し、決裁及び報告は 6.3 による。設備保全課長の決裁を受けるまで使用せず、原因及び対策は 44 稼働日以内に保全記録へ記入する。",
+   "answer_keys": [
+    "設備保全課長",
+    "44 稼働日"
+   ],
+   "entry_doc": "KS-TC-M404A.md",
+   "entry_where": "4.2 点火",
+   "entry_quote": "3 回で着火しない場合は、運転をやめ、区分 F-2 の不具合として KS-TC-M402 の 6.2 により処置する。",
+   "bridge_kind": "reference",
+   "bridge_quote": "3 回で着火しない場合は、運転をやめ、区分 F-2 の不具合として KS-TC-M402 の 6.2 により処置する。",
+   "reference_form": "番号と項（KS-TC-M402 の 6.2）、続けて同じ文書の項（6.3 による）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [
+    {
+     "doc": "KS-TC-M402E.md",
+     "where": "6.2 不具合の区分",
+     "quote": "区分ごとの決裁及び報告は、6.3 による。",
+     "kind": "reference"
+    }
+   ],
+   "answer_doc": "KS-TC-M402E.md",
+   "answer_where": "6.3 決裁及び報告",
+   "answer_quote": "(2) F-2 は、設備保全課長の決裁を受けるまで、使用してはならない。原因及び対策は、44 稼働日以内に保全記録へ記入する。",
+   "hops": 2,
+   "wrong_values": [
+    "14 稼働日",
+    "生産技術部長",
+    "HF-24"
+   ],
+   "avoided_terms": [
+    "決裁",
+    "報告",
+    "区分",
+    "再開",
+    "稼働日",
+    "原因",
+    "対策",
+    "保全記録"
+   ],
+   "rationale": "C4-06 と同じ道で、区分だけが違う。起点の 4.2 が「区分 F-2 の不具合として KS-TC-M402 の 6.2 により」と書いている。失火の F-1（生産技術部長・14 稼働日・HF-24）と取り違えやすい。"
+  },
+  {
+   "qid": "C4-07d",
+   "type": "control",
+   "twin_of": "C4-07",
+   "question": "KS-TC-M402 の 6.3 では、区分 F-2 の設備について、だれの決裁を要し、原因及び対策を何稼働日以内に記入すると定めているか。",
+   "answer": "設備保全課長の決裁を要し、原因及び対策は 44 稼働日以内に保全記録へ記入する。",
+   "answer_keys": [
+    "設備保全課長",
+    "44 稼働日"
+   ],
+   "entry_doc": "KS-TC-M402E.md",
+   "entry_where": "6.3 決裁及び報告",
+   "entry_quote": "(2) F-2 は、設備保全課長の決裁を受けるまで、使用してはならない。原因及び対策は、44 稼働日以内に保全記録へ記入する。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M402E.md",
+   "answer_where": "6.3 決裁及び報告",
+   "answer_quote": "(2) F-2 は、設備保全課長の決裁を受けるまで、使用してはならない。原因及び対策は、44 稼働日以内に保全記録へ記入する。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C4-07 と同じ事実を、答えの節の番号と見出しの語で直接聞く。これだけ正答できれば、C4-07 の失敗は経路の側にある。",
+   "fix_note": "answer を、元の問いの写しをやめ、聞いたことだけにした（質問と answer_keys は変えていない）。"
+  },
+  {
+   "qid": "C4-08",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "エア運転と運転台の駆動に使う圧縮空気をつくる起動用空気圧縮機は、保全の上でどのくらい重要な設備とされているか。",
+   "answer": "起動用空気圧縮機は管理番号 AC-10 で、設備管理基準の別表 1 では管理区分 S-24 である（3 段階のうち 2 番目に重い）。",
+   "answer_keys": [
+    "S-24"
+   ],
+   "entry_doc": "KS-TC-M404A.md",
+   "entry_where": "5.1 起動及び停止",
+   "entry_quote": "起動用空気圧縮機 AC-10 は、エア運転に用いる圧縮空気、及び燃焼器を備えない運転台の駆動に用いる圧縮空気をつくる。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "AC-10",
+   "bridge_aliases": [
+    "起動用空気圧縮機",
+    "空気源"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-M401C.md",
+   "answer_where": "別表 1 管理番号別の区分",
+   "answer_quote": "| AC-10 | S-24 | 2074 | 第 2 班 |",
+   "hops": 1,
+   "wrong_values": [
+    "S-14",
+    "S-34"
+   ],
+   "avoided_terms": [
+    "管理区分",
+    "管理番号",
+    "別表",
+    "AC-10",
+    "区分"
+   ],
+   "rationale": "答えの別表は管理番号と区分の記号・年度・班だけの表で、空気圧縮機の名称を持たない。管理番号 AC-10 は起点の 5.1 に出ている。区分の記号が重要度を示すことは、設備管理基準の注 3 に書いてある。"
+  },
+  {
+   "qid": "C4-08d",
+   "type": "control",
+   "twin_of": "C4-08",
+   "question": "KS-TC-M401 の別表 1 で、管理番号 AC-10 の管理区分は何か。",
+   "answer": "起動用空気圧縮機は管理番号 AC-10 で、設備管理基準の別表 1 では管理区分 S-24 である（3 段階のうち 2 番目に重い）。",
+   "answer_keys": [
+    "S-24"
+   ],
+   "entry_doc": "KS-TC-M401C.md",
+   "entry_where": "別表 1 管理番号別の区分",
+   "entry_quote": "| AC-10 | S-24 | 2074 | 第 2 班 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M401C.md",
+   "answer_where": "別表 1 管理番号別の区分",
+   "answer_quote": "| AC-10 | S-24 | 2074 | 第 2 班 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C4-08 と同じ事実を、答えの節の番号と見出しの語で直接聞く。これだけ正答できれば、C4-08 の失敗は経路の側にある。"
+  },
+  {
+   "qid": "C4-09",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "運転台の始業点検の結果を記入した点検表は、いつまで残しておくのか。",
+   "answer": "設備始業点検表（様式 TCF-320）は保存区分 K-1 で、年限は 9 年、書架は第 2 書架である。",
+   "answer_keys": [
+    "9 年"
+   ],
+   "entry_doc": "KS-TC-M402E.md",
+   "entry_where": "4.3 記録",
+   "entry_quote": "始業点検の結果は、設備始業点検表（様式 TCF-320）に記入し、設備保全課長の承認を受ける。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "TCF-320",
+   "bridge_aliases": [
+    "設備始業点検表",
+    "始業点検表"
+   ],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "別表 2 様式別の区分",
+   "answer_quote": "| TCF-320 | K-1 | 9 年 | 第 2 書架 |",
+   "hops": 1,
+   "wrong_values": [
+    "19 年",
+    "29 年",
+    "39 年"
+   ],
+   "avoided_terms": [
+    "年限",
+    "保存区分",
+    "保管",
+    "様式番号",
+    "書架"
+   ],
+   "rationale": "答えの別表は様式番号と区分・年限・書架だけの表で、点検表の名称も始業点検の語も持たない。様式番号 TCF-320 は起点の 4.3 に出ている。",
+   "fix_note": "answer_keys を「9 年」だけにした。質問は「いつまで残しておくのか」で、保存区分の記号 K-1 は聞いていない。「9 年」が「19 年」「29 年」に含まれる点は、採点が数字の前後の桁を見るので当たらない。"
+  },
+  {
+   "qid": "C4-09d",
+   "type": "control",
+   "twin_of": "C4-09",
+   "question": "QK-TC-01 の別表 2 で、様式 TCF-320 の年限は何年か。",
+   "answer": "9 年である。",
+   "answer_keys": [
+    "9 年"
+   ],
+   "entry_doc": "QK-TC-01G.md",
+   "entry_where": "別表 2 様式別の区分",
+   "entry_quote": "| TCF-320 | K-1 | 9 年 | 第 2 書架 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "別表 2 様式別の区分",
+   "answer_quote": "| TCF-320 | K-1 | 9 年 | 第 2 書架 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C4-09 と同じ事実を、答えの節の番号と見出しの語で直接聞く。これだけ正答できれば、C4-09 の失敗は経路の側にある。",
+   "fix_note": "元の問い C4-09 に合わせ、質問を年限だけに、answer_keys を「9 年」にした。answer は、元の問いの写しをやめ、聞いたことだけにした。"
+  },
+  {
+   "qid": "C4-10",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "運転台の始業点検で、取り付ける前に指示を確かめる潤滑油流量計は、校正に合格してから、いつまで試運転に使ってよいのか。",
+   "answer": "潤滑油流量計は管理番号 FM-70 で、計測共通の別表 2 では等級 丙、周期は 269（直近の校正に合格した日から数える日数）である。",
+   "answer_keys": [
+    "269"
+   ],
+   "entry_doc": "KS-TC-M402E.md",
+   "entry_where": "4.2 項目及び判定",
+   "entry_quote": "(3) 生技保が保管する潤滑油流量計 FM-70 は、配管に取り付ける前に、指示が 0 であること及び管理票の日付を確かめる。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "FM-70",
+   "bridge_aliases": [
+    "潤滑油流量計",
+    "流量計"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-P001D.md",
+   "answer_where": "別表 2 管理番号別の区分",
+   "answer_quote": "| FM-70 | 丙 | 269 | 生技保 |",
+   "hops": 1,
+   "wrong_values": [
+    "189",
+    "359",
+    "539",
+    "1,079"
+   ],
+   "avoided_terms": [
+    "周期",
+    "等級",
+    "管理番号",
+    "日数",
+    "区分"
+   ],
+   "rationale": "答えの別表は管理番号と等級・周期・担当だけの表で、流量計の名称を持たない。管理番号 FM-70 は起点の 4.2 に出ている。ほかの行（189、359、539 など）と取り違えやすい。"
+  },
+  {
+   "qid": "C4-10d",
+   "type": "control",
+   "twin_of": "C4-10",
+   "question": "KS-TC-P001 の別表 2 で、管理番号 FM-70 の周期はいくつか。",
+   "answer": "潤滑油流量計は管理番号 FM-70 で、計測共通の別表 2 では等級 丙、周期は 269（直近の校正に合格した日から数える日数）である。",
+   "answer_keys": [
+    "269"
+   ],
+   "entry_doc": "KS-TC-P001D.md",
+   "entry_where": "別表 2 管理番号別の区分",
+   "entry_quote": "| FM-70 | 丙 | 269 | 生技保 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-P001D.md",
+   "answer_where": "別表 2 管理番号別の区分",
+   "answer_quote": "| FM-70 | 丙 | 269 | 生技保 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C4-10 と同じ事実を、答えの節の番号と見出しの語で直接聞く。これだけ正答できれば、C4-10 の失敗は経路の側にある。"
+  },
+  {
+   "qid": "C4-11",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "第 4 運転台へ燃焼ガスを送る燃焼器は、保全の上でどのくらい重要な設備とされているか。",
+   "answer": "第 4 運転台は専用の燃焼器を持たず、第 1 運転台の燃焼器 CB-10 を用いる。CB-10 は、設備管理基準の別表 1 では管理区分 S-14 である（3 段階のうち最も重い）。",
+   "answer_keys": [
+    "S-14"
+   ],
+   "entry_doc": "KS-TC-M401C.md",
+   "entry_where": "4.2 駆動及び供給",
+   "entry_quote": "第 1 運転台の燃焼器 CB-10 の燃焼ガスを、切替ダンパで導いて用いる。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "CB-10",
+   "bridge_aliases": [
+    "第 1 燃焼器",
+    "1 号燃焼器"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-M401C.md",
+   "answer_where": "別表 1 管理番号別の区分",
+   "answer_quote": "| CB-10 | S-14 | 2044 | 第 1 班 |",
+   "hops": 1,
+   "wrong_values": [
+    "S-24",
+    "S-34"
+   ],
+   "avoided_terms": [
+    "管理区分",
+    "管理番号",
+    "別表",
+    "CB-10",
+    "切替ダンパ",
+    "区分"
+   ],
+   "rationale": "答えの別表は管理番号と区分の記号だけの表で、燃焼器の名称も運転台の呼称も持たない。第 4 運転台が使う燃焼器が CB-10 であることは、起点の 4.2 にだけ書いてある。第 4 運転台そのもの（TB-40）の行は S-24 で、取り違えやすい。"
+  },
+  {
+   "qid": "C4-11d",
+   "type": "control",
+   "twin_of": "C4-11",
+   "question": "KS-TC-M401 の別表 1 で、管理番号 CB-10 の管理区分は何か。",
+   "answer": "管理区分は S-14 である。",
+   "answer_keys": [
+    "S-14"
+   ],
+   "entry_doc": "KS-TC-M401C.md",
+   "entry_where": "別表 1 管理番号別の区分",
+   "entry_quote": "| CB-10 | S-14 | 2044 | 第 1 班 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M401C.md",
+   "answer_where": "別表 1 管理番号別の区分",
+   "answer_quote": "| CB-10 | S-14 | 2044 | 第 1 班 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C4-11 と同じ事実を、答えの節の番号と見出しの語で直接聞く。これだけ正答できれば、C4-11 の失敗は経路の側にある。",
+   "fix_note": "answer を、元の問いの写しをやめ、聞いたことだけにした（質問と answer_keys は変えていない）。"
+  },
+  {
+   "qid": "C4-12",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "小形の過給機を運転する第 3 運転台は、設備としてどの格付けになっているか。",
+   "answer": "第 3 運転台の管理番号は TB-30 で、設備管理基準の別表 1 では管理区分 S-34 である（3 段階のうち最も軽い）。",
+   "answer_keys": [
+    "S-34"
+   ],
+   "entry_doc": "KS-TC-M401C.md",
+   "entry_where": "3. 呼称及び管理番号",
+   "entry_quote": "| TB-30 | 第 3 運転台 | 運転棟 第 3 室 | 小形 |",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "TB-30",
+   "bridge_aliases": [
+    "第 3 運転台"
+   ],
+   "answer_doc": "KS-TC-M401C.md",
+   "answer_where": "別表 1 管理番号別の区分",
+   "answer_quote": "| TB-30 | S-34 | 2034 | 第 2 班 |",
+   "hops": 1,
+   "wrong_values": [
+    "S-14",
+    "S-24"
+   ],
+   "avoided_terms": [
+    "管理区分",
+    "管理番号",
+    "TB-30",
+    "別表",
+    "区分",
+    "保全",
+    "重要"
+   ],
+   "rationale": "答えの別表は管理番号と区分の記号だけの表で、「第 3 運転台」の呼称を持たない。呼称と管理番号 TB-30 の対応は設備管理基準の 3. にだけあり、この節が質問で 1 位に来る。管理番号 TB-30 で別表 1 の行を引く。",
+   "fix_note": "型を ent2 から ent1 に改め、起点を KS-TC-M401 の 3.（呼称及び管理番号）にした。呼称「第 3 運転台」は質問に書いてあり、設計した起点（KS-TC-L001 の協議の記録）は答えに要る情報を足さなかった。質問から、起点を上位に出すためだけの修飾（冬季に潤滑油の昇温に…）を外した。元の文では、別表 1 を参照で指す注 3 が 3 位に来て参照 1 回でも着けたが、改めた文では 21 位である。"
+  },
+  {
+   "qid": "C4-12d",
+   "type": "control",
+   "twin_of": "C4-12",
+   "question": "KS-TC-M401 の別表 1 で、管理番号 TB-30 の管理区分は何か。",
+   "answer": "管理区分は S-34 である。",
+   "answer_keys": [
+    "S-34"
+   ],
+   "entry_doc": "KS-TC-M401C.md",
+   "entry_where": "別表 1 管理番号別の区分",
+   "entry_quote": "| TB-30 | S-34 | 2034 | 第 2 班 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M401C.md",
+   "answer_where": "別表 1 管理番号別の区分",
+   "answer_quote": "| TB-30 | S-34 | 2034 | 第 2 班 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "C4-12 と同じ事実を、答えの節の番号と見出しの語で直接聞く。これだけ正答できれば、C4-12 の失敗は経路の側にある。",
+   "fix_note": "answer を、元の問いの写しをやめ、聞いたことだけにした。"
+  },
+  {
+   "qid": "C4-13",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "RM20 系列の過給機を運転する運転台には、質量が何 kg の過給機まで据え付けられるか。",
+   "answer": "RM20 系列の運転台は TB-30 で、据え付けできる過給機の質量は 484 kg 以下である。",
+   "answer_keys": [
+    "484 kg"
+   ],
+   "entry_doc": "KS-TC-T001F.md",
+   "entry_where": "別表 1 系列別の区分",
+   "entry_quote": "| RM20 | 斜流 | ER | TB-30 | 2 点 | — | ±5 % |",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "TB-30",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M401C.md",
+   "answer_where": "5. 設備個票 TB-30",
+   "answer_quote": "- 据え付けできる過給機の質量: 484 kg 以下",
+   "hops": 1,
+   "wrong_values": [
+    "9,404 kg",
+    "3,204 kg",
+    "2,304 kg"
+   ],
+   "avoided_terms": [
+    "TB-30",
+    "第 3 運転台"
+   ],
+   "rationale": "設備管理基準の個票は TB-10〜TB-40 が同じ書式で並び、系列の名前を書いていない。質問で引くと 4 つの個票が並んで上位に来る。RM20 系列が TB-30 であることは、試運転の基準の別表 1 にだけ書いてある。"
+  },
+  {
+   "qid": "C4-14",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "第 4 運転台で使う燃焼器は、点火の前に何秒以上掃気するのか。",
+   "answer": "第 4 運転台は専用の燃焼器を持たず、第 1 運転台の燃焼器 CB-10 を切替ダンパで用いる。CB-10 の掃気の時間は 94 秒以上である。",
+   "answer_keys": [
+    "94 秒"
+   ],
+   "entry_doc": "KS-TC-M401C.md",
+   "entry_where": "4.2 駆動及び供給",
+   "entry_quote": "第 1 運転台の燃焼器 CB-10 の燃焼ガスを、切替ダンパで導いて用いる。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "CB-10",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M404A.md",
+   "answer_where": "6. 設備個票 CB-10",
+   "answer_quote": "- 掃気の時間: 94 秒以上",
+   "hops": 1,
+   "wrong_values": [
+    "64 秒"
+   ],
+   "avoided_terms": [
+    "CB-10",
+    "切替ダンパ"
+   ],
+   "rationale": "燃焼器の個票は CB-10 と CB-20 が同じ書式で並び、運転台の名前を書いていない。第 4 運転台がどちらの燃焼器を使うかは、設備管理基準の 4.2 にだけ書いてある。管理番号の数字からは決まらない（CB-40 は無い）。"
+  },
+  {
+   "qid": "C4-15",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "運転台 TB-20 で空気量を計るのに使うオリフィス管は、質量がどれだけあり、何で運ぶのか。",
+   "answer": "TB-20 に適用するオリフィス管は OP-400 で、質量は 104 kg、天井クレーンで運ぶ。",
+   "answer_keys": [
+    "104 kg"
+   ],
+   "entry_doc": "KS-TC-P001D.md",
+   "entry_where": "別表 1 オリフィス管の選定",
+   "entry_quote": "| 300A から 400A | OP-400 | 0.60 | TB-20、TB-40 |",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "OP-400",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M403B.md",
+   "answer_where": "5. 治具個票 OP-400",
+   "answer_quote": "- 質量: 104 kg。天井クレーンで運ぶ。",
+   "hops": 1,
+   "wrong_values": [
+    "44 kg",
+    "214 kg"
+   ],
+   "avoided_terms": [
+    "OP-400",
+    "300A",
+    "400A"
+   ],
+   "rationale": "治具の個票は OP-250・OP-400・OP-600 が同じ書式で並び、運転台の名前を書いていない。TB-20 に OP-400 を当てるのは、計測共通の別表 1 だけである。"
+  },
+  {
+   "qid": "C4-16",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "起動用空気圧縮機の空気槽に付いている安全弁は、何 MPa で吹き出すのか。",
+   "answer": "手元の文書には書かれていない。安全弁の吹出し圧力は、製造者の取扱説明書及び検査証によると定められており、それらは文書群に無い。個票にあるのは圧力開閉器の入り切りの圧力である。",
+   "answer_keys": [],
+   "entry_doc": "KS-TC-M404A.md",
+   "entry_where": "5.2 空気槽及び安全装置",
+   "entry_quote": "(1) 空気槽の安全弁の吹出し圧力は、製造者の取扱説明書及び検査証による。",
+   "bridge_kind": "reference",
+   "bridge_quote": "(1) 空気槽の安全弁の吹出し圧力は、製造者の取扱説明書及び検査証による。",
+   "reference_form": "手元に無い文書（製造者の取扱説明書及び検査証）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "",
+   "answer_where": "",
+   "answer_quote": "",
+   "hops": 1,
+   "wrong_values": [
+    "0.74 MPa",
+    "0.94 MPa"
+   ],
+   "avoided_terms": [],
+   "rationale": "起点の 5.2 は吹出し圧力を製造者の取扱説明書と検査証に委ねており、どちらも文書群に無い。AC-10 の個票にある入り 0.74 MPa・切り 0.94 MPa は圧力開閉器の値で、安全弁の値ではない。"
+  },
+  {
+   "qid": "C4-17",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "燃焼器の出口のガス温度は、運転中、何度に合わせるのか。",
+   "answer": "手元の文書には書かれていない。機種ごとの組付指示書（過技設発行）に示すタービン入口ガス温度に合わせると定められており、その指示書は文書群に無い。",
+   "answer_keys": [],
+   "entry_doc": "KS-TC-M404A.md",
+   "entry_where": "4.3 運転中の監視",
+   "entry_quote": "燃焼器の出口のガス温度は、機種ごとの組付指示書に示すタービン入口ガス温度に合わせる。",
+   "bridge_kind": "reference",
+   "bridge_quote": "燃焼器の出口のガス温度は、機種ごとの組付指示書に示すタービン入口ガス温度に合わせる。",
+   "reference_form": "手元に無い文書（機種ごとの組付指示書）",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "",
+   "answer_where": "",
+   "answer_quote": "",
+   "hops": 1,
+   "wrong_values": [
+    "104 ℃"
+   ],
+   "avoided_terms": [],
+   "rationale": "起点の 4.3 はガス温度を組付指示書に委ねており、組付指示書は文書群に無い。4.4 の 104 ℃ は消火の後に送風を続ける目安で、運転中のガス温度ではない。"
+  },
+  {
+   "qid": "C4-18",
+   "type": "control",
+   "twin_of": null,
+   "question": "潤滑油供給ユニットの加熱器の容量は、TB-30 では何 kW か。",
+   "answer": "24 kW である。LU-30 を TB-40 と共用するので、TB-40 も同じ 24 kW である。",
+   "answer_keys": [
+    "24 kW"
+   ],
+   "entry_doc": "KS-TC-M401C.md",
+   "entry_where": "別表 2 潤滑油加熱器の容量",
+   "entry_quote": "| TB-30 | LU-30 | 24 kW |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M401C.md",
+   "answer_where": "別表 2 潤滑油加熱器の容量",
+   "answer_quote": "| TB-30 | LU-30 | 24 kW |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "別表 2 の見出しと欄に加熱器・容量・TB-30 の語があり、質問で直接引ける。"
+  },
+  {
+   "qid": "C4-19",
+   "type": "control",
+   "twin_of": null,
+   "question": "燃焼器を消火したあと、送風はいつまで続けるのか。",
+   "answer": "燃焼器の出口の温度が 104 ℃ を下回るまで続ける。",
+   "answer_keys": [
+    "104 ℃"
+   ],
+   "entry_doc": "KS-TC-M404A.md",
+   "entry_where": "4.4 消火",
+   "entry_quote": "(3) 送風機を止めず、燃焼器の出口の温度が 104 ℃ を下回るまで、送風を続ける。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M404A.md",
+   "answer_where": "4.4 消火",
+   "answer_quote": "(3) 送風機を止めず、燃焼器の出口の温度が 104 ℃ を下回るまで、送風を続ける。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "4.4 の見出しと本文に消火・送風の語があり、質問で直接引ける。"
+  },
+  {
+   "qid": "C4-20",
+   "type": "control",
+   "twin_of": null,
+   "question": "運転台の始業点検で、計装用空気の圧力はいくら以上あればよいか。",
+   "answer": "0.54 MPa 以上である。",
+   "answer_keys": [
+    "0.54 MPa"
+   ],
+   "entry_doc": "KS-TC-M402E.md",
+   "entry_where": "別表 1 始業点検の項目",
+   "entry_quote": "| 3 | 計装用空気 | 圧力が 0.54 MPa 以上あること |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M402E.md",
+   "answer_where": "別表 1 始業点検の項目",
+   "answer_quote": "| 3 | 計装用空気 | 圧力が 0.54 MPa 以上あること |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "別表 1 の見出しと項目に始業点検・計装用空気の語があり、質問で直接引ける。"
+  },
+  {
+   "qid": "C4-21",
+   "type": "control",
+   "twin_of": null,
+   "question": "管理番号 AC-10 の設備の開放点検は、運転の積算が何時間に達するごとに行うのか。",
+   "answer": "2,004 時間に達するごとに行う。",
+   "answer_keys": [
+    "2,004"
+   ],
+   "entry_doc": "KS-TC-M402E.md",
+   "entry_where": "別表 2 管理番号別の定期点検",
+   "entry_quote": "| AC-10 | 第 3 週 | 2,004 | 12 月 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M402E.md",
+   "answer_where": "別表 2 管理番号別の定期点検",
+   "answer_quote": "| AC-10 | 第 3 週 | 2,004 | 12 月 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "別表 2 の見出しと欄に管理番号・開放・定期点検の語があり、質問で直接引ける。"
+  }
+ ]
+}

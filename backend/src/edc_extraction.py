@@ -14,11 +14,33 @@ EDC 本体には手を入れず、HTTP 経由でのみ連携する。
       - chunk_method: EDC 側の再分割方式 (既定 recursive)。
       - concurrency: EDC への同時リクエスト数 (既定 2)。
     タイムアウト秒は EDC_EXTRACTION_TIMEOUT で指定 (既定 900)。
+
+語彙の扱い (EDC_ENRICH_SCHEMA, 既定 false):
+    false なら EDC は文書タイプの語彙に写せないリレーションを足さずに落とし、応答の dropped に
+    定義文付きで返す。アダプタはそれを EDC_PROPOSALS_DIR (既定 /code/edc_proposals) の
+    proposals.jsonl に追記する。人が見て、必要なものだけ EDC の語彙 CSV に足す。
+    true なら従来どおり語彙外の名前もそのまま足される (語彙が閉じない)。
+
+語彙外のリレーションの畳み込み (EDC_FOLD_UNKNOWN_RELATIONS, 既定 false):
+    enrich で残った語彙外のリレーション (LLM が付けた小文字の名前。語彙の名前は CSV どおり大文字) を、
+    Neo4j の種類にはせず RELATED_TO に畳み、元の名前をプロパティ label に残す。種類の数が語彙+1 に収まり、
+    検索の文字列化はリレーションのプロパティも出すので、元の名前は LLM に読ませられる。
+    後で語彙に足すときは、label から種類へ張り替えるだけで済む (再抽出が要らない)。
+
+    語彙の名前は、EDC の registry.json と語彙 CSV を読んで知る (EDC_SCHEMAS_DIR、既定 /edc_schemas に read-only で mount)。
+    LLM が付けた名前が大文字小文字の違いだけで語彙の名前と同じなら (applies_to と APPLIES_TO)、畳まずに語彙の種類にする。
+    語彙が読めない (mount が無い) ときは、大文字でない名前をすべて畳む。
+
+文のような名前の除外 (EDC_DROP_SENTENCE_NAMES, 既定 false):
+    主語か目的語が 15 字以上で読点か句点を含むトリプルを落とす。文をそのままノード名にした行き止まりを作らない。
 """
 
 import asyncio
+import json
 import logging
+import os
 import re
+import time
 
 import httpx
 from langchain_community.graphs.graph_document import GraphDocument, Node, Relationship
@@ -32,6 +54,7 @@ DEFAULT_CONCURRENCY = 2
 DEFAULT_TIMEOUT_SECONDS = 900
 CLASSIFY_SAMPLE_CHARS = 3000
 DEFAULT_NODE_TYPE = "Entity"
+DEFAULT_PROPOSALS_DIR = "/code/edc_proposals"
 
 
 def _get_edc_config():
@@ -58,21 +81,89 @@ def _normalize_rel_type(relation: str) -> str:
     return re.sub(r"\s+", "_", relation.strip())
 
 
-def _triplets_to_graph_document(triplets, source_document) -> GraphDocument:
+FOLDED_REL_TYPE = "RELATED_TO"
+DEFAULT_SCHEMAS_DIR = "/edc_schemas"
+_vocabulary_cache = {}
+
+
+def _read_csv_names(path):
+    import csv
+    with open(path, encoding="utf-8") as f:
+        return {row[0].strip() for row in csv.reader(f) if row and row[0].strip()}
+
+
+def _load_vocabulary(doctype):
+    """文書の種類の語彙 (共通の骨組み ∪ 種類ごとの CSV) のリレーション名の集合。読めなければ None。"""
+    if not doctype or doctype in ("auto", "none", "UNKNOWN"):
+        return None
+    if doctype in _vocabulary_cache:
+        return _vocabulary_cache[doctype]
+    vocabulary = None
+    schemas_dir = get_value_from_env("EDC_SCHEMAS_DIR", DEFAULT_SCHEMAS_DIR)
+    try:
+        with open(os.path.join(schemas_dir, "registry.json"), encoding="utf-8") as f:
+            registry = json.load(f)
+        names = set(_read_csv_names(os.path.join(schemas_dir, os.path.basename(registry["backbone"]["schema"]))))
+        entry = next((d for d in registry.get("doctypes", []) if d.get("name") == doctype), None)
+        if entry is not None:
+            names |= _read_csv_names(os.path.join(schemas_dir, os.path.basename(entry["schema"])))
+            vocabulary = names
+        else:
+            logging.warning(f"EDC adapter: doctype '{doctype}' not in registry; folding every lowercase relation")
+    except (OSError, KeyError, ValueError, StopIteration) as e:
+        logging.warning(f"EDC adapter: could not read the vocabulary from {schemas_dir} ({e}); folding every lowercase relation")
+    _vocabulary_cache[doctype] = vocabulary
+    return vocabulary
+SENTENCE_NAME_MIN_CHARS = 15
+_SENTENCE_PUNCT = re.compile(r"[、。]")
+
+
+def _flag_enabled(name: str, default: bool = False) -> bool:
+    return str(get_value_from_env(name, "true" if default else "false")).strip().lower() in ("1", "true", "yes", "on")
+
+
+def _is_vocabulary_relation(relation: str) -> bool:
+    """語彙の名前は CSV どおり大文字 (APPLIES_TO)。LLM が付けた名前は小文字 (applies_to) で、enrich で残ったもの。"""
+    return relation == relation.upper()
+
+
+def _is_sentence_name(name: str) -> bool:
+    return len(name) >= SENTENCE_NAME_MIN_CHARS and bool(_SENTENCE_PUNCT.search(name))
+
+
+def _triplets_to_graph_document(triplets, source_document, vocabulary=None) -> GraphDocument:
     """EDC のトリプル配列 ({subject, relation, object, subject_type?, object_type?}) を GraphDocument へ変換する。
 
     主語・関係・目的語のいずれかが欠落した不完全トリプルは、孤立ノードを作らないよう丸ごと除外する。
     """
+    fold = _flag_enabled("EDC_FOLD_UNKNOWN_RELATIONS")
+    drop_sentences = _flag_enabled("EDC_DROP_SENTENCE_NAMES")
     complete_triplets = []
+    n_dropped_sentence = n_folded = n_cased = 0
     for triplet in triplets:
         subject = str(triplet.get("subject") or "").strip()
         obj = str(triplet.get("object") or "").strip()
         relation = _normalize_rel_type(str(triplet.get("relation") or ""))
-        if subject and obj and relation:
-            complete_triplets.append((triplet, subject, relation, obj))
+        if not (subject and obj and relation):
+            continue
+        if drop_sentences and (_is_sentence_name(subject) or _is_sentence_name(obj)):
+            n_dropped_sentence += 1
+            continue
+        if fold and not _is_vocabulary_relation(relation):
+            if vocabulary and relation.upper() in vocabulary:
+                n_cased += 1
+                complete_triplets.append((triplet, subject, relation.upper(), obj, None))
+            else:
+                n_folded += 1
+                complete_triplets.append((triplet, subject, FOLDED_REL_TYPE, obj, relation))
+        else:
+            complete_triplets.append((triplet, subject, relation, obj, None))
+    if n_dropped_sentence or n_folded or n_cased:
+        logging.info(f"EDC adapter: folded {n_folded} out-of-vocabulary relations into {FOLDED_REL_TYPE}, "
+                     f"uppercased {n_cased} to vocabulary names, dropped {n_dropped_sentence} sentence-like triplets")
 
     node_types = {}
-    for triplet, subject, _, obj in complete_triplets:
+    for triplet, subject, _, obj, _ in complete_triplets:
         for entity, type_key in ((subject, "subject_type"), (obj, "object_type")):
             entity_type = str(triplet.get(type_key) or "").strip()
             # 同一エンティティが型付き/型なし両方で現れた場合は型付きを優先する
@@ -83,12 +174,13 @@ def _triplets_to_graph_document(triplets, source_document) -> GraphDocument:
 
     relationships = []
     seen = set()
-    for _, subject, relation, obj in complete_triplets:
-        dedup_key = (subject, relation, obj)
+    for _, subject, relation, obj, label in complete_triplets:
+        dedup_key = (subject, relation, obj, label)
         if dedup_key in seen:
             continue
         seen.add(dedup_key)
-        relationships.append(Relationship(source=nodes[subject], target=nodes[obj], type=relation))
+        properties = {"label": label} if label else {}
+        relationships.append(Relationship(source=nodes[subject], target=nodes[obj], type=relation, properties=properties))
 
     return GraphDocument(nodes=list(nodes.values()), relationships=relationships, source=source_document)
 
@@ -107,13 +199,74 @@ async def _classify_doctype(client, base_url, combined_chunk_document_list):
         return "auto"
 
 
+def _enrich_schema_enabled() -> bool:
+    return str(get_value_from_env("EDC_ENRICH_SCHEMA", "false")).strip().lower() in ("1", "true", "yes", "on")
+
+
+def _write_proposals(dropped, doc, doctype):
+    """語彙に写せず落ちた抽出結果を、語彙を育てる候補として JSONL に追記する。"""
+    if not dropped:
+        return
+    out_dir = get_value_from_env("EDC_PROPOSALS_DIR", DEFAULT_PROPOSALS_DIR)
+    try:
+        os.makedirs(out_dir, exist_ok=True)
+        chunk_ids = (doc.metadata or {}).get("combined_chunk_ids")
+        stamp = time.strftime("%Y-%m-%dT%H:%M:%S")
+        with open(os.path.join(out_dir, "proposals.jsonl"), "a", encoding="utf-8") as f:
+            for rec in dropped:
+                f.write(json.dumps({**rec, "doctype": doctype, "chunk_ids": chunk_ids, "at": stamp},
+                                   ensure_ascii=False) + "\n")
+    except OSError as e:
+        logging.warning(f"Could not write EDC proposals to {out_dir}: {e}")
+
+
+_SELF_REFERENCE = re.compile(r"(この基準|本基準|当基準|この規格|本規格|この要領|本要領)")
+_BREADCRUMB_HEAD = re.compile(r"^\[([^\]>]+?)\s*(?:>|\])")
+_DOC_NUMBER = re.compile(r"^(?:HS[-\s]?)?([A-Z]{2,4})-([A-Z]?\d{3})([A-Z])?$")
+
+
+def _self_reference_name(text):
+    """チャンク先頭の見出しの経路（[文書名 > 見出し …]）の文書名から、本文の「本基準」に当てる名前を作る。
+    文書番号の形（HS-RU-002F など）なら末尾の改訂記号を外す。番号の形でなければ文書名をそのまま使う。"""
+    m = _BREADCRUMB_HEAD.match(text or "")
+    if not m:
+        return None
+    name = m.group(1).strip()
+    n = _DOC_NUMBER.match(name.replace(" ", ""))
+    if n:
+        return f"HS-{n.group(1)}-{n.group(2)}"
+    return name or None
+
+
+def _resolve_self_reference(text):
+    """本文の「本基準」「この基準」などを文書番号に置き換える。EDC はこれらを雑音の語として 3 つ組ごと捨てるため。
+    チャンク先頭の見出しの経路の行は置き換えない。環境変数 EDC_RESOLVE_SELF_REFERENCE=false で止める。"""
+    if not _flag_enabled("EDC_RESOLVE_SELF_REFERENCE", default=True):
+        return text
+    name = _self_reference_name(text)
+    if not name:
+        return text
+    head, sep, body = text.partition("\n")
+    if not head.startswith("["):
+        head, sep, body = "", "", text
+    return head + sep + _SELF_REFERENCE.sub(name, body)
+
+
 async def _extract_chunk(client, semaphore, base_url, doc, doctype, chunk_method):
-    payload = {"text": doc.page_content, "doctype": doctype, "chunk_method": chunk_method}
+    payload = {"text": _resolve_self_reference(doc.page_content), "doctype": doctype, "chunk_method": chunk_method,
+               "enrich_schema": _enrich_schema_enabled()}
     async with semaphore:
         response = await client.post(f"{base_url}/extract", json=payload)
         response.raise_for_status()
-        triplets = (response.json() or {}).get("triplets") or []
-    return _triplets_to_graph_document(triplets, doc)
+        body = response.json() or {}
+    triplets = body.get("triplets") or []
+    dropped = body.get("dropped") or []
+    _write_proposals(dropped, doc, doctype)
+    stats = {"truncated": int(body.get("n_truncated") or 0),
+             "noise": int(body.get("n_noise_dropped") or 0),
+             "dropped": len(dropped)}
+    vocabulary = _load_vocabulary(doctype) if _flag_enabled("EDC_FOLD_UNKNOWN_RELATIONS") else None
+    return _triplets_to_graph_document(triplets, doc, vocabulary), stats
 
 
 async def get_graph_from_edc(combined_chunk_document_list):
@@ -133,9 +286,11 @@ async def get_graph_from_edc(combined_chunk_document_list):
     async with httpx.AsyncClient(timeout=httpx.Timeout(timeout_seconds, connect=10)) as client:
         try:
             health = await client.get(f"{base_url}/health", timeout=10)
-            health.raise_for_status()
         except Exception as e:
             raise LLMGraphBuilderException(f"EDC API is not reachable at {base_url}: {e}")
+        if health.status_code != 200:
+            # EDC の /health は LLM と埋め込みへの到達まで見る。落ちていれば抽出を始めない
+            raise LLMGraphBuilderException(f"EDC API is not ready ({health.status_code}): {health.text[:300]}")
 
         if doctype == "auto":
             doctype = await _classify_doctype(client, base_url, combined_chunk_document_list)
@@ -151,12 +306,23 @@ async def get_graph_from_edc(combined_chunk_document_list):
 
     graph_document_list = []
     failed_chunks = 0
+    totals = {"truncated": 0, "noise": 0, "dropped": 0}
     for result in results:
         if isinstance(result, BaseException):
             failed_chunks += 1
             logging.warning(f"Skipping chunk due to EDC extraction error: {result}")
         else:
-            graph_document_list.append(result)
+            graph_document, stats = result
+            graph_document_list.append(graph_document)
+            for k in totals:
+                totals[k] += stats.get(k, 0)
+    if totals["truncated"]:
+        logging.warning(f"EDC: {totals['truncated']} LLM calls hit the output limit; some triples were lost")
+    logging.info(
+        f"EDC: noise triples dropped={totals['noise']}, out-of-vocabulary triples dropped={totals['dropped']}"
+        + (f" (written to {get_value_from_env('EDC_PROPOSALS_DIR', DEFAULT_PROPOSALS_DIR)}/proposals.jsonl)"
+           if totals["dropped"] else "")
+    )
     if failed_chunks:
         logging.warning(f"EDC extraction skipped {failed_chunks}/{len(combined_chunk_document_list)} combined chunks")
     if combined_chunk_document_list and failed_chunks == len(combined_chunk_document_list):

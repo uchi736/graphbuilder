@@ -306,6 +306,29 @@ AI Response: "I don't have that information right now. Is there something else I
 Note: This system does not generate answers based solely on internal knowledge. It answers from the information provided in the user's current and previous inputs, and from the context.
 """
 
+# 参照（「…による」「…参照」）の扱い。検索設定 reference_prompt がオンのときだけ、Response Guidelines の末尾に足す。
+# すべての回答に効くので、短く、文書の種類に依らない書き方にしている（波括弧は使わない: プロンプトの差し込み記号と衝突する）。
+# 2 文目の「手元の文書に含まれていないと明言する」は外さないこと。「どこを見ればよいかを答える」だけにすると、
+# 答えが文書群に無い問いで「書かれていない」と述べる回答が減った（開発用の問い 11 問で 9 → 8。この文にして 9 に戻った）。
+CHAT_REFERENCE_GUIDELINE = (
+    "11. **Cross-references**: When a passage in the context points to another place (for example 「…による」「…参照」) "
+    "and the referenced passage is also in the context (it may be labeled 「参照先」), answer concretely with what the referenced passage says. "
+    "If the referenced passage is not in the context, state clearly that its content is not included in the provided documents, "
+    "say where to look, and do not guess its content."
+)
+
+
+def chat_system_template(reference_guideline: bool = False) -> str:
+    """回答のシステムプロンプト。reference_guideline が真なら、参照の扱いの 1 項を Response Guidelines の末尾に足す。"""
+    if not reference_guideline:
+        return CHAT_SYSTEM_TEMPLATE
+    marker = "\n**IMPORTANT**"
+    head, found, tail = CHAT_SYSTEM_TEMPLATE.partition(marker)
+    if not found:
+        return CHAT_SYSTEM_TEMPLATE + "\n" + CHAT_REFERENCE_GUIDELINE + "\n"
+    return head.rstrip("\n") + "\n" + CHAT_REFERENCE_GUIDELINE + "\n\n" + marker + tail
+
+
 QUESTION_TRANSFORM_TEMPLATE = "Given the below conversation, generate a search query to look up in order to get information relevant to the conversation. Only respond with the query, nothing else." 
 
 ## CHAT QUERIES
@@ -479,7 +502,7 @@ WITH d, avg_score,
             startNode(r).id,
             startNode(r)[head([k IN keys(startNode(r)) WHERE k =~ "(?i)(name|title|id|description)$"])],
             ""
-        ) + " " + type(r) + " " +
+        ) + " " + type(r) + (CASE WHEN size([k IN keys(r) WHERE k <> 'embedding' AND toString(r[k]) <> '']) > 0 THEN " {{" + apoc.text.join([k IN keys(r) WHERE k <> 'embedding' AND toString(r[k]) <> '' | k + ": " + toString(r[k])], ", ") + "}}" ELSE "" END) + " " +
         coalesce(apoc.coll.removeAll(labels(endNode(r)), ['__Entity__'])[0], "") + ":" +
         coalesce(
             endNode(r).id,
@@ -582,7 +605,7 @@ RETURN {
   ],
   relationships: [
     r IN rels | 
-    startNode(r).id + " " + type(r) + " " + endNode(r).id
+    startNode(r).id + " " + type(r) + (CASE WHEN size([k IN keys(r) WHERE k <> 'embedding' AND toString(r[k]) <> '']) > 0 THEN " {{" + apoc.text.join([k IN keys(r) WHERE k <> 'embedding' AND toString(r[k]) <> '' | k + ": " + toString(r[k])], ", ") + "}}" ELSE "" END) + " " + endNode(r).id
   ],
   outside: {
     nodes: [

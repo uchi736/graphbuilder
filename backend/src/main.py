@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import os
@@ -356,9 +357,10 @@ async def extract_graph_from_file_local_file(credentials, params, merged_file_pa
   if params.retry_condition in ["", None] or params.retry_condition not in [DELETE_ENTITIES_AND_START_FROM_BEGINNING, START_FROM_LAST_PROCESSED_POSITION]:
     if GCS_FILE_CACHE:
       folder_name = create_gcs_bucket_folder_name_hashed(credentials.uri, params.file_name)
-      file_name, pages = get_documents_from_gcs( PROJECT_ID, BUCKET_UPLOAD_FILE, folder_name, params.file_name)
+      file_name, pages = await asyncio.to_thread(get_documents_from_gcs, PROJECT_ID, BUCKET_UPLOAD_FILE, folder_name, params.file_name)
     else:
-      file_name, pages, file_extension = get_documents_from_file_by_path(merged_file_path, params.file_name)
+      # PDF の変換は 1 ページ 0.3 秒ほど掛かる。イベントループを止めないよう別スレッドで読む
+      file_name, pages, file_extension = await asyncio.to_thread(get_documents_from_file_by_path, merged_file_path, params.file_name)
     if pages is None or len(pages)==0:
       raise LLMGraphBuilderException(f'File content is not available for file : {file_name}')
     return await processing_source(credentials, params, pages, merged_file_path, True)
@@ -381,7 +383,7 @@ async def extract_graph_from_file_s3(credentials, params):
       raise LLMGraphBuilderException('Please provide AWS access and secret keys')
     else:
       logging.info("Insert in S3 Block")
-      file_name, pages = get_documents_from_s3(params.source_url, params.aws_access_key_id, params.aws_secret_access_key)
+      file_name, pages = await asyncio.to_thread(get_documents_from_s3, params.source_url, params.aws_access_key_id, params.aws_secret_access_key)
     if pages is None or len(pages)==0:
       raise LLMGraphBuilderException(f'File content is not available for file : {file_name}')
     return await processing_source(credentials, params, pages)
@@ -458,7 +460,7 @@ async def extract_graph_from_file_gcs(credentials, params):
       dict: Processing latency and response details.
   """
   if params.retry_condition in ["", None] or params.retry_condition not in [DELETE_ENTITIES_AND_START_FROM_BEGINNING, START_FROM_LAST_PROCESSED_POSITION]:
-    file_name, pages = get_documents_from_gcs(params.gcs_project_id, params.gcs_bucket_name, params.gcs_bucket_folder, params.gcs_blob_filename, params.access_token)
+    file_name, pages = await asyncio.to_thread(get_documents_from_gcs, params.gcs_project_id, params.gcs_bucket_name, params.gcs_bucket_folder, params.gcs_blob_filename, params.access_token)
     if pages is None or len(pages)==0:
       raise LLMGraphBuilderException(f'File content is not available for file : {file_name}')
     return await processing_source(credentials, params, pages)
@@ -728,6 +730,13 @@ def get_chunkId_chunkDoc_list(graph, file_name, pages, token_chunk_size, chunk_o
     bad_chars = ['"', "\n", "'"]
     for i in range(0,len(pages)):
       text = pages[i].page_content
+      # Markdown は行の切れ目で見出しや表を表し、引用符はプライム記号・単位・コードの一部である。
+      # 改行を空白に替えると見出しでの分割が効かなくなり、引用符を消すと A' が A になるので、どちらも残す
+      # （Neo4j へはパラメータで渡すので、引用符を消す必要は無い）
+      if pages[i].metadata.get('markdown') and get_value_from_env("MARKDOWN_CHUNKING", "true", "bool"):
+        # パンくずの先頭に付ける文書名は登録名から取る（S3 などでは保存先が一時ファイル名になる）
+        pages[i].metadata['title'] = os.path.splitext(os.path.basename(file_name or ''))[0] or pages[i].metadata.get('title', '')
+        continue
       for j in bad_chars:
         if j == '\n':
           text = text.replace(j, ' ')

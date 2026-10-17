@@ -1,0 +1,9095 @@
+{
+ "questions": [
+  {
+   "qid": "C1-01",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "NA36 の量産機で、消音器の納入が間に合わない。代わりに吸込ベルマウスを付けて単独試運転をしたいが、どうすればよいか。",
+   "answer_keys": [
+    "基準逸脱審査会"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 2,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 9,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 10799,
+     "sec": 6.5
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T102E.md#5"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#10"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-01d",
+   "type": "control",
+   "twin_of": "C1-01",
+   "question": "QK-TC-02 の第 9 条では、基準に定める条件を満たせないと実施の前から見込まれる場合に、逸脱許可申請書を提出したうえで、どこの承認を受けると定めているか。",
+   "answer_keys": [
+    "基準逸脱審査会"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8522,
+     "sec": 4.1
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-02D.md#10"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#10"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-02",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "NA54 の量産機をチェック回転速度で運転中、強サージング点を探っていてサージングに入り、その計測点を取り直した。取り直す前の値はどう扱うのか。",
+   "answer_keys": [
+    "MK-49"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 2,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 9,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 9621,
+     "sec": 4.3
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T102E.md#8"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#7"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-02d",
+   "type": "control",
+   "twin_of": "C1-02",
+   "question": "QK-TC-01 の第 6 条では、やり直しの結果に置き換えて無効とした記録を、どの綴りに綴じると定めているか。",
+   "answer_keys": [
+    "MK-49"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8295,
+     "sec": 3.7
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-01G.md#7"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#7"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-03",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "NA54 の量産機の単独試運転で、サージング点の空気量比と回転速度比の合否は何に照らして決めるのか。その曲線の、各部門へ配った写しでない元の 1 部は、どこに置くことになっているか。",
+   "answer_keys": [
+    "R-21"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 9967,
+     "sec": 4.6
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T001F.md#14"
+   ],
+   "answer_chunks": [
+    "KS-TC-P104D.md#7"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-03d",
+   "type": "control",
+   "twin_of": "C1-03",
+   "question": "KS-TC-P104 の 3 では、管理台帳及び管理曲線の正本の定位置を、文書庫のどの棚と定めているか。",
+   "answer_keys": [
+    "R-21"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8489,
+     "sec": 3.8
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P104D.md#7"
+   ],
+   "answer_chunks": [
+    "KS-TC-P104D.md#7"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-04",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "NA54 の単独試運転の途中で、吸込空気の温度を測る熱電対が 1 本断線した。残りの点だけで計測を続けてよいか。続けた場合、そのことを成績表のどこに、どう書き残すのか。",
+   "answer_keys": [
+    "備考",
+    "Z-31"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 9218,
+     "sec": 4.3
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P103B.md#5"
+   ],
+   "answer_chunks": [
+    "KS-TC-P103B.md#15"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-04d",
+   "type": "control",
+   "twin_of": "C1-04",
+   "question": "KS-TC-P103 の注 2 では、n−1 点で T1 を求めた場合に、備考へどの符号を記入すると定めているか。",
+   "answer_keys": [
+    "Z-31"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 10168,
+     "sec": 3.7
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P103B.md#15"
+   ],
+   "answer_chunks": [
+    "KS-TC-P103B.md#15"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-05",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "NA50 系列の初号機 3 台の計測値から作成し、4 台目以降の単独性能の判定に用いているものが、あとで改められた。それまでのものは、どう扱うのか。",
+   "answer_keys": [
+    "KT-11"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 10,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 11333,
+     "sec": 4.5
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T101C.md#9"
+   ],
+   "answer_chunks": [
+    "KS-TC-P104D.md#10"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-05d",
+   "type": "control",
+   "twin_of": "C1-05",
+   "question": "KS-TC-P104 の 5 では、回収した性能管理曲線の旧版を、どの綴りに綴じると定めているか。",
+   "answer_keys": [
+    "KT-11"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 10186,
+     "sec": 3.2
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P104D.md#10"
+   ],
+   "answer_chunks": [
+    "KS-TC-P104D.md#10"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-06",
+   "type": "ref2",
+   "twin_of": null,
+   "question": "NA54 の量産機の単独試運転で、性能が管理曲線から外れて不合格になった。この過給機の処置は、いつまでに決めなければならないか。",
+   "answer_keys": [
+    "29 稼働日"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": true,
+     "answer_rank": 5,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 10,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 11939,
+     "sec": 4.7
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T102E.md#11"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": true,
+   "link_mid_to_answer": true
+  },
+  {
+   "qid": "C1-06d",
+   "type": "control",
+   "twin_of": "C1-06",
+   "question": "QK-TC-02 の別表 1 で、区分 乙の期限は何稼働日か。",
+   "answer_keys": [
+    "29 稼働日"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8107,
+     "sec": 3.2
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-02D.md#16"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-07",
+   "type": "ref2",
+   "twin_of": null,
+   "question": "NE65 の初号機の 1 台目で、吐出絞り弁を閉じていく途中に、逆流の手前で圧力の脈動だけが出た。弁の目盛を控えて記録したが、この記録はあとでどう扱うのか。",
+   "answer_keys": [
+    "Z-41"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": true,
+     "answer_rank": 3,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 10,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 10339,
+     "sec": 4.9
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T101C.md#4"
+   ],
+   "answer_chunks": [
+    "KS-TC-P103B.md#15"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": true,
+   "link_mid_to_answer": true
+  },
+  {
+   "qid": "C1-07d",
+   "type": "control",
+   "twin_of": "C1-07",
+   "question": "KS-TC-P103 の注 5 では、s' の値を s の値として用いた場合に、備考へどの符号を記入すると定めているか。",
+   "answer_keys": [
+    "Z-41"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 9898,
+     "sec": 4.3
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P103B.md#15"
+   ],
+   "answer_chunks": [
+    "KS-TC-P103B.md#15"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-08",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "NA56 の初号機の単独性能確認試験は消音器を付けずに吸込ベルマウスで運転するが、そのとき大気圧力から差し引く値はいくらか。",
+   "answer_keys": [
+    "0.11 kPa"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 3,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 10294,
+     "sec": 4.5
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T101C.md#8"
+   ],
+   "answer_chunks": [
+    "KS-TC-P103B.md#15"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-08d",
+   "type": "control",
+   "twin_of": "C1-08",
+   "question": "KS-TC-P103 の注 3 で、JG-110 を用いた場合に a 欄の値に代える値はいくらか。",
+   "answer_keys": [
+    "0.11 kPa"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8781,
+     "sec": 3.7
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P103B.md#15"
+   ],
+   "answer_chunks": [
+    "KS-TC-P103B.md#15"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-09",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "NA50 系列の初号機の単独性能確認試験で大気圧力を読む気圧計は、校正に合格してからいつまで使ってよいのか。",
+   "answer_keys": [
+    "719"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 9,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 11263,
+     "sec": 4.8
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T101C.md#8"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-09d",
+   "type": "control",
+   "twin_of": "C1-09",
+   "question": "KS-TC-P001 の別表 2 で、管理番号 BR-80 の周期はいくつか。",
+   "answer_keys": [
+    "719"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8931,
+     "sec": 4.1
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-10",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "NA50 系列の量産機の単独試運転でブローバイガス量を測る流量計は、校正してからいつまで使ってよいのか。",
+   "answer_keys": [
+    "269"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 9022,
+     "sec": 1.8
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T102E.md#10"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-10d",
+   "type": "control",
+   "twin_of": "C1-10",
+   "question": "KS-TC-P001 の別表 2 で、管理番号 BM-60 の周期はいくつか。",
+   "answer_keys": [
+    "269"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 7,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8398,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-11",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "NA50 系列の性能管理曲線を改廃したときに、関係部門へ内容を知らせるのに使う票は、いつまで、どこに残しておくのか。",
+   "answer_keys": [
+    "9 年",
+    "第 1 書架"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 9742,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P104D.md#10"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-11d",
+   "type": "control",
+   "twin_of": "C1-11",
+   "question": "QK-TC-01 の別表 2 で、様式 TCF-010 の年限は何年で、書架はどこか。",
+   "answer_keys": [
+    "9 年",
+    "第 1 書架"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7260,
+     "sec": 1.2
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-12",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "NA36 の量産機の単独試運転で使うオリフィス管は、吐出管の呼び径からどれを選ぶことになるか。そのオリフィス管は、点検に合格してから何日のあいだ試運転に使ってよいのか。",
+   "answer_keys": [
+    "OP-400",
+    "1,079"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 3,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 9164,
+     "sec": 1.7
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P001D.md#17"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-12d",
+   "type": "control",
+   "twin_of": "C1-12",
+   "question": "KS-TC-P001 の別表 2 で、管理番号 OP-400 の周期はいくつか。",
+   "answer_keys": [
+    "1,079"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 9114,
+     "sec": 1.7
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-14",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "運転台 TB-20 で運転する系列の初号機では、規定チェック回転速度を、最高許容回転速度に何を乗じた値に最も近い指示回転速度とするのか。",
+   "answer_keys": [
+    "0.81"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 3,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 9622,
+     "sec": 2.3
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T001F.md#19"
+   ],
+   "answer_chunks": [
+    "KS-TC-T101C.md#3"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-15",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "NA58 の量産機の空気量を計測するオリフィス管は、絞り径比がいくつのものか。",
+   "answer_keys": [
+    "0.70"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 3,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8917,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T102E.md#15"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#17"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-16",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "NE60 系列の量産機のうち、吐出管の呼び径が 600A の型式は、チェック回転速度が何 min-1 か。",
+   "answer_keys": [
+    "13,401"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 4,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 9924,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T102E.md#15"
+   ],
+   "answer_chunks": [
+    "KS-TC-T102E.md#14"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-17",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "NE60 系列の初号機で 4 台目以降の計測をするとき、データ収録装置の収録の条件は何番を呼び出すか。",
+   "answer_keys": [
+    "J-11"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 3,
+     "entry_rank": 2,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 9511,
+     "sec": 1.8
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T101C.md#6"
+   ],
+   "answer_chunks": [
+    "KS-TC-T101C.md#11"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-18",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "NA54 の初号機のコンプレッサ性能を計測するとき、潤滑油の供給圧力はいくらにするか。",
+   "answer_keys": [
+    "149±20"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": false,
+     "answer_in": true,
+     "mid_in": false,
+     "answer_rank": 3,
+     "entry_rank": null,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 10055,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T101C.md#7"
+   ],
+   "answer_chunks": [
+    "KS-TC-L001E.md#5"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": true,
+   "link_mid_to_answer": false
+  },
+  {
+   "qid": "C1-19",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "NE65 の初号機の単独性能確認試験で計測する指示回転速度は、それぞれ何 min-1 か。",
+   "answer_keys": [],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 2,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 10332,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T101C.md#3"
+   ],
+   "answer_chunks": [],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-20",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "NA36 の量産機を運転台に取り付けたあと、運転の前に軸受箱へ入れる油は何 L か。",
+   "answer_keys": [],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 2,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 8387,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T102E.md#6",
+    "KS-TC-T102E.md#9",
+    "KS-TC-T102E.md#12"
+   ],
+   "answer_chunks": [],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-21",
+   "type": "control",
+   "twin_of": null,
+   "question": "KS-TC-T102 の別表 1 で、NA54 のチェック回転速度は何 min-1 か。",
+   "answer_keys": [
+    "14,401"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 9887,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T102E.md#14"
+   ],
+   "answer_chunks": [
+    "KS-TC-T102E.md#14"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-22",
+   "type": "control",
+   "twin_of": null,
+   "question": "NA30 系列の量産機の単独試運転で、惰走時間は何秒以上でなければならないか。",
+   "answer_keys": [
+    "141 秒"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 2,
+     "entry_rank": 2,
+     "answer_via_reference": false,
+     "chunks": 10,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 9572,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T102E.md#12"
+   ],
+   "answer_chunks": [
+    "KS-TC-T102E.md#12"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-23",
+   "type": "control",
+   "twin_of": null,
+   "question": "NA30・NA50・NE60 系列の性能管理曲線は、初号機の 3 台目の計測を終えた日から何日以内に作成するのか。",
+   "answer_keys": [
+    "31 日"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 10,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 10930,
+     "sec": 1.7
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P104D.md#4"
+   ],
+   "answer_chunks": [
+    "KS-TC-P104D.md#4"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C1-24",
+   "type": "control",
+   "twin_of": null,
+   "question": "KS-TC-P103 の計算例では、NA54 の量産機のサージ点について、換算回転速度 Nc は何 min-1 になっているか。",
+   "answer_keys": [
+    "14,531"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 9649,
+     "sec": 1.1
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P103B.md#12"
+   ],
+   "answer_chunks": [
+    "KS-TC-P103B.md#12"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C2-01",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "RK14 の初号機の単独性能確認試験で、サージングに入ってしまい計測点を採り直した。採り直す前の値は、どうすればよいか。",
+   "answer_keys": [
+    "MK-49"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 2,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 9,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 11263,
+     "sec": 1.7
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T201B.md#4"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#7"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C2-01d",
+   "type": "control",
+   "twin_of": "C2-01",
+   "question": "QK-TC-01 の第 6 条（無効とする記録）では、無効とした記録をどの綴りに綴じると定めているか。",
+   "answer_keys": [
+    "MK-49"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7547,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-01G.md#7"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#7"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C2-02",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "RK18 の量産機のチェック回転速度は、何に基づいて決めた値か。",
+   "answer_keys": [
+    "TN-2732"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 2,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 9,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 10129,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T202D.md#11"
+   ],
+   "answer_chunks": [
+    "KS-TC-T202D.md#13"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C2-02d",
+   "type": "control",
+   "twin_of": "C2-02",
+   "question": "KS-TC-T202 の注 3 では、印の付いた欄は、どの技術連絡書による暫定のものと書いているか。",
+   "answer_keys": [
+    "TN-2732"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 10643,
+     "sec": 2.0
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T202D.md#13"
+   ],
+   "answer_chunks": [
+    "KS-TC-T202D.md#13"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C2-03",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "RK16 の量産機で、運転の前にロータを手で回したら引っ掛かりがあった。この過給機は、どうしておけばよいか。",
+   "answer_keys": [
+    "H-39"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 2,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 9,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 10102,
+     "sec": 2.0
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T202D.md#8"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#6"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C2-03d",
+   "type": "control",
+   "twin_of": "C2-03",
+   "question": "QK-TC-02 の第 5 条（識別及び隔離）では、不適合の品に保留札を付けたあと、どの保留区画へ移すと定めているか。",
+   "answer_keys": [
+    "H-39"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 7,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 7947,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-02D.md#6"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#6"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C2-04",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "RK10 系列の管理曲線の年次の傾向の確認のために、過去の成績表を借りたい。借りるときに何に書き込み、いつまでに返せばよいか。",
+   "answer_keys": [
+    "持出簿",
+    "5 稼働日"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 2,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 10,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 10322,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P204C.md#9"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#9"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C2-04d",
+   "type": "control",
+   "twin_of": "C2-04",
+   "question": "QK-TC-01 の第 8 条（保管）では、文書庫から帳票を持ち出すとき、何に記入し、何稼働日以内に戻すと定めているか。",
+   "answer_keys": [
+    "持出簿",
+    "5 稼働日"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7773,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-01G.md#9"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#9"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C2-05",
+   "type": "ref2",
+   "twin_of": null,
+   "question": "RM24 の量産機が、管理曲線に照らした性能の判定で不合格になった。この過給機の扱いは、いつまでに決めるのか。",
+   "answer_keys": [
+    "29 稼働日"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": true,
+     "answer_rank": 4,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 10,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 10854,
+     "sec": 2.0
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T202D.md#9"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": true,
+   "link_mid_to_answer": true
+  },
+  {
+   "qid": "C2-05d",
+   "type": "control",
+   "twin_of": "C2-05",
+   "question": "QK-TC-02 の別表 1（区分別の期限及び決裁）で、区分 乙 の不適合の処置を決める期限は、何稼働日か。",
+   "answer_keys": [
+    "29 稼働日"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7394,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-02D.md#16"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C2-06",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "RK14 の初号機の単独性能確認試験で、吸込ベルマウスに取り付けて吸込空気温度を計る熱電対は、いつまで使ってよいのか。",
+   "answer_keys": [
+    "359"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 10095,
+     "sec": 2.1
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T201B.md#8"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C2-06d",
+   "type": "control",
+   "twin_of": "C2-06",
+   "question": "KS-TC-P001 の別表 2（管理番号別の区分）で、管理番号 TK-30 の周期はいくつか。",
+   "answer_keys": [
+    "359"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8561,
+     "sec": 1.7
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C2-07",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "RK16 の量産機の単独試運転で、全力運転のあとに計った惰行時間を書き込んだ用紙は、出荷のあといつまで残しておくのか。",
+   "answer_keys": [
+    "19 年"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 8894,
+     "sec": 1.9
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T202D.md#8"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C2-07d",
+   "type": "control",
+   "twin_of": "C2-07",
+   "question": "QK-TC-01 の別表 2（様式別の区分）で、様式番号 TCF-120 の年限は何年か。",
+   "answer_keys": [
+    "19 年"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8286,
+     "sec": 1.9
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C2-08",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "RK16 の量産機の単独試運転でブローバイガス量を計る流量計は、いつまで使ってよいのか。",
+   "answer_keys": [
+    "269"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 10480,
+     "sec": 1.9
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T202D.md#8"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C2-08d",
+   "type": "control",
+   "twin_of": "C2-08",
+   "question": "KS-TC-P001 の別表 2（管理番号別の区分）で、管理番号 BM-60 の周期はいくつか。",
+   "answer_keys": [
+    "269"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8682,
+     "sec": 1.7
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C2-09",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "RM26 の量産機を第 3 運転台で単独試運転するときに使うオリフィス管は、吐出管の呼び径からどれを選ぶことになるか。そのオリフィス管は、点検に合格してから何日のあいだ使ってよいのか。",
+   "answer_keys": [
+    "OP-250",
+    "1,079"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 4,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 10836,
+     "sec": 2.5
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P001D.md#17"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C2-09d",
+   "type": "control",
+   "twin_of": "C2-09",
+   "question": "KS-TC-P001 の別表 2（管理番号別の区分）で、管理番号 OP-250 の周期はいくつか。",
+   "answer_keys": [
+    "1,079"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8804,
+     "sec": 1.7
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C2-11",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "RM24 の量産機を単独試運転するとき、潤滑油の供給温度は何度にするか。",
+   "answer_keys": [
+    "79±10"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": false,
+     "answer_in": true,
+     "mid_in": false,
+     "answer_rank": 4,
+     "entry_rank": null,
+     "answer_via_reference": false,
+     "chunks": 7,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7775,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T202D.md#5"
+   ],
+   "answer_chunks": [
+    "KS-TC-L001E.md#6"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": true,
+   "link_mid_to_answer": false
+  },
+  {
+   "qid": "C2-12",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "斜流タービンの系列の性能管理曲線は、どれだけの間隔で定期の見直しを行うのか。",
+   "answer_keys": [
+    "62"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": false,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": null,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8663,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T001F.md#19"
+   ],
+   "answer_chunks": [
+    "KS-TC-P204C.md#10"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C2-13",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "RM24 の量産機の性能の判定に使う管理曲線は、いつまでに次の定期の見直しを終えることになっているか。年月日は、2020.01.31 のような書き方で答えてほしい。",
+   "answer_keys": [
+    "2023.07.22"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": false,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": null,
+     "answer_via_reference": true,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 9127,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P204C.md#12"
+   ],
+   "answer_chunks": [
+    "KS-TC-P204C.md#13"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C2-14",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "斜流タービンの系列の量産機で、単独試運転の性能の判定に使う管理曲線は、いつまでに作ることになっているか。",
+   "answer_keys": [
+    "12 稼働日"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": false,
+     "answer_in": true,
+     "mid_in": false,
+     "answer_rank": 3,
+     "entry_rank": null,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 9746,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T001F.md#14"
+   ],
+   "answer_chunks": [
+    "KS-TC-P204C.md#4"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": true,
+   "link_mid_to_answer": false
+  },
+  {
+   "qid": "C2-15",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "RK14 の初号機の単独性能確認試験で使う指示回転速度は、それぞれ何 min-1 か。",
+   "answer_keys": [],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 3,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 11183,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T201B.md#3"
+   ],
+   "answer_chunks": [],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C2-16",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "RM24 の量産機を第 3 運転台の架台に固定する取付けボルトの締付けトルクは、いくらか。",
+   "answer_keys": [],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 8965,
+     "sec": 1.9
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T202D.md#4"
+   ],
+   "answer_chunks": [],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C2-17",
+   "type": "control",
+   "twin_of": null,
+   "question": "RK16 の量産機の単独試運転で、チェック回転速度は何 min-1 か。",
+   "answer_keys": [
+    "43,652"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 9710,
+     "sec": 2.0
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T202D.md#11"
+   ],
+   "answer_chunks": [
+    "KS-TC-T202D.md#11"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C2-18",
+   "type": "control",
+   "twin_of": null,
+   "question": "RK10・RM20 系列の初号機の判定で、サージ誤差は何 % 以内とされているか。",
+   "answer_keys": [
+    "4.2 %"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 9307,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P203A.md#10"
+   ],
+   "answer_chunks": [
+    "KS-TC-P203A.md#10"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C2-19",
+   "type": "control",
+   "twin_of": null,
+   "question": "RK10・RM20 系列の初号機の単独性能確認試験で、規定チェック回転速度は、最高許容回転速度の何 % に最も近い指示回転速度とするか。",
+   "answer_keys": [
+    "82 %"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 10241,
+     "sec": 1.7
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T201B.md#3"
+   ],
+   "answer_chunks": [
+    "KS-TC-T201B.md#3"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C2-20",
+   "type": "control",
+   "twin_of": null,
+   "question": "RM20 系列の量産機の惰行時間は、何秒以上とされているか。",
+   "answer_keys": [
+    "52 秒"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 9188,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T202D.md#9"
+   ],
+   "answer_chunks": [
+    "KS-TC-T202D.md#9"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-01",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "HX44 の量産機で、運転の前と後との軸方向の動きの差が 0.03 mm を超えた。分解して確かめるまで、この過給機はどうしておくのか。",
+   "answer_keys": [
+    "H-39"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 2,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 9,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 9590,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T302B.md#11"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#6"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-01d",
+   "type": "control",
+   "twin_of": "C3-01",
+   "question": "QK-TC-02 の第 5 条では、保留札を付けた品を、どの保留区画へ移すと定めているか。",
+   "answer_keys": [
+    "H-39"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8360,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-02D.md#6"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#6"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-02",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "HX44 の性能管理曲線の管理台帳と原紙を、しまってある所から借りて、試運転に立ち会いながら見たい。どうすればよいか。",
+   "answer_keys": [
+    "持出簿",
+    "5 稼働日"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 9590,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P304A.md#7"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#9"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-02d",
+   "type": "control",
+   "twin_of": "C3-02",
+   "question": "QK-TC-01 の第 8 条では、文書庫から帳票を持ち出すとき、何に記入し、何稼働日以内に戻すと定めているか。",
+   "answer_keys": [
+    "持出簿",
+    "5 稼働日"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8302,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-01G.md#9"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#9"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-03",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "HX46 の性能管理曲線が改訂になった。回収した古い版は、どうすればよいか。",
+   "answer_keys": [
+    "溶解"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 4,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 9,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 10586,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P304A.md#10"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#11"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-03d",
+   "type": "control",
+   "twin_of": "C3-03",
+   "question": "QK-TC-01 の第 10 条では、帳票の廃棄はどんな方法によると定めているか。",
+   "answer_keys": [
+    "溶解"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7070,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-01G.md#11"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#11"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-04",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "2 段過給の過給機で、チェック回転速度に合わせ込まなかった側の回転速度は、どうするのか。",
+   "answer_keys": [
+    "U-13"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 4,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 10,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 10639,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T302B.md#7"
+   ],
+   "answer_chunks": [
+    "KS-TC-T302B.md#14"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-04d",
+   "type": "control",
+   "twin_of": "C3-04",
+   "question": "KS-TC-T302 の 6. 記録の a) では、値の右に何の符号を付けると定めているか。",
+   "answer_keys": [
+    "U-13"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 9,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 10034,
+     "sec": 1.7
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T302B.md#14"
+   ],
+   "answer_chunks": [
+    "KS-TC-T302B.md#14"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-05",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "低圧段と高圧段のあいだの温度がはかれていなかった点がある。高圧段のその点はどうすればよいか。",
+   "answer_keys": [
+    "白抜き"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 6,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 10,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 10184,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P303A.md#6"
+   ],
+   "answer_chunks": [
+    "KS-TC-P303A.md#16"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-05d",
+   "type": "control",
+   "twin_of": "C3-05",
+   "question": "KS-TC-P303 の注 2 では、3. の (3) の末尾に当たる点を、曲線にどんな記号で記入すると定めているか。",
+   "answer_keys": [
+    "白抜き"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 9172,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P303A.md#16"
+   ],
+   "answer_chunks": [
+    "KS-TC-P303A.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-06",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "単独試運転で性能が不合格になった量産機は、不適合として処置し、原因を究明して再運転する。HX46 では、このほかに、不合格になった号機をどこに控えておくのか。",
+   "answer_keys": [
+    "N-43"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 9924,
+     "sec": 1.8
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T001F.md#14"
+   ],
+   "answer_chunks": [
+    "KS-TC-P304A.md#7"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-06d",
+   "type": "control",
+   "twin_of": "C3-06",
+   "question": "KS-TC-P304 の 3 管理台帳では、KS-TC-T001 の 6.1 の後段に当たった工番を、どの欄に記入すると定めているか。",
+   "answer_keys": [
+    "N-43"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 9,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 10346,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P304A.md#7"
+   ],
+   "answer_chunks": [
+    "KS-TC-P304A.md#7"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-07",
+   "type": "ref2",
+   "twin_of": null,
+   "question": "HX48 の量産機の全力運転は、第 4 運転台ではどう取り扱えばよいか。",
+   "answer_keys": [
+    "基準逸脱審査会"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": true,
+     "answer_rank": 3,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 10,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 10482,
+     "sec": 1.9
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T302B.md#8"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#10"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": true,
+   "link_mid_to_answer": true
+  },
+  {
+   "qid": "C3-07d",
+   "type": "control",
+   "twin_of": "C3-07",
+   "question": "QK-TC-02 の第 9 条では、逸脱許可申請書を提出したあと、どの会の承認を受けると定めているか。",
+   "answer_keys": [
+    "基準逸脱審査会"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8585,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-02D.md#10"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#10"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-08",
+   "type": "ref2",
+   "twin_of": null,
+   "question": "HX46 の量産機で、サージ点の換算空気量が、同じ圧力比における管理曲線のサージラインの空気量から大きく外れ、サージ誤差が許容値を超えた。この過給機の処置は、いつまでに決めなければならないか。",
+   "answer_keys": [
+    "29 稼働日"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": false,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 9118,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P303A.md#10"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": true,
+   "link_mid_to_answer": true
+  },
+  {
+   "qid": "C3-08d",
+   "type": "control",
+   "twin_of": "C3-08",
+   "question": "QK-TC-02 の別表 1 で、区分 乙の期限は何稼働日か。",
+   "answer_keys": [
+    "29 稼働日"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8107,
+     "sec": 1.2
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-02D.md#16"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-09",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "2 段過給の過給機の試運転で、段間ダクトの高圧段側に差し込んで段間の温度をはかる熱電対は、いつまで使ってよいのか。",
+   "answer_keys": [
+    "359"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 9749,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T302B.md#9"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-09d",
+   "type": "control",
+   "twin_of": "C3-09",
+   "question": "KS-TC-P001 の別表 2 で、管理番号 TK-30 の周期はいくつか。",
+   "answer_keys": [
+    "359"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8589,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-10",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "2 段過給の量産機の試運転で計測した段間圧力を記入したものは、出荷のあといつまで残しておくのか。",
+   "answer_keys": [
+    "19 年"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 11482,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T302B.md#9"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-10d",
+   "type": "control",
+   "twin_of": "C3-10",
+   "question": "QK-TC-01 の別表 2 で、様式 TCF-120 の年限は何年か。",
+   "answer_keys": [
+    "19 年"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8114,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-11",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "DS74 の量産機を第 4 運転台で試運転するとき、低圧段の吐出口と高圧段の吸込口をつなぐダクトは、どのくらい圧力を落とすのか。",
+   "answer_keys": [
+    "0.333"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 9826,
+     "sec": 1.1
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T302B.md#4"
+   ],
+   "answer_chunks": [
+    "KS-TC-P303A.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-11d",
+   "type": "control",
+   "twin_of": "C3-11",
+   "question": "KS-TC-P303 の注 6 で、DK-320 の目安とする値はいくらか。",
+   "answer_keys": [
+    "0.333"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 9683,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P303A.md#16"
+   ],
+   "answer_chunks": [
+    "KS-TC-P303A.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-12",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "2 段過給の過給機の試運転で、低圧段と高圧段のあいだの圧力をはかる圧力伝送器は、いつまで使ってよいのか。あわせて、計測器としての格も知りたい。",
+   "answer_keys": [
+    "甲",
+    "189"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 7,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 9496,
+     "sec": 1.8
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T302B.md#9"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-12d",
+   "type": "control",
+   "twin_of": "C3-12",
+   "question": "KS-TC-P001 の別表 2 で、管理番号 PT-20 の等級と周期は何か。",
+   "answer_keys": [
+    "甲",
+    "189"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 7,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8710,
+     "sec": 1.2
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-13",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "HX48 の量産機の試運転で吐出側に置くオリフィス管は、吐出管の呼び径からどれを選ぶことになるか。そのオリフィス管は、点検に合格してから何日のあいだ使ってよいのか。",
+   "answer_keys": [
+    "OP-400",
+    "1,079"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 2,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 9945,
+     "sec": 1.7
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P001D.md#17"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-13d",
+   "type": "control",
+   "twin_of": "C3-13",
+   "question": "KS-TC-P001 の別表 2 で、管理番号 OP-400 の周期はいくつか。",
+   "answer_keys": [
+    "1,079"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 9114,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-14",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "HX44 の初号機の単独性能を計測するとき、潤滑油の供給温度は何度にするか。",
+   "answer_keys": [
+    "49±10"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": false,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 5,
+     "entry_rank": null,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 9666,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T001F.md#19"
+   ],
+   "answer_chunks": [
+    "KS-TC-L001E.md#5"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-15",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "HX48 の量産機の試運転で、空気量の計測に使うオリフィス管の絞り径比はいくらか。",
+   "answer_keys": [
+    "0.60"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": false,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 2,
+     "entry_rank": null,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8312,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T302B.md#4"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#17"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-16",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "HX44 でディフューザを新しい仕様に変えた。その 2 台目は、全部で何点の性能を計測するのか。",
+   "answer_keys": [
+    "13 点"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 6,
+     "entry_rank": 3,
+     "answer_via_reference": true,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 9163,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T301A.md#5"
+   ],
+   "answer_chunks": [
+    "KS-TC-T301A.md#11"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-17",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "DS72 の量産機の取付けで、給油管をつなぐときに給油口の直前に入れる絞りの径は、何 mm か。",
+   "answer_keys": [],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 10120,
+     "sec": 1.8
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T302B.md#5",
+    "KS-TC-T302B.md#8"
+   ],
+   "answer_chunks": [],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-18",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "HX46 の量産機の全力運転では、タービン入口ガス温度を何度にするのか。",
+   "answer_keys": [],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 8762,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T302B.md#8"
+   ],
+   "answer_chunks": [],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-19",
+   "type": "control",
+   "twin_of": null,
+   "question": "KS-TC-T302 の別表 1 で、HX46 のチェック回転速度はいくらか。",
+   "answer_keys": [
+    "29,623"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 9,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 10653,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T302B.md#15"
+   ],
+   "answer_chunks": [
+    "KS-TC-T302B.md#15"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-20",
+   "type": "control",
+   "twin_of": null,
+   "question": "DS70 系列の高圧段の性能は、どの状態（温度と全圧の値）に換算して表すのか。",
+   "answer_keys": [
+    "323 K",
+    "243 kPa"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 10,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 10495,
+     "sec": 1.2
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P303A.md#6"
+   ],
+   "answer_chunks": [
+    "KS-TC-P303A.md#6"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C3-21",
+   "type": "control",
+   "twin_of": null,
+   "question": "HX40・DS70 系列の性能管理曲線は、作成に用いる計測値がそろってから何稼働日以内に作成するのか。",
+   "answer_keys": [
+    "23 稼働日"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 10049,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P304A.md#4"
+   ],
+   "answer_chunks": [
+    "KS-TC-P304A.md#4"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-01",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "運転台 TB-10 で空気量を計るのに使うオリフィス管は、どうなったら使えなくなるのか。",
+   "answer_keys": [
+    "0.24 mm"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 2,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 9012,
+     "sec": 1.7
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P001D.md#17"
+   ],
+   "answer_chunks": [
+    "KS-TC-M403B.md#17"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-01d",
+   "type": "control",
+   "twin_of": "C4-01",
+   "question": "KS-TC-M403 の治具個票で、OP-600 の使用の限度は、孔の径が刻印の値に何 mm を加えた値までか。",
+   "answer_keys": [
+    "0.24 mm"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7697,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-M403B.md#17"
+   ],
+   "answer_chunks": [
+    "KS-TC-M403B.md#17"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-02",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "過給機を据え付けるのに定盤のボルト穴の位置が合わず、穴を追加したい。どうすればよいか。",
+   "answer_keys": [
+    "SK-44"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 2,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 9,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8620,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-M401C.md#7"
+   ],
+   "answer_chunks": [
+    "KS-TC-M401C.md#9"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-02d",
+   "type": "control",
+   "twin_of": "C4-02",
+   "question": "KS-TC-M401 の 4.5 では、運転台の改造に着手する前に、何を起票してだれの決裁を受けると定めているか。",
+   "answer_keys": [
+    "SK-44"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8427,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-M401C.md#9"
+   ],
+   "answer_chunks": [
+    "KS-TC-M401C.md#9"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-03",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "点火の前に確かめたら、燃焼器の燃料の圧力が個票の範囲から外れていた。調節弁を合わせ直すには、どうすればよいか。",
+   "answer_keys": [
+    "HZ-14"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 2,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7335,
+     "sec": 1.1
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-M404A.md#5",
+    "KS-TC-M404A.md#14"
+   ],
+   "answer_chunks": [
+    "KS-TC-M401C.md#8"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-03d",
+   "type": "control",
+   "twin_of": "C4-03",
+   "question": "KS-TC-M401 の 4.4 で、設備の封印を切る必要がある者は、あらかじめ何を出してだれの承認を受けるのか。",
+   "answer_keys": [
+    "HZ-14"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 7,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8317,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-M401C.md#8"
+   ],
+   "answer_chunks": [
+    "KS-TC-M401C.md#8"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-04",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "運転台へ据え付ける作業の途中で、過給機に打痕を付けてしまった。まず何をすればよいか。",
+   "answer_keys": [
+    "職場の長",
+    "報告"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 2,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 9,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 9735,
+     "sec": 2.2
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-M401C.md#7"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#5"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-04d",
+   "type": "control",
+   "twin_of": "C4-04",
+   "question": "QK-TC-02 の第 4 条では、不適合を見つけた者は、まず何をすると定めているか。",
+   "answer_keys": [
+    "職場の長",
+    "報告"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 9,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 9443,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-02D.md#5"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#5"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-05",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "空気量の計測に使うオリフィス管は、点検に合格してから、いつまで試運転に使ってよいのか。",
+   "answer_keys": [
+    "1,079"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": false,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": null,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 9028,
+     "sec": 1.7
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-M403B.md#8"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-05d",
+   "type": "control",
+   "twin_of": "C4-05",
+   "question": "KS-TC-P001 の別表 2 で、管理番号 OP-600 の周期はいくつか。",
+   "answer_keys": [
+    "1,079"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8534,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-06",
+   "type": "ref2",
+   "twin_of": null,
+   "question": "同じ日に 2 回失火した燃焼器は、そのあとどう扱うのか。",
+   "answer_keys": [
+    "HF-24",
+    "14 稼働日"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": true,
+     "answer_rank": 3,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 11,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8624,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-M404A.md#9"
+   ],
+   "answer_chunks": [
+    "KS-TC-M402E.md#14"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": true,
+   "link_mid_to_answer": true
+  },
+  {
+   "qid": "C4-06d",
+   "type": "control",
+   "twin_of": "C4-06",
+   "question": "KS-TC-M402 の 6.3 では、区分 F-1 の設備について、原因及び対策を、何稼働日以内に、何にまとめると定めているか。",
+   "answer_keys": [
+    "HF-24",
+    "14 稼働日"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8687,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-M402E.md#14"
+   ],
+   "answer_chunks": [
+    "KS-TC-M402E.md#14"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-07",
+   "type": "ref2",
+   "twin_of": null,
+   "question": "点火を 3 回試みても着火しなかった燃焼器は、そのあとどう扱うのか。",
+   "answer_keys": [
+    "設備保全課長",
+    "44 稼働日"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": true,
+     "answer_rank": 3,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 10,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8231,
+     "sec": 1.2
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-M404A.md#6"
+   ],
+   "answer_chunks": [
+    "KS-TC-M402E.md#14"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": true,
+   "link_mid_to_answer": true
+  },
+  {
+   "qid": "C4-07d",
+   "type": "control",
+   "twin_of": "C4-07",
+   "question": "KS-TC-M402 の 6.3 では、区分 F-2 の設備について、だれの決裁を要し、原因及び対策を何稼働日以内に記入すると定めているか。",
+   "answer_keys": [
+    "設備保全課長",
+    "44 稼働日"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 9237,
+     "sec": 1.7
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-M402E.md#14"
+   ],
+   "answer_chunks": [
+    "KS-TC-M402E.md#14"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-08",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "エア運転と運転台の駆動に使う圧縮空気をつくる起動用空気圧縮機は、保全の上でどのくらい重要な設備とされているか。",
+   "answer_keys": [
+    "S-24"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 8,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8055,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-M404A.md#12"
+   ],
+   "answer_chunks": [
+    "KS-TC-M401C.md#15"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-08d",
+   "type": "control",
+   "twin_of": "C4-08",
+   "question": "KS-TC-M401 の別表 1 で、管理番号 AC-10 の管理区分は何か。",
+   "answer_keys": [
+    "S-24"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8970,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-M401C.md#15"
+   ],
+   "answer_chunks": [
+    "KS-TC-M401C.md#15"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-09",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "運転台の始業点検の結果を記入した点検表は、いつまで残しておくのか。",
+   "answer_keys": [
+    "9 年"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 8086,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-M402E.md#7"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-09d",
+   "type": "control",
+   "twin_of": "C4-09",
+   "question": "QK-TC-01 の別表 2 で、様式 TCF-320 の年限は何年か。",
+   "answer_keys": [
+    "9 年"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8444,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-10",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "運転台の始業点検で、取り付ける前に指示を確かめる潤滑油流量計は、校正に合格してから、いつまで試運転に使ってよいのか。",
+   "answer_keys": [
+    "269"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 8843,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-M402E.md#6"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-10d",
+   "type": "control",
+   "twin_of": "C4-10",
+   "question": "KS-TC-P001 の別表 2 で、管理番号 FM-70 の周期はいくつか。",
+   "answer_keys": [
+    "269"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 7,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8301,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-11",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "第 4 運転台へ燃焼ガスを送る燃焼器は、保全の上でどのくらい重要な設備とされているか。",
+   "answer_keys": [
+    "S-14"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 8017,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-M401C.md#6"
+   ],
+   "answer_chunks": [
+    "KS-TC-M401C.md#15"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-11d",
+   "type": "control",
+   "twin_of": "C4-11",
+   "question": "KS-TC-M401 の別表 1 で、管理番号 CB-10 の管理区分は何か。",
+   "answer_keys": [
+    "S-14"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8166,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-M401C.md#15"
+   ],
+   "answer_chunks": [
+    "KS-TC-M401C.md#15"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-12",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "小形の過給機を運転する第 3 運転台は、設備としてどの格付けになっているか。",
+   "answer_keys": [
+    "S-34"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 9462,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-M401C.md#4"
+   ],
+   "answer_chunks": [
+    "KS-TC-M401C.md#15"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-12d",
+   "type": "control",
+   "twin_of": "C4-12",
+   "question": "KS-TC-M401 の別表 1 で、管理番号 TB-30 の管理区分は何か。",
+   "answer_keys": [
+    "S-34"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 9,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 9526,
+     "sec": 1.8
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-M401C.md#15"
+   ],
+   "answer_chunks": [
+    "KS-TC-M401C.md#15"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-13",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "RM20 系列の過給機を運転する運転台には、質量が何 kg の過給機まで据え付けられるか。",
+   "answer_keys": [
+    "484 kg"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": false,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 3,
+     "entry_rank": null,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8713,
+     "sec": 1.7
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T001F.md#19"
+   ],
+   "answer_chunks": [
+    "KS-TC-M401C.md#13"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-14",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "第 4 運転台で使う燃焼器は、点火の前に何秒以上掃気するのか。",
+   "answer_keys": [
+    "94 秒"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 2,
+     "entry_rank": 4,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 7917,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-M401C.md#6"
+   ],
+   "answer_chunks": [
+    "KS-TC-M404A.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-15",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "運転台 TB-20 で空気量を計るのに使うオリフィス管は、質量がどれだけあり、何で運ぶのか。",
+   "answer_keys": [
+    "104 kg"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 3,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": true,
+     "context_chars": 9392,
+     "sec": 1.8
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P001D.md#17"
+   ],
+   "answer_chunks": [
+    "KS-TC-M403B.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-16",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "起動用空気圧縮機の空気槽に付いている安全弁は、何 MPa で吹き出すのか。",
+   "answer_keys": [],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 2,
+     "answer_via_reference": false,
+     "chunks": 7,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 6755,
+     "sec": 1.0
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-M404A.md#13"
+   ],
+   "answer_chunks": [],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-17",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "燃焼器の出口のガス温度は、運転中、何度に合わせるのか。",
+   "answer_keys": [],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 7825,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-M404A.md#7"
+   ],
+   "answer_chunks": [],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-18",
+   "type": "control",
+   "twin_of": null,
+   "question": "潤滑油供給ユニットの加熱器の容量は、TB-30 では何 kW か。",
+   "answer_keys": [
+    "24 kW"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 7737,
+     "sec": 1.1
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-M401C.md#16"
+   ],
+   "answer_chunks": [
+    "KS-TC-M401C.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-19",
+   "type": "control",
+   "twin_of": null,
+   "question": "燃焼器を消火したあと、送風はいつまで続けるのか。",
+   "answer_keys": [
+    "104 ℃"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 7634,
+     "sec": 1.1
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-M404A.md#8"
+   ],
+   "answer_chunks": [
+    "KS-TC-M404A.md#8"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-20",
+   "type": "control",
+   "twin_of": null,
+   "question": "運転台の始業点検で、計装用空気の圧力はいくら以上あればよいか。",
+   "answer_keys": [
+    "0.54 MPa"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8427,
+     "sec": 1.9
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-M402E.md#15"
+   ],
+   "answer_chunks": [
+    "KS-TC-M402E.md#15"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C4-21",
+   "type": "control",
+   "twin_of": null,
+   "question": "管理番号 AC-10 の設備の開放点検は、運転の積算が何時間に達するごとに行うのか。",
+   "answer_keys": [
+    "2,004"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 2,
+     "entry_rank": 2,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7630,
+     "sec": 1.1
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-M402E.md#16"
+   ],
+   "answer_chunks": [
+    "KS-TC-M402E.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C5-01",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "過給機の試運転に使用した後で、圧力伝送器の校正外れが判明した。成績表に記入した過去の計測値は、どう取り扱うのか。",
+   "answer_keys": [
+    "1.25"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 2,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 10,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 10292,
+     "sec": 1.8
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P001D.md#16"
+   ],
+   "answer_chunks": [
+    "KS-TC-C501D.md#14"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C5-01d",
+   "type": "control",
+   "twin_of": "C5-01",
+   "question": "KS-TC-C501 の 6-2 項の表では、倍率がいくつ以下のとき、帳票をそのまま有効とするか。",
+   "answer_keys": [
+    "1.25"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 7749,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-C501D.md#14"
+   ],
+   "answer_chunks": [
+    "KS-TC-C501D.md#14"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C5-02",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "社外に委託して校正する携帯式振動計は、合格の日からいつまで試運転に使ってよいのか。",
+   "answer_keys": [
+    "419"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 8236,
+     "sec": 1.2
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-C504A.md#2"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C5-02d",
+   "type": "control",
+   "twin_of": "C5-02",
+   "question": "KS-TC-P001 の別表 2 で、管理番号 VM-50 の周期はいくつか。",
+   "answer_keys": [
+    "419"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 7,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 9025,
+     "sec": 1.2
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C5-03",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "過給機の単独試運転の準備中に、圧力伝送器を運転台の床に落としてしまった。計管に届け出て臨時の校正を受ける。その費用は、どの科目で付け替えられるのか。",
+   "answer_keys": [
+    "7215"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 8708,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-C501D.md#7"
+   ],
+   "answer_chunks": [
+    "KS-TC-C501D.md#20"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C5-03d",
+   "type": "control",
+   "twin_of": "C5-03",
+   "question": "KS-TC-C501 の別表 3 で、区分 U-15 の科目は何番か。",
+   "answer_keys": [
+    "7215"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8408,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-C501D.md#20"
+   ],
+   "answer_chunks": [
+    "KS-TC-C501D.md#20"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C5-04",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "過給機の試運転で空気量の計測に使う差圧伝送器を往復で校正したところ、行きの読みと戻りの読みを取り違えて残してしまった。どう直して、直した者は何をしておくのか。",
+   "answer_keys": [
+    "二重線",
+    "署名"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": false,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": null,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 7970,
+     "sec": 1.7
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-C502B.md#14"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#6"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C5-04d",
+   "type": "control",
+   "twin_of": "C5-04",
+   "question": "QK-TC-01 の第 5 条では、帳票の記入を誤ったとき、誤った箇所をどう訂正し、訂正した者は何をすると定めているか。",
+   "answer_keys": [
+    "二重線",
+    "署名"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8180,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-01G.md#6"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#6"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C5-05",
+   "type": "ref2",
+   "twin_of": null,
+   "question": "据え付けた場所から外さず、携帯の基準器と並べて読みを比べる気圧計は、いつまで使ってよいのか。",
+   "answer_keys": [
+    "719"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": false,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 8601,
+     "sec": 1.2
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-C502B.md#11"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": true,
+   "link_mid_to_answer": true
+  },
+  {
+   "qid": "C5-05d",
+   "type": "control",
+   "twin_of": "C5-05",
+   "question": "KS-TC-P001 の別表 2 で、管理番号 BR-80 の周期はいくつか。",
+   "answer_keys": [
+    "719"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8931,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C5-06",
+   "type": "ref2",
+   "twin_of": null,
+   "question": "校正外れの通知を受けて帳票を補正して見直したところ、性能の合否が変わる過給機があった。この過給機の扱いは、いつまでに決まるのか。",
+   "answer_keys": [
+    "29 稼働日"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": false,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 10160,
+     "sec": 1.7
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-C501D.md#15"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": true,
+   "link_mid_to_answer": true
+  },
+  {
+   "qid": "C5-06d",
+   "type": "control",
+   "twin_of": "C5-06",
+   "question": "QK-TC-02 の別表 1 で、区分 乙の期限は何稼働日か。",
+   "answer_keys": [
+    "29 稼働日"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8107,
+     "sec": 1.2
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-02D.md#16"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C5-07",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "潤滑油の供給圧力を測る圧力伝送器を、次の試運転のために借りたい。どこへ取りに行けばよいか。",
+   "answer_keys": [
+    "R-25"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 8422,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T001F.md#9"
+   ],
+   "answer_chunks": [
+    "KS-TC-C501D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C5-07d",
+   "type": "control",
+   "twin_of": "C5-07",
+   "question": "KS-TC-C501 の別表 1 で、管理番号 PT-20 の棚はどこか。",
+   "answer_keys": [
+    "R-25"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8510,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-C501D.md#18"
+   ],
+   "answer_chunks": [
+    "KS-TC-C501D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C5-08",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "試運転に使う圧力伝送器や熱電対の校正の結果を記入した記録票の原本は、保管の場所のなかの、どの置き場に置かれるのか。",
+   "answer_keys": [
+    "第 2 書架"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 7419,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-C501D.md#11"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C5-08d",
+   "type": "control",
+   "twin_of": "C5-08",
+   "question": "QK-TC-01 の別表 2 で、様式 TCF-310 の書架はどこか。",
+   "answer_keys": [
+    "第 2 書架"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8323,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C5-09",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "吸込空気温度や吐出空気温度の熱電対と組にして校正するデータ収録装置は、校正に合格してからいつまで試運転に使ってよいのか。",
+   "answer_keys": [
+    "389"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 7972,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-C503B.md#7"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C5-09d",
+   "type": "control",
+   "twin_of": "C5-09",
+   "question": "KS-TC-P001 の別表 2 で、管理番号 DL-90 の周期はいくつか。",
+   "answer_keys": [
+    "389"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8566,
+     "sec": 1.7
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C5-10",
+   "type": "ent2",
+   "twin_of": null,
+   "question": "校正外れの通知を受けて帳票を見直した結果、過検が起票した不適合の報告書は、保管の場所のなかの、どの置き場に置かれるのか。",
+   "answer_keys": [
+    "第 6 書架"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": false,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 7841,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-C501D.md#15"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": false,
+   "link_mid_to_answer": false
+  },
+  {
+   "qid": "C5-10d",
+   "type": "control",
+   "twin_of": "C5-10",
+   "question": "QK-TC-01 の別表 2 で、様式 TCF-210 の書架はどこか。",
+   "answer_keys": [
+    "第 6 書架"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 7600,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C5-11",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "軸受箱の空気抜き管につなぐ流量計は、どこまでの流量で校正するのか。",
+   "answer_keys": [
+    "125 L/min"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 3,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7108,
+     "sec": 0.9
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P001D.md#9"
+   ],
+   "answer_chunks": [
+    "KS-TC-C504A.md#14"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C5-12",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "コンプレッサ出口に差し込む熱電対を校正するとき、温度校正槽に差し込む深さは何 mm か。",
+   "answer_keys": [
+    "175 mm"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 4,
+     "entry_rank": 3,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 6482,
+     "sec": 0.9
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-C503B.md#4"
+   ],
+   "answer_chunks": [
+    "KS-TC-C503B.md#11"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C5-13",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "空気量を計測するのに使う計測器を校正するとき、許容差はいくらか。",
+   "answer_keys": [
+    "0.125 kPa"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": false,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 4,
+     "entry_rank": null,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7727,
+     "sec": 0.9
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T001F.md#9"
+   ],
+   "answer_chunks": [
+    "KS-TC-C502B.md#9"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C5-14",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "熱電対の校正では、器差が何℃以内なら合格になるのか。",
+   "answer_keys": [],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 7897,
+     "sec": 1.0
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-C503B.md#13"
+   ],
+   "answer_chunks": [],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C5-15",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "顧客から計測器の校正の証明を求められたとき、どの計測器の分まで提出すればよいのか。",
+   "answer_keys": [],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 7971,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-C501D.md#11"
+   ],
+   "answer_chunks": [],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C5-16",
+   "type": "control",
+   "twin_of": null,
+   "question": "計測器の校正室は、室温を何℃に保つのか。",
+   "answer_keys": [
+    "25±2 ℃"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7011,
+     "sec": 0.9
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-C501D.md#9"
+   ],
+   "answer_chunks": [
+    "KS-TC-C501D.md#9"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C5-17",
+   "type": "control",
+   "twin_of": null,
+   "question": "現場での校正と標準器の取扱いができる校正員の区分 S-35 には、何時間の講習が要るか。",
+   "answer_keys": [
+    "105 時間"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 6434,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-C501D.md#8"
+   ],
+   "answer_chunks": [
+    "KS-TC-C501D.md#8"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C5-18",
+   "type": "control",
+   "twin_of": null,
+   "question": "借り受けた計測器を運転台に取り付けたまま夜を越すとき、導線の端子には何を付けるのか。",
+   "answer_keys": [
+    "TP-45"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 7969,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-C501D.md#21"
+   ],
+   "answer_chunks": [
+    "KS-TC-C501D.md#21"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C5-19",
+   "type": "control",
+   "twin_of": null,
+   "question": "気圧計を現場で校正するとき、運んだ基準器は、据えてから何分のあいだ読みを採らないのか。",
+   "answer_keys": [
+    "105 分"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 6948,
+     "sec": 1.0
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-C502B.md#19"
+   ],
+   "answer_chunks": [
+    "KS-TC-C502B.md#19"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C6-01",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "納入された潤滑油のドラムの封印が破れていた。そのドラムはどう取り扱えばよいか。",
+   "answer_keys": [
+    "返品",
+    "選別"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 2,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 10,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 9023,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-L601C.md#5"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#14"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C6-01d",
+   "type": "control",
+   "twin_of": "C6-01",
+   "question": "QK-TC-02 の第 13 条では、受入検査で見つかった購入品の不適合について、資購は購入先に何を求めると定めているか。",
+   "answer_keys": [
+    "返品",
+    "選別"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 9,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8524,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-02D.md#14"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#14"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C6-02",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "冷却水循環装置の導電率計が連続して採っている値は、そのあとどう扱うのか。",
+   "answer_keys": [
+    "SV-29"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 2,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7657,
+     "sec": 1.1
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-L604A.md#17"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#10"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C6-02d",
+   "type": "control",
+   "twin_of": "C6-02",
+   "question": "帳票規定（QK-TC-01）の第 9 条では、電子の原記録を、作成した日のうちに共有サーバのどの保管域へ複写すると定めているか。",
+   "answer_keys": [
+    "SV-29"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7840,
+     "sec": 1.8
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-01G.md#10"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#10"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C6-03",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "試運転には、どのタービン油を使うのか。また、受入検査に合格したあと、その油のドラムは、油庫のどこに置いておくのか。",
+   "answer_keys": [
+    "D-26"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 2,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 9137,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-L601C.md#6"
+   ],
+   "answer_chunks": [
+    "KS-TC-L601C.md#18"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C6-03d",
+   "type": "control",
+   "twin_of": "C6-03",
+   "question": "KS-TC-L601 の別表 3 で、グレード 68 の区画はどこか。",
+   "answer_keys": [
+    "D-26"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8214,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-L601C.md#18"
+   ],
+   "answer_chunks": [
+    "KS-TC-L601C.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C6-04",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "潤滑油の配管に使う可とう管の予備は、どこに置いているか。",
+   "answer_keys": [
+    "R-56"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": false,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 8,
+     "entry_rank": null,
+     "answer_via_reference": true,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8792,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-L603D.md#13"
+   ],
+   "answer_chunks": [
+    "KS-TC-L603D.md#21"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C6-04d",
+   "type": "control",
+   "twin_of": "C6-04",
+   "question": "KS-TC-L603 の別表 1 で、品目 FH-516 の棚はどこか。",
+   "answer_keys": [
+    "R-56"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8231,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-L603D.md#21"
+   ],
+   "answer_chunks": [
+    "KS-TC-L603D.md#21"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C6-05",
+   "type": "ref2",
+   "twin_of": null,
+   "question": "試運転の途中で、給油ユニットの油タンクの油面が上がり、油が白く濁ってきた。油冷却器から水が漏れたらしい。この油の処置は、いつまでに終えなければならないか。",
+   "answer_keys": [
+    "146"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": true,
+     "answer_rank": 4,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 9,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8729,
+     "sec": 1.8
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-L602B.md#7"
+   ],
+   "answer_chunks": [
+    "KS-TC-L601C.md#17"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": true,
+   "link_mid_to_answer": true
+  },
+  {
+   "qid": "C6-05d",
+   "type": "control",
+   "twin_of": "C6-05",
+   "question": "KS-TC-L601 の別表 2 で、区分 ハ の猶予はいくつか。",
+   "answer_keys": [
+    "146"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8500,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-L601C.md#17"
+   ],
+   "answer_chunks": [
+    "KS-TC-L601C.md#17"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C6-06",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "潤滑油供給ユニットの出口に置いた油流量計は、校正してからいつまで使ってよいのか。",
+   "answer_keys": [
+    "269"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 8582,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-L602B.md#5"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C6-06d",
+   "type": "control",
+   "twin_of": "C6-06",
+   "question": "KS-TC-P001 の別表 2 で、管理番号 FM-70 の周期はいくつか。",
+   "answer_keys": [
+    "269"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 7,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8301,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C6-07",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "冷却水循環装置の循環ポンプの吸込側にあるストレーナは、予備をどこに置いているか。",
+   "answer_keys": [
+    "R-66"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 7554,
+     "sec": 1.1
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-L604A.md#4"
+   ],
+   "answer_chunks": [
+    "KS-TC-L603D.md#21"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C6-07d",
+   "type": "control",
+   "twin_of": "C6-07",
+   "question": "KS-TC-L603 の別表 1 で、品目 WS-616 の棚はどこか。",
+   "answer_keys": [
+    "R-66"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8157,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-L603D.md#21"
+   ],
+   "answer_chunks": [
+    "KS-TC-L603D.md#21"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C6-08",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "潤滑油の分析の結果を記入した管理票は、承認のあと、どこにしまうのか。",
+   "answer_keys": [
+    "第 2 書架"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 7848,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-L601C.md#15"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C6-08d",
+   "type": "control",
+   "twin_of": "C6-08",
+   "question": "QK-TC-01 の別表 2 で、様式 TCF-410 の書架はどこか。",
+   "answer_keys": [
+    "第 2 書架"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 7855,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C6-09",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "冷却水に入れる防錆剤の予備は、ふだんどこにしまってあるか。",
+   "answer_keys": [
+    "C-26"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 5,
+     "entry_rank": 2,
+     "answer_via_reference": true,
+     "chunks": 9,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7980,
+     "sec": 1.0
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-L604A.md#11"
+   ],
+   "answer_chunks": [
+    "KS-TC-L603D.md#22"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C6-09d",
+   "type": "control",
+   "twin_of": "C6-09",
+   "question": "KS-TC-L603 の別表 2 で、記号 K-16 の区画はどこか。",
+   "answer_keys": [
+    "C-26"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 7295,
+     "sec": 1.1
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-L603D.md#22"
+   ],
+   "answer_chunks": [
+    "KS-TC-L603D.md#22"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C6-10",
+   "type": "ref2",
+   "twin_of": null,
+   "question": "3 号給油ユニットの送り先を TB-30 から TB-40 へ切り替えた。運転の前に調べる油は、どれだけ要るのか。",
+   "answer_keys": [
+    "136 mL"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": false,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 9126,
+     "sec": 1.7
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-L602B.md#13"
+   ],
+   "answer_chunks": [
+    "KS-TC-L601C.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": true,
+   "link_mid_to_answer": true
+  },
+  {
+   "qid": "C6-10d",
+   "type": "control",
+   "twin_of": "C6-10",
+   "question": "KS-TC-L601 の別表 1 で、区分 S-36 の量は何 mL か。",
+   "answer_keys": [
+    "136 mL"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7271,
+     "sec": 0.9
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-L601C.md#16"
+   ],
+   "answer_chunks": [
+    "KS-TC-L601C.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C6-11",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "TB-40 で過給機を運転するときに使う潤滑油供給ユニットは、油タンクに油が何 L 入るのか。",
+   "answer_keys": [
+    "1,116"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": false,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 3,
+     "entry_rank": null,
+     "answer_via_reference": false,
+     "chunks": 7,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7960,
+     "sec": 1.2
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-L001E.md#13"
+   ],
+   "answer_chunks": [
+    "KS-TC-L602B.md#12"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C6-12",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "LU-30 のラインフィルタのエレメントは、差圧がいくらになったら交換するのか。",
+   "answer_keys": [
+    "86 kPa"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 2,
+     "entry_rank": 4,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8324,
+     "sec": 1.2
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-L602B.md#10",
+    "KS-TC-L602B.md#12"
+   ],
+   "answer_chunks": [
+    "KS-TC-L603D.md#7"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C6-13",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "NA30 系列の過給機を運転する運転台の潤滑油供給ユニットは、油タンクの容量が何 L か。",
+   "answer_keys": [
+    "616 L"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": false,
+     "answer_in": true,
+     "mid_in": false,
+     "answer_rank": 3,
+     "entry_rank": null,
+     "answer_via_reference": false,
+     "chunks": 7,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7880,
+     "sec": 1.2
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T001F.md#19"
+   ],
+   "answer_chunks": [
+    "KS-TC-L602B.md#11"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": false,
+   "link_mid_to_answer": false
+  },
+  {
+   "qid": "C6-14",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "顧客が銘柄を指定した油で試運転をする場合、使用中の油の酸価は、いくらまで許されるか。",
+   "answer_keys": [],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 7966,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-L601C.md#11"
+   ],
+   "answer_chunks": [],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C6-15",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "ラインフィルタのエレメントを交換したあと、ふたはどれだけのトルクで締め付けるのか。",
+   "answer_keys": [],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 7,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 5837,
+     "sec": 0.8
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-L603D.md#5",
+    "KS-TC-L603D.md#6",
+    "KS-TC-L603D.md#7"
+   ],
+   "answer_chunks": [],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C6-16",
+   "type": "control",
+   "twin_of": null,
+   "question": "使用中の潤滑油の水分の管理値は、いくらか。",
+   "answer_keys": [
+    "506 ppm"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7734,
+     "sec": 1.0
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-L601C.md#11"
+   ],
+   "answer_chunks": [
+    "KS-TC-L601C.md#11"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C6-17",
+   "type": "control",
+   "twin_of": null,
+   "question": "冷却水循環装置 CW-10 が装置の全体で保有する水の量は、いくらか。",
+   "answer_keys": [
+    "2,416"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 7,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7609,
+     "sec": 1.0
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-L604A.md#4"
+   ],
+   "answer_chunks": [
+    "KS-TC-L604A.md#4"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C6-18",
+   "type": "control",
+   "twin_of": null,
+   "question": "LU-10 の油タンクの容量は、何 L か。",
+   "answer_keys": [
+    "3,216"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8175,
+     "sec": 1.0
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-L602B.md#10"
+   ],
+   "answer_chunks": [
+    "KS-TC-L602B.md#10"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C6-19",
+   "type": "control",
+   "twin_of": null,
+   "question": "顧客の指定で、いつもと違う銘柄の油を試運転に使うとき、社内の届出は、使う日の何稼働日前までに行うのか。",
+   "answer_keys": [
+    "26 稼働日"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8223,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-L601C.md#14"
+   ],
+   "answer_chunks": [
+    "KS-TC-L601C.md#14"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C7-01",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "単独試運転の成績表の承認者が不在のとき、代行者として承認する者に指名できるのは、どういう者か。",
+   "answer_keys": [
+    "S-37",
+    "SC-77"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 8450,
+     "sec": 1.7
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-01G.md#8"
+   ],
+   "answer_chunks": [
+    "QK-TC-71E.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C7-02",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "船主から、単独試運転を担当する検査員が資格を持っていることの証明を求められた。どう対応すればよいか。",
+   "answer_keys": [
+    "発行番号"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 2,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 10,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8665,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-71E.md#11"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#12"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C7-03",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "聴音検査で異常音を聞き落とし、あとの工程で軸受の損傷が見つかった。聞き落とした者は、そのあとどうなるのか。",
+   "answer_keys": [
+    "RC-47"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 2,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 9,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7700,
+     "sec": 1.1
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-74A.md#10"
+   ],
+   "answer_chunks": [
+    "QK-TC-73B.md#9"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C7-04",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "運転台のまわりに、まだ認定を受けていない見習いの作業者が混じっていることがある。認定を受けた作業者とは、どこで見分けるのか。",
+   "answer_keys": [
+    "若草色"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 7,
+     "entry_rank": 2,
+     "answer_via_reference": true,
+     "chunks": 7,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7396,
+     "sec": 1.0
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-72C.md#13"
+   ],
+   "answer_chunks": [
+    "QK-TC-73B.md#8"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C7-05",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "携帯式振動計の当て方を習わせる加振台は、点検してからいつまで使ってよいのか。",
+   "answer_keys": [
+    "277"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 8909,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-73B.md#13"
+   ],
+   "answer_chunks": [
+    "QK-TC-73B.md#17"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C7-06",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "聴音検査の認定を受けた者が休暇で不在で、試運転の日程も動かせない。どうすればよいか。",
+   "answer_keys": [
+    "基準逸脱審査会"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 2,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7989,
+     "sec": 1.2
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-74A.md#11"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#10"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C7-07",
+   "type": "ref2",
+   "twin_of": null,
+   "question": "単独試運転で、検査員から回転を下げるよう指示されたのに従わずに運転を続けた作業者は、どういう扱いを受けるのか。",
+   "answer_keys": [
+    "117"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": false,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 9,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 9277,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-72C.md#12"
+   ],
+   "answer_chunks": [
+    "QK-TC-71E.md#17"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": true,
+   "link_mid_to_answer": true
+  },
+  {
+   "qid": "C7-09",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "運転台を操作する作業者の認定の結果を登録した台帳の原本は、どこにあるのか。",
+   "answer_keys": [
+    "第 7 書架"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 7839,
+     "sec": 1.2
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-72C.md#16"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C7-10",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "聴音検査の認定の実技試験で音を再生する装置は、点検してからいつまで試験に使ってよいのか。",
+   "answer_keys": [
+    "187"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 2,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 7226,
+     "sec": 1.2
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-73B.md#13"
+   ],
+   "answer_chunks": [
+    "QK-TC-73B.md#17"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C7-11",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "運転台の操作の認定を受ける前の学科の講習で使う模擬操作盤は、点検してからいつまで講習に使ってよいのか。",
+   "answer_keys": [
+    "367"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 7,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 7,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7623,
+     "sec": 1.2
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-73B.md#13"
+   ],
+   "answer_chunks": [
+    "QK-TC-73B.md#17"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C7-12",
+   "type": "ent2",
+   "twin_of": null,
+   "question": "聴音検査の認定を受けようとする者は、それまでに何台の単独試運転に立ち会っていなければならないか。",
+   "answer_keys": [
+    "137"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": false,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 7712,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-74A.md#5"
+   ],
+   "answer_chunks": [
+    "QK-TC-71E.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": false,
+   "link_mid_to_answer": false
+  },
+  {
+   "qid": "C7-13",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "HX40 系列の過給機を運転する運転台の操作の認定を受けるには、見習いとして何時間、操作に就かなければならないか。",
+   "answer_keys": [
+    "217 時間"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": false,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 2,
+     "entry_rank": null,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8138,
+     "sec": 1.0
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T001F.md#19"
+   ],
+   "answer_chunks": [
+    "QK-TC-72C.md#8"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C7-14",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "自己給油方式の過給機を運転する運転台の操作の認定を受けるには、見習いとして何時間、操作に就かなければならないか。",
+   "answer_keys": [
+    "167 時間"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": false,
+     "answer_in": true,
+     "mid_in": false,
+     "answer_rank": 3,
+     "entry_rank": null,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8179,
+     "sec": 1.2
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-L001E.md#13"
+   ],
+   "answer_chunks": [
+    "QK-TC-72C.md#6"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": false,
+   "link_mid_to_answer": false
+  },
+  {
+   "qid": "C7-15",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "帳票の承認者を務めている者は、何か月ごとに更新を受けなければならないか。",
+   "answer_keys": [
+    "47"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 3,
+     "entry_rank": 2,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8700,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-01G.md#8"
+   ],
+   "answer_chunks": [
+    "QK-TC-71E.md#9"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C7-16",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "聴音検査の認定の実技試験で、エア運転中の過給機を使って聴音をするとき、過給機は何回転で回すのか。",
+   "answer_keys": [],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 9193,
+     "sec": 1.8
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-74A.md#7"
+   ],
+   "answer_chunks": [],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C7-17",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "検査員が社外で取得した資格は、社内の検査員の等級にどう読み替えるのか。",
+   "answer_keys": [],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 6662,
+     "sec": 1.1
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-71E.md#14"
+   ],
+   "answer_chunks": [],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C7-18",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "顧客の立会いのもとで行う試運転で、運転台を操作する作業者に顧客が求める条件は何か。",
+   "answer_keys": [],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 10,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 9096,
+     "sec": 1.8
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-72C.md#15"
+   ],
+   "answer_chunks": [],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C7-19",
+   "type": "control",
+   "twin_of": null,
+   "question": "検査員の資格認定の学科試験は、何点以上で合格か。",
+   "answer_keys": [
+    "77 点"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 7,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 6188,
+     "sec": 1.0
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-71E.md#8"
+   ],
+   "answer_chunks": [
+    "QK-TC-71E.md#8"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C7-20",
+   "type": "control",
+   "twin_of": null,
+   "question": "聴音検査の認定を受ける者の聴力は、どのような基準で合格とするのか。",
+   "answer_keys": [
+    "27 dB"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 7,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 6561,
+     "sec": 1.0
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-74A.md#6"
+   ],
+   "answer_chunks": [
+    "QK-TC-74A.md#6"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C7-21",
+   "type": "control",
+   "twin_of": null,
+   "question": "教育訓練の年間計画は、誰が、いつまでに作るのか。",
+   "answer_keys": [
+    "2 月"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 7522,
+     "sec": 1.2
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-73B.md#5"
+   ],
+   "answer_chunks": [
+    "QK-TC-73B.md#5"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C7-22",
+   "type": "control",
+   "twin_of": null,
+   "question": "QK-TC-73 の別表 1 で、番号 QK-TC-01 の教育の所要はいくつか。",
+   "answer_keys": [
+    "147"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 9,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7979,
+     "sec": 2.0
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-73B.md#16"
+   ],
+   "answer_chunks": [
+    "QK-TC-73B.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C7-01d",
+   "type": "control",
+   "twin_of": "C7-01",
+   "question": "QK-TC-71 の別表 3 で、番号 QK-TC-01 の第 7 条の行の記号と摘要は何か。",
+   "answer_keys": [
+    "S-37",
+    "SC-77"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 10,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 10571,
+     "sec": 1.7
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-71E.md#18"
+   ],
+   "answer_chunks": [
+    "QK-TC-71E.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C7-02d",
+   "type": "control",
+   "twin_of": "C7-02",
+   "question": "QK-TC-01 の第 11 条では、顧客へ提出する帳票の写しに、過品管が何を付けると定めているか。",
+   "answer_keys": [
+    "発行番号"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8423,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-01G.md#12"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#12"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C7-03d",
+   "type": "control",
+   "twin_of": "C7-03",
+   "question": "QK-TC-73 の第 8 条では、資格又は認定の効力を停止された者は、どの課程を修了しなければ元の業務に就けないと定めているか。",
+   "answer_keys": [
+    "RC-47"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7645,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-73B.md#9"
+   ],
+   "answer_chunks": [
+    "QK-TC-73B.md#9"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C7-04d",
+   "type": "control",
+   "twin_of": "C7-04",
+   "question": "QK-TC-73 の第 7 条では、実技の訓練の受講者は、訓練のあいだ何色の腕章を着けると定めているか。",
+   "answer_keys": [
+    "若草色"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 7547,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-73B.md#8"
+   ],
+   "answer_chunks": [
+    "QK-TC-73B.md#8"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C7-05d",
+   "type": "control",
+   "twin_of": "C7-05",
+   "question": "QK-TC-73 の別表 2 で、管理番号 KN-730 の周期はいくつか。",
+   "answer_keys": [
+    "277"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 7829,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-73B.md#17"
+   ],
+   "answer_chunks": [
+    "QK-TC-73B.md#17"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C7-06d",
+   "type": "control",
+   "twin_of": "C7-06",
+   "question": "QK-TC-02 の第 9 条では、基準からの逸脱があらかじめ見込まれる場合に、逸脱許可申請書を出して、どこの承認を受けると定めているか。",
+   "answer_keys": [
+    "基準逸脱審査会"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8764,
+     "sec": 1.2
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-02D.md#10"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#10"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C7-07d",
+   "type": "control",
+   "twin_of": "C7-07",
+   "question": "QK-TC-71 の別表 2 で、号 (2) の措置と期間は何か。",
+   "answer_keys": [
+    "117"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8324,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-71E.md#17"
+   ],
+   "answer_chunks": [
+    "QK-TC-71E.md#17"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C7-09d",
+   "type": "control",
+   "twin_of": "C7-09",
+   "question": "QK-TC-01 の別表 2 で、様式 TCF-510 の書架はどこか。",
+   "answer_keys": [
+    "第 7 書架"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8324,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C7-10d",
+   "type": "control",
+   "twin_of": "C7-10",
+   "question": "QK-TC-73 の別表 2 で、管理番号 KN-710 の周期はいくつか。",
+   "answer_keys": [
+    "187"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8078,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-73B.md#17"
+   ],
+   "answer_chunks": [
+    "QK-TC-73B.md#17"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C7-11d",
+   "type": "control",
+   "twin_of": "C7-11",
+   "question": "QK-TC-73 の別表 2 で、管理番号 KN-720 の周期はいくつか。",
+   "answer_keys": [
+    "367"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8086,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-73B.md#17"
+   ],
+   "answer_chunks": [
+    "QK-TC-73B.md#17"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C7-12d",
+   "type": "control",
+   "twin_of": "C7-12",
+   "question": "QK-TC-71 の別表 1 で、記号 S-27 の実績はいくつか。",
+   "answer_keys": [
+    "137"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7913,
+     "sec": 1.1
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-71E.md#16"
+   ],
+   "answer_chunks": [
+    "QK-TC-71E.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-01",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "出荷の後に不適合が見つかった過給機は、社内でどう取り扱うのか。相手方への連絡の期限も知りたい。",
+   "answer_keys": [
+    "48 時間"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 7,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": true,
+     "context_chars": 8263,
+     "sec": 1.0
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-02D.md#2"
+   ],
+   "answer_chunks": [
+    "QK-TC-84B.md#12"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-01d",
+   "type": "control",
+   "twin_of": "C8-01",
+   "question": "QK-TC-84 の第 11 条では、苦情を受け付けてから何時間以内に第一報を出すと定めているか。",
+   "answer_keys": [
+    "48 時間"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 7,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 6841,
+     "sec": 0.9
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-84B.md#12"
+   ],
+   "answer_chunks": [
+    "QK-TC-84B.md#12"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-02",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "顧客の立会検査の運転中に、立会人から異常を指摘されて運転を止めた。止めたあとの過給機はどう扱うのか。",
+   "answer_keys": [
+    "H-39"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 2,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 10,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 9771,
+     "sec": 1.7
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-84B.md#8"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#6"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-02d",
+   "type": "control",
+   "twin_of": "C8-02",
+   "question": "QK-TC-02 の第 5 条では、不適合の品に保留札を付けたあと、どの保留区画へ移すと定めているか。",
+   "answer_keys": [
+    "H-39"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8243,
+     "sec": 1.2
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-02D.md#6"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#6"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-03",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "過給機の立会検査で、立会人の求めで同じ計測点を計測し直したとき、後の値は成績表に書く。先の値はどうなるのか。",
+   "answer_keys": [
+    "MK-49"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 2,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 9,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 10833,
+     "sec": 1.8
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-84B.md#6"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#7"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-03d",
+   "type": "control",
+   "twin_of": "C8-03",
+   "question": "QK-TC-01 の第 6 条では、無効とした記録をどの綴りに綴じると定めているか。",
+   "answer_keys": [
+    "MK-49"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8085,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-01G.md#7"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#7"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-04",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "同じ型式の過給機の同じ部位について、特別採用の申請が続いている。件数が 3 件に達したら、何が行われるのか。",
+   "answer_keys": [
+    "傾向検討会"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 2,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 9,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 11103,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-82C.md#13"
+   ],
+   "answer_chunks": [
+    "QK-TC-81D.md#11"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-04d",
+   "type": "control",
+   "twin_of": "C8-04",
+   "question": "QK-TC-81 の第 10 条では、予防処置の対象とした事項について、過品管がどんな会合を開くと定めているか。",
+   "answer_keys": [
+    "傾向検討会"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8293,
+     "sec": 1.1
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-81D.md#11"
+   ],
+   "answer_chunks": [
+    "QK-TC-81D.md#11"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-05",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "使用する期間を限る条件を付けて出荷された過給機は、納入からいつまで使ってよいのか。",
+   "answer_keys": [
+    "208"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 11432,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-82C.md#10"
+   ],
+   "answer_chunks": [
+    "QK-TC-82C.md#17"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-05d",
+   "type": "control",
+   "twin_of": "C8-05",
+   "question": "QK-TC-82 の別表 1 で、記号 J-18 の値はいくつか。",
+   "answer_keys": [
+    "208"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 6965,
+     "sec": 0.9
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-82C.md#17"
+   ],
+   "answer_chunks": [
+    "QK-TC-82C.md#17"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-06",
+   "type": "ref2",
+   "twin_of": null,
+   "question": "過検の文書庫に保管している帳票について、保管の状況は、だれがどうやって確かめるのか。",
+   "answer_keys": [
+    "38 冊"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": true,
+     "answer_rank": 3,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 10,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 9478,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-01G.md#9"
+   ],
+   "answer_chunks": [
+    "QK-TC-83E.md#17"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": false,
+   "link_mid_to_answer": true
+  },
+  {
+   "qid": "C8-06d",
+   "type": "control",
+   "twin_of": "C8-06",
+   "question": "QK-TC-83 の別表 2 で、記号 NK-38 の数は何冊か。",
+   "answer_keys": [
+    "38 冊"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 6366,
+     "sec": 1.1
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-83E.md#17"
+   ],
+   "answer_chunks": [
+    "QK-TC-83E.md#17"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-07",
+   "type": "ref2",
+   "twin_of": null,
+   "question": "過給機の検査で甲の不適合が起きた。原因のある部門へ求めた処置は、いつ完結にできるのか。",
+   "answer_keys": [
+    "188"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": true,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 8680,
+     "sec": 1.2
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-02D.md#12"
+   ],
+   "answer_chunks": [
+    "QK-TC-81D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": false,
+   "link_mid_to_answer": true
+  },
+  {
+   "qid": "C8-07d",
+   "type": "control",
+   "twin_of": "C8-07",
+   "question": "QK-TC-81 の別表 2 で、種別 S-18 の確認の欄の数はいくつか。",
+   "answer_keys": [
+    "188"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 6791,
+     "sec": 0.9
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-81D.md#18"
+   ],
+   "answer_chunks": [
+    "QK-TC-81D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-08",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "特別採用を申請するために過品管へ提出した申請書は、出荷のあといつまで残しておくのか。",
+   "answer_keys": [
+    "39 年"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 9,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 9090,
+     "sec": 1.2
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-82C.md#5"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-08d",
+   "type": "control",
+   "twin_of": "C8-08",
+   "question": "QK-TC-01 の別表 2 で、様式 TCF-230 の年限は何年か。",
+   "answer_keys": [
+    "39 年"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8270,
+     "sec": 1.7
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-09",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "過給機の検査の記録の付け方について、内部品質監査で重欠点の指摘を受けた。指摘を受けた部門は、いつまでに、何を過品管へ出さなければならないか。",
+   "answer_keys": [
+    "28 稼働日"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 7,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 9246,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-83E.md#11"
+   ],
+   "answer_chunks": [
+    "QK-TC-81D.md#17"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-09d",
+   "type": "control",
+   "twin_of": "C8-09",
+   "question": "QK-TC-81 の別表 1 で、種別 S-38 の報告の期限は何稼働日か。",
+   "answer_keys": [
+    "28 稼働日"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8473,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-81D.md#17"
+   ],
+   "answer_chunks": [
+    "QK-TC-81D.md#17"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-10",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "納入後に運転の状況を追跡する条件を付けて特別採用とした過給機は、出荷のあと、いつまで様子を見るのか。",
+   "answer_keys": [
+    "158"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 2,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 9719,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-82C.md#14"
+   ],
+   "answer_chunks": [
+    "QK-TC-84B.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-10d",
+   "type": "control",
+   "twin_of": "C8-10",
+   "question": "QK-TC-84 の別表 2 で、記号 T-28 の終了の欄の数はいくつか。",
+   "answer_keys": [
+    "158"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 5969,
+     "sec": 0.6
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-84B.md#18"
+   ],
+   "answer_chunks": [
+    "QK-TC-84B.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-11",
+   "type": "ent2",
+   "twin_of": null,
+   "question": "納入した過給機の苦情を調べたら、当社の製造に原因があった。回答書を出したあと、原因のある部門がとった処置は、いつ効いたと認められるのか。",
+   "answer_keys": [
+    "368"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": true,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 8270,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-84B.md#14"
+   ],
+   "answer_chunks": [
+    "QK-TC-81D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": false,
+   "link_mid_to_answer": true
+  },
+  {
+   "qid": "C8-11d",
+   "type": "control",
+   "twin_of": "C8-11",
+   "question": "QK-TC-81 の別表 2 で、種別 S-48 の確認の欄の数はいくつか。",
+   "answer_keys": [
+    "368"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 6781,
+     "sec": 0.8
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-81D.md#18"
+   ],
+   "answer_chunks": [
+    "QK-TC-81D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-12",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "顧客の立会検査の運転中に、軸受が焼き付いた。再立会いは、社内の再試験に合格してから何日以内に行うのか。",
+   "answer_keys": [
+    "28 日"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": false,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": null,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8108,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-02D.md#4"
+   ],
+   "answer_chunks": [
+    "QK-TC-84B.md#9"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-13",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "量産機の性能の判定で、サージング点が許容範囲を外れた。特別採用を申請できるのは、外れがどこまでの場合か。",
+   "answer_keys": [
+    "18 %"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 2,
+     "entry_rank": 5,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8430,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T001F.md#14"
+   ],
+   "answer_chunks": [
+    "QK-TC-82C.md#8"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-14",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "立会検査の運転中に、渦巻室の合せ面から、かに泡の程度を超える空気漏れが見つかった。締め直しても止まらない。立会いは、その日のうちに続けられるか。",
+   "answer_keys": [
+    "その場",
+    "手直し"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": false,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 4,
+     "entry_rank": null,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7884,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-02D.md#4"
+   ],
+   "answer_chunks": [
+    "QK-TC-84B.md#11"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-15",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "顧客の立会検査では、顧客はどの項目に立ち会うのか。",
+   "answer_keys": [],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 7249,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-84B.md#4"
+   ],
+   "answer_chunks": [],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-16",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "船級協会の承認図に関わる不適合を特別採用にするとき、協会の承認は、どういう手続で受けるのか。",
+   "answer_keys": [],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 8360,
+     "sec": 1.2
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-82C.md#11"
+   ],
+   "answer_chunks": [],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-17",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "顧客が、苦情とは関係なく、当社に対して定期に行う監査は、どの部門が、どういう手順で受け入れるのか。",
+   "answer_keys": [],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 8420,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-83E.md#2"
+   ],
+   "answer_chunks": [],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-18",
+   "type": "control",
+   "twin_of": null,
+   "question": "内部品質監査の監査員になるための監査員研修は、何時間か。",
+   "answer_keys": [
+    "18 時間"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 7,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 6703,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-83E.md#6"
+   ],
+   "answer_chunks": [
+    "QK-TC-83E.md#6"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-19",
+   "type": "control",
+   "twin_of": null,
+   "question": "特別採用が決まった品には、保留札の代わりに何を付けるのか。",
+   "answer_keys": [
+    "特採札"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8210,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-82C.md#12"
+   ],
+   "answer_chunks": [
+    "QK-TC-82C.md#12"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-20",
+   "type": "control",
+   "twin_of": null,
+   "question": "苦情の調査のために引き取った現品は、どこに受け入れるのか。",
+   "answer_keys": [
+    "返却品置場"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8064,
+     "sec": 1.1
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-84B.md#13"
+   ],
+   "answer_chunks": [
+    "QK-TC-84B.md#13"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-21",
+   "type": "control",
+   "twin_of": null,
+   "question": "是正処置の原因の分類で、基準類又は手順書の不備は、どの記号で記入するのか。",
+   "answer_keys": [
+    "GB-38"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7422,
+     "sec": 1.2
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-81D.md#19"
+   ],
+   "answer_chunks": [
+    "QK-TC-81D.md#19"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "C8-22",
+   "type": "control",
+   "twin_of": null,
+   "question": "顧客の立会いのもとで記入した帳票には、いつ、だれの署名を受けるのか。",
+   "answer_keys": [
+    "立会人"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 7951,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-84B.md#7"
+   ],
+   "answer_chunks": [
+    "QK-TC-84B.md#7"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "CORE-01",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "全力運転試験で、運転装置の都合により最高許容回転速度まで回せない過給機は、どう取り扱えばよいか。",
+   "answer_keys": [
+    "基準逸脱審査会"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 2,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 10,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 10730,
+     "sec": 2.0
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T001F.md#8"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#10"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "CORE-01d",
+   "type": "control",
+   "twin_of": "CORE-01",
+   "question": "QK-TC-02 の第 9 条では、基準からの逸脱があらかじめ見込まれる場合に、どこの承認を受けると定めているか。",
+   "answer_keys": [
+    "基準逸脱審査会"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8932,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-02D.md#10"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#10"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "CORE-02",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "試運転中に潤滑油の供給温度が範囲を外れていた。そのあいだに計測した性能のデータはどうすればよいか。",
+   "answer_keys": [
+    "MK-49"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 2,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 9,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 9207,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-L001E.md#11"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#7"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "CORE-02d",
+   "type": "control",
+   "twin_of": "CORE-02",
+   "question": "QK-TC-01 の第 6 条では、無効とした記録をどの綴りに綴じると定めているか。",
+   "answer_keys": [
+    "MK-49"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8085,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-01G.md#7"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#7"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "CORE-03",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "性能計測でデータ収録装置 DL-90 が収録した計測値は、試運転が終わったあとどう扱うのか。",
+   "answer_keys": [
+    "SV-29"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 8996,
+     "sec": 1.9
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P001D.md#8"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#10"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "CORE-03d",
+   "type": "control",
+   "twin_of": "CORE-03",
+   "question": "QK-TC-01 の第 9 条では、電子の原記録を共有サーバのどの保管域へ複写すると定めているか。",
+   "answer_keys": [
+    "SV-29"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 7655,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-01G.md#10"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#10"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "CORE-04",
+   "type": "ref1",
+   "twin_of": null,
+   "question": "聴音検査で接触音を認めて運転を止めた過給機は、そのあとどう扱うのか。",
+   "answer_keys": [
+    "H-39"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 2,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 9,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 9693,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T001F.md#10"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#6"
+   ],
+   "link_entry_to_answer": true,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "CORE-04d",
+   "type": "control",
+   "twin_of": "CORE-04",
+   "question": "QK-TC-02 の第 5 条では、不適合の品に保留札を付けたあと、どの保留区画へ移すと定めているか。",
+   "answer_keys": [
+    "H-39"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 8243,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-02D.md#6"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#6"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "CORE-05",
+   "type": "ref2",
+   "twin_of": null,
+   "question": "試運転で外部振動が許容値を超えた過給機の処置は、いつまでに決めなければならないか。",
+   "answer_keys": [
+    "19 稼働日"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": true,
+     "answer_rank": 3,
+     "entry_rank": 1,
+     "answer_via_reference": true,
+     "chunks": 10,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 11063,
+     "sec": 1.8
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T001F.md#16"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": true,
+   "link_mid_to_answer": true
+  },
+  {
+   "qid": "CORE-05d",
+   "type": "control",
+   "twin_of": "CORE-05",
+   "question": "QK-TC-02 の別表 1 で、区分 甲の期限は何稼働日か。",
+   "answer_keys": [
+    "19 稼働日"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8459,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-02D.md#16"
+   ],
+   "answer_chunks": [
+    "QK-TC-02D.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "CORE-06",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "単独試運転の結果を記入した成績表は、出荷のあといつまで残しておくのか。",
+   "answer_keys": [
+    "29 年"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 10440,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T001F.md#18"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "CORE-06d",
+   "type": "control",
+   "twin_of": "CORE-06",
+   "question": "QK-TC-01 の別表 2 で、様式 TCF-110 の年限は何年か。",
+   "answer_keys": [
+    "29 年"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8238,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "CORE-07",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "単独試運転の計測項目のうち、回転速度をタービン軸端で計測するのに使う回転計は、いつまで使ってよいのか。",
+   "answer_keys": [
+    "539"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 9466,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T001F.md#9"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "CORE-07d",
+   "type": "control",
+   "twin_of": "CORE-07",
+   "question": "KS-TC-P001 の別表 2 で、管理番号 RT-40 の周期はいくつか。",
+   "answer_keys": [
+    "539"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 7,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 9143,
+     "sec": 1.2
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#18"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "CORE-08",
+   "type": "ent2",
+   "twin_of": null,
+   "question": "初号機の試験で計測したコンプレッサ性能の値を記入したものは、出荷のあといつまで残しておくのか。",
+   "answer_keys": [
+    "39 年"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": false,
+     "answer_rank": null,
+     "entry_rank": 2,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 10905,
+     "sec": 1.6
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T001F.md#5"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": false,
+   "link_mid_to_answer": false
+  },
+  {
+   "qid": "CORE-08d",
+   "type": "control",
+   "twin_of": "CORE-08",
+   "question": "QK-TC-01 の別表 2 で、様式 TCF-130 の年限は何年か。",
+   "answer_keys": [
+    "39 年"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 6,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8371,
+     "sec": 1.5
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "CORE-09",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "NE60 系列の過給機を単独試運転するとき、潤滑油の供給圧力はいくらにするか。",
+   "answer_keys": [
+    "219±20"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": false,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": null,
+     "answer_via_reference": false,
+     "chunks": 9,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 8817,
+     "sec": 1.3
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T001F.md#19"
+   ],
+   "answer_chunks": [
+    "KS-TC-L001E.md#7"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "CORE-10",
+   "type": "confusable",
+   "twin_of": null,
+   "question": "斜流タービンの系列の量産機は、どの基準で単独試運転の検査をするのか。番号を知りたい。",
+   "answer_keys": [
+    "KS-TC-T202"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 4,
+     "answer_via_reference": false,
+     "chunks": 10,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 11272,
+     "sec": 2.0
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T001F.md#19"
+   ],
+   "answer_chunks": [
+    "KS-TC-A000N.md#4"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "CORE-11",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "全力運転試験では、最高許容回転速度で何分間運転するのか。",
+   "answer_keys": [],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 9,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 9313,
+     "sec": 1.8
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T001F.md#8"
+   ],
+   "answer_chunks": [],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "CORE-12",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "空気量の計算に使うオリフィスの流量係数は、いくつか。",
+   "answer_keys": [],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 8632,
+     "sec": 1.1
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P001D.md#4"
+   ],
+   "answer_chunks": [],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "CORE-13",
+   "type": "unanswerable",
+   "twin_of": null,
+   "question": "単独試運転で計測するブローバイガス量の許容値は、いくらか。",
+   "answer_keys": [],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": false,
+     "mid_in": null,
+     "answer_rank": null,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": false,
+     "keys_in_graph_lines": false,
+     "context_chars": 8844,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T001F.md#12"
+   ],
+   "answer_chunks": [],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "CORE-14",
+   "type": "control",
+   "twin_of": null,
+   "question": "単独試運転の外部振動の許容値は、振動速度でいくらか。",
+   "answer_keys": [
+    "4.9 mm/s"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 11,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 10130,
+     "sec": 1.7
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-T001F.md#16"
+   ],
+   "answer_chunks": [
+    "KS-TC-T001F.md#16"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "CORE-15",
+   "type": "control",
+   "twin_of": null,
+   "question": "コンプレッサ性能を換算するときの標準吸込状態は、吸込温度と吸込全圧がいくつか。",
+   "answer_keys": [
+    "299 K",
+    "99.9 kPa"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 10,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": false,
+     "context_chars": 10294,
+     "sec": 1.4
+    }
+   },
+   "entry_chunks": [
+    "KS-TC-P001D.md#10"
+   ],
+   "answer_chunks": [
+    "KS-TC-P001D.md#10"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  },
+  {
+   "qid": "CORE-16",
+   "type": "control",
+   "twin_of": null,
+   "question": "原記録から帳票へ値を転記したときは、どのような方法で照合するのか。",
+   "answer_keys": [
+    "二者読合せ"
+   ],
+   "runs": {
+    "新・参照2": {
+     "entry_in": true,
+     "answer_in": true,
+     "mid_in": null,
+     "answer_rank": 1,
+     "entry_rank": 1,
+     "answer_via_reference": false,
+     "chunks": 8,
+     "keys_in_chunk_text": true,
+     "keys_in_graph_lines": true,
+     "context_chars": 7924,
+     "sec": 1.1
+    }
+   },
+   "entry_chunks": [
+    "QK-TC-01G.md#5"
+   ],
+   "answer_chunks": [
+    "QK-TC-01G.md#5"
+   ],
+   "link_entry_to_answer": false,
+   "link_entry_to_mid": null,
+   "link_mid_to_answer": null
+  }
+ ]
+}

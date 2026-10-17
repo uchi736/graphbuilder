@@ -1,0 +1,3303 @@
+{
+ "about": {
+  "purpose": "エンティティをたどる問いの検証用（ホールドアウト）。仕組みを直す担当には見せない。",
+  "made": "2026-10-12",
+  "check": "check_synth.py --rerank --answer-below 20 --entry-top 6 を通したもの（リランカーは cl-nagoya/ruri-v3-reranker-310m）。",
+  "extra_fields": {
+   "bridge_name_kind": "つなぎの名前の種類（2 回たどる問いは、起点にある名前の種類）。",
+   "entry_name_form": "起点のチャンクでの名前の出方（質問と似た文 / 質問と似ていない文 / 表の行 / 一覧・列挙 / 見出しだけ）。",
+   "ref_source_rank": "答えのチャンクへ規則の参照リンク（graph_dump3.json の refers_to）を持つチャンクのうち、質問だけの並べ替えで最も上のものの順位。null は、答えのチャンクへ参照リンクを持つチャンクが無いこと。6 以下の問いは、参照の経路だけで答えの表が文脈に入る可能性がある（行を選ぶには、つなぎの名前が要る）。順位は check_synth.py の近似のチャンク（699 個）で数えた。",
+   "caveat": "採点や道筋についての注意（ある問いだけ）。"
+  }
+ },
+ "questions": [
+  {
+   "qid": "H-E01",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "NA 系列の初号機の計測で、全開の位置から始め、静定を待つあいだは手で触れないことになっている弁は、何日おきに定期点検をするのか。",
+   "answer": "吐出絞り弁 JG-120 のことで、定期点検の間隔は 184 日である。",
+   "answer_keys": [
+    "184"
+   ],
+   "entry_doc": "KS-TC-T101C.md",
+   "entry_where": "2. 単独性能確認試験要領 2-5 計測器及び治具 b.",
+   "entry_quote": "風量は、吐出絞り弁 JG-120 で調整する。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "JG-120",
+   "bridge_aliases": [
+    "吐出絞り弁",
+    "絞り弁"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-M403B.md",
+   "answer_where": "別表 1 管理番号別の間隔及び担当（JG-120 の行）",
+   "answer_quote": "| JG-120 | 184 | 治具係 |",
+   "hops": 1,
+   "wrong_values": [
+    "364",
+    "94",
+    "724"
+   ],
+   "avoided_terms": [
+    "JG-120",
+    "吐出絞り弁",
+    "間隔",
+    "管理番号"
+   ],
+   "rationale": "質問は 2-5 の末尾の段落（吐出絞り弁は、全開の位置から始め、静定を待つあいだは手で触れない）に似せてあり、そこには管理番号が無い。管理番号 JG-120 は、同じチャンクの b. の別の文（風量は、吐出絞り弁 JG-120 で調整する）にだけ出る。答えの別表は管理番号だけで引く表である。",
+   "bridge_name_kind": "設備・治具・計測器の管理番号",
+   "entry_name_form": "質問と似ていない文",
+   "ref_source_rank": 3
+  },
+  {
+   "qid": "H-E01d",
+   "type": "control",
+   "twin_of": "H-E01",
+   "question": "KS-TC-M403 の別表 1 で、管理番号 JG-120 の間隔はいくつか。",
+   "answer": "184（日）である。",
+   "answer_keys": [
+    "184"
+   ],
+   "entry_doc": "KS-TC-M403B.md",
+   "entry_where": "別表 1 管理番号別の間隔及び担当（JG-120 の行）",
+   "entry_quote": "| JG-120 | 184 | 治具係 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M403B.md",
+   "answer_where": "別表 1 管理番号別の間隔及び担当（JG-120 の行）",
+   "answer_quote": "| JG-120 | 184 | 治具係 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E01 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E02",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "吐出管の呼び径が 250A 以下のときに選ぶオリフィス管は、使わないあいだ、どこに置いてあるか。",
+   "answer": "オリフィス管 OP-250 の定位置は、架台 R-54 である。管軸を水平にして置く。",
+   "answer_keys": [
+    "R-54"
+   ],
+   "entry_doc": "KS-TC-P001D.md",
+   "entry_where": "別表 1 オリフィス管の選定（250A 以下 の行）",
+   "entry_quote": "| 250A 以下 | OP-250 | 0.50 | TB-30、TB-40 |",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "OP-250",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M403B.md",
+   "answer_where": "5. 治具個票 OP-250",
+   "answer_quote": "- 定位置: 架台 R-54。管軸を水平にして置く。",
+   "hops": 1,
+   "wrong_values": [
+    "R-64",
+    "R-44",
+    "R-24",
+    "R-34"
+   ],
+   "avoided_terms": [
+    "OP-250",
+    "定位置",
+    "個票",
+    "架台"
+   ],
+   "rationale": "答えの個票は、見出しが管理番号 OP-250 だけで、本文にオリフィス管の語も呼び径も無い。呼び径から OP-250 が決まることは、計測共通の別表 1 の行に書いてある。番号をたどらなければ、OP-400（R-64）や OP-600（R-44）の個票と区別できない。",
+   "bridge_name_kind": "設備・治具・計測器の管理番号",
+   "entry_name_form": "表の行",
+   "ref_source_rank": null
+  },
+  {
+   "qid": "H-E02d",
+   "type": "control",
+   "twin_of": "H-E02",
+   "question": "KS-TC-M403 の治具個票で、OP-250 の定位置はどこか。",
+   "answer": "架台 R-54 である。",
+   "answer_keys": [
+    "R-54"
+   ],
+   "entry_doc": "KS-TC-M403B.md",
+   "entry_where": "5. 治具個票 OP-250",
+   "entry_quote": "- 定位置: 架台 R-54。管軸を水平にして置く。",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M403B.md",
+   "answer_where": "5. 治具個票 OP-250",
+   "answer_quote": "- 定位置: 架台 R-54。管軸を水平にして置く。",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E02 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E03",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "RK10 系列の初号機の試験で、消音器を付けずに吸込側に取り付けるものは、使い終わったらどこへ戻すのか。",
+   "answer": "吸込ベルマウス JG-110 のことで、定位置は棚 R-24 である。",
+   "answer_keys": [
+    "R-24"
+   ],
+   "entry_doc": "KS-TC-T201B.md",
+   "entry_where": "2. 単独性能確認試験要領 2-5 計測器及び治具 1)",
+   "entry_quote": "1) 吸込側は、消音器を付けず、吸込ベルマウス JG-110 を取り付ける。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "JG-110",
+   "bridge_aliases": [
+    "吸込ベルマウス",
+    "ベルマウス"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-M403B.md",
+   "answer_where": "5. 治具個票 JG-110",
+   "answer_quote": "- 定位置: 棚 R-24",
+   "hops": 1,
+   "wrong_values": [
+    "R-34",
+    "R-14",
+    "R-74",
+    "R-54"
+   ],
+   "avoided_terms": [
+    "JG-110",
+    "吸込ベルマウス",
+    "定位置",
+    "個票",
+    "棚"
+   ],
+   "rationale": "答えの個票は、見出しが管理番号 JG-110 だけで、本文に吸込ベルマウスの語が無い。番号は起点の 2-5 の 1) に出る。番号をたどらなければ、ほかの治具の棚（R-34・R-14 など）と区別できない。",
+   "bridge_name_kind": "設備・治具・計測器の管理番号",
+   "entry_name_form": "質問と似た文",
+   "ref_source_rank": 9
+  },
+  {
+   "qid": "H-E03d",
+   "type": "control",
+   "twin_of": "H-E03",
+   "question": "KS-TC-M403 の治具個票で、JG-110 の定位置はどこか。",
+   "answer": "棚 R-24 である。",
+   "answer_keys": [
+    "R-24"
+   ],
+   "entry_doc": "KS-TC-M403B.md",
+   "entry_where": "5. 治具個票 JG-110",
+   "entry_quote": "- 定位置: 棚 R-24",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M403B.md",
+   "answer_where": "5. 治具個票 JG-110",
+   "answer_quote": "- 定位置: 棚 R-24",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E03 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E04",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "エア運転のときに軸受箱やコンプレッサ車室に当てて音を聞く棒は、使い終わったらどこへ戻すのか。",
+   "answer": "聴音棒 JG-140 のことで、定位置は棚 R-14 である。",
+   "answer_keys": [
+    "R-14"
+   ],
+   "entry_doc": "KS-TC-T001F.md",
+   "entry_where": "5. 確認項目及び要領 5.4 聴音検査",
+   "entry_quote": "エア運転時に、聴音棒 JG-140 を軸受箱及びコンプレッサ車室に当て、接触音及び異常音の有無を確認する。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "JG-140",
+   "bridge_aliases": [
+    "聴音棒"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-M403B.md",
+   "answer_where": "5. 治具個票 JG-140",
+   "answer_quote": "- 定位置: 棚 R-14",
+   "hops": 1,
+   "wrong_values": [
+    "R-24",
+    "R-34",
+    "R-74"
+   ],
+   "avoided_terms": [
+    "JG-140",
+    "聴音棒",
+    "定位置",
+    "個票",
+    "棚"
+   ],
+   "rationale": "答えの個票は、見出しが管理番号 JG-140 だけで、本文に聴音棒の語が無い。番号は起点の 5.4 に出る。番号をたどらなければ、ほかの治具の棚と区別できない。",
+   "bridge_name_kind": "設備・治具・計測器の管理番号",
+   "entry_name_form": "質問と似た文",
+   "ref_source_rank": null
+  },
+  {
+   "qid": "H-E04d",
+   "type": "control",
+   "twin_of": "H-E04",
+   "question": "KS-TC-M403 の治具個票で、JG-140 の定位置はどこか。",
+   "answer": "棚 R-14 である。",
+   "answer_keys": [
+    "R-14"
+   ],
+   "entry_doc": "KS-TC-M403B.md",
+   "entry_where": "5. 治具個票 JG-140",
+   "entry_quote": "- 定位置: 棚 R-14",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M403B.md",
+   "answer_where": "5. 治具個票 JG-140",
+   "answer_quote": "- 定位置: 棚 R-14",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E04 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E05",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "NA30 系列の初号機の単独性能確認試験に使う運転台は、何年度に新しい設備に替える計画か。",
+   "answer": "NA30 系列の運転台は TB-20 で、更新の計画の年度は 2054 年度である。",
+   "answer_keys": [
+    "2054"
+   ],
+   "entry_doc": "KS-TC-T101C.md",
+   "entry_where": "2. 単独性能確認試験要領 2-5 計測器及び治具 a.",
+   "entry_quote": "a. 運転台は、NA30 系列では TB-20、NA50 系列及び NE60 系列では TB-10 を用いる。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "TB-20",
+   "bridge_aliases": [
+    "第 2 運転台"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-M401C.md",
+   "answer_where": "別表 1 管理番号別の区分（TB-20 の行）",
+   "answer_quote": "| TB-20 | S-14 | 2054 | 第 1 班 |",
+   "hops": 1,
+   "wrong_values": [
+    "2044",
+    "2034",
+    "2064",
+    "2074"
+   ],
+   "avoided_terms": [
+    "TB-20",
+    "更新",
+    "管理番号",
+    "管理区分"
+   ],
+   "rationale": "答えの別表は管理番号と区分・年度・班だけの表で、系列の名も運転台の呼称も持たない。起点の文には運転台の管理番号が 2 つ並んでおり、NA30 系列の TB-20 を選んでたどる必要がある。TB-10 を選ぶと 2044 になる。",
+   "bridge_name_kind": "設備・治具・計測器の管理番号",
+   "entry_name_form": "一覧・列挙",
+   "ref_source_rank": 49
+  },
+  {
+   "qid": "H-E05d",
+   "type": "control",
+   "twin_of": "H-E05",
+   "question": "KS-TC-M401 の別表 1 で、管理番号 TB-20 の更新の欄はいくつか。",
+   "answer": "2054 である。",
+   "answer_keys": [
+    "2054"
+   ],
+   "entry_doc": "KS-TC-M401C.md",
+   "entry_where": "別表 1 管理番号別の区分（TB-20 の行）",
+   "entry_quote": "| TB-20 | S-14 | 2054 | 第 1 班 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M401C.md",
+   "answer_where": "別表 1 管理番号別の区分（TB-20 の行）",
+   "answer_quote": "| TB-20 | S-14 | 2054 | 第 1 班 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E05 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E06",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "技能の区分 U-17 の認定で操作できる運転台は、保全の上で、どのくらい重要な設備とされているか。",
+   "answer": "区分 U-17 の運転台は TB-10 で、管理区分は S-14 である。管理区分は保全の上での重要度を示し、数字の小さいものほど重い。",
+   "answer_keys": [
+    "S-14"
+   ],
+   "entry_doc": "QK-TC-72C.md",
+   "entry_where": "第 3 条（技能の区分）の表（U-17 の行）",
+   "entry_quote": "| U-17 | TB-10 |",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "TB-10",
+   "bridge_aliases": [
+    "第 1 運転台"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-M401C.md",
+   "answer_where": "別表 1 管理番号別の区分（TB-10 の行）",
+   "answer_quote": "| TB-10 | S-14 | 2044 | 第 1 班 |",
+   "hops": 1,
+   "wrong_values": [
+    "S-24",
+    "S-34"
+   ],
+   "avoided_terms": [
+    "TB-10",
+    "管理区分",
+    "管理番号",
+    "別表"
+   ],
+   "rationale": "答えの別表は管理番号だけで引く表である。区分 U-17 が TB-10 に当たることは、技能認定規定の第 3 条の表の行にだけ書いてある（文ではなく表の 2 列）。TB-40 や TB-30 の行を読むと S-24・S-34 になる。",
+   "bridge_name_kind": "設備・治具・計測器の管理番号",
+   "entry_name_form": "表の行",
+   "ref_source_rank": 3
+  },
+  {
+   "qid": "H-E06d",
+   "type": "control",
+   "twin_of": "H-E06",
+   "question": "KS-TC-M401 の別表 1 で、管理番号 TB-10 の管理区分は何か。",
+   "answer": "S-14 である。",
+   "answer_keys": [
+    "S-14"
+   ],
+   "entry_doc": "KS-TC-M401C.md",
+   "entry_where": "別表 1 管理番号別の区分（TB-10 の行）",
+   "entry_quote": "| TB-10 | S-14 | 2044 | 第 1 班 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M401C.md",
+   "answer_where": "別表 1 管理番号別の区分（TB-10 の行）",
+   "answer_quote": "| TB-10 | S-14 | 2044 | 第 1 班 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E06 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E07",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "RK16 の量産機の全力運転で、戻り油の流れをのぞき窓で確かめながら運転する運転台は、何年度に新しい設備に替える計画か。",
+   "answer": "運転台は TB-30（第 3 運転台）で、更新の計画の年度は 2034 年度である。",
+   "answer_keys": [
+    "2034"
+   ],
+   "entry_doc": "KS-TC-T202D.md",
+   "entry_where": "4. 試運転要領 4.2 全力運転",
+   "entry_quote": "TB-30 は燃焼器を持たないので、タービン入口ガス温度の計測は行わない。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "TB-30",
+   "bridge_aliases": [
+    "第 3 運転台"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-M401C.md",
+   "answer_where": "別表 1 管理番号別の区分（TB-30 の行）",
+   "answer_quote": "| TB-30 | S-34 | 2034 | 第 2 班 |",
+   "hops": 1,
+   "wrong_values": [
+    "2044",
+    "2054",
+    "2064",
+    "2074"
+   ],
+   "avoided_terms": [
+    "TB-30",
+    "第 3 運転台",
+    "更新",
+    "管理番号"
+   ],
+   "rationale": "質問は 4.2 の「全力運転のあいだ、戻り油の流れをのぞき窓で確かめる」に似せてあり、その文には運転台の名が無い。管理番号 TB-30 は、同じチャンクの別の文（TB-30 は燃焼器を持たないので…）に出る。答えの別表は管理番号だけで引く表である。",
+   "bridge_name_kind": "設備・治具・計測器の管理番号",
+   "entry_name_form": "質問と似ていない文",
+   "ref_source_rank": 23
+  },
+  {
+   "qid": "H-E07d",
+   "type": "control",
+   "twin_of": "H-E07",
+   "question": "KS-TC-M401 の別表 1 で、管理番号 TB-30 の更新の欄はいくつか。",
+   "answer": "2034 である。",
+   "answer_keys": [
+    "2034"
+   ],
+   "entry_doc": "KS-TC-M401C.md",
+   "entry_where": "別表 1 管理番号別の区分（TB-30 の行）",
+   "entry_quote": "| TB-30 | S-34 | 2034 | 第 2 班 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M401C.md",
+   "answer_where": "別表 1 管理番号別の区分（TB-30 の行）",
+   "answer_quote": "| TB-30 | S-34 | 2034 | 第 2 班 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E07 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E08",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "潤滑油供給ユニットの切替えが実技試験に含まれる技能の区分で操作できる運転台は、何年度に新しい設備に替える計画か。",
+   "answer": "実技試験に LU-30 の切替えを含むのは区分 U-47 で、対象の運転台は TB-40 である。TB-40 の更新の計画の年度は 2064 年度である。",
+   "answer_keys": [
+    "2064"
+   ],
+   "entry_doc": "QK-TC-72C.md",
+   "entry_where": "第 7 条（区分 U-47）1 項",
+   "entry_quote": "区分 U-47 の認定は、TB-40 の操作を対象とし、次による。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "TB-40",
+   "bridge_aliases": [
+    "第 4 運転台"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-M401C.md",
+   "answer_where": "別表 1 管理番号別の区分（TB-40 の行）",
+   "answer_quote": "| TB-40 | S-24 | 2064 | 第 2 班 |",
+   "hops": 1,
+   "wrong_values": [
+    "2044",
+    "2054",
+    "2034",
+    "2074"
+   ],
+   "avoided_terms": [
+    "TB-40",
+    "第 4 運転台",
+    "更新",
+    "管理番号",
+    "U-47"
+   ],
+   "rationale": "質問は第 7 条の (2)（実技試験: …潤滑油供給ユニット LU-30 の切替えを含む）に似せてあり、運転台の名を言わない。管理番号 TB-40 は、同じ条の柱書きの文に出る。答えの別表は管理番号だけで引く表で、文書も別である。",
+   "bridge_name_kind": "設備・治具・計測器の管理番号",
+   "entry_name_form": "質問と似ていない文",
+   "ref_source_rank": 28
+  },
+  {
+   "qid": "H-E08d",
+   "type": "control",
+   "twin_of": "H-E08",
+   "question": "KS-TC-M401 の別表 1 で、管理番号 TB-40 の更新の欄はいくつか。",
+   "answer": "2064 である。",
+   "answer_keys": [
+    "2064"
+   ],
+   "entry_doc": "KS-TC-M401C.md",
+   "entry_where": "別表 1 管理番号別の区分（TB-40 の行）",
+   "entry_quote": "| TB-40 | S-24 | 2064 | 第 2 班 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M401C.md",
+   "answer_where": "別表 1 管理番号別の区分（TB-40 の行）",
+   "answer_quote": "| TB-40 | S-24 | 2064 | 第 2 班 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E08 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E09",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "NA30 系列の量産機を運転する運転台では、配管に流せる空気の量はどこまでか。",
+   "answer": "NA30 系列の運転台は TB-20 で、空気量の上限は 9.74 m3/s である。",
+   "answer_keys": [
+    "9.74"
+   ],
+   "entry_doc": "KS-TC-T102E.md",
+   "entry_where": "3. 試運転の準備 3.1 運転台及び治具 a)",
+   "entry_quote": "a) NA30 系列は第 2 運転台 TB-20、NA50 系列及び NE60 系列は第 1 運転台 TB-10 で運転する。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "TB-20",
+   "bridge_aliases": [
+    "第 2 運転台"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-M401C.md",
+   "answer_where": "5. 設備個票 TB-20",
+   "answer_quote": "- 空気量の上限: 9.74 m3/s",
+   "hops": 1,
+   "wrong_values": [
+    "24.4",
+    "2.14",
+    "6.34"
+   ],
+   "avoided_terms": [
+    "TB-20",
+    "空気量の上限",
+    "個票"
+   ],
+   "rationale": "答えの個票は、見出しが管理番号 TB-20 だけで、系列の名も呼称も持たない。起点の文には運転台が 2 つ並んでおり、NA30 系列の TB-20 を選んでたどる必要がある。TB-10 の個票を読むと 24.4 m3/s になる。",
+   "bridge_name_kind": "設備・治具・計測器の管理番号",
+   "entry_name_form": "一覧・列挙",
+   "ref_source_rank": 104
+  },
+  {
+   "qid": "H-E09d",
+   "type": "control",
+   "twin_of": "H-E09",
+   "question": "KS-TC-M401 の設備個票で、TB-20 の空気量の上限はいくらか。",
+   "answer": "9.74 m3/s である。",
+   "answer_keys": [
+    "9.74"
+   ],
+   "entry_doc": "KS-TC-M401C.md",
+   "entry_where": "5. 設備個票 TB-20",
+   "entry_quote": "- 空気量の上限: 9.74 m3/s",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M401C.md",
+   "answer_where": "5. 設備個票 TB-20",
+   "answer_quote": "- 空気量の上限: 9.74 m3/s",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E09 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E10",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "RK10 系列の量産機の試運転でタービンを駆動する圧縮空気をつくる圧縮機は、空気槽の圧力がどこまで下がると自動で動き出すのか。",
+   "answer": "起動用空気圧縮機 AC-10 で、入りの圧力は 0.74 MPa である。",
+   "answer_keys": [
+    "0.74 MPa"
+   ],
+   "entry_doc": "KS-TC-T202D.md",
+   "entry_where": "3. 試運転の準備 3.1 運転台及び治具",
+   "entry_quote": "TB-30 は、起動用空気圧縮機 AC-10 の圧縮空気でタービンを駆動し、燃焼器を用いない。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "AC-10",
+   "bridge_aliases": [
+    "起動用空気圧縮機",
+    "空気源"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-M404A.md",
+   "answer_where": "6. 設備個票 AC-10",
+   "answer_quote": "- 入りの圧力: 0.74 MPa",
+   "hops": 1,
+   "wrong_values": [
+    "0.94 MPa",
+    "0.64 MPa",
+    "0.44 MPa"
+   ],
+   "avoided_terms": [
+    "AC-10",
+    "入りの圧力",
+    "圧力開閉器",
+    "個票"
+   ],
+   "rationale": "答えの個票は、見出しが管理番号 AC-10 だけで、起動用空気圧縮機の語を持たない。番号は起点の 3.1 に出る。切りの圧力（0.94 MPa）や燃焼器の個票の圧力と取り違えやすい。",
+   "bridge_name_kind": "設備・治具・計測器の管理番号",
+   "entry_name_form": "質問と似た文",
+   "ref_source_rank": 128
+  },
+  {
+   "qid": "H-E10d",
+   "type": "control",
+   "twin_of": "H-E10",
+   "question": "KS-TC-M404 の設備個票で、AC-10 の入りの圧力はいくらか。",
+   "answer": "0.74 MPa である。",
+   "answer_keys": [
+    "0.74 MPa"
+   ],
+   "entry_doc": "KS-TC-M404A.md",
+   "entry_where": "6. 設備個票 AC-10",
+   "entry_quote": "- 入りの圧力: 0.74 MPa",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M404A.md",
+   "answer_where": "6. 設備個票 AC-10",
+   "answer_quote": "- 入りの圧力: 0.74 MPa",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E10 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E11",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "吐出管の呼び径が 450A から 600A の過給機を運転する運転台は、運転の積算が何時間に達するごとに設備を分解して調べるのか。",
+   "answer": "呼び径 450A から 600A に適用する運転台は TB-10 で、開放点検は運転の積算 3,004 時間ごとに行う。",
+   "answer_keys": [
+    "3,004"
+   ],
+   "entry_doc": "KS-TC-P001D.md",
+   "entry_where": "別表 1 オリフィス管の選定（450A から 600A の行）",
+   "entry_quote": "| 450A から 600A | OP-600 | 0.70 | TB-10 |",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "TB-10",
+   "bridge_aliases": [
+    "第 1 運転台"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-M402E.md",
+   "answer_where": "別表 2 管理番号別の定期点検（TB-10 の行）",
+   "answer_quote": "| TB-10 | 第 1 週 | 3,004 | 8 月 |",
+   "hops": 1,
+   "wrong_values": [
+    "3,504",
+    "4,004",
+    "3,204",
+    "604",
+    "904"
+   ],
+   "avoided_terms": [
+    "TB-10",
+    "開放",
+    "管理番号",
+    "第 1 運転台"
+   ],
+   "rationale": "答えの別表は管理番号だけで引く表で、呼び径も運転台の呼称も持たず、文書も別である。運転台の管理番号 TB-10 は、計測共通の別表 1 の行の端の欄に出ているだけで、同じ行にオリフィス管の番号 OP-600 も並ぶ。運転台の番号を選んでたどらなければ、ほかの運転台の行と区別できない。",
+   "bridge_name_kind": "設備・治具・計測器の管理番号",
+   "entry_name_form": "表の行",
+   "ref_source_rank": 2
+  },
+  {
+   "qid": "H-E11d",
+   "type": "control",
+   "twin_of": "H-E11",
+   "question": "KS-TC-M402 の別表 2 で、管理番号 TB-10 の開放の欄はいくつか。",
+   "answer": "3,004（時間）である。",
+   "answer_keys": [
+    "3,004"
+   ],
+   "entry_doc": "KS-TC-M402E.md",
+   "entry_where": "別表 2 管理番号別の定期点検（TB-10 の行）",
+   "entry_quote": "| TB-10 | 第 1 週 | 3,004 | 8 月 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M402E.md",
+   "answer_where": "別表 2 管理番号別の定期点検（TB-10 の行）",
+   "answer_quote": "| TB-10 | 第 1 週 | 3,004 | 8 月 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E11 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E12",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "振動の計測のために定盤の周りに足場を設けてある運転台は、運転の積算がどこまで行ったら設備を分解して調べるのか。",
+   "answer": "運転台 TB-20 で、開放点検は運転の積算 3,504 時間ごとに行う。",
+   "answer_keys": [
+    "3,504"
+   ],
+   "entry_doc": "KS-TC-M401C.md",
+   "entry_where": "5. 設備個票 TB-20",
+   "entry_quote": "- 摘要: 給油は、暖機及び停止後の冷却に限る。振動の計測のため、定盤の周りに足場を設けてある。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "TB-20",
+   "bridge_aliases": [
+    "第 2 運転台"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-M402E.md",
+   "answer_where": "別表 2 管理番号別の定期点検（TB-20 の行）",
+   "answer_quote": "| TB-20 | 第 2 週 | 3,504 | 8 月 |",
+   "hops": 1,
+   "wrong_values": [
+    "3,004",
+    "4,004",
+    "3,204",
+    "904"
+   ],
+   "avoided_terms": [
+    "TB-20",
+    "開放",
+    "管理番号",
+    "別表"
+   ],
+   "rationale": "起点の個票は、管理番号 TB-20 が見出しにあるだけで、本文の文には番号が出ない。答えの別表は管理番号だけで引く表である。番号をたどらなければ、ほかの運転台の行と区別できない。",
+   "bridge_name_kind": "設備・治具・計測器の管理番号",
+   "entry_name_form": "見出しだけ",
+   "ref_source_rank": 1
+  },
+  {
+   "qid": "H-E12d",
+   "type": "control",
+   "twin_of": "H-E12",
+   "question": "KS-TC-M402 の別表 2 で、管理番号 TB-20 の開放の欄はいくつか。",
+   "answer": "3,504（時間）である。",
+   "answer_keys": [
+    "3,504"
+   ],
+   "entry_doc": "KS-TC-M402E.md",
+   "entry_where": "別表 2 管理番号別の定期点検（TB-20 の行）",
+   "entry_quote": "| TB-20 | 第 2 週 | 3,504 | 8 月 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M402E.md",
+   "answer_where": "別表 2 管理番号別の定期点検（TB-20 の行）",
+   "answer_quote": "| TB-20 | 第 2 週 | 3,504 | 8 月 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E12 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E13",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "計管が校正室で自ら校正する回転計は、使わないあいだ、どこに置いてあるか。",
+   "answer": "電気式回転計 RT-40 で、計測棟の計測器庫の棚 R-45 に置く。",
+   "answer_keys": [
+    "R-45"
+   ],
+   "entry_doc": "KS-TC-C504A.md",
+   "entry_where": "1 適用",
+   "entry_quote": "RT-40 は、計管が校正室で校正する。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "RT-40",
+   "bridge_aliases": [
+    "電気式回転計",
+    "回転計"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-C501D.md",
+   "answer_where": "別表 1 管理番号別の区分（RT-40 の行）",
+   "answer_quote": "| RT-40 | 1 | R-45 |",
+   "hops": 1,
+   "wrong_values": [
+    "R-15",
+    "R-25",
+    "R-35",
+    "R-55"
+   ],
+   "avoided_terms": [
+    "RT-40",
+    "棚",
+    "計測器庫",
+    "管理番号"
+   ],
+   "rationale": "答えの別表は管理番号と封印の数・棚だけの表で、回転計の語を持たない。起点の文は管理番号だけで書いてあり（回転計の語は前の文にある）、同じ段落に VM-50・BM-60・FM-70 も並ぶ。番号をたどらなければ、ほかの計測器の棚と区別できない。",
+   "bridge_name_kind": "設備・治具・計測器の管理番号",
+   "entry_name_form": "質問と似た文",
+   "ref_source_rank": 1
+  },
+  {
+   "qid": "H-E13d",
+   "type": "control",
+   "twin_of": "H-E13",
+   "question": "KS-TC-C501 の別表 1 で、管理番号 RT-40 の棚はどこか。",
+   "answer": "R-45 である。",
+   "answer_keys": [
+    "R-45"
+   ],
+   "entry_doc": "KS-TC-C501D.md",
+   "entry_where": "別表 1 管理番号別の区分（RT-40 の行）",
+   "entry_quote": "| RT-40 | 1 | R-45 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-C501D.md",
+   "answer_where": "別表 1 管理番号別の区分（RT-40 の行）",
+   "answer_quote": "| RT-40 | 1 | R-45 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E13 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E14",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "圧力計測器の校正要領が対象にしている差圧伝送器は、借りたいとき、どこへ取りに行けばよいか。",
+   "answer": "差圧伝送器 DP-10 で、計測棟の計測器庫の棚 R-15 に置いてある。",
+   "answer_keys": [
+    "R-15"
+   ],
+   "entry_doc": "KS-TC-C502B.md",
+   "entry_where": "1 適用",
+   "entry_quote": "差圧伝送器 DP-10、圧力伝送器 PT-20 及び気圧計 BR-80 について、校正の手順及び合否の判定を定める。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "DP-10",
+   "bridge_aliases": [
+    "差圧伝送器",
+    "差圧計"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-C501D.md",
+   "answer_where": "別表 1 管理番号別の区分（DP-10 の行）",
+   "answer_quote": "| DP-10 | 2 | R-15 |",
+   "hops": 1,
+   "wrong_values": [
+    "R-25",
+    "R-35",
+    "R-45",
+    "R-55"
+   ],
+   "avoided_terms": [
+    "DP-10",
+    "棚",
+    "計測器庫",
+    "管理番号"
+   ],
+   "rationale": "答えの別表は管理番号だけで引く表である。起点の文には 3 つの計測器の管理番号が並んでおり、差圧伝送器の DP-10 を選んでたどる必要がある。PT-20 を選ぶと R-25 になる。",
+   "bridge_name_kind": "設備・治具・計測器の管理番号",
+   "entry_name_form": "一覧・列挙",
+   "ref_source_rank": 11
+  },
+  {
+   "qid": "H-E14d",
+   "type": "control",
+   "twin_of": "H-E14",
+   "question": "KS-TC-C501 の別表 1 で、管理番号 DP-10 の棚はどこか。",
+   "answer": "R-15 である。",
+   "answer_keys": [
+    "R-15"
+   ],
+   "entry_doc": "KS-TC-C501D.md",
+   "entry_where": "別表 1 管理番号別の区分（DP-10 の行）",
+   "entry_quote": "| DP-10 | 2 | R-15 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-C501D.md",
+   "answer_where": "別表 1 管理番号別の区分（DP-10 の行）",
+   "answer_quote": "| DP-10 | 2 | R-15 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E14 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E15",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "第 1 潤滑油供給ユニットの油タンクに付いているブリーザのエレメントは、取り替える品をどこから出してくるのか。",
+   "answer": "品目 BZ-316 で、予備の品は消耗品庫の棚 R-36 に置いてある。",
+   "answer_keys": [
+    "R-36"
+   ],
+   "entry_doc": "KS-TC-L602B.md",
+   "entry_where": "4. 個票 (1) LU-10（(2)・(3) の個票も同じ品目）",
+   "entry_quote": "- ブリーザ: 品目 BZ-316",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "BZ-316",
+   "bridge_aliases": [
+    "品目 BZ-316"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-L603D.md",
+   "answer_where": "別表 1 品目別の区分（BZ-316 の行）",
+   "answer_quote": "| BZ-316 | R-36 | 2 | 36 |",
+   "hops": 1,
+   "wrong_values": [
+    "R-16",
+    "R-26",
+    "R-46",
+    "R-56",
+    "R-66",
+    "R-76"
+   ],
+   "avoided_terms": [
+    "BZ-316",
+    "棚",
+    "消耗品庫",
+    "予備の品",
+    "品目"
+   ],
+   "rationale": "答えの別表は品目の記号と棚・数・限度だけの表で、ブリーザの語を持たない。品目の記号は、ユニットの個票の箇条書きの 1 行に出ているだけである。記号をたどらなければ、同じ個票に並ぶエレメント（R-16）やストレーナ（R-26）と区別できない。",
+   "bridge_name_kind": "材料・品目の記号",
+   "entry_name_form": "一覧・列挙",
+   "ref_source_rank": 7
+  },
+  {
+   "qid": "H-E15d",
+   "type": "control",
+   "twin_of": "H-E15",
+   "question": "KS-TC-L603 の別表 1 で、品目 BZ-316 の棚はどこか。",
+   "answer": "R-36 である。",
+   "answer_keys": [
+    "R-36"
+   ],
+   "entry_doc": "KS-TC-L603D.md",
+   "entry_where": "別表 1 品目別の区分（BZ-316 の行）",
+   "entry_quote": "| BZ-316 | R-36 | 2 | 36 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-L603D.md",
+   "answer_where": "別表 1 品目別の区分（BZ-316 の行）",
+   "answer_quote": "| BZ-316 | R-36 | 2 | 36 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E15 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E16",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "冷却水の循環ポンプの軸封から漏れが増えてきた。取り替える品は、どこから出してくればよいか。",
+   "answer": "品目 MS-626（メカニカルシール）で、予備の品は消耗品庫の棚 R-76 に置いてある。",
+   "answer_keys": [
+    "R-76"
+   ],
+   "entry_doc": "KS-TC-L603D.md",
+   "entry_where": "4. 品目別の交換要領 (11) 品目 MS-626",
+   "entry_quote": "- 交換の時期: 軸封からの漏れが、1 分間に 6 滴を超えたとき",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "MS-626",
+   "bridge_aliases": [
+    "品目 MS-626"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-L603D.md",
+   "answer_where": "別表 1 品目別の区分（MS-626 の行）",
+   "answer_quote": "| MS-626 | R-76 | 1 | — |",
+   "hops": 1,
+   "wrong_values": [
+    "R-66",
+    "R-16",
+    "R-26",
+    "R-36",
+    "R-46",
+    "R-56"
+   ],
+   "avoided_terms": [
+    "MS-626",
+    "棚",
+    "消耗品庫",
+    "予備の品",
+    "品目"
+   ],
+   "rationale": "答えの別表は品目の記号だけで引く表である。品目の記号 MS-626 は、起点の節の見出しにあるだけで、本文の箇条書きには出ない。記号をたどらなければ、同じ装置のストレーナ WS-616（R-66）などと区別できない。",
+   "bridge_name_kind": "材料・品目の記号",
+   "entry_name_form": "見出しだけ",
+   "ref_source_rank": 5
+  },
+  {
+   "qid": "H-E16d",
+   "type": "control",
+   "twin_of": "H-E16",
+   "question": "KS-TC-L603 の別表 1 で、品目 MS-626 の棚はどこか。",
+   "answer": "R-76 である。",
+   "answer_keys": [
+    "R-76"
+   ],
+   "entry_doc": "KS-TC-L603D.md",
+   "entry_where": "別表 1 品目別の区分（MS-626 の行）",
+   "entry_quote": "| MS-626 | R-76 | 1 | — |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-L603D.md",
+   "answer_where": "別表 1 品目別の区分（MS-626 の行）",
+   "answer_quote": "| MS-626 | R-76 | 1 | — |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E16 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E17",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "冷却水にぬめりや浮遊物が出たときに入れる殺菌剤の予備は、ふだんどこにしまってあるか。",
+   "answer": "薬剤 K-26 で、予備は薬品庫の区画 C-36 に置いてある。",
+   "answer_keys": [
+    "C-36"
+   ],
+   "entry_doc": "KS-TC-L604A.md",
+   "entry_where": "6. 薬剤 (2) 薬剤 K-26",
+   "entry_quote": "- 用途: 殺菌剤。イソチアゾリン系",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "K-26",
+   "bridge_aliases": [
+    "薬剤 K-26"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-L603D.md",
+   "answer_where": "別表 2 記号別の区画（K-26 の行）",
+   "answer_quote": "| K-26 | C-36 | 2 |",
+   "hops": 1,
+   "wrong_values": [
+    "C-26",
+    "C-46"
+   ],
+   "avoided_terms": [
+    "K-26",
+    "区画",
+    "薬品庫",
+    "記号"
+   ],
+   "rationale": "答えの別表は薬剤の記号と区画・数だけの表で、殺菌剤の語を持たず、文書も別である。薬剤の記号 K-26 は、起点の節の見出しにあるだけである。記号をたどらなければ、防錆剤 K-16（C-26）や pH 調整剤 K-36（C-46）と区別できない。",
+   "bridge_name_kind": "材料・品目の記号",
+   "entry_name_form": "見出しだけ",
+   "ref_source_rank": 2
+  },
+  {
+   "qid": "H-E17d",
+   "type": "control",
+   "twin_of": "H-E17",
+   "question": "KS-TC-L603 の別表 2 で、記号 K-26 の区画はどこか。",
+   "answer": "C-36 である。",
+   "answer_keys": [
+    "C-36"
+   ],
+   "entry_doc": "KS-TC-L603D.md",
+   "entry_where": "別表 2 記号別の区画（K-26 の行）",
+   "entry_quote": "| K-26 | C-36 | 2 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-L603D.md",
+   "answer_where": "別表 2 記号別の区画（K-26 の行）",
+   "answer_quote": "| K-26 | C-36 | 2 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E17 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E18",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "規定類や基準類の教育の講師は、どういう検査員のなかから指名するのか。その検査員は、それまでに何台の単独試運転に立ち会っているか。",
+   "answer": "等級 S-37 の検査員のなかから指名する。S-37 の認定には、単独試運転 407 台の検査に従事した実績が要る。",
+   "answer_keys": [
+    "407"
+   ],
+   "entry_doc": "QK-TC-73B.md",
+   "entry_where": "第 5 条（講師及び指導員）1 項",
+   "entry_quote": "規定類及び基準類の教育の講師は、主管部門の長が、等級 S-37 の検査員のうちから指名する。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "S-37",
+   "bridge_aliases": [
+    "1 級検査員"
+   ],
+   "path": [],
+   "answer_doc": "QK-TC-71E.md",
+   "answer_where": "別表 1 記号別の事項（S-37 の行）",
+   "answer_quote": "| S-37 | 407 | 247 | 学科及び実技 |",
+   "hops": 1,
+   "wrong_values": [
+    "27",
+    "137",
+    "247"
+   ],
+   "avoided_terms": [
+    "実績",
+    "座学",
+    "記号",
+    "別表",
+    "1 級検査員"
+   ],
+   "rationale": "答えの別表は等級の記号だけで引く表で、文書も別である。起点の文は等級を記号 S-37 だけで書いており、等級の名称を持たない。記号をたどらなければ、S-27（137 台）や S-17（27 台）と区別できない。",
+   "bridge_name_kind": "区分・等級・種別の記号",
+   "entry_name_form": "質問と似た文",
+   "ref_source_rank": 2
+  },
+  {
+   "qid": "H-E18d",
+   "type": "control",
+   "twin_of": "H-E18",
+   "question": "QK-TC-71 の別表 1 では、記号 S-37 の検査員の実績は何台とされているか。",
+   "answer": "407（台）である。",
+   "answer_keys": [
+    "407"
+   ],
+   "entry_doc": "QK-TC-71E.md",
+   "entry_where": "別表 1 記号別の事項（S-37 の行）",
+   "entry_quote": "| S-37 | 407 | 247 | 学科及び実技 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-71E.md",
+   "answer_where": "別表 1 記号別の事項（S-37 の行）",
+   "answer_quote": "| S-37 | 407 | 247 | 学科及び実技 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E18 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E19",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "運転台の構造や警報の種類を科目とする、試運転作業者の学科の講習で使う訓練用の設備は、どこに置いてあるか。",
+   "answer": "模擬操作盤 KN-720 で、置場は研修棟の第 1 実習室である。",
+   "answer_keys": [
+    "第 1 実習室"
+   ],
+   "entry_doc": "QK-TC-72C.md",
+   "entry_where": "第 9 条（学科の講習）2 項",
+   "entry_quote": "2 講習では、模擬操作盤 KN-720 を用いて、警報が出たときの操作を習う。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "KN-720",
+   "bridge_aliases": [
+    "模擬操作盤"
+   ],
+   "path": [],
+   "answer_doc": "QK-TC-73B.md",
+   "answer_where": "別表 2 管理番号別の区分（KN-720 の行）",
+   "answer_quote": "| KN-720 | 第 1 実習室 | 367 | 生技保 |",
+   "hops": 1,
+   "wrong_values": [
+    "第 2 実習室",
+    "第 3 実習室"
+   ],
+   "avoided_terms": [
+    "KN-720",
+    "模擬操作盤",
+    "置場",
+    "管理番号",
+    "実習室"
+   ],
+   "rationale": "質問は第 9 条の 1 項（科目は、運転台の構造、…警報の種類…）に似せてあり、設備の名を言わない。管理番号 KN-720 は 2 項に出る。答えの別表は管理番号だけで引く表で、文書も別である。",
+   "bridge_name_kind": "設備・治具・計測器の管理番号",
+   "entry_name_form": "質問と似ていない文",
+   "ref_source_rank": 3
+  },
+  {
+   "qid": "H-E19d",
+   "type": "control",
+   "twin_of": "H-E19",
+   "question": "QK-TC-73 の別表 2 で、管理番号 KN-720 の置場はどこか。",
+   "answer": "第 1 実習室である。",
+   "answer_keys": [
+    "第 1 実習室"
+   ],
+   "entry_doc": "QK-TC-73B.md",
+   "entry_where": "別表 2 管理番号別の区分（KN-720 の行）",
+   "entry_quote": "| KN-720 | 第 1 実習室 | 367 | 生技保 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-73B.md",
+   "answer_where": "別表 2 管理番号別の区分（KN-720 の行）",
+   "answer_quote": "| KN-720 | 第 1 実習室 | 367 | 生技保 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E19 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E20",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "聞き落としが 1 件でもあれば不合格になる実技試験で、音を再生する装置は、どこへ行けば使えるか。",
+   "answer": "聴音訓練装置 KN-710 で、置場は研修棟の第 3 実習室である。",
+   "answer_keys": [
+    "第 3 実習室"
+   ],
+   "entry_doc": "QK-TC-74A.md",
+   "entry_where": "第 6 条（区分 D-17 の実技試験）1 項",
+   "entry_quote": "実技試験は、技教の聴音訓練装置 KN-710 を用いて行う。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "KN-710",
+   "bridge_aliases": [
+    "聴音訓練装置"
+   ],
+   "path": [],
+   "answer_doc": "QK-TC-73B.md",
+   "answer_where": "別表 2 管理番号別の区分（KN-710 の行）",
+   "answer_quote": "| KN-710 | 第 3 実習室 | 187 | 技教 |",
+   "hops": 1,
+   "wrong_values": [
+    "第 1 実習室",
+    "第 2 実習室"
+   ],
+   "avoided_terms": [
+    "KN-710",
+    "聴音訓練装置",
+    "置場",
+    "管理番号",
+    "実習室"
+   ],
+   "rationale": "答えの別表は管理番号だけで引く表で、文書も別である。管理番号 KN-710 は起点の第 6 条の 1 項に出る。番号をたどらなければ、模擬操作盤（第 1 実習室）や切断模型（第 2 実習室）と区別できない。",
+   "bridge_name_kind": "設備・治具・計測器の管理番号",
+   "entry_name_form": "質問と似た文",
+   "ref_source_rank": 7
+  },
+  {
+   "qid": "H-E20d",
+   "type": "control",
+   "twin_of": "H-E20",
+   "question": "QK-TC-73 の別表 2 で、管理番号 KN-710 の置場はどこか。",
+   "answer": "第 3 実習室である。",
+   "answer_keys": [
+    "第 3 実習室"
+   ],
+   "entry_doc": "QK-TC-73B.md",
+   "entry_where": "別表 2 管理番号別の区分（KN-710 の行）",
+   "entry_quote": "| KN-710 | 第 3 実習室 | 187 | 技教 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-73B.md",
+   "answer_where": "別表 2 管理番号別の区分（KN-710 の行）",
+   "answer_quote": "| KN-710 | 第 3 実習室 | 187 | 技教 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E20 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E21",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "「計測共通」という通称で引かれている基準を、新しく配属された人に教えるときは、1 回にどれだけの時間をあてるのか。",
+   "answer": "計測共通は KS-TC-P001 のことで、教育の所要は 1 回 177 分である。",
+   "answer_keys": [
+    "177"
+   ],
+   "entry_doc": "KS-TC-P001D.md",
+   "entry_where": "1 適用",
+   "entry_quote": "この基準は、通称を「計測共通」といい、他の基準類でこの名で引かれることがある。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "KS-TC-P001",
+   "bridge_aliases": [
+    "計測共通"
+   ],
+   "path": [],
+   "answer_doc": "QK-TC-73B.md",
+   "answer_where": "別表 1 番号別の区分（KS-TC-P001 の行）",
+   "answer_quote": "| KS-TC-P001 | Y-17 | 177 | 筆記 |",
+   "hops": 1,
+   "wrong_values": [
+    "207",
+    "87",
+    "147",
+    "157",
+    "37"
+   ],
+   "avoided_terms": [
+    "KS-TC-P001",
+    "所要",
+    "番号",
+    "種別",
+    "別表"
+   ],
+   "rationale": "答えの別表は基準類の番号だけで引く表で、基準の名称も通称も持たない。通称と番号の対応は、起点のチャンクでは文書名と見出しの経路（KS-TC-P001D）にあるだけで、本文の文には番号が出ない（発行目録の注 1 にも対応がある）。番号をたどらなければ、ほかの基準の所要と区別できない。",
+   "bridge_name_kind": "文書の番号",
+   "entry_name_form": "見出しだけ",
+   "ref_source_rank": 1
+  },
+  {
+   "qid": "H-E21d",
+   "type": "control",
+   "twin_of": "H-E21",
+   "question": "QK-TC-73 の別表 1 で、番号 KS-TC-P001 の所要はいくつか。",
+   "answer": "177（分）である。",
+   "answer_keys": [
+    "177"
+   ],
+   "entry_doc": "QK-TC-73B.md",
+   "entry_where": "別表 1 番号別の区分（KS-TC-P001 の行）",
+   "entry_quote": "| KS-TC-P001 | Y-17 | 177 | 筆記 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-73B.md",
+   "answer_where": "別表 1 番号別の区分（KS-TC-P001 の行）",
+   "answer_quote": "| KS-TC-P001 | Y-17 | 177 | 筆記 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E21 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E22",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "過検が原因と処置の内容を営業の担当を通じて顧客へ報告することになる是正処置の要求では、要求を受けた部門は、何日以内に調査の結果と処置の計画を報告するのか。",
+   "answer": "種別 S-48 の要求で、要求書を受け取った日から 38 稼働日以内に報告する。",
+   "answer_keys": [
+    "38 稼働日"
+   ],
+   "entry_doc": "QK-TC-81D.md",
+   "entry_where": "第 13 条（顧客への報告）1 項",
+   "entry_quote": "種別 S-48 の要求については、過検が、原因及び処置の内容を、営業の担当を通じて顧客へ報告する。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "S-48",
+   "bridge_aliases": [
+    "種別 S-48"
+   ],
+   "path": [],
+   "answer_doc": "QK-TC-81D.md",
+   "answer_where": "別表 1 種別ごとの基準（S-48 の行）",
+   "answer_quote": "| S-48 | 38 稼働日 | 2 回 |",
+   "hops": 1,
+   "wrong_values": [
+    "8 稼働日",
+    "18 稼働日",
+    "28 稼働日"
+   ],
+   "avoided_terms": [
+    "S-48",
+    "種別",
+    "報告の欄",
+    "別表",
+    "期限"
+   ],
+   "rationale": "答えの別表は種別の記号だけで引く表である。起点の第 13 条は種別を記号 S-48 だけで書いており、別表への参照を持たない。記号をたどらなければ、ほかの種別の期限（8・18・28 稼働日）と区別できない。",
+   "bridge_name_kind": "区分・等級・種別の記号",
+   "entry_name_form": "質問と似た文",
+   "ref_source_rank": 1
+  },
+  {
+   "qid": "H-E22d",
+   "type": "control",
+   "twin_of": "H-E22",
+   "question": "QK-TC-81 の別表 1 で、種別 S-48 の報告の欄は何稼働日か。",
+   "answer": "38 稼働日である。",
+   "answer_keys": [
+    "38 稼働日"
+   ],
+   "entry_doc": "QK-TC-81D.md",
+   "entry_where": "別表 1 種別ごとの基準（S-48 の行）",
+   "entry_quote": "| S-48 | 38 稼働日 | 2 回 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-81D.md",
+   "answer_where": "別表 1 種別ごとの基準（S-48 の行）",
+   "answer_quote": "| S-48 | 38 稼働日 | 2 回 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E22 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E23",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "内部品質監査で、前回の監査から続いている軽欠点を指摘された。これに対する是正処置は、処置が終わってから何日のあいだ再発しなければ、効果があったと認められるか。",
+   "answer": "前回から続く軽欠点は重欠点に当たり、種別 S-38 の是正処置要求書が発行される。S-38 の効果の確認は、処置の完了の日から 148 日である。",
+   "answer_keys": [
+    "148"
+   ],
+   "entry_doc": "QK-TC-83E.md",
+   "entry_where": "第 10 条（指摘に対する処置）1 項",
+   "entry_quote": "重欠点の指摘に対しては、過品管が、種別 S-38 の是正処置要求書を発行する。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "S-38",
+   "bridge_aliases": [
+    "種別 S-38"
+   ],
+   "path": [],
+   "answer_doc": "QK-TC-81D.md",
+   "answer_where": "別表 2 種別ごとの数（S-38 の行）",
+   "answer_quote": "| S-38 | 148 | 458 |",
+   "hops": 1,
+   "wrong_values": [
+    "188",
+    "128",
+    "368",
+    "458"
+   ],
+   "avoided_terms": [
+    "S-38",
+    "重欠点",
+    "種別",
+    "確認の欄",
+    "別表"
+   ],
+   "rationale": "質問は第 9 条の重欠点の定め（同じ軽欠点が前回の監査から続いているものを含む）に似せてあり、重欠点とも種別とも言わない。種別の記号 S-38 は、隣の第 10 条の文に出る。答えの別表は種別の記号だけで引く表で、文書も別である。",
+   "bridge_name_kind": "区分・等級・種別の記号",
+   "entry_name_form": "質問と似ていない文",
+   "ref_source_rank": 3
+  },
+  {
+   "qid": "H-E23d",
+   "type": "control",
+   "twin_of": "H-E23",
+   "question": "QK-TC-81 の別表 2 で、種別 S-38 の確認の欄はいくつか。",
+   "answer": "148（日）である。",
+   "answer_keys": [
+    "148"
+   ],
+   "entry_doc": "QK-TC-81D.md",
+   "entry_where": "別表 2 種別ごとの数（S-38 の行）",
+   "entry_quote": "| S-38 | 148 | 458 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-81D.md",
+   "answer_where": "別表 2 種別ごとの数（S-38 の行）",
+   "answer_quote": "| S-38 | 148 | 458 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E23 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E24",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "区分 甲の不適合を特別採用とした過給機は、納入の日から何週のうちに次の開放をして、その箇所を点検することになるか。",
+   "answer": "区分 甲の特別採用には条件 J-18 と J-28 を付ける。次の開放までの期間を限る J-28 の値は、納入の日から 78 週である。",
+   "answer_keys": [
+    "78"
+   ],
+   "entry_doc": "QK-TC-82C.md",
+   "entry_where": "第 6 条（区分 甲の特別採用）1 項 (3)",
+   "entry_quote": "(3) 条件 J-18 及び J-28 を付けること。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "J-28",
+   "bridge_aliases": [
+    "条件 J-28"
+   ],
+   "path": [],
+   "answer_doc": "QK-TC-82C.md",
+   "answer_where": "別表 1 記号別の値（J-28 の行）",
+   "answer_quote": "| J-28 | 78 |",
+   "hops": 1,
+   "wrong_values": [
+    "208"
+   ],
+   "avoided_terms": [
+    "J-28",
+    "J-18",
+    "条件",
+    "記号",
+    "別表"
+   ],
+   "rationale": "答えの別表は条件の記号と値だけの表である。起点の第 6 条には条件の記号が 2 つ並んでいるだけで、どちらが開放の期間かは書いていない（第 9 条に定めがある）。J-18 を選ぶと 208 になる。",
+   "bridge_name_kind": "区分・等級・種別の記号",
+   "entry_name_form": "一覧・列挙",
+   "ref_source_rank": 1
+  },
+  {
+   "qid": "H-E24d",
+   "type": "control",
+   "twin_of": "H-E24",
+   "question": "QK-TC-82 の別表 1 で、記号 J-28 の値はいくつか。",
+   "answer": "78（週）である。",
+   "answer_keys": [
+    "78"
+   ],
+   "entry_doc": "QK-TC-82C.md",
+   "entry_where": "別表 1 記号別の値（J-28 の行）",
+   "entry_quote": "| J-28 | 78 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-82C.md",
+   "answer_where": "別表 1 記号別の値（J-28 の行）",
+   "answer_quote": "| J-28 | 78 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E24 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E25",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "HX48 の量産機を定盤に据え付けるときに介するものは、ふだんどこにしまってあるか。",
+   "answer": "HX48 の取付台は MT-320 で、棚 R-53 に置く。",
+   "answer_keys": [
+    "R-53"
+   ],
+   "entry_doc": "KS-TC-T302B.md",
+   "entry_where": "別表 2 型式別の取付け及び計測の条件（HX48 の行）",
+   "entry_quote": "| HX48 | MT-320 | 水冷 | 無し | — |",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "MT-320",
+   "bridge_aliases": [
+    "取付台"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-T301A.md",
+   "answer_where": "2. 単独性能確認試験要領 2-5 計測器及び治具（専用の治具の表）（MT-320 の行）",
+   "answer_quote": "| MT-320 | R-53 | 1,093 | 183 |",
+   "hops": 1,
+   "wrong_values": [
+    "R-43",
+    "R-63",
+    "R-73"
+   ],
+   "avoided_terms": [
+    "MT-320",
+    "取付台",
+    "棚",
+    "管理番号"
+   ],
+   "rationale": "答えの表は専用の治具の管理番号と棚・周期・質量だけの表で、型式も取付台の語も持たず、文書も別である。型式と取付台の管理番号の対応は、量産機の要領の別表 2 の行にだけある。HX42・HX44 の MT-310 を選ぶと R-43 になる。",
+   "bridge_name_kind": "設備・治具・計測器の管理番号",
+   "entry_name_form": "表の行",
+   "ref_source_rank": 1
+  },
+  {
+   "qid": "H-E25d",
+   "type": "control",
+   "twin_of": "H-E25",
+   "question": "KS-TC-T301 の 2-5 の表で、管理番号 MT-320 の棚はどこか。",
+   "answer": "R-53 である。",
+   "answer_keys": [
+    "R-53"
+   ],
+   "entry_doc": "KS-TC-T301A.md",
+   "entry_where": "2. 単独性能確認試験要領 2-5 計測器及び治具（専用の治具の表）（MT-320 の行）",
+   "entry_quote": "| MT-320 | R-53 | 1,093 | 183 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-T301A.md",
+   "answer_where": "2. 単独性能確認試験要領 2-5 計測器及び治具（専用の治具の表）（MT-320 の行）",
+   "answer_quote": "| MT-320 | R-53 | 1,093 | 183 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E25 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E26",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "DS76 の組で、低圧段の吐出口と高圧段の吸込口をつなぐのに使うものは、ふだんどこにしまってあるか。",
+   "answer": "DS76 の段間ダクトは DK-330 で、棚 R-33 に置く。",
+   "answer_keys": [
+    "R-33"
+   ],
+   "entry_doc": "KS-TC-T302B.md",
+   "entry_where": "3. 試運転の準備 3.1 運転台及び治具",
+   "entry_quote": "段間ダクトは、DS72 には DK-310、DS74 には DK-320、DS76 には DK-330 を用いる。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "DK-330",
+   "bridge_aliases": [
+    "段間ダクト"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-T301A.md",
+   "answer_where": "2. 単独性能確認試験要領 2-5 計測器及び治具（専用の治具の表）（DK-330 の行）",
+   "answer_quote": "| DK-330 | R-33 | 543 | 93 |",
+   "hops": 1,
+   "wrong_values": [
+    "R-13",
+    "R-23"
+   ],
+   "avoided_terms": [
+    "DK-330",
+    "段間ダクト",
+    "棚",
+    "管理番号"
+   ],
+   "rationale": "答えの表は管理番号だけで引く表で、文書も別である。起点の文には段間ダクトの管理番号が 3 つ並んでおり、DS76 の DK-330 を選んでたどる必要がある。DK-310・DK-320 を選ぶと R-13・R-23 になる。",
+   "bridge_name_kind": "設備・治具・計測器の管理番号",
+   "entry_name_form": "一覧・列挙",
+   "ref_source_rank": 3
+  },
+  {
+   "qid": "H-E26d",
+   "type": "control",
+   "twin_of": "H-E26",
+   "question": "KS-TC-T301 の 2-5 の表で、管理番号 DK-330 の棚はどこか。",
+   "answer": "R-33 である。",
+   "answer_keys": [
+    "R-33"
+   ],
+   "entry_doc": "KS-TC-T301A.md",
+   "entry_where": "2. 単独性能確認試験要領 2-5 計測器及び治具（専用の治具の表）（DK-330 の行）",
+   "entry_quote": "| DK-330 | R-33 | 543 | 93 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-T301A.md",
+   "answer_where": "2. 単独性能確認試験要領 2-5 計測器及び治具（専用の治具の表）（DK-330 の行）",
+   "answer_quote": "| DK-330 | R-33 | 543 | 93 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E26 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E27",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "被要求部門の長へ渡された是正処置の要求書は、製品の出荷のあといつまで残しておくのか。",
+   "answer": "是正処置要求書（様式 TCF-220）は保存区分 K-4 で、出荷の日から 39 年残す。",
+   "answer_keys": [
+    "39 年"
+   ],
+   "entry_doc": "QK-TC-81D.md",
+   "entry_where": "第 4 条（要求書の発行）1 項",
+   "entry_quote": "是正処置要求書（様式 TCF-220）を起票し、被要求部門の長へ渡す。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "TCF-220",
+   "bridge_aliases": [
+    "是正処置要求書",
+    "要求書"
+   ],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "別表 2 様式別の区分（TCF-220 の行）",
+   "answer_quote": "| TCF-220 | K-4 | 39 年 | 第 6 書架 |",
+   "hops": 1,
+   "wrong_values": [
+    "9 年",
+    "19 年",
+    "29 年",
+    "永年"
+   ],
+   "avoided_terms": [
+    "TCF-220",
+    "年限",
+    "保存区分",
+    "様式番号",
+    "保管"
+   ],
+   "rationale": "答えの別表は様式番号と区分・年限・書架だけの表で、帳票の名称を持たず、文書も別である。様式番号 TCF-220 は起点の第 4 条に出る。番号をたどらなければ、ほかの様式の年限と区別できない。",
+   "bridge_name_kind": "帳票の様式番号",
+   "entry_name_form": "質問と似た文",
+   "ref_source_rank": 14
+  },
+  {
+   "qid": "H-E27d",
+   "type": "control",
+   "twin_of": "H-E27",
+   "question": "QK-TC-01 の別表 2 で、様式番号 TCF-220 の年限は何年か。",
+   "answer": "39 年である。",
+   "answer_keys": [
+    "39 年"
+   ],
+   "entry_doc": "QK-TC-01G.md",
+   "entry_where": "別表 2 様式別の区分（TCF-220 の行）",
+   "entry_quote": "| TCF-220 | K-4 | 39 年 | 第 6 書架 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "別表 2 様式別の区分（TCF-220 の行）",
+   "answer_quote": "| TCF-220 | K-4 | 39 年 | 第 6 書架 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E27 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E28",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "基準の条件の一部を満たせないと実施の前から見込まれるときに過品管へ出す申請書は、承認のあと、どこに置かれるのか。",
+   "answer": "逸脱許可申請書（様式 TCF-240）で、過検の文書庫の第 6 書架に保管する。",
+   "answer_keys": [
+    "第 6 書架"
+   ],
+   "entry_doc": "QK-TC-02D.md",
+   "entry_where": "第 9 条（基準からの逸脱の事前承認）1 項",
+   "entry_quote": "逸脱許可申請書（様式 TCF-240）を、実施の予定日の 5 稼働日前までに過品管へ提出し",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "TCF-240",
+   "bridge_aliases": [
+    "逸脱許可申請書",
+    "逸脱申請"
+   ],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "別表 2 様式別の区分（TCF-240 の行）",
+   "answer_quote": "| TCF-240 | K-4 | 39 年 | 第 6 書架 |",
+   "hops": 1,
+   "wrong_values": [
+    "第 1 書架",
+    "第 2 書架",
+    "第 4 書架",
+    "第 7 書架",
+    "第 8 書架",
+    "第 9 書架"
+   ],
+   "avoided_terms": [
+    "TCF-240",
+    "書架",
+    "文書庫",
+    "様式番号",
+    "保管"
+   ],
+   "rationale": "答えの別表は様式番号だけで引く表で、帳票の名称を持たず、文書も別である。様式番号 TCF-240 は起点の第 9 条に出る。番号をたどらなければ、ほかの様式の書架と区別できない。",
+   "bridge_name_kind": "帳票の様式番号",
+   "entry_name_form": "質問と似た文",
+   "ref_source_rank": 26
+  },
+  {
+   "qid": "H-E28d",
+   "type": "control",
+   "twin_of": "H-E28",
+   "question": "QK-TC-01 の別表 2 で、様式番号 TCF-240 の書架はどこか。",
+   "answer": "第 6 書架である。",
+   "answer_keys": [
+    "第 6 書架"
+   ],
+   "entry_doc": "QK-TC-01G.md",
+   "entry_where": "別表 2 様式別の区分（TCF-240 の行）",
+   "entry_quote": "| TCF-240 | K-4 | 39 年 | 第 6 書架 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "別表 2 様式別の区分（TCF-240 の行）",
+   "answer_quote": "| TCF-240 | K-4 | 39 年 | 第 6 書架 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E28 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E29",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "不適合を見つけたときに過検が起票して過品管へ回付する報告書は、製品の出荷のあといつまで残しておくのか。",
+   "answer": "不適合報告書（様式 TCF-210）は保存区分 K-4 で、出荷の日から 39 年残す。",
+   "answer_keys": [
+    "39 年"
+   ],
+   "entry_doc": "QK-TC-02D.md",
+   "entry_where": "第 4 条（発見時の報告）2 項",
+   "entry_quote": "不適合報告書（様式 TCF-210）を起票して、過品管へ回付する。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "TCF-210",
+   "bridge_aliases": [
+    "不適合報告書",
+    "不適合報告"
+   ],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "別表 2 様式別の区分（TCF-210 の行）",
+   "answer_quote": "| TCF-210 | K-4 | 39 年 | 第 6 書架 |",
+   "hops": 1,
+   "wrong_values": [
+    "9 年",
+    "19 年",
+    "29 年",
+    "永年"
+   ],
+   "avoided_terms": [
+    "TCF-210",
+    "年限",
+    "保存区分",
+    "様式番号",
+    "保管"
+   ],
+   "rationale": "答えの別表は様式番号だけで引く表で、帳票の名称を持たず、文書も別である。様式番号 TCF-210 は起点の第 4 条に出る。番号をたどらなければ、ほかの様式の年限と区別できない。",
+   "bridge_name_kind": "帳票の様式番号",
+   "entry_name_form": "質問と似た文",
+   "ref_source_rank": 3
+  },
+  {
+   "qid": "H-E29d",
+   "type": "control",
+   "twin_of": "H-E29",
+   "question": "QK-TC-01 の別表 2 で、様式番号 TCF-210 の年限は何年か。",
+   "answer": "39 年である。",
+   "answer_keys": [
+    "39 年"
+   ],
+   "entry_doc": "QK-TC-01G.md",
+   "entry_where": "別表 2 様式別の区分（TCF-210 の行）",
+   "entry_quote": "| TCF-210 | K-4 | 39 年 | 第 6 書架 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "別表 2 様式別の区分（TCF-210 の行）",
+   "answer_quote": "| TCF-210 | K-4 | 39 年 | 第 6 書架 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E29 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E30",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "振動診断の認定を受けた者が、振動の値は判定基準に入っているのに過去の値と比べて変化が大きいことに気づいた。連絡する先の部門は、どこにあるか。",
+   "answer": "連絡する先は過技設（技術部 設計課）で、所在は技術棟 2 階である。",
+   "answer_keys": [
+    "技術棟 2 階"
+   ],
+   "entry_doc": "QK-TC-74A.md",
+   "entry_where": "第 3 条（認定の区分）3 項",
+   "entry_quote": "過去の値と比べて変化が大きいときは、過技設に連絡する。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "過技設",
+   "bridge_aliases": [
+    "設計課"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-A000N.md",
+   "answer_where": "5. 部門の略称及び連絡先（過技設 の行）",
+   "answer_quote": "| 過技設 | 過給機事業部 技術部 設計課 | 技術棟 2 階 | 4169 |",
+   "hops": 1,
+   "wrong_values": [
+    "技術棟 3 階",
+    "本館 3 階",
+    "本館 1 階",
+    "第 2 組立棟 2 階"
+   ],
+   "avoided_terms": [
+    "過技設",
+    "所在",
+    "内線",
+    "略称",
+    "連絡先"
+   ],
+   "rationale": "答えの表は部門の略称と正式の名称・所在・内線だけの表で、振動の語を持たず、文書も別である。部門の略称は起点の第 3 条に出る。略称をたどらなければ、過技性（技術棟 3 階）などと区別できない。",
+   "bridge_name_kind": "部門の略称",
+   "entry_name_form": "質問と似た文",
+   "ref_source_rank": null
+  },
+  {
+   "qid": "H-E30d",
+   "type": "control",
+   "twin_of": "H-E30",
+   "question": "KS-TC-A000 の 5. の表で、略称 過技設 の部門の所在はどこか。",
+   "answer": "技術棟 2 階である。",
+   "answer_keys": [
+    "技術棟 2 階"
+   ],
+   "entry_doc": "KS-TC-A000N.md",
+   "entry_where": "5. 部門の略称及び連絡先（過技設 の行）",
+   "entry_quote": "| 過技設 | 過給機事業部 技術部 設計課 | 技術棟 2 階 | 4169 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-A000N.md",
+   "answer_where": "5. 部門の略称及び連絡先（過技設 の行）",
+   "answer_quote": "| 過技設 | 過給機事業部 技術部 設計課 | 技術棟 2 階 | 4169 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E30 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E31",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "新しく買った熱電対の購入先の成績書を保管している部門は、どこにあるか。",
+   "answer": "保管しているのは資購（資材部 購買課）で、所在は本館 1 階である。",
+   "answer_keys": [
+    "本館 1 階"
+   ],
+   "entry_doc": "KS-TC-C503B.md",
+   "entry_where": "6 合否及び処置 6-4 新しい熱電対の受入れ",
+   "entry_quote": "購入先の成績書は、資購が保管する。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "資購",
+   "bridge_aliases": [
+    "購買課"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-A000N.md",
+   "answer_where": "5. 部門の略称及び連絡先（資購 の行）",
+   "answer_quote": "| 資購 | 資材部 購買課 | 本館 1 階 | 4309 |",
+   "hops": 1,
+   "wrong_values": [
+    "本館 3 階",
+    "計測棟",
+    "技術棟 2 階",
+    "保全棟"
+   ],
+   "avoided_terms": [
+    "資購",
+    "所在",
+    "内線",
+    "略称",
+    "連絡先"
+   ],
+   "rationale": "答えの表は部門の略称だけで引く表で、熱電対の語を持たず、文書も別である。部門の略称は起点の 6-4 に出る。略称をたどらなければ、過品管（本館 3 階）や計管（計測棟）と区別できない。",
+   "bridge_name_kind": "部門の略称",
+   "entry_name_form": "質問と似た文",
+   "ref_source_rank": null
+  },
+  {
+   "qid": "H-E31d",
+   "type": "control",
+   "twin_of": "H-E31",
+   "question": "KS-TC-A000 の 5. の表で、略称 資購 の部門の所在はどこか。",
+   "answer": "本館 1 階である。",
+   "answer_keys": [
+    "本館 1 階"
+   ],
+   "entry_doc": "KS-TC-A000N.md",
+   "entry_where": "5. 部門の略称及び連絡先（資購 の行）",
+   "entry_quote": "| 資購 | 資材部 購買課 | 本館 1 階 | 4309 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-A000N.md",
+   "answer_where": "5. 部門の略称及び連絡先（資購 の行）",
+   "answer_quote": "| 資購 | 資材部 購買課 | 本館 1 階 | 4309 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E31 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E32",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "検査員の認定証をなくしたときに再交付を願い出る先の部門は、どこにあるか。",
+   "answer": "再交付は過品管（品質保証部 品質管理課）へ願い出る。所在は本館 3 階である。",
+   "answer_keys": [
+    "本館 3 階"
+   ],
+   "entry_doc": "QK-TC-71E.md",
+   "entry_where": "第 11 条（認定証）3 項",
+   "entry_quote": "認定証を汚し、又は失ったときは、所属の長を通じて、過品管へ再交付を願い出る。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "過品管",
+   "bridge_aliases": [
+    "品質管理課"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-A000N.md",
+   "answer_where": "5. 部門の略称及び連絡先（過品管 の行）",
+   "answer_quote": "| 過品管 | 過給機事業部 品質保証部 品質管理課 | 本館 3 階 | 4119 |",
+   "hops": 1,
+   "wrong_values": [
+    "本館 1 階",
+    "技術棟 2 階",
+    "研修棟",
+    "第 2 組立棟 2 階"
+   ],
+   "avoided_terms": [
+    "過品管",
+    "所在",
+    "内線",
+    "略称",
+    "連絡先"
+   ],
+   "rationale": "答えの表は部門の略称だけで引く表で、認定証の語を持たず、文書も別である。部門の略称は起点の第 11 条に出る。略称は文書群の多くのチャンクに出るので、名前の出るチャンクを全部足す方法では絞れない。略称をたどらなければ、資購（本館 1 階）や技教（研修棟）と区別できない。",
+   "bridge_name_kind": "部門の略称",
+   "entry_name_form": "質問と似た文",
+   "ref_source_rank": null
+  },
+  {
+   "qid": "H-E32d",
+   "type": "control",
+   "twin_of": "H-E32",
+   "question": "KS-TC-A000 の 5. の表で、略称 過品管 の部門の所在はどこか。",
+   "answer": "本館 3 階である。",
+   "answer_keys": [
+    "本館 3 階"
+   ],
+   "entry_doc": "KS-TC-A000N.md",
+   "entry_where": "5. 部門の略称及び連絡先（過品管 の行）",
+   "entry_quote": "| 過品管 | 過給機事業部 品質保証部 品質管理課 | 本館 3 階 | 4119 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-A000N.md",
+   "answer_where": "5. 部門の略称及び連絡先（過品管 の行）",
+   "answer_quote": "| 過品管 | 過給機事業部 品質保証部 品質管理課 | 本館 3 階 | 4119 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E32 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E33",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "潤滑油の受入検査や分析の結果を記入する管理票について、様式を主管している部門には、何番でつながるか。",
+   "answer": "潤滑油性状管理票（様式 TCF-410）の主管は過運（製造部 試運転係）で、内線は 4149 である。",
+   "answer_keys": [
+    "4149"
+   ],
+   "entry_doc": "QK-TC-01G.md",
+   "entry_where": "別表 1 様式の一覧（TCF-410 の行）",
+   "entry_quote": "| TCF-410 | 潤滑油性状管理票 | 過運 | 試運転係長 |",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "過運",
+   "bridge_aliases": [
+    "試運転係"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-A000N.md",
+   "answer_where": "5. 部門の略称及び連絡先（過運 の行）",
+   "answer_quote": "| 過運 | 過給機事業部 製造部 試運転係 | 運転棟 | 4149 |",
+   "hops": 1,
+   "wrong_values": [
+    "4109",
+    "4119",
+    "4139",
+    "4209",
+    "4219"
+   ],
+   "avoided_terms": [
+    "過運",
+    "内線",
+    "略称",
+    "連絡先",
+    "TCF-410"
+   ],
+   "rationale": "答えの表は部門の略称だけで引く表で、帳票の語を持たず、文書も別である。主管の部門の略称は、帳票規定の別表 1 の行に並んでいるだけである。略称をたどらなければ、ほかの部門の内線と区別できない。",
+   "bridge_name_kind": "部門の略称",
+   "entry_name_form": "表の行",
+   "ref_source_rank": null
+  },
+  {
+   "qid": "H-E33d",
+   "type": "control",
+   "twin_of": "H-E33",
+   "question": "KS-TC-A000 の 5. の表で、略称 過運 の部門の内線は何番か。",
+   "answer": "4149 である。",
+   "answer_keys": [
+    "4149"
+   ],
+   "entry_doc": "KS-TC-A000N.md",
+   "entry_where": "5. 部門の略称及び連絡先（過運 の行）",
+   "entry_quote": "| 過運 | 過給機事業部 製造部 試運転係 | 運転棟 | 4149 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-A000N.md",
+   "answer_where": "5. 部門の略称及び連絡先（過運 の行）",
+   "answer_quote": "| 過運 | 過給機事業部 製造部 試運転係 | 運転棟 | 4149 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E33 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E34",
+   "type": "ent1",
+   "twin_of": null,
+   "question": "タービン入口に差し込む熱電対は、合格が続いていても、いつ新しいものにするのか。",
+   "answer": "タービン入口用の熱電対は符号 H で、取替えの目安は校正 5 回である。目安に達したら、次の校正の前に取り替える。",
+   "answer_keys": [
+    "校正 5 回"
+   ],
+   "entry_doc": "KS-TC-C503B.md",
+   "entry_where": "3 区分の表（符号 H の行）",
+   "entry_quote": "| H | タービン入口 | 6.4 mm | 355 mm |",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "H",
+   "bridge_aliases": [
+    "符号 H"
+   ],
+   "path": [],
+   "answer_doc": "KS-TC-C503B.md",
+   "answer_where": "別表 1 符号別の取替え（H の行）",
+   "answer_quote": "| H | 校正 5 回 | 赤 |",
+   "hops": 1,
+   "wrong_values": [
+    "校正 10 回",
+    "校正 15 回"
+   ],
+   "avoided_terms": [
+    "符号",
+    "目安",
+    "取替え",
+    "別表",
+    "札"
+   ],
+   "rationale": "答えの別表は符号（1 文字）と目安・札の色だけの表で、差し込む箇所の語を持たない。差し込む箇所と符号の対応は、3 の表の行にだけある。符号をたどらなければ、L（校正 15 回）や M（校正 10 回）と区別できない。",
+   "bridge_name_kind": "区分・等級・種別の記号",
+   "entry_name_form": "表の行",
+   "caveat": "答えの語は表の欄のとおり「校正 5 回」とした。回答が「5 回の校正」「校正を 5 回」と書くと、語が合わず誤答と数えられる。",
+   "ref_source_rank": 1
+  },
+  {
+   "qid": "H-E34d",
+   "type": "control",
+   "twin_of": "H-E34",
+   "question": "KS-TC-C503 の別表 1 で、符号 H の熱電対の取替えの目安は何か。",
+   "answer": "校正 5 回である。",
+   "answer_keys": [
+    "校正 5 回"
+   ],
+   "entry_doc": "KS-TC-C503B.md",
+   "entry_where": "別表 1 符号別の取替え（H の行）",
+   "entry_quote": "| H | 校正 5 回 | 赤 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-C503B.md",
+   "answer_where": "別表 1 符号別の取替え（H の行）",
+   "answer_quote": "| H | 校正 5 回 | 赤 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E34 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E35",
+   "type": "ent2",
+   "twin_of": null,
+   "question": "RM20 系列の量産機の試運転で、吐出管の直管部が取れない配置のときに入れる整流の格子は、どこに保管してあるか。",
+   "answer": "格子は吐出絞り弁と同じ棚に保管する。吐出絞り弁の管理番号は JG-120 で、その定位置は棚 R-34 である。",
+   "answer_keys": [
+    "R-34"
+   ],
+   "entry_doc": "KS-TC-T202D.md",
+   "entry_where": "注（注 5）",
+   "entry_quote": "（注 5）直管部が取れない配置では、整流の格子を入れる。格子は、過組が吐出絞り弁と同じ棚に保管する。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "吐出絞り弁",
+   "bridge_aliases": [
+    "JG-120",
+    "絞り弁"
+   ],
+   "path": [
+    {
+     "doc": "KS-TC-T202D.md",
+     "where": "3. 試運転の準備 3.1 運転台及び治具（名称から管理番号が分かる。KS-TC-M403 の 2. の表にも同じ対応がある）",
+     "quote": "風量は、吐出絞り弁 JG-120 で調整する。",
+     "kind": "entity"
+    }
+   ],
+   "answer_doc": "KS-TC-M403B.md",
+   "answer_where": "5. 治具個票 JG-120",
+   "answer_quote": "- 定位置: 棚 R-34",
+   "hops": 2,
+   "wrong_values": [
+    "R-24",
+    "R-14",
+    "R-74",
+    "R-54"
+   ],
+   "avoided_terms": [
+    "JG-120",
+    "定位置",
+    "個票",
+    "棚"
+   ],
+   "rationale": "起点の注には治具の名称（吐出絞り弁）だけがあり、管理番号が無い。名称から管理番号 JG-120 が分かるのは別のチャンク（同じ文書の 3.1、又は治具の基準の 2. の表）で、棚は管理番号だけを見出しにした個票に書いてある。名称 → 管理番号 → 個票と 2 回たどる。",
+   "bridge_name_kind": "設備・治具・計測器の名称や呼称",
+   "entry_name_form": "質問と似た文",
+   "caveat": "中継（吐出絞り弁 JG-120 の文）は起点と同じ文書の 3.1 にあり、質問だけの並べ替えで 3 位に来る。中継が最初から文脈に入っている場合は、そこから管理番号を 1 回たどれば答えに着く。",
+   "ref_source_rank": 97
+  },
+  {
+   "qid": "H-E35d",
+   "type": "control",
+   "twin_of": "H-E35",
+   "question": "KS-TC-M403 の治具個票で、JG-120 の定位置はどこか。",
+   "answer": "棚 R-34 である。",
+   "answer_keys": [
+    "R-34"
+   ],
+   "entry_doc": "KS-TC-M403B.md",
+   "entry_where": "5. 治具個票 JG-120",
+   "entry_quote": "- 定位置: 棚 R-34",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M403B.md",
+   "answer_where": "5. 治具個票 JG-120",
+   "answer_quote": "- 定位置: 棚 R-34",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E35 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E36",
+   "type": "ent2",
+   "twin_of": null,
+   "question": "冷却水の始業の時の pH や導電率を書き込んだ用紙は、あとで、どこにしまうのか。",
+   "answer": "設備始業点検表（様式 TCF-320）に記入する。様式 TCF-320 は、過検の文書庫の第 2 書架に保管する。",
+   "answer_keys": [
+    "第 2 書架"
+   ],
+   "entry_doc": "KS-TC-L604A.md",
+   "entry_where": "9. 記録",
+   "entry_quote": "始業の時の pH、導電率及び外観は、設備始業点検表に記入する。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "設備始業点検表",
+   "bridge_aliases": [
+    "TCF-320",
+    "始業点検表"
+   ],
+   "path": [
+    {
+     "doc": "QK-TC-01G.md",
+     "where": "別表 1 様式の一覧（TCF-320 の行）",
+     "quote": "| TCF-320 | 設備始業点検表 | 生技保 | 設備保全課長 |",
+     "kind": "entity"
+    }
+   ],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "別表 2 様式別の区分（TCF-320 の行）",
+   "answer_quote": "| TCF-320 | K-1 | 9 年 | 第 2 書架 |",
+   "hops": 2,
+   "wrong_values": [
+    "第 1 書架",
+    "第 4 書架",
+    "第 6 書架",
+    "第 7 書架",
+    "第 8 書架",
+    "第 9 書架"
+   ],
+   "avoided_terms": [
+    "設備始業点検表",
+    "TCF-320",
+    "書架",
+    "文書庫",
+    "保管"
+   ],
+   "rationale": "起点には帳票の名称だけがあり、様式番号が無い。名称から様式番号が分かるのは帳票規定の別表 1 で、書架は様式番号だけで引く別表 2 にある。名称 → 様式番号 → 書架と 2 回たどる。",
+   "bridge_name_kind": "帳票の名称",
+   "entry_name_form": "質問と似た文",
+   "ref_source_rank": 42
+  },
+  {
+   "qid": "H-E36d",
+   "type": "control",
+   "twin_of": "H-E36",
+   "question": "QK-TC-01 の別表 2 で、様式番号 TCF-320 の書架はどこか。",
+   "answer": "第 2 書架である。",
+   "answer_keys": [
+    "第 2 書架"
+   ],
+   "entry_doc": "QK-TC-01G.md",
+   "entry_where": "別表 2 様式別の区分（TCF-320 の行）",
+   "entry_quote": "| TCF-320 | K-1 | 9 年 | 第 2 書架 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "別表 2 様式別の区分（TCF-320 の行）",
+   "answer_quote": "| TCF-320 | K-1 | 9 年 | 第 2 書架 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E36 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E37",
+   "type": "ent2",
+   "twin_of": null,
+   "question": "校正外れで廃却した熱電対の製造番号を備考に書き込んだ用紙は、いつまで残しておくのか。",
+   "answer": "校正記録票（様式 TCF-310）に記入する。様式 TCF-310 は保存区分 K-1 で、9 年残す。",
+   "answer_keys": [
+    "9 年"
+   ],
+   "entry_doc": "KS-TC-C503B.md",
+   "entry_where": "6 合否及び処置 6-3 記録",
+   "entry_quote": "校正の結果は、校正記録票に記入する。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "校正記録票",
+   "bridge_aliases": [
+    "TCF-310",
+    "校正記録"
+   ],
+   "path": [
+    {
+     "doc": "QK-TC-01G.md",
+     "where": "別表 1 様式の一覧（TCF-310 の行）",
+     "quote": "| TCF-310 | 校正記録票 | 計管 | 計測管理室長 |",
+     "kind": "entity"
+    }
+   ],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "別表 2 様式別の区分（TCF-310 の行）",
+   "answer_quote": "| TCF-310 | K-1 | 9 年 | 第 2 書架 |",
+   "hops": 2,
+   "wrong_values": [
+    "19 年",
+    "29 年",
+    "39 年",
+    "永年"
+   ],
+   "avoided_terms": [
+    "校正記録票",
+    "TCF-310",
+    "年限",
+    "保存区分",
+    "保管"
+   ],
+   "rationale": "起点には帳票の名称だけがあり、様式番号が無い。名称から様式番号が分かるのは帳票規定の別表 1（又は校正管理基準の 5-4）で、年限は様式番号だけで引く別表 2 にある。名称 → 様式番号 → 年限と 2 回たどる。",
+   "bridge_name_kind": "帳票の名称",
+   "entry_name_form": "質問と似た文",
+   "ref_source_rank": 42
+  },
+  {
+   "qid": "H-E37d",
+   "type": "control",
+   "twin_of": "H-E37",
+   "question": "QK-TC-01 の別表 2 で、様式番号 TCF-310 の年限は何年か。",
+   "answer": "9 年である。",
+   "answer_keys": [
+    "9 年"
+   ],
+   "entry_doc": "QK-TC-01G.md",
+   "entry_where": "別表 2 様式別の区分（TCF-310 の行）",
+   "entry_quote": "| TCF-310 | K-1 | 9 年 | 第 2 書架 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "別表 2 様式別の区分（TCF-310 の行）",
+   "answer_quote": "| TCF-310 | K-1 | 9 年 | 第 2 書架 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E37 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E38",
+   "type": "ent2",
+   "twin_of": null,
+   "question": "潤滑油の供給圧力が範囲を外れた時刻や、そのときの回転速度を備考に書き込んだ成績表は、承認のあと、どこに置かれるのか。",
+   "answer": "成績表は単独運転試験成績表（様式 TCF-110）のことで、過検の文書庫の第 9 書架に保管する。",
+   "answer_keys": [
+    "第 9 書架"
+   ],
+   "entry_doc": "KS-TC-L001E.md",
+   "entry_where": "7. 供給条件を外れた場合",
+   "entry_quote": "範囲を外れた時刻、外れていた時間及びそのときの回転速度は、成績表の備考に記入する。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "成績表",
+   "bridge_aliases": [
+    "単独運転試験成績表",
+    "TCF-110"
+   ],
+   "path": [
+    {
+     "doc": "QK-TC-01G.md",
+     "where": "別表 1 様式の一覧（TCF-110 の行）",
+     "quote": "| TCF-110 | 単独運転試験成績表 | 過検 | 検査課長 |",
+     "kind": "entity"
+    }
+   ],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "別表 2 様式別の区分（TCF-110 の行）",
+   "answer_quote": "| TCF-110 | K-3 | 29 年 | 第 9 書架 |",
+   "hops": 2,
+   "wrong_values": [
+    "第 1 書架",
+    "第 2 書架",
+    "第 4 書架",
+    "第 6 書架",
+    "第 7 書架",
+    "第 8 書架"
+   ],
+   "avoided_terms": [
+    "TCF-110",
+    "単独運転試験成績表",
+    "書架",
+    "文書庫",
+    "保管"
+   ],
+   "rationale": "起点には帳票の略した名称（成績表）だけがあり、様式番号が無い。名称から様式番号が分かるのは帳票規定の別表 1（又は単独試運転の共通基準の 7.）で、書架は様式番号だけで引く別表 2 にある。名称 → 様式番号 → 書架と 2 回たどる。",
+   "bridge_name_kind": "帳票の名称",
+   "entry_name_form": "質問と似た文",
+   "ref_source_rank": 351
+  },
+  {
+   "qid": "H-E38d",
+   "type": "control",
+   "twin_of": "H-E38",
+   "question": "QK-TC-01 の別表 2 で、様式番号 TCF-110 の書架はどこか。",
+   "answer": "第 9 書架である。",
+   "answer_keys": [
+    "第 9 書架"
+   ],
+   "entry_doc": "QK-TC-01G.md",
+   "entry_where": "別表 2 様式別の区分（TCF-110 の行）",
+   "entry_quote": "| TCF-110 | K-3 | 29 年 | 第 9 書架 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-01G.md",
+   "answer_where": "別表 2 様式別の区分（TCF-110 の行）",
+   "answer_quote": "| TCF-110 | K-3 | 29 年 | 第 9 書架 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E38 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E39",
+   "type": "ent2",
+   "twin_of": null,
+   "question": "外部振動が許容値を超えて不適合になった過給機について、原因のある部門に是正処置が求められた。処置が完結したあと、何日のうちに同じ不適合が起きると、完結は取り消されるか。",
+   "answer": "外部振動の許容値を超えた不適合は区分 甲である。甲の不適合に対する是正処置の要求は種別 S-18 で、監視の日数は 728 日である。",
+   "answer_keys": [
+    "728"
+   ],
+   "entry_doc": "KS-TC-T001F.md",
+   "entry_where": "6. 判定基準 6.3 外部振動",
+   "entry_quote": "許容値を超えた場合は、回転体に係る不適合（区分 甲）として、QK-TC-02 の第 7 条により処置を決定する。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "甲",
+   "bridge_aliases": [
+    "区分 甲",
+    "甲の不適合",
+    "S-18"
+   ],
+   "path": [
+    {
+     "doc": "QK-TC-81D.md",
+     "where": "第 3 条（要求の種別）1 項 (1)",
+     "quote": "(1) S-18: 甲の不適合に対するもの",
+     "kind": "entity"
+    }
+   ],
+   "answer_doc": "QK-TC-81D.md",
+   "answer_where": "別表 2 種別ごとの数（S-18 の行）",
+   "answer_quote": "| S-18 | 188 | 728 |",
+   "hops": 2,
+   "wrong_values": [
+    "548",
+    "458",
+    "638",
+    "188"
+   ],
+   "avoided_terms": [
+    "S-18",
+    "種別",
+    "監視",
+    "別表",
+    "甲"
+   ],
+   "rationale": "起点には不適合の区分（甲）だけがあり、是正処置の種別の記号が無い。区分から種別 S-18 が分かるのは是正処置の規定の第 3 条で、日数は種別の記号だけで引く別表 2 にある。区分 → 種別 → 日数と 2 回たどる。起点にある参照（QK-TC-02 の第 7 条）は、処置の決定の話で、この道には載らない。",
+   "bridge_name_kind": "区分・等級・種別の記号",
+   "entry_name_form": "質問と似た文",
+   "caveat": "中継（第 3 条）から答え（別表 2）へは、同じ条の 3 項「種別ごとの期限その他の定めは、別表 1 及び別表 2 による」の参照リンクもある。起点から中継へは、参照では着けない。",
+   "ref_source_rank": 1
+  },
+  {
+   "qid": "H-E39d",
+   "type": "control",
+   "twin_of": "H-E39",
+   "question": "QK-TC-81 の別表 2 で、種別 S-18 の監視の欄はいくつか。",
+   "answer": "728（日）である。",
+   "answer_keys": [
+    "728"
+   ],
+   "entry_doc": "QK-TC-81D.md",
+   "entry_where": "別表 2 種別ごとの数（S-18 の行）",
+   "entry_quote": "| S-18 | 188 | 728 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-81D.md",
+   "answer_where": "別表 2 種別ごとの数（S-18 の行）",
+   "answer_quote": "| S-18 | 188 | 728 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E39 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E40",
+   "type": "ent2",
+   "twin_of": null,
+   "question": "加振台を使って当て方を習う計器は、借りたいとき、どこへ取りに行けばよいか。",
+   "answer": "加振台で当て方を習うのは携帯式振動計で、管理番号は VM-50 である。VM-50 は、計測棟の計測器庫の棚 R-55 に置いてある。",
+   "answer_keys": [
+    "R-55"
+   ],
+   "entry_doc": "QK-TC-73B.md",
+   "entry_where": "第 12 条（訓練用の設備）1 項 (3)",
+   "entry_quote": "(3) 加振台 KN-730: 定まった大きさの振動を出し、携帯式振動計の当て方を習わせる。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "携帯式振動計",
+   "bridge_aliases": [
+    "VM-50",
+    "振動計"
+   ],
+   "path": [
+    {
+     "doc": "KS-TC-P001D.md",
+     "where": "3 計測 3-6 振動及びブローバイガス量（名称から管理番号が分かる。KS-TC-T001 の 5.5 などにも同じ対応がある）",
+     "quote": "振動速度は、携帯式振動計 VM-50 の検出器を、計測位置の面に垂直に押し当てて読む。",
+     "kind": "entity"
+    }
+   ],
+   "answer_doc": "KS-TC-C501D.md",
+   "answer_where": "別表 1 管理番号別の区分（VM-50 の行）",
+   "answer_quote": "| VM-50 | 1 | R-55 |",
+   "hops": 2,
+   "wrong_values": [
+    "R-15",
+    "R-25",
+    "R-35",
+    "R-45"
+   ],
+   "avoided_terms": [
+    "VM-50",
+    "携帯式振動計",
+    "棚",
+    "計測器庫",
+    "管理番号"
+   ],
+   "rationale": "起点には計測器の名称（携帯式振動計）だけがあり、管理番号が無い。名称から管理番号 VM-50 が分かるのは別の文書（計測共通の 3-6 など）で、棚は管理番号だけで引く別表にある。名称 → 管理番号 → 棚と 2 回たどる。起点に出る管理番号 KN-730 は加振台のもので、たどる先ではない。",
+   "bridge_name_kind": "設備・治具・計測器の名称や呼称",
+   "entry_name_form": "質問と似た文",
+   "ref_source_rank": 2
+  },
+  {
+   "qid": "H-E40d",
+   "type": "control",
+   "twin_of": "H-E40",
+   "question": "KS-TC-C501 の別表 1 で、管理番号 VM-50 の棚はどこか。",
+   "answer": "R-55 である。",
+   "answer_keys": [
+    "R-55"
+   ],
+   "entry_doc": "KS-TC-C501D.md",
+   "entry_where": "別表 1 管理番号別の区分（VM-50 の行）",
+   "entry_quote": "| VM-50 | 1 | R-55 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-C501D.md",
+   "answer_where": "別表 1 管理番号別の区分（VM-50 の行）",
+   "answer_quote": "| VM-50 | 1 | R-55 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E40 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E41",
+   "type": "ent2",
+   "twin_of": null,
+   "question": "過給機を運転台に据え付ける作業で傷や打痕を付けたときの報告を定めている規定について、新しく配属された人への教育は、1 回にどれだけの時間をあてるのか。",
+   "answer": "報告は品規 9 号による。品規 9 号は現行の QK-TC-02（不適合品処理規定）で、教育の所要は 1 回 157 分である。",
+   "answer_keys": [
+    "157"
+   ],
+   "entry_doc": "KS-TC-M401C.md",
+   "entry_where": "4. 管理 4.3 据付け (3)",
+   "entry_quote": "(3) 据付けの作業で過給機に傷又は打痕を付けた場合は、品規 9 号の第 4 条により報告する。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "品規 9 号",
+   "bridge_aliases": [
+    "QK-TC-02"
+   ],
+   "path": [
+    {
+     "doc": "KS-TC-A000N.md",
+     "where": "6. 旧番号との対照（品規 9 号 の行）",
+     "quote": "| 品規 9 号 | QK-TC-02 |",
+     "kind": "entity"
+    }
+   ],
+   "answer_doc": "QK-TC-73B.md",
+   "answer_where": "別表 1 番号別の区分（QK-TC-02 の行）",
+   "answer_quote": "| QK-TC-02 | Y-17、Y-27 | 157 | 筆記 |",
+   "hops": 2,
+   "wrong_values": [
+    "147",
+    "207",
+    "177",
+    "87",
+    "37"
+   ],
+   "avoided_terms": [
+    "品規 9 号",
+    "QK-TC-02",
+    "所要",
+    "番号",
+    "別表"
+   ],
+   "rationale": "起点には規定の旧番号（品規 9 号）だけがあり、現行の番号が無い。旧番号から現行の番号が分かるのは発行目録の 6. の表で、所要は現行の番号だけで引く別表にある。旧番号 → 現行の番号 → 所要と 2 回たどる。起点の文は第 4 条への参照でもあるが、参照先（不適合品処理規定の第 4 条）には教育の時間は書いていない。",
+   "bridge_name_kind": "文書の番号",
+   "entry_name_form": "質問と似た文",
+   "ref_source_rank": 2
+  },
+  {
+   "qid": "H-E41d",
+   "type": "control",
+   "twin_of": "H-E41",
+   "question": "QK-TC-73 の別表 1 で、番号 QK-TC-02 の所要はいくつか。",
+   "answer": "157（分）である。",
+   "answer_keys": [
+    "157"
+   ],
+   "entry_doc": "QK-TC-73B.md",
+   "entry_where": "別表 1 番号別の区分（QK-TC-02 の行）",
+   "entry_quote": "| QK-TC-02 | Y-17、Y-27 | 157 | 筆記 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "QK-TC-73B.md",
+   "answer_where": "別表 1 番号別の区分（QK-TC-02 の行）",
+   "answer_quote": "| QK-TC-02 | Y-17、Y-27 | 157 | 筆記 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E41 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E42",
+   "type": "ent2",
+   "twin_of": null,
+   "question": "RK10 系列の初号機の単独性能確認試験を行う運転台は、運転の積算が何時間に達するごとに設備を分解して調べるのか。",
+   "answer": "試験は第 3 運転台で行う。第 3 運転台の管理番号は TB-30 で、開放点検は運転の積算 4,004 時間ごとに行う。",
+   "answer_keys": [
+    "4,004"
+   ],
+   "entry_doc": "KS-TC-T201B.md",
+   "entry_where": "2. 単独性能確認試験要領 2-4 計測時の運転条件",
+   "entry_quote": "運転は、第 3 運転台で行う。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "第 3 運転台",
+   "bridge_aliases": [
+    "TB-30",
+    "3 号運転台"
+   ],
+   "path": [
+    {
+     "doc": "KS-TC-M401C.md",
+     "where": "3. 呼称及び管理番号（TB-30 の行）",
+     "quote": "| TB-30 | 第 3 運転台 | 運転棟 第 3 室 | 小形 |",
+     "kind": "entity"
+    }
+   ],
+   "answer_doc": "KS-TC-M402E.md",
+   "answer_where": "別表 2 管理番号別の定期点検（TB-30 の行）",
+   "answer_quote": "| TB-30 | 第 3 週 | 4,004 | 12 月 |",
+   "hops": 2,
+   "wrong_values": [
+    "3,004",
+    "3,504",
+    "3,204",
+    "2,004"
+   ],
+   "avoided_terms": [
+    "TB-30",
+    "第 3 運転台",
+    "開放",
+    "管理番号",
+    "別表"
+   ],
+   "rationale": "起点には運転台の呼称（第 3 運転台）だけがあり、管理番号が無い。呼称から管理番号 TB-30 が分かるのは設備管理基準の 3. の表で、時間は管理番号だけで引く点検要領の別表 2 にある。呼称 → 管理番号 → 時間と 2 回たどる。",
+   "bridge_name_kind": "設備・治具・計測器の名称や呼称",
+   "entry_name_form": "質問と似た文",
+   "ref_source_rank": 1
+  },
+  {
+   "qid": "H-E42d",
+   "type": "control",
+   "twin_of": "H-E42",
+   "question": "KS-TC-M402 の別表 2 で、管理番号 TB-30 の開放の欄はいくつか。",
+   "answer": "4,004（時間）である。",
+   "answer_keys": [
+    "4,004"
+   ],
+   "entry_doc": "KS-TC-M402E.md",
+   "entry_where": "別表 2 管理番号別の定期点検（TB-30 の行）",
+   "entry_quote": "| TB-30 | 第 3 週 | 4,004 | 12 月 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M402E.md",
+   "answer_where": "別表 2 管理番号別の定期点検（TB-30 の行）",
+   "answer_quote": "| TB-30 | 第 3 週 | 4,004 | 12 月 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E42 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E43",
+   "type": "ent2",
+   "twin_of": null,
+   "question": "NA30 系列の量産機を運転する運転台の燃焼器は、運転の積算が何時間に達するごとに分解して調べるのか。",
+   "answer": "NA30 系列の運転台は TB-20 で、その駆動源は燃焼器 CB-20 である。CB-20 の開放点検は、運転の積算 904 時間ごとに行う。",
+   "answer_keys": [
+    "904"
+   ],
+   "entry_doc": "KS-TC-T102E.md",
+   "entry_where": "3. 試運転の準備 3.1 運転台及び治具 a)",
+   "entry_quote": "a) NA30 系列は第 2 運転台 TB-20、NA50 系列及び NE60 系列は第 1 運転台 TB-10 で運転する。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "TB-20",
+   "bridge_aliases": [
+    "CB-20",
+    "第 2 運転台"
+   ],
+   "path": [
+    {
+     "doc": "KS-TC-M401C.md",
+     "where": "5. 設備個票 TB-20",
+     "quote": "- 駆動源: CB-20",
+     "kind": "entity"
+    }
+   ],
+   "answer_doc": "KS-TC-M402E.md",
+   "answer_where": "別表 2 管理番号別の定期点検（CB-20 の行）",
+   "answer_quote": "| CB-20 | 第 2 週 | 904 | 8 月 |",
+   "hops": 2,
+   "wrong_values": [
+    "3,504",
+    "604",
+    "3,004",
+    "2,004"
+   ],
+   "avoided_terms": [
+    "TB-20",
+    "CB-20",
+    "開放",
+    "管理番号",
+    "別表"
+   ],
+   "rationale": "起点には運転台の管理番号 TB-20 があるが、燃焼器の管理番号が無い。運転台から燃焼器 CB-20 が分かるのは、TB-20 の個票の箇条書きの 1 行で、時間は管理番号だけで引く点検要領の別表 2 にある。運転台の番号 → 燃焼器の番号 → 時間と 2 回たどる。運転台の行（3,504）で止まると誤りになる。",
+   "bridge_name_kind": "設備・治具・計測器の管理番号",
+   "entry_name_form": "一覧・列挙",
+   "ref_source_rank": 1
+  },
+  {
+   "qid": "H-E43d",
+   "type": "control",
+   "twin_of": "H-E43",
+   "question": "KS-TC-M402 の別表 2 で、管理番号 CB-20 の開放の欄はいくつか。",
+   "answer": "904（時間）である。",
+   "answer_keys": [
+    "904"
+   ],
+   "entry_doc": "KS-TC-M402E.md",
+   "entry_where": "別表 2 管理番号別の定期点検（CB-20 の行）",
+   "entry_quote": "| CB-20 | 第 2 週 | 904 | 8 月 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M402E.md",
+   "answer_where": "別表 2 管理番号別の定期点検（CB-20 の行）",
+   "answer_quote": "| CB-20 | 第 2 週 | 904 | 8 月 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E43 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E44",
+   "type": "ent2",
+   "twin_of": null,
+   "question": "HX40 系列や DS70 系列の初号機の試験で、製品の消音器が未納のときに吸込側に用いてよいものは、何日おきに定期点検をするのか。",
+   "answer": "消音器が未納のときは吸込ベルマウスを用いてよい。吸込ベルマウスの管理番号は JG-110 で、定期点検の間隔は 364 日である。",
+   "answer_keys": [
+    "364"
+   ],
+   "entry_doc": "KS-TC-T301A.md",
+   "entry_where": "2. 単独性能確認試験要領 2-4 計測時の運転条件",
+   "entry_quote": "消音器が未納の場合は、吸込ベルマウスを用いてよい。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "吸込ベルマウス",
+   "bridge_aliases": [
+    "JG-110",
+    "ベルマウス"
+   ],
+   "path": [
+    {
+     "doc": "KS-TC-M403B.md",
+     "where": "2. 対象及び管理番号（JG-110 の行）",
+     "quote": "| JG-110 | 吸込ベルマウス | 消音器を付けない運転で、コンプレッサの吸込口に取り付ける。 |",
+     "kind": "entity"
+    }
+   ],
+   "answer_doc": "KS-TC-M403B.md",
+   "answer_where": "別表 1 管理番号別の間隔及び担当（JG-110 の行）",
+   "answer_quote": "| JG-110 | 364 | 治具係 |",
+   "hops": 2,
+   "wrong_values": [
+    "184",
+    "94",
+    "724"
+   ],
+   "avoided_terms": [
+    "JG-110",
+    "吸込ベルマウス",
+    "間隔",
+    "管理番号",
+    "別表"
+   ],
+   "rationale": "起点には治具の名称（吸込ベルマウス）だけがあり、管理番号が無い（この系列の文書は、汎用の治具を管理番号で書いていない）。名称から管理番号 JG-110 が分かるのは治具の基準の 2. の表で、間隔は管理番号だけで引く別表 1 にある。名称 → 管理番号 → 間隔と 2 回たどる。",
+   "bridge_name_kind": "設備・治具・計測器の名称や呼称",
+   "entry_name_form": "質問と似た文",
+   "caveat": "中継（治具の基準の 2. の表）から答え（別表 1）へは、同じチャンクの「5. の個票及び別表 1 は、管理番号で示す」の参照リンクもある。吸込ベルマウス JG-110 と書いた文は、ほかの系列の要領（KS-TC-T201 の 2-5 など）にもあり、中継の代わりになる。",
+   "ref_source_rank": 45
+  },
+  {
+   "qid": "H-E44d",
+   "type": "control",
+   "twin_of": "H-E44",
+   "question": "KS-TC-M403 の別表 1 で、管理番号 JG-110 の間隔はいくつか。",
+   "answer": "364（日）である。",
+   "answer_keys": [
+    "364"
+   ],
+   "entry_doc": "KS-TC-M403B.md",
+   "entry_where": "別表 1 管理番号別の間隔及び担当（JG-110 の行）",
+   "entry_quote": "| JG-110 | 364 | 治具係 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-M403B.md",
+   "answer_where": "別表 1 管理番号別の間隔及び担当（JG-110 の行）",
+   "answer_quote": "| JG-110 | 364 | 治具係 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E44 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E45",
+   "type": "ent2",
+   "twin_of": null,
+   "question": "エア運転のときに軸受箱やコンプレッサ車室に当てて音を聞く棒の定期点検を受け持っている部門には、何番でつながるか。",
+   "answer": "聴音棒 JG-140 の定期点検の担当は過検（品質保証部 検査課）で、内線は 4109 である。",
+   "answer_keys": [
+    "4109"
+   ],
+   "entry_doc": "KS-TC-T001F.md",
+   "entry_where": "5. 確認項目及び要領 5.4 聴音検査",
+   "entry_quote": "エア運転時に、聴音棒 JG-140 を軸受箱及びコンプレッサ車室に当て、接触音及び異常音の有無を確認する。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "JG-140",
+   "bridge_aliases": [
+    "過検",
+    "聴音棒"
+   ],
+   "path": [
+    {
+     "doc": "KS-TC-M403B.md",
+     "where": "別表 1 管理番号別の間隔及び担当（JG-140 の行）",
+     "quote": "| JG-140 | 724 | 過検 |",
+     "kind": "entity"
+    }
+   ],
+   "answer_doc": "KS-TC-A000N.md",
+   "answer_where": "5. 部門の略称及び連絡先（過検 の行）",
+   "answer_quote": "| 過検 | 過給機事業部 品質保証部 検査課 | 第 2 組立棟 2 階 | 4109 |",
+   "hops": 2,
+   "wrong_values": [
+    "4139",
+    "4119",
+    "4209",
+    "4219",
+    "4149"
+   ],
+   "avoided_terms": [
+    "JG-140",
+    "過検",
+    "内線",
+    "略称",
+    "担当"
+   ],
+   "rationale": "起点には治具の管理番号 JG-140 があるが、点検の担当は書いていない。担当の部門の略称（過検）は、管理番号だけで引く治具の基準の別表 1 にあり、内線は略称だけで引く発行目録の 5. の表にある。管理番号 → 部門の略称 → 内線と 2 回たどる。ほかの治具の担当は治具係（過組）なので、番号をたどらないと取り違える。",
+   "bridge_name_kind": "設備・治具・計測器の管理番号",
+   "entry_name_form": "質問と似た文",
+   "caveat": "治具の基準の協議・通知の記録に「過検: …聴音棒は、検査員が持ち歩くことが多い」とあり、質問だけの並べ替えで上位に来る。担当を定めた箇所ではないが、ここから過検を拾って正答に着くことがありうる。",
+   "ref_source_rank": null
+  },
+  {
+   "qid": "H-E45d",
+   "type": "control",
+   "twin_of": "H-E45",
+   "question": "KS-TC-A000 の 5. の表で、略称 過検 の部門の内線は何番か。",
+   "answer": "4109 である。",
+   "answer_keys": [
+    "4109"
+   ],
+   "entry_doc": "KS-TC-A000N.md",
+   "entry_where": "5. 部門の略称及び連絡先（過検 の行）",
+   "entry_quote": "| 過検 | 過給機事業部 品質保証部 検査課 | 第 2 組立棟 2 階 | 4109 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-A000N.md",
+   "answer_where": "5. 部門の略称及び連絡先（過検 の行）",
+   "answer_quote": "| 過検 | 過給機事業部 品質保証部 検査課 | 第 2 組立棟 2 階 | 4109 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E45 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E46",
+   "type": "ent2",
+   "twin_of": null,
+   "question": "RK 系列の量産機の惰行時間を備考に書き込む用紙について、様式を主管している部門には、内線の何番でつながるか。",
+   "answer": "惰行時間は組付チェックシート（様式 TCF-120）に記入する。TCF-120 の主管は過組（製造部 組立課）で、内線は 4139 である。",
+   "answer_keys": [
+    "4139"
+   ],
+   "entry_doc": "KS-TC-T202D.md",
+   "entry_where": "4. 試運転要領 4.3 系列に固有の確認項目 b) 惰行時間",
+   "entry_quote": "計測値は、組付チェックシート（様式 TCF-120）の備考に記入する。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "TCF-120",
+   "bridge_aliases": [
+    "過組",
+    "組付チェックシート"
+   ],
+   "path": [
+    {
+     "doc": "QK-TC-01G.md",
+     "where": "別表 1 様式の一覧（TCF-120 の行）",
+     "quote": "| TCF-120 | 組付チェックシート | 過組 | 組立課長 |",
+     "kind": "entity"
+    }
+   ],
+   "answer_doc": "KS-TC-A000N.md",
+   "answer_where": "5. 部門の略称及び連絡先（過組 の行）",
+   "answer_quote": "| 過組 | 過給機事業部 製造部 組立課 | 第 1 組立棟 | 4139 |",
+   "hops": 2,
+   "wrong_values": [
+    "4109",
+    "4119",
+    "4149",
+    "4209",
+    "4219"
+   ],
+   "avoided_terms": [
+    "TCF-120",
+    "過組",
+    "略称",
+    "連絡先",
+    "別表"
+   ],
+   "rationale": "起点には様式番号 TCF-120 があるが、様式の主管は書いていない。主管の部門の略称（過組）は帳票規定の別表 1 の行にあり、内線は略称だけで引く発行目録の 5. の表にある。様式番号 → 部門の略称 → 内線と 2 回たどる。成績表（主管は過検）と取り違えると 4109 になる。",
+   "bridge_name_kind": "帳票の様式番号",
+   "entry_name_form": "質問と似た文",
+   "ref_source_rank": null
+  },
+  {
+   "qid": "H-E46d",
+   "type": "control",
+   "twin_of": "H-E46",
+   "question": "KS-TC-A000 の 5. の表で、略称 過組 の部門の内線は何番か。",
+   "answer": "4139 である。",
+   "answer_keys": [
+    "4139"
+   ],
+   "entry_doc": "KS-TC-A000N.md",
+   "entry_where": "5. 部門の略称及び連絡先（過組 の行）",
+   "entry_quote": "| 過組 | 過給機事業部 製造部 組立課 | 第 1 組立棟 | 4139 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-A000N.md",
+   "answer_where": "5. 部門の略称及び連絡先（過組 の行）",
+   "answer_quote": "| 過組 | 過給機事業部 製造部 組立課 | 第 1 組立棟 | 4139 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E46 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  },
+  {
+   "qid": "H-E47",
+   "type": "ent2",
+   "twin_of": null,
+   "question": "試運転作業者の学科の講習で使う模擬操作盤が、点検の周期を過ぎていた。点検を受け持つ部門には、何番でつながるか。",
+   "answer": "模擬操作盤 KN-720 の担当は生技保（生産技術部 設備保全課）で、内線は 4209 である。",
+   "answer_keys": [
+    "4209"
+   ],
+   "entry_doc": "QK-TC-72C.md",
+   "entry_where": "第 9 条（学科の講習）2 項",
+   "entry_quote": "2 講習では、模擬操作盤 KN-720 を用いて、警報が出たときの操作を習う。",
+   "bridge_kind": "entity",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "KN-720",
+   "bridge_aliases": [
+    "生技保",
+    "模擬操作盤"
+   ],
+   "path": [
+    {
+     "doc": "QK-TC-73B.md",
+     "where": "別表 2 管理番号別の区分（KN-720 の行）",
+     "quote": "| KN-720 | 第 1 実習室 | 367 | 生技保 |",
+     "kind": "entity"
+    }
+   ],
+   "answer_doc": "KS-TC-A000N.md",
+   "answer_where": "5. 部門の略称及び連絡先（生技保 の行）",
+   "answer_quote": "| 生技保 | 生産技術部 設備保全課 | 保全棟 | 4209 |",
+   "hops": 2,
+   "wrong_values": [
+    "4409",
+    "4219",
+    "4149",
+    "4109"
+   ],
+   "avoided_terms": [
+    "KN-720",
+    "生技保",
+    "内線",
+    "略称",
+    "担当"
+   ],
+   "rationale": "起点には訓練用の設備の管理番号 KN-720 があるが、点検の担当は書いていない。担当の部門の略称（生技保）は、管理番号だけで引く教育訓練の要領の別表 2 にあり、内線は略称だけで引く発行目録の 5. の表にある。管理番号 → 部門の略称 → 内線と 2 回たどる。ほかの訓練用の設備の担当は技教又は計管なので、番号をたどらないと 4409 や 4219 と取り違える。",
+   "bridge_name_kind": "設備・治具・計測器の管理番号",
+   "entry_name_form": "質問と似た文",
+   "ref_source_rank": null
+  },
+  {
+   "qid": "H-E47d",
+   "type": "control",
+   "twin_of": "H-E47",
+   "question": "KS-TC-A000 の 5. の表で、略称 生技保 の部門の内線は何番か。",
+   "answer": "4209 である。",
+   "answer_keys": [
+    "4209"
+   ],
+   "entry_doc": "KS-TC-A000N.md",
+   "entry_where": "5. 部門の略称及び連絡先（生技保 の行）",
+   "entry_quote": "| 生技保 | 生産技術部 設備保全課 | 保全棟 | 4209 |",
+   "bridge_kind": "none",
+   "bridge_quote": "",
+   "reference_form": "",
+   "bridge_entity": "",
+   "bridge_aliases": [],
+   "path": [],
+   "answer_doc": "KS-TC-A000N.md",
+   "answer_where": "5. 部門の略称及び連絡先（生技保 の行）",
+   "answer_quote": "| 生技保 | 生産技術部 設備保全課 | 保全棟 | 4209 |",
+   "hops": 0,
+   "wrong_values": [],
+   "avoided_terms": [],
+   "rationale": "H-E47 と同じ事実を、答えの箇所の番号と記号で直接聞く。"
+  }
+ ]
+}

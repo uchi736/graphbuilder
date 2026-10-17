@@ -30,6 +30,8 @@ from langchain_ollama import ChatOllama
 # Local imports
 from src.llm import get_llm
 from src.shared.common_fn import load_embedding_model, get_value_from_env
+from src.rerank_retriever import rerank_enabled, make_rerank_retriever, RerankGraphRetriever, resolve_retrieval_settings, collect_reference_trace, reference_sources
+from src.shared.constants import chat_system_template
 from src.shared.constants import (
     CHAT_SYSTEM_TEMPLATE, CHAT_TOKEN_CUT_OFF, CHAT_ENTITY_VECTOR_MODE,
     CHAT_GLOBAL_VECTOR_FULLTEXT_MODE, CHAT_SEARCH_KWARG_SCORE_THRESHOLD,CHAT_MODE_CONFIG_MAP, CHAT_DEFAULT_MODE, CHAT_GRAPH_MODE,CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD, CHAT_DOC_SPLIT_SIZE, QUESTION_TRANSFORM_TEMPLATE
@@ -183,8 +185,9 @@ def format_documents(documents, model,chat_mode_settings):
         if model in model_names:
             prompt_token_cutoff = value
             break
+    prompt_token_cutoff = get_value_from_env("CHAT_PROMPT_TOKEN_CUTOFF", prompt_token_cutoff, "int")
 
-    sorted_documents = sorted(documents, key=lambda doc: doc.state.get("query_similarity_score", 0), reverse=True)
+    sorted_documents = sorted(documents, key=lambda doc: (getattr(doc, "state", None) or {}).get("query_similarity_score", 0), reverse=True)
     sorted_documents = sorted_documents[:prompt_token_cutoff]
 
     formatted_docs = list()
@@ -238,7 +241,9 @@ def process_documents(docs, question, messages, llm, model,chat_mode_settings):
     try:
         formatted_docs, sources, entitydetails, communities = format_documents(docs, model,chat_mode_settings)
         
-        rag_chain = get_rag_chain(llm=llm)
+        # 検索設定 reference_prompt がオンのときだけ、回答の指示に参照の扱いを足す（オフなら従来のプロンプトのまま）
+        reference_prompt = bool((chat_mode_settings.get("retrieval_settings") or {}).get("reference_prompt"))
+        rag_chain = get_rag_chain(llm=llm, system_template=chat_system_template(reference_prompt))
         
         ai_response = rag_chain.invoke({
             "messages": messages[:-1],
@@ -246,7 +251,7 @@ def process_documents(docs, question, messages, llm, model,chat_mode_settings):
             "input": question
         })
 
-        result = {'sources': list(), 'nodedetails': dict(), 'entities': dict()}
+        result = {'sources': list(), 'nodedetails': dict(), 'entities': dict(), 'references': list()}
         node_details = {"chunkdetails":list(),"entitydetails":list(),"communitydetails":list()}
         entities = {'entityids':list(),"relationshipids":list()}
 
@@ -260,6 +265,12 @@ def process_documents(docs, question, messages, llm, model,chat_mode_settings):
             result['sources'] = sources_and_chunks['sources']
             node_details["chunkdetails"] = sources_and_chunks["chunkdetails"]
             entities.update(entitydetails)
+            # 参照リンクをたどって足したチャンクの控え（参照元のチャンク、参照の一文、点数、何回目のたどりか）。文脈に入れた文書行の分だけ
+            result["references"] = collect_reference_trace(docs, sources)
+            # 参照元の直後に示した参照先の文書も、出典の一覧に入れる（本文は参照元の文書行の中にあり、自分の文書行が無いことがある）
+            extra_sources = reference_sources(result["references"]) - set(sources)
+            if extra_sources:
+                result['sources'] = set(sources) | extra_sources
 
         result["nodedetails"] = node_details
         result["entities"] = entities
@@ -321,9 +332,13 @@ def create_document_retriever_chain(llm, retriever, embedding_provider, embeddin
             transformers=[splitter, embeddings_filter]
         )
 
-        compression_retriever = ContextualCompressionRetriever(
-            base_compressor=pipeline_compressor, base_retriever=retriever
-        )
+        if isinstance(retriever, RerankGraphRetriever):
+            # P1-a: 断片選別を廃止。リランク済みチャンク＋文字数予算で切った文脈をそのまま渡す
+            compression_retriever = retriever
+        else:
+            compression_retriever = ContextualCompressionRetriever(
+                base_compressor=pipeline_compressor, base_retriever=retriever
+            )
 
         query_transforming_retriever_chain = RunnableBranch(
             (
@@ -388,7 +403,7 @@ def create_retriever(neo_db, document_names, chat_mode_settings,search_k, score_
         retriever = neo_db.as_retriever(
             search_type="similarity_score_threshold",
             search_kwargs={
-                'top_k': search_k,
+                'k': search_k,
                 'effective_search_ratio': ef_ratio,
                 'score_threshold': score_threshold,
                 'filter': {'fileName': {'$in': document_names}}
@@ -398,7 +413,7 @@ def create_retriever(neo_db, document_names, chat_mode_settings,search_k, score_
     else:
         retriever = neo_db.as_retriever(
             search_type="similarity_score_threshold",
-            search_kwargs={'top_k': search_k,'effective_search_ratio': ef_ratio, 'score_threshold': score_threshold}
+            search_kwargs={'k': search_k,'effective_search_ratio': ef_ratio, 'score_threshold': score_threshold}
         )
         logging.info(f"Successfully created retriever with search_k={search_k}, score_threshold={score_threshold}")
     return retriever
@@ -410,6 +425,11 @@ def get_neo4j_retriever(graph, document_names,chat_mode_settings, score_threshol
         # document_names= list(map(str.strip, json.loads(document_names)))
         search_k = chat_mode_settings["top_k"]
         ef_ratio = get_value_from_env("EFFECTIVE_SEARCH_RATIO", 5, "int")
+        # P1-a: チャンク単位リランク（Chunk を索引にするモードのみ。entity_vector / community は従来どおり）
+        if rerank_enabled() and chat_mode_settings.get("node_label") == "Chunk":
+            retriever = make_rerank_retriever(neo_db, graph, chat_mode_settings, document_names, neo_db.embedding, score_threshold)
+            logging.info(f"Rerank retriever enabled: candidate_k={retriever.candidate_k}, top_n={retriever.top_n}, budget={retriever.char_budget}")
+            return retriever
         retriever = create_retriever(neo_db, document_names,chat_mode_settings, search_k, score_threshold,ef_ratio)
         return retriever
     except Exception as e:
@@ -458,16 +478,17 @@ def process_chat_response(messages, history, question, model, graph, document_na
             #     logging.info(f"Total token usage {latest_token} for user {email} ")
         else:
             content = "I couldn't find any relevant documents to answer your question."
-            result = {"sources": list(), "nodedetails": list(), "entities": list()}
+            result = {"sources": list(), "nodedetails": list(), "entities": list(), "references": list()}
             total_tokens = 0
             formatted_docs = ""
         
         ai_response = AIMessage(content=content)
         messages.append(ai_response)
 
-        summarization_thread = threading.Thread(target=summarize_and_log, args=(history, messages, llm, session_id))
-        summarization_thread.start()
-        logging.info("Summarization thread started.")
+        if history is not None:
+            summarization_thread = threading.Thread(target=summarize_and_log, args=(history, messages, llm, session_id))
+            summarization_thread.start()
+            logging.info("Summarization thread started.")
         # summarize_and_log(history, messages, llm)
         metric_details = {"question":question,"contexts":formatted_docs,"answer":content}
         return {
@@ -482,6 +503,7 @@ def process_chat_response(messages, history, question, model, graph, document_na
                 "response_time": 0,
                 "mode": chat_mode_settings["mode"],
                 "entities": result["entities"],
+                "references": result.get("references", []),
                 "metric_details": metric_details,
             },
             
@@ -615,8 +637,9 @@ def process_graph_response(model, graph, question, messages, history, session_id
         
         messages.append(ai_response)
         # summarize_and_log(history, messages, qa_llm)
-        summarization_thread = threading.Thread(target=summarize_and_log, args=(history, messages, qa_llm, session_id))
-        summarization_thread.start()
+        if history is not None:
+            summarization_thread = threading.Thread(target=summarize_and_log, args=(history, messages, qa_llm, session_id))
+            summarization_thread.start()
         logging.info("Summarization thread started.")
         metric_details = {"question":question,"contexts":graph_response.get("context", ""),"answer":ai_response_content}
         result = {
@@ -685,11 +708,16 @@ def get_chat_mode_settings(mode,settings_map=CHAT_MODE_CONFIG_MAP):
 
     return chat_mode_settings
     
-def QA_RAG(graph, model, question, document_names, session_id, mode, write_access=True, email=None, uri=None, embedding_provider=None, embedding_model=None):
+def QA_RAG(graph, model, question, document_names, session_id, mode, write_access=True, email=None, uri=None, embedding_provider=None, embedding_model=None, retrieval_settings=None, use_history=True):
     logging.info(f"Chat Mode: {mode}")
 
-    history = create_neo4j_chat_message_history(graph, session_id, write_access)
-    messages = history.messages
+    if use_history:
+        history = create_neo4j_chat_message_history(graph, session_id, write_access)
+        messages = history.messages
+    else:
+        # 単発の質問（他のサービスからの呼び出しなど）。会話の履歴を読まず、Session も作らず、要約の LLM 呼び出しも行わない
+        history = None
+        messages = []
 
     user_question = HumanMessage(content=question)
     messages.append(user_question)
@@ -697,7 +725,16 @@ def QA_RAG(graph, model, question, document_names, session_id, mode, write_acces
     if mode == CHAT_GRAPH_MODE:
         result = process_graph_response(model, graph, question, messages, history, session_id)
     else:
-        chat_mode_settings = get_chat_mode_settings(mode=mode)
+        # 共有の設定辞書を書き換えないよう写しを作り、画面から来た検索設定を載せる
+        chat_mode_settings = dict(get_chat_mode_settings(mode=mode))
+        overrides = retrieval_settings
+        if isinstance(overrides, str):
+            try:
+                overrides = json.loads(overrides) if overrides.strip() else None
+            except json.JSONDecodeError:
+                logging.warning(f"retrieval_settings is not valid JSON; using defaults: {overrides[:200]}")
+                overrides = None
+        chat_mode_settings["retrieval_settings"] = resolve_retrieval_settings(overrides if isinstance(overrides, dict) else None)
         document_names= list(map(str.strip, json.loads(document_names)))
         if document_names and not chat_mode_settings["document_filter"]:
             result =  {
@@ -719,5 +756,7 @@ def QA_RAG(graph, model, question, document_names, session_id, mode, write_acces
             result = process_chat_response(messages,history, question, model, graph, document_names,chat_mode_settings, email, uri, embedding_provider, embedding_model, session_id)
 
     result["session_id"] = session_id
+    if mode != CHAT_GRAPH_MODE and isinstance(result.get("info"), dict):
+        result["info"]["retrieval_settings"] = chat_mode_settings.get("retrieval_settings")
     
     return result

@@ -21,10 +21,11 @@ RUN apt-get update && \
 # Set LD_LIBRARY_PATH
 ENV LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
 # Copy requirements file and install Python dependencies
-COPY requirements.txt /code/
+COPY requirements.txt constraints.txt /code/
 # --no-cache-dir --upgrade 
 RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+# constraints.txt: 版を固定しない部品（unstructured などが連れてくるもの）も、外す前のイメージと同じ版にそろえる（2026-11-10）
+RUN pip install -r requirements.txt -c constraints.txt
 
 RUN python -c "from transformers import AutoTokenizer, AutoModel; \
    name='sentence-transformers/all-MiniLM-L6-v2'; \

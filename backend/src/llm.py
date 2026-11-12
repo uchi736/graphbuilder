@@ -15,6 +15,7 @@ import boto3
 import google.auth
 from src.shared.constants import ADDITIONAL_INSTRUCTIONS
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
+from src import skipped_chunks  # T16: 抽出に失敗したチャンクを文書に記録する
 from src.edc_extraction import get_graph_from_edc
 import re
 from langchain_core.callbacks.manager import CallbackManager
@@ -246,9 +247,10 @@ async def get_graph_document_list(
                 return_exceptions=True,
             )
             failed_chunks = 0
-            for result in results:
+            for doc, result in zip(combined_chunk_document_list, results):
                 if isinstance(result, BaseException):
                     failed_chunks += 1
+                    skipped_chunks.note(doc.metadata.get("combined_chunk_ids"))
                     logging.warning(f"Skipping chunk due to graph transformation error: {result}")
                 else:
                     graph_document_list.extend(result)
@@ -271,14 +273,15 @@ async def get_graph_document_list(
 
     return graph_document_list, token_usage
 
-async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship, chunks_to_combine, additional_instructions=None):
+async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship, chunks_to_combine, additional_instructions=None, extraction_method=None, edc_options=None):
    try:
-       if model.strip().lower() == "edc":
+       # 抽出方式が EDC なら EDC API へ送る（旧来の model=edc も同じ）。EDC の LLM は EDC 側の設定で固定
+       if str(extraction_method or "").strip().lower() == "edc" or model.strip().lower() == "edc":
            if allowedNodes or allowedRelationship:
                logging.info("EDC extraction manages schema via its doctype registry; ignoring allowedNodes/allowedRelationship")
            combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list, chunks_to_combine)
            logging.info(f"Combined {len(combined_chunk_document_list)} chunks for EDC extraction")
-           return await get_graph_from_edc(combined_chunk_document_list)
+           return await get_graph_from_edc(combined_chunk_document_list, options=edc_options)
 
        llm, model_name,callback_handler = get_llm(model)
        logging.info(f"Using model: {model_name}")

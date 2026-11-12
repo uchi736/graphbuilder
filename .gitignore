@@ -194,3 +194,9 @@ tools/kg/**/emb_cache.json
 tools/**/pdf/
 tools/**/*.pdf
 tools/**/*.png
+
+# 作業中の控えと実行時の記録（コミットしない）
+*.bak
+*.bak.*
+*.bak[0-9]*
+backend/logs/

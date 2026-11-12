@@ -260,6 +260,14 @@ def save_graphDocuments_in_neo4j(graph: Neo4jGraph, graph_document_list: List[Gr
    logging.error("Failed to execute query after maximum retries due to persistent deadlocks.")
    raise RuntimeError("Query execution failed after multiple retries due to deadlock.")
            
+# 仕組みが使うラベルと同じ名前をエンティティの型にしない（例: 法令名を型 Document で抜くと、ファイルの Document と混ざり
+# 文書の一覧・数え方・削除の照会に入る）。大文字小文字を区別せずに置き換える。
+RESERVED_NODE_TYPES = {"document": "DocumentRef", "chunk": "ChunkRef", "session": "SessionRef", "message": "MessageRef",
+                       "__entity__": "Entity", "__community__": "CommunityRef", "__kgbuilder__": "KgBuilderRef", "section": "SectionRef"}
+
+def normalize_reserved_type(node_type: str) -> str:
+  return RESERVED_NODE_TYPES.get(node_type.strip().lower(), node_type)
+
 def handle_backticks_nodes_relationship_id_type(graph_document_list:List[GraphDocument]):
   for graph_document in graph_document_list:
     # Clean node id and types
@@ -268,7 +276,7 @@ def handle_backticks_nodes_relationship_id_type(graph_document_list:List[GraphDo
       node_type = str(node.type).strip() if node.type is not None else ""
       node_id = str(node.id).strip() if node.id is not None else ""
       if node_type and node_id:
-        node.type = node_type.replace('`', '')
+        node.type = normalize_reserved_type(node_type.replace('`', ''))
         node.id = node_id
         cleaned_nodes.append(node)
     # Clean relationship id types and source/target node id and types
@@ -285,10 +293,10 @@ def handle_backticks_nodes_relationship_id_type(graph_document_list:List[GraphDo
       if rel_type and src_id and src_type and tgt_id and tgt_type:
         rel.type = rel_type.replace('`', '')
         if src is not None:
-          src.type = src_type.replace('`', '')
+          src.type = normalize_reserved_type(src_type.replace('`', ''))
           src.id = src_id.replace('`', '')
         if tgt is not None:
-          tgt.type = tgt_type.replace('`', '')
+          tgt.type = normalize_reserved_type(tgt_type.replace('`', ''))
           tgt.id = tgt_id
         cleaned_relationships.append(rel)
     graph_document.relationships = cleaned_relationships

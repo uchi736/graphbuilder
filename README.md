@@ -11,7 +11,7 @@
 | 分類 | 内容 |
 |---|---|
 | UI | フロントエンド全体を日本語化 |
-| 抽出エンジン | **EDC**（Extract-Define-Canonicalize）をHTTPサイドカーとして統合。モデル名 `edc` で選択（統制スキーマ抽出） |
+| 抽出エンジン | **EDC**（Extract-Define-Canonicalize）をHTTPサイドカーとして統合。画面の「抽出方式」で選ぶ（統制スキーマ抽出。LLM の選択とは別で、EDC の LLM は EDC 側の設定で固定） |
 | LLM | ローカル gemma4（vLLM・OpenAI互換）対応。モデル名 `gemma4` |
 | 埋め込み | vLLM上の **ruri-v3-310m**（日本語特化・768次元）へ移行。EDCと共用 |
 | 名寄せ | エンティティ埋め込み（`ENTITY_EMBEDDING`）による重複検出を有効化 |
@@ -65,7 +65,7 @@ GRAPH_SCHEMA_CONSOLIDATION_ENABLED=false
 
 # フロント（ビルド時に焼き込み。変更時は frontend 再ビルド要）
 VITE_BACKEND_API_URL=http://<ホストIP>:8440
-VITE_LLM_MODELS=gemma4,edc
+VITE_LLM_MODELS=gemma4
 VITE_CHAT_MODES=vector,graph_vector,graph,fulltext,graph_vector_fulltext,entity_vector
 ```
 
@@ -81,17 +81,18 @@ docker compose up -d
 ### 3. 初回のみ
 
 1. 接続時にベクトル索引の次元不一致アラートが出たら索引を再作成（旧384 → ruri 768）
-2. 文書を取り込み（モデルは `edc` 推奨、`gemma4` も可）
+2. 文書を取り込み（抽出方式は「EDC（スキーマ統制）」推奨、「標準」も可。LLM は `gemma4`）
 3. グラフ強化メニューから**後処理を実行**（フルテキスト索引・SIMILAR・エンティティ埋め込み）
 
-## モデルの使い分け
+## 抽出方式と LLM
 
-| モデル | 用途 | 備考 |
-|---|---|---|
-| `edc` | エンティティ抽出（統制スキーマ） | 抽出専用。チャットで選ぶと明示エラー |
-| `gemma4` | 抽出（フリー）・チャット生成・後処理 | ローカル vLLM |
+| 選ぶもの | 値 | 用途 | 備考 |
+|---|---|---|---|
+| 抽出方式 | 標準（standard） | LLM でエンティティとリレーションを抽出（スキーマは任意） | LLM は画面で選んだもの |
+| 抽出方式 | EDC（edc） | 統制スキーマで抽出（抽出→定義→正規化） | EDC の LLM は EDC 側の設定で固定。Document.extraction_method に edc、Document.model に EDC の LLM を残す |
+| LLM | gemma4 | 標準の抽出・チャット生成・後処理 | ローカル vLLM |
 
-抽出は**ファイル単位でモデルを選べる**ため、`edc` と `gemma4` を同じNeo4jに混在させられる（名寄せで統合可能）。
+抽出方式は取り込みごとに選べるため、EDC と標準の結果を同じ Neo4j に混在させられる（名寄せで統合可能）。続きからの再処理は前回と同じ抽出方式に限る。API では /extract の extraction_method（旧来の model=edc も EDC として扱う）、選択肢は GET /extraction_methods。
 
 ## 図解・ドキュメント
 

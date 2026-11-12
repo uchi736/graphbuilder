@@ -8,6 +8,7 @@ from src.shared.common_fn import get_value_from_env
 from src.shared.common_fn import load_embedding_model,track_token_usage
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from src.shared.constants import PROTECTED_LABELS_CYPHER
+from src.graph_edit.lease import QueryAdapter, hold_lease
 
 COMMUNITY_PROJECTION_NAME = "communities"
 # 保護ラベル（チャット履歴・外部管理ノード）はLeiden投影から除外する
@@ -467,7 +468,8 @@ def create_fulltext_index(gds, index_type):
         logging.error("An error occurred while creating the full-text index.", exc_info=True)
         logging.error(f"Error details: {str(e)}")
 
-def create_community_properties(gds, model, email, uri, embedding_provider, embedding_model):
+def create_community_structure(gds):
+    """コミュニティのノードと、エンティティからの IN_COMMUNITY・順位・重み（エンティティに触れる段。貸し出しの中で呼ぶ）。"""
     commands = [
         (CREATE_COMMUNITY_CONSTRAINT, "created community constraint to the graph."),
         (CREATE_COMMUNITY_LEVELS, "Successfully created community levels."),
@@ -476,11 +478,14 @@ def create_community_properties(gds, model, email, uri, embedding_provider, embe
         (CREATE_COMMUNITY_WEIGHTS, "Successfully created community weights."),
         (CREATE_PARENT_COMMUNITY_WEIGHTS, "Successfully created parent community weights."),
     ]
-    try:
-        for command, message in commands:
-            gds.run_cypher(command)
-            logging.info(message)
+    for command, message in commands:
+        gds.run_cypher(command)
+        logging.info(message)
 
+
+def create_community_properties(gds, model, email, uri, embedding_provider, embedding_model):
+    """コミュニティの要約・埋め込み・索引（コミュニティのノードだけに触れる。LLM を呼ぶので貸し出しの外で呼ぶ）。"""
+    try:
         create_community_summaries(gds, model, email, uri)
         logging.info("Successfully created community summaries.")
 
@@ -521,10 +526,15 @@ def clear_communities(gds):
 def create_communities(uri, username, password, database,email=None,model=COMMUNITY_CREATION_DEFAULT_MODEL, embedding_provider=None, embedding_model=None):
     try:
         gds = get_gds_driver(uri, username, password, database)
-        clear_communities(gds)
+        # エンティティに触れる段（コミュニティの消去、投影と Leiden の書き込み（e.communities）、IN_COMMUNITY の作成）の間は
+        # 貸し出し（lease）を取り、編集の API と取り込みの保存を待たせる（設計メモ 2.6）。LLM の要約の段では取らない
+        with hold_lease(QueryAdapter(gds.run_cypher), "communities"):
+            clear_communities(gds)
 
-        graph_project = create_community_graph_projection(gds)
-        write_communities_success = write_communities(gds, graph_project)
+            graph_project = create_community_graph_projection(gds)
+            write_communities_success = write_communities(gds, graph_project)
+            if write_communities_success:
+                create_community_structure(gds)
         if write_communities_success:
             logging.info("Starting Community properties creation process.")
             create_community_properties(gds,model,email,uri, embedding_provider, embedding_model)

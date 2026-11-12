@@ -8,6 +8,8 @@ from src.document_sources.gcs_bucket import delete_file_from_gcs
 from src.shared.constants import NODEREL_COUNT_QUERY_WITH_COMMUNITY, NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY, PROTECTED_MANAGEMENT_LABELS, PROTECTED_LABELS_CYPHER, PROTECTED_RELATIONSHIP_TYPES
 from src.entities.source_node import sourceNode
 from src.communities import MAX_COMMUNITY_LEVELS
+from src.graph_edit.lease import hold_lease
+from src.graph_edit.validate import RESERVED_RELATIONSHIP_TYPES  # 予約のリレーション種類（正本は graph_edit.validate。B2 で出どころを推し量る対象にしない）
 import json
 from dotenv import load_dotenv
 
@@ -100,6 +102,15 @@ class graphDBdataAccess:
 
             if obj_source_node.model is not None and obj_source_node.model != '':
                 params['model'] = obj_source_node.model
+
+            if obj_source_node.extraction_method is not None and obj_source_node.extraction_method != '':
+                params['extraction_method'] = obj_source_node.extraction_method
+
+            # EDC で取り込んだときの初期スキーマの指定（11/9）。画面・ingest.py の指定、無ければ backend の設定の値
+            for key in ('edc_doctype', 'edc_schema_mode'):
+                value = getattr(obj_source_node, key, None)
+                if value is not None and value != '':
+                    params[key] = value
 
             if obj_source_node.total_chunks is not None and obj_source_node.total_chunks != 0:
                 params['total_chunks'] = obj_source_node.total_chunks
@@ -326,7 +337,9 @@ class graphDBdataAccess:
                 d.communityRelCount AS communityRelCount,
                 d.createdAt AS created_time,
                 coalesce(d.token_usage, 0) AS token_usage,
-                coalesce(d.embedding_model, "") AS embedding_model
+                coalesce(d.embedding_model, "") AS embedding_model,
+                d.extraction_method AS extraction_method,
+                coalesce(d.skipped_chunks, 0) AS skipped_chunks
                 """
         param = {"file_name" : file_name}
         return self.execute_query(query, param)
@@ -347,34 +360,106 @@ class graphDBdataAccess:
                 logging.info(f'Deleted File Path: {merged_file_path} and Deleted File Name : {file_name}')
                 delete_uploaded_local_file(merged_file_path,file_name)
                 
-        query_to_delete_document="""
+        # 消す文書の集合 D と、消すチャンク（D のどれかに PART_OF し、D 以外の文書に PART_OF しないもの）。
+        # 他の文書と共有するチャンクは消さない（文書ノードを消すときに、その文書との PART_OF だけが消える）。
+        # 残す共有のチャンクの fileName が残る文書のどれも指さなければ、残る文書の名前に替える
+        # （文書で絞る検索はチャンクの fileName で絞るので、消した文書の名前のままだと、どの文書で絞っても出ない）
+        query_documents_and_chunks = """
             MATCH (d:Document)
             WHERE d.fileName IN $filename_list AND coalesce(d.fileSource, "None") IN $source_types_list
-            WITH COLLECT(d) AS documents
+            WITH collect(d) AS documents
             CALL (documents) {
-            UNWIND documents AS d
-            optional match (d)<-[:PART_OF]-(c:Chunk) 
-            detach delete c, d
-            } IN TRANSACTIONS OF 1 ROWS
+                UNWIND documents AS d
+                MATCH (d)<-[:PART_OF]-(c:Chunk)
+                WHERE NOT EXISTS { (c)-[:PART_OF]->(o:Document) WHERE NOT o IN documents }
+                RETURN collect(DISTINCT c) AS chunks
+            }
+            CALL (documents) {
+                UNWIND documents AS d
+                MATCH (d)<-[:PART_OF]-(c:Chunk)
+                WITH DISTINCT c, documents
+                WITH c, [(c)-[:PART_OF]->(o:Document) WHERE NOT o IN documents | o.fileName] AS others
+                WHERE size(others) > 0 AND NOT coalesce(c.fileName, "") IN others
+                SET c.fileName = others[0]
+            }
             """
-        query_to_delete_document_and_entities = """
-            MATCH (d:Document)
-            WHERE d.fileName IN $filename_list AND coalesce(d.fileSource, "None") IN $source_types_list
-            WITH COLLECT(d) AS documents
-            CALL (documents) {
-            UNWIND documents AS d
-            OPTIONAL MATCH (d)<-[:PART_OF]-(c:Chunk)
-            OPTIONAL MATCH (c:Chunk)-[:HAS_ENTITY]->(e)
-            WITH d, c, e, documents
-            WHERE NOT EXISTS {
-                MATCH (e)<-[:HAS_ENTITY]-(c2)-[:PART_OF]->(d2:Document)
-                WHERE NOT d2 IN documents
-                }
-            WITH d, COLLECT(c) AS chunks, COLLECT(e) AS entities
-            FOREACH (chunk IN chunks | DETACH DELETE chunk)
-            FOREACH (entity IN entities | DETACH DELETE entity)
-            DETACH DELETE d
-            } IN TRANSACTIONS OF 1 ROWS
+        # 残るチャンク r: D 以外の文書に PART_OF するもの。どの文書にも PART_OF しないチャンク（以前の削除の残り）は
+        # 出どころに数えない（再処理の QUERY_TO_DELETE_EXISTING_ENTITIES と同じ判定）
+        remaining_chunk = "EXISTS { (r)-[:PART_OF]->(od:Document) WHERE NOT od IN documents }"
+        # 消すチャンク c（chunks と同じ判定）。一覧の中を探さず、チャンクの PART_OF と D（小さい）とで判定する
+        deleted_chunk = """(EXISTS { (c)-[:PART_OF]->(dd:Document) WHERE dd IN documents }
+                     AND NOT EXISTS { (c)-[:PART_OF]->(od:Document) WHERE NOT od IN documents })"""
+        # 消すチャンクから指されるエンティティは HAS_ENTITY を失うので、版（_v）を 1 上げる（前の手動の操作の取り消しが、
+        # 消えたものを作り直さないため。設計メモ 2.3）
+        query_to_delete_document = query_documents_and_chunks + """
+            CALL (chunks) {
+                UNWIND chunks AS c
+                MATCH (c)-[:HAS_ENTITY]->(k:__Entity__)
+                WITH DISTINCT k
+                SET k._v = coalesce(k._v, 0) + 1
+                RETURN count(k) AS versioned
+            }
+            FOREACH (c IN chunks | DETACH DELETE c)
+            FOREACH (d IN documents | DETACH DELETE d)
+            RETURN size(documents) AS documents, size(chunks) AS chunks, 0 AS entities, 0 AS relationships, versioned
+            """
+        query_to_delete_document_and_entities = query_documents_and_chunks + """
+            // 消すチャンクから指されるエンティティを 1 つずつにまとめ、残すかどうかを 1 回だけ判定する。
+            // 消すもの: 残るチャンクから指されず、手動で修正しておらず、規則が作ったものでないもの
+            CALL (documents, chunks) {
+                UNWIND chunks AS c
+                MATCH (c)-[:HAS_ENTITY]->(e)
+                WITH DISTINCT e, documents
+                WITH e, coalesce(e._curated, false) = true
+                        // 規則が作った共有のエンティティ（Standard・Model など method = 'rule' のもの、他の文書から規則のエッジで指されるもの）も残す（C8）
+                        OR coalesce(e.method, '') = 'rule'
+                        OR EXISTS { (:Document)-[rr]->(e) WHERE rr.method = 'rule' }
+                        OR EXISTS { MATCH (e)<-[:HAS_ENTITY]-(r:Chunk) WHERE """ + remaining_chunk + """ } AS keep
+                RETURN collect(CASE WHEN NOT keep THEN e END) AS entities,
+                       collect(CASE WHEN keep AND e:__Entity__ THEN e END) AS kept
+            }
+            // 消すリレーション: 残すエンティティ a から出るリレーションを 1 本ずつ見て、消すチャンクの中に両端を一緒に指す
+            // ものがあり、残るチャンクの中には無いもの（出どころの代用）。種類が予約のもの、手動で追加したもの（manual_rel）は
+            // 消さない。両端を一緒に指すチャンクは、指すチャンクの少ない端からたどる（多くのチャンクに出るエンティティを
+            // 何度もたどらない）。端 b も残るものだけを選ぶ（b が消すエンティティなら、リレーションは b と一緒に消える）。
+            // b が残るかは b ごとに 1 回だけ、上の keep と同じ条件（手動で修正したもの・規則が作ったもの・残るチャンクから
+            // 指されるもの。C8）で判定する
+            CALL (documents, kept) {
+                UNWIND kept AS a
+                MATCH (a)-[rel]->(b:__Entity__)
+                WHERE NOT type(rel) IN $reserved_relationship_types
+                WITH documents, rel, a, b, COUNT { (a)<-[:HAS_ENTITY]-() } <= COUNT { (b)<-[:HAS_ENTITY]-() } AS from_a
+                WITH documents, rel, a, b, CASE WHEN from_a THEN a ELSE b END AS fewer, CASE WHEN from_a THEN b ELSE a END AS more
+                WHERE EXISTS { MATCH (fewer)<-[:HAS_ENTITY]-(c:Chunk) WHERE (c)-[:HAS_ENTITY]->(more) AND """ + deleted_chunk + """ }
+                  AND NOT EXISTS { MATCH (fewer)<-[:HAS_ENTITY]-(r:Chunk) WHERE (r)-[:HAS_ENTITY]->(more) AND """ + remaining_chunk + """ }
+                  AND NOT EXISTS { MATCH (g:__GraphEdit__ {uid: 'mrel:' + a.id + '|' + type(rel) + '|' + b.id})
+                                   WHERE g.kind = 'manual_rel' }
+                WITH documents, b, collect(rel) AS rels_of_b
+                WHERE coalesce(b._curated, false) = true
+                   OR coalesce(b.method, '') = 'rule'
+                   OR EXISTS { (:Document)-[rr]->(b) WHERE rr.method = 'rule' }
+                   OR EXISTS { MATCH (b)<-[:HAS_ENTITY]-(r:Chunk) WHERE """ + remaining_chunk + """ }
+                UNWIND rels_of_b AS rel
+                RETURN collect(rel) AS relationships
+            }
+            // 残すエンティティのうち、HAS_ENTITY かリレーションを失うものの版（_v）を 1 上げる（前の手動の操作の取り消しが、
+            // 消えたものを作り直さないため。設計メモ 2.3）: 消すチャンクから指される残すもの（kept。消すリレーションの両端も
+            // ここに入る）と、消すエンティティの隣の残るもの
+            CALL (entities, kept) {
+                WITH kept, entities, apoc.map.fromPairs([e IN entities | [elementId(e), true]]) AS deleted
+                WITH kept, apoc.coll.flatten([e IN entities | [(e)--(k:__Entity__) WHERE deleted[elementId(k)] IS NULL | k]]) AS neighbours
+                UNWIND kept + neighbours AS k
+                WITH DISTINCT k
+                SET k._v = coalesce(k._v, 0) + 1
+                RETURN count(k) AS versioned
+            }
+            // リレーション、エンティティ、チャンクの順に消し、最後に文書ノードを消す
+            FOREACH (rel IN relationships | DELETE rel)
+            FOREACH (e IN entities | DETACH DELETE e)
+            FOREACH (c IN chunks | DETACH DELETE c)
+            FOREACH (d IN documents | DETACH DELETE d)
+            RETURN size(documents) AS documents, size(chunks) AS chunks, size(entities) AS entities, size(relationships) AS relationships,
+                   versioned
             """
         query_to_delete_communities = """
             MATCH (c:`__Community__`)
@@ -388,22 +473,29 @@ class graphDBdataAccess:
                 DETACH DELETE c
                 }
         """   
-        param = {"filename_list" : filename_list, "source_types_list": source_types_list}
+        param = {"filename_list" : filename_list, "source_types_list": source_types_list,
+                 "reserved_relationship_types": RESERVED_RELATIONSHIP_TYPES}
         community_param = {"max_level":MAX_COMMUNITY_LEVELS}
-        if deleteEntities == "true":
-            _ = self.execute_query(query_to_delete_document_and_entities, param)
-            _ = self.execute_query(query_to_delete_communities,community_param)
-            logging.info(f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' from database")
-        else :
-            _ = self.execute_query(query_to_delete_document, param)    
-            logging.info(f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' with their entities from database")
+        # 貸し出し（lease）を取り、編集の API と取り込みの保存を待たせる（設計メモ 2.6）
+        with hold_lease(self.graph, "delete:" + ",".join(filename_list)[:200]):
+            # 規則が作った節と文書層のエッジを先に消す（文書ノードを消してもエッジしか消えず、節のノードが残る。C8）
+            from src.document_replace import delete_rule_layer
+            logging.info(f"規則の層を消した {filename_list}: {delete_rule_layer(self.graph, filename_list)}")
+            if deleteEntities == "true":
+                result = self.execute_query(query_to_delete_document_and_entities, param)
+                _ = self.execute_query(query_to_delete_communities,community_param)
+                logging.info(f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' with their entities from database: {result}")
+            else :
+                result = self.execute_query(query_to_delete_document, param)    
+                logging.info(f"Deleting {len(filename_list)} documents = '{filename_list}' from '{source_types_list}' from database: {result}")
         return len(filename_list)
     
     def list_unconnected_nodes(self):
         excl = PROTECTED_LABELS_CYPHER
+        # 規則で作ったノード（章・節 Section、文書番号 Standard・型式 Model。method='rule'）は後処理が作り直すので一覧に出さない（文書・チャンクにだけつながるため孤立に数えられ、消すと後処理まで層が欠ける）
         query = """
         MATCH (e:!Chunk&!Document&!`__Community__`""" + excl + """)
-        WHERE NOT exists { (e)--(:!Chunk&!Document&!`__Community__`""" + excl + """) }
+        WHERE coalesce(e.method, '') <> 'rule' AND NOT exists { (e)--(:!Chunk&!Document&!`__Community__`""" + excl + """) }
         OPTIONAL MATCH (doc:Document)<-[:PART_OF]-(c:Chunk)-[:HAS_ENTITY]->(e)
         RETURN 
         e {
@@ -424,7 +516,7 @@ class graphDBdataAccess:
         """
         query_total_nodes = """
         MATCH (e:!Chunk&!Document&!`__Community__`""" + excl + """)
-        WHERE NOT exists { (e)--(:!Chunk&!Document&!`__Community__`""" + excl + """) }
+        WHERE coalesce(e.method, '') <> 'rule' AND NOT exists { (e)--(:!Chunk&!Document&!`__Community__`""" + excl + """) }
         RETURN count(*) as total
         """
         nodes_list = self.execute_query(query)
@@ -440,18 +532,20 @@ class graphDBdataAccess:
         param = {"elementIds":entities_list}
         return self.execute_query(query,param)
     
-    def get_duplicate_nodes_list(self):
+    def get_duplicate_nodes_list(self, excluded_pairs=None):
+        # excluded_pairs: 候補から外す要素 ID の組 [[小さい方, 大きい方]]（修正台帳で別物とした組。graph_edit.read.distinct_element_pairs）
         score_value = get_value_from_env("DUPLICATE_SCORE_VALUE",0.97,"float")
         text_distance = get_value_from_env("DUPLICATE_TEXT_DISTANCE", 3 ,"int")
         query_duplicate_nodes = """
                 MATCH (n:!Chunk&!Session&!Document&!`__Community__`""" + PROTECTED_LABELS_CYPHER + """) with n
-                WHERE n.embedding is not null and n.id is not null // and size(toString(n.id)) > 3
+                WHERE n.embedding is not null and n.id is not null and coalesce(n.method,'') <> 'rule' // 規則が作った文書番号のエンティティは候補にしない（段 3）
                 WITH n ORDER BY count {{ (n)--() }} DESC, size(toString(n.id)) DESC // updated
                 WITH collect(n) as nodes
                 UNWIND nodes as n
                 WITH n, [other in nodes 
                 // only one pair, same labels e.g. Person with Person
                 WHERE elementId(n) < elementId(other) and labels(n) = labels(other)
+                AND NOT [elementId(n), elementId(other)] IN $excluded_pairs
                 // at least embedding similarity of X
                 AND 
                 (
@@ -484,7 +578,8 @@ class graphDBdataAccess:
                 """
         total_duplicate_nodes = "RETURN COUNT(DISTINCT(n)) as total"
         
-        param = {"duplicate_score_value": score_value, "duplicate_text_distance" : text_distance}
+        param = {"duplicate_score_value": score_value, "duplicate_text_distance" : text_distance,
+                 "excluded_pairs": excluded_pairs or []}
         
         nodes_list = self.execute_query(query_duplicate_nodes.format(return_statement=return_query_duplicate_nodes),param=param)
         total_nodes = self.execute_query(query_duplicate_nodes.format(return_statement=total_duplicate_nodes),param=param)
@@ -621,7 +716,8 @@ class graphDBdataAccess:
     
     def get_nodelabels_relationships(self):
         excluded_labels = ['Document', 'Chunk', '_Bloom_Perspective_', '__Community__', '__Entity__'] + PROTECTED_MANAGEMENT_LABELS
-        excluded_relationships = ['PART_OF', 'NEXT_CHUNK', 'HAS_ENTITY', '_Bloom_Perspective_', 'FIRST_CHUNK', 'SIMILAR', 'IN_COMMUNITY', 'PARENT_COMMUNITY'] + PROTECTED_RELATIONSHIP_TYPES
+        from src.shared.constants import LAYER_RELATIONSHIP_TYPES  # 段 3 の層の関係型もスキーマ統合の候補から外す（C7）
+        excluded_relationships = ['PART_OF', 'NEXT_CHUNK', 'HAS_ENTITY', '_Bloom_Perspective_', 'FIRST_CHUNK', 'SIMILAR', 'IN_COMMUNITY', 'PARENT_COMMUNITY'] + PROTECTED_RELATIONSHIP_TYPES + LAYER_RELATIONSHIP_TYPES
         node_query = """
                     CALL db.labels() YIELD label
                     WITH label

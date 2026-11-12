@@ -27,6 +27,10 @@ class SourceScanExtractParams(BaseModel):
     additional_instructions: Optional[str] = Field(None, description="Additional instructions")
     embedding_provider: Optional[str] = Field(None, description="Embedding provider")
     embedding_model: Optional[str] = Field(None, description="Embedding model")
+    extraction_method: Optional[str] = Field(None, description="Extraction method: standard | edc (model=edc is also treated as edc)")
+    # EDC の初期スキーマの指定（取り込みごと。省略時は backend の設定 LLM_MODEL_CONFIG_EDC・EDC_ENRICH_SCHEMA に従う）
+    edc_doctype: Optional[str] = Field(None, description="EDC doctype: auto | none | <registered doctype name>")
+    edc_schema_mode: Optional[str] = Field(None, description="EDC schema mode: fixed | fixed_extended")
 
 def _or_default(value: Optional[int], env_name: str, fallback: int) -> int:
     """取り込みの引数が省かれたときの既定値。画面を通さず API を直接呼んでも同じ大きさになるようにする"""
@@ -61,6 +65,9 @@ def get_source_scan_extract_params(
     additional_instructions: Optional[str] = Form(None),
     embedding_provider: Optional[str] = Form(None),
     embedding_model: Optional[str] = Form(None),
+    extraction_method: Optional[str] = Form(None),
+    edc_doctype: Optional[str] = Form(None),
+    edc_schema_mode: Optional[str] = Form(None),
 ) -> SourceScanExtractParams:
     return SourceScanExtractParams(
         source_url=source_url,
@@ -84,5 +91,8 @@ def get_source_scan_extract_params(
         retry_condition=retry_condition,
         additional_instructions=additional_instructions,
         embedding_provider=embedding_provider,
-        embedding_model=embedding_model
+        embedding_model=embedding_model,
+        extraction_method=extraction_method,
+        edc_doctype=edc_doctype,
+        edc_schema_mode=edc_schema_mode
     )

@@ -32,3 +32,6 @@ class sourceNode:
     retry_condition:str=None
     token_usage:int=None
     embedding_model:str=None
+    extraction_method:str=None
+    edc_doctype:str=None        # EDC の初期スキーマ: 指定された文書種別（auto / none / 文書種別名）。11/9
+    edc_schema_mode:str=None    # EDC の運用モード（fixed / fixed_extended）。11/9

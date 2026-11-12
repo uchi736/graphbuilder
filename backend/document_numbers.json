@@ -1,0 +1,68 @@
+{
+  "_comment": "文書層の規則の設定。系列ごとの文書番号の形（match は NFKC 正規化・空白除去後の文字列に対する正規表現、canonical は正規形、rev_group は版の符号のグループ番号）。無い系列は参照抽出の規則の目録が本文から拾った識別子をそのまま使う",
+  "series": [
+    {
+      "name": "HS-VTR",
+      "match": "(?<![A-Z0-9])(?:HS-?)?VTR-?([TP])(\\d{3})([A-Z])?(?![0-9])",
+      "canonical": "HS-VTR-{1}{2}",
+      "rev_group": 3
+    },
+    {
+      "name": "HS-RU-TP",
+      "match": "(?<![A-Z0-9])(?:HS-)?(RU|TP)-?(\\d{3})([A-Z])?(?![0-9])",
+      "canonical": "HS-{1}-{2}",
+      "rev_group": 3
+    }
+  ],
+  "external_prefixes": [
+    "JIS",
+    "ISO",
+    "IEC",
+    "QC-",
+    "QC-KAI",
+    "IMP",
+    "HZ",
+    "V0",
+    "V-0",
+    "DIN",
+    "ASTM",
+    "MIL-",
+    "AMS"
+  ],
+  "external_min_digits": 3,
+  "catalog_file_pattern": "目録",
+  "catalog_heading_pattern": "発行目録",
+  "history_heading_pattern": "来歴|改訂記録|改訂履歴|改正履歴",
+  "notice_heading_pattern": "通知票",
+  "scope_heading_pattern": "適用",
+  "control_headings": [
+    "来歴",
+    "通知票",
+    "目録",
+    "確認欄",
+    "改訂記録",
+    "改訂履歴",
+    "改正履歴"
+  ],
+  "model_suffix": "(?:形|型)(?:舶用)?過給機",
+  "document_kinds": [
+    "規程",
+    "規定",
+    "規則",
+    "基準",
+    "要領",
+    "要綱",
+    "要項",
+    "細則",
+    "標準",
+    "仕様書",
+    "指示書",
+    "方案",
+    "規格",
+    "指針",
+    "手順書",
+    "マニュアル",
+    "目録"
+  ],
+  "_comment_document_kinds": "文書の種類（名称の語尾の語）。文書台帳の kind と、未解決の参照のうち文書の名称らしい語（「○○規程による」の○○）の判定に使う"
+}

@@ -121,7 +121,7 @@ class CreateChunksofDocument:
         1 文書あたりの上限（MAX_TOKEN_CHUNK_SIZE）は、チャンクの数ではなく実際のトークン数の累計で数える。0 以下は上限なし。
         """
         from langchain_text_splitters import RecursiveCharacterTextSplitter
-        from src.document_sources.pdf_markdown import PAGE_MARK_PATTERN
+        from src.document_sources.page_marks import PAGE_MARK_PATTERN
         from src.document_sources.number_headings import is_control_heading
 
         length = chunk_length_function()
@@ -446,7 +446,8 @@ def merge_tiny_chunks(chunks, length, size: int, min_tokens: int, prefix_for):
         out = list(chunks)
     for chunk in out:
         chunk.metadata.pop("_prefix", None)
-        chunk.metadata.pop("_path", None)
+        # 見出しの経路は、章・節の層（section_layer）の予備の入力として section_path に残す（段 3 B4）
+        chunk.metadata["section_path"] = list(chunk.metadata.pop("_path", None) or [])
     return out
 
 

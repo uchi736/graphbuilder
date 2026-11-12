@@ -26,6 +26,7 @@ from src.chunkid_entities import get_entities_from_chunkids
 from src.communities import create_communities
 from src.entities.source_extract_params import SourceScanExtractParams, get_source_scan_extract_params
 from src.entities.user_credential import Neo4jCredentials, get_neo4j_credentials
+from src.extraction_methods import apply_extraction_method, list_extraction_methods
 from src.graphDB_dataAccess import graphDBdataAccess
 from src.graph_query import get_chunktext_results, get_graph_results, visualize_schema
 from src.logger import CustomLogger
@@ -43,6 +44,9 @@ from src.post_processing import create_entity_embedding, create_vector_fulltext_
 from src.ragas_eval import get_additional_metrics, get_ragas_metrics
 from src.shared.common_fn import formatted_time, get_value_from_env, get_remaining_token_limits, get_user_embedding_model, change_user_embedding_model
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
+from src.graph_edit import api as graph_edit_api, ops as graph_edit_ops, read as graph_edit_read
+from src.graph_edit.validate import EditError
+from src.graph_edit.router import router as graph_edit_router
 from Secweb.XContentTypeOptions import XContentTypeOptions
 from Secweb.XFrameOptions import XFrame
 
@@ -131,6 +135,20 @@ app.add_middleware(
 )
 app.add_middleware(SessionMiddleware, secret_key=os.urandom(24))
 app.add_api_route("/health", health([healthy_condition, healthy]))
+app.add_api_route("/extraction_methods", list_extraction_methods, methods=["GET"])  # 抽出方式の選択肢（標準 / EDC）。資格情報は要らない
+# 保守: 設定値と検証件数の一覧（参照のみ、POST /settings_overview）。本体は src/settings_overview.py。読み込めない場合も本体は起動する
+try:
+    from src.settings_overview import router as settings_overview_router
+    app.include_router(settings_overview_router)
+except Exception:
+    logging.exception("settings_overview is not available")
+# グラフスキーマ設定欄の選択肢の件数（参照のみ、POST /schema_options）。本体は src/schema_options.py。読み込めない場合も本体は起動する
+try:
+    from src.schema_options import router as schema_options_router
+    app.include_router(schema_options_router)
+except Exception:
+    logging.exception("schema_options is not available")
+app.include_router(graph_edit_router)  # グラフの手動修正の入口（src/graph_edit/router.py、docs/graph-edit/DESIGN.md の 3 章）
 
 
 @app.post("/url/scan")
@@ -225,6 +243,8 @@ async def extract_knowledge_graph_from_file(
                 error_message = "Authentication required: Your session is missing required credentials. Please log in again to continue."
                 raise LLMGraphBuilderException(error_message)
             
+        # 抽出方式（standard / edc）を決める。EDC のときは params.model を EDC 側の LLM の名前に置き換える（Document.model に残る）
+        await apply_extraction_method(params)
         if params.source_type == 'local file':
             uri_latency, result = await extract_graph_from_file_local_file(credentials, params, merged_file_path)
         elif params.source_type == 's3 bucket' and params.source_url:
@@ -330,6 +350,8 @@ async def get_source_list(credentials: Neo4jCredentials = Depends(get_neo4j_cred
 @app.post("/post_processing")
 async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), tasks=Form(None), embedding_provider=Form(None), embedding_model=Form(None)):
     """Run post-processing tasks on the graph database."""
+    # LLM を使う段（参照リンク・スキーマ統合）の失敗はここに貯めて残りの段を流し、最後に Failed で返す
+    deferred_errors = []
     try:
         graph = create_graph_database_connection(credentials)
         auth_required = get_value_from_env("AUTHENTICATION_REQUIRED", False, bool)
@@ -340,8 +362,112 @@ async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_cred
         tasks = set(map(str.strip, json.loads(tasks)))
         api_name = 'post_processing'
         reference_summary = None
+        summaries_summary = None
         count_response = []
         start = time.time()
+        # 流す順番（画面の POST_PROCESSING_JOBS の order と同じ。tests/test_post_processing_order.py で確かめる）:
+        #   参照リンク → スキーマ統合 → 文書層 → 表記ゆれの統合 → 章・節の層 → 由来情報と安定キー → 節の要点 → チャンクの類似 → 索引 → エンティティの埋め込み → コミュニティ
+        # 表記ゆれの統合は文書層の後（文書番号の名寄せは文書層が先に済ませ、残りのエンティティだけを見る）、由来情報の前（言及の文は残ったエンティティの名前と aliases で探す）
+        # 参照リンクが先: 文書層と章・節の層はチャンク間の REFERS_TO を材料にする。参照リンクが後だと、層は前回の参照リンクの結果で作られる
+        #   （参照リンクは自分が張った規則のリンクを消して張り直すが、章・節の層が張る節への REFERS_TO は消さない。chunk_references.py）
+        # スキーマ統合は層の前: 付け替えの後で層が Standard・Section・SectionRef を作り直し、索引とコミュニティは付け替え後のラベルを見る
+        # 索引・埋め込み・コミュニティは層の後: 全文索引はその時点のラベルで張られ、文書層は文書番号のエンティティを Standard に統合する。
+        #   チャンクの類似は既存の vector 索引で近傍を引くので、索引の作り直しより前（本家と同じ前後関係）
+        if 'link_chunk_references' in tasks:
+            # 本文の「〜による」「〜参照」をたどり、チャンクから参照先のチャンクへ REFERS_TO を張る
+            from src.chunk_references import link_chunk_references
+            api_name = 'post_processing/link_chunk_references'
+            try:
+                reference_summary = (await asyncio.to_thread(link_chunk_references, graph))['summary']
+                logging.info('Chunk references linked: %s', json.dumps(reference_summary, ensure_ascii=False))
+                if reference_summary['aborted'] or reference_summary['skipped_documents']:
+                    # LLM が止まっているなどで、文書単位で何も書けなかった。成功としては返さないが、残りの段は流す
+                    deferred_errors.append(f'link_chunk_references did not complete: {json.dumps(reference_summary, ensure_ascii=False)}')
+            except Exception as e:
+                logging.exception(f'link_chunk_references failed: {e}')
+                deferred_errors.append(f'link_chunk_references failed: {e}')
+
+        if 'graph_schema_consolidation' in tasks:
+            # LLMによるラベル・関係型の一括リネームは、EDC/graphragが正規化した語彙を壊しうるため
+            # 共有グラフ運用では GRAPH_SCHEMA_CONSOLIDATION_ENABLED=false で無効化できる
+            if get_value_from_env('GRAPH_SCHEMA_CONSOLIDATION_ENABLED', 'true', 'bool'):
+                try:
+                    await asyncio.to_thread(graph_schema_consolidation, graph)
+                    api_name = 'post_processing/graph_schema_consolidation'
+                    logging.info('Updated nodes and relationship labels')
+                except Exception as e:
+                    logging.exception(f'graph_schema_consolidation failed: {e}')
+                    deferred_errors.append(f'graph_schema_consolidation failed: {e}')
+            else:
+                logging.info('graph_schema_consolidation is disabled by GRAPH_SCHEMA_CONSOLIDATION_ENABLED=false')
+
+        if "build_document_layer" in tasks:
+            # 段 3 B2・B3: 文書層（文書番号のエンティティ・版・文書どうしの参照・目録・適用先）。規則だけで作る
+            from src.document_layer import build_document_layer
+            api_name = 'post_processing/build_document_layer'
+            # 書き換えの間は貸し出し（lease）を取り、グラフの手動修正の操作と取り込みの保存を待たせる（docs/graph-edit/DESIGN.md の 2.6）
+            from src.graph_edit.lease import run_with_lease
+            document_layer_summary = (await asyncio.to_thread(run_with_lease, graph, "document_layer", build_document_layer, graph))["summary"]
+            logging.info(f'document layer: {document_layer_summary}')
+        if "merge_entity_variants" in tasks:
+            # 表記ゆれのエンティティ（空白・ハイフン・大文字小文字・全角半角だけの違いで種類も同じもの）を規則で 1 つに統合する。
+            # 既定の後処理には入れない。統合前の状態は logs/entity_variants/<時刻>.json（src/entity_variants.py の restore_entity_variants で戻せる）
+            from src.entity_variants import merge_entity_variants
+            api_name = 'post_processing/merge_entity_variants'
+            from src.graph_edit.lease import run_with_lease
+            entity_variants_summary = (await asyncio.to_thread(run_with_lease, graph, "entity_variants", merge_entity_variants, graph))["summary"]
+            logging.info('entity variants: %s', json.dumps(entity_variants_summary, ensure_ascii=False))
+        if "build_section_layer" in tasks:
+            # 段 3 B4: 章・節の層（見出しの木・チャンクの所属・節への参照）。分割時の見出しの経路だけから作る
+            from src.section_layer import build_section_layer
+            api_name = 'post_processing/build_section_layer'
+            from src.graph_edit.lease import run_with_lease
+            section_layer_summary = (await asyncio.to_thread(run_with_lease, graph, "section_layer", build_section_layer, graph))["summary"]
+            logging.info(f'section layer: {section_layer_summary}')
+        if "attach_provenance" in tasks:
+            # 由来情報と安定キー（HAS_ENTITY の言及の文・リレーションの根拠の文・Chunk.stable_key）。規則だけで付ける。
+            # 安定キーは章・節の層の IN_SECTION {primary} を使うので、章・節の層の後に流す。
+            # 失敗しても残りの段（類似リンク・索引など）は流し、最後に Failed で返す（LLM を使う段と同じ扱い）
+            from src.provenance import attach_provenance
+            api_name = 'post_processing/attach_provenance'
+            from src.graph_edit.lease import run_with_lease
+            try:
+                provenance_summary = (await asyncio.to_thread(run_with_lease, graph, "provenance", attach_provenance, graph))["summary"]
+                logging.info('provenance: %s', json.dumps(provenance_summary, ensure_ascii=False))
+            except Exception as e:
+                logging.exception(f'attach_provenance failed: {e}')
+                deferred_errors.append(f'attach_provenance failed: {e}')
+
+        if "build_section_summaries" in tasks:
+            # 節の要点（参照追跡の一覧選択の材料）。章・節の層の Section に LLM（SECTION_SUMMARY_MODEL、既定 gemma4）で要点を付ける。
+            # 章・節の層の後に流す。層は Section を毎回作り直すので、入力が変わらない節の要点は控え（SectionSummary）から LLM なしで書き戻す。
+            # Section の属性を書くだけなので貸し出し（lease）は取らない（数分かかり、その間グラフの手動修正を止めないため）。
+            # 章・節の層の作り直しの途中には節を読まず（層の貸し出しが返るまで待つ）、同じコンテナでは同時に 1 本だけ流す。
+            # 失敗した節は飛ばして続ける。LLM が続けて応答しない・接続先の設定の誤り・失敗が多い（complete = False）・例外のときは、
+            # 残りの段は流して最後に Failed で返す
+            from src.section_summaries import build_section_summaries
+            api_name = 'post_processing/build_section_summaries'
+            try:
+                summaries_summary = (await asyncio.to_thread(build_section_summaries, graph))['summary']
+                logging.info('section summaries: %s', json.dumps(summaries_summary, ensure_ascii=False))
+                if not summaries_summary.get('complete', True):
+                    deferred_errors.append(f'build_section_summaries did not complete: {json.dumps(summaries_summary, ensure_ascii=False)}')
+            except Exception as e:
+                logging.exception(f'build_section_summaries failed: {e}')
+                deferred_errors.append(f'build_section_summaries failed: {e}')
+        elif "build_section_layer" in tasks:
+            # 章・節の層を作り直し、節の要点の段は流さないとき（画面・ingest.py の既定の後処理）: 層の作り直しで消えた要点を、
+            # 入力が変わらない節だけ控え（SectionSummary）から書き戻す。LLM は呼ばない。控えが無い DB（要点を作ったことが無い）では何もしない。
+            # 新しい節・本文が変わった節の要点は、後処理「節の要点」を流すまで無い（件数は pending）
+            from src.section_summaries import build_section_summaries
+            api_name = 'post_processing/restore_section_summaries'
+            try:
+                restored_summary = (await asyncio.to_thread(build_section_summaries, graph, restore_only=True))['summary']
+                logging.info('section summaries (restore only): %s', json.dumps(restored_summary, ensure_ascii=False))
+            except Exception as e:
+                logging.exception(f'restoring section summaries failed: {e}')
+                deferred_errors.append(f'restoring section summaries failed: {e}')
+
         if "materialize_text_chunk_similarities" in tasks:
             await asyncio.to_thread(update_graph, graph, embedding_provider, embedding_model)
             api_name = 'post_processing/update_similarity_graph'
@@ -356,26 +482,6 @@ async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_cred
             await asyncio.to_thread(create_entity_embedding, graph, embedding_provider, embedding_model)
             api_name = 'post_processing/create_entity_embedding'
             logging.info('Entity Embeddings created')
-
-        if "graph_schema_consolidation" in tasks :
-            # LLMによるラベル・関係型の一括リネームは、EDC/graphragが正規化した語彙を壊しうるため
-            # 共有グラフ運用では GRAPH_SCHEMA_CONSOLIDATION_ENABLED=false で無効化できる
-            if get_value_from_env("GRAPH_SCHEMA_CONSOLIDATION_ENABLED", "true", "bool"):
-                await asyncio.to_thread(graph_schema_consolidation, graph)
-                api_name = 'post_processing/graph_schema_consolidation'
-                logging.info('Updated nodes and relationship labels')
-            else:
-                logging.info('graph_schema_consolidation is disabled by GRAPH_SCHEMA_CONSOLIDATION_ENABLED=false')
-            
-        if "link_chunk_references" in tasks:
-            # 本文の「〜による」「〜参照」をたどり、チャンクから参照先のチャンクへ REFERS_TO を張る
-            from src.chunk_references import link_chunk_references
-            api_name = 'post_processing/link_chunk_references'
-            reference_summary = (await asyncio.to_thread(link_chunk_references, graph))["summary"]
-            logging.info('Chunk references linked: %s', json.dumps(reference_summary, ensure_ascii=False))
-            if reference_summary["aborted"] or reference_summary["skipped_documents"]:
-                # LLM が止まっているなどで、文書単位で何も書けなかった。成功として返さない
-                raise Exception(f"link_chunk_references did not complete: {json.dumps(reference_summary, ensure_ascii=False)}")
 
         if "enable_communities" in tasks:
             api_name = 'create_communities'
@@ -407,11 +513,19 @@ async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_cred
         if reference_summary is not None:
             # 参照リンクの件数と、失敗したチャンクの数を呼び出し側に見せる（失敗分は次回の実行で引き直される）
             message += f"; chunk references: {json.dumps(reference_summary, ensure_ascii=False)}"
+        if summaries_summary is not None:
+            # 節の要点の件数（作成・据え置き・控えから書き戻し・失敗）と時間
+            message += f"; section summaries: {json.dumps(summaries_summary, ensure_ascii=False)}"
+        if deferred_errors:
+            # 残りの段は流し終えた。件数は返すが、状態は Failed にする（参照リンクの未完了を成功として返さない従来の扱い）
+            # 従来は except 節が ERROR で記録していた（参照リンクの未完了も例外にしていた）ので、同じ文言でログに残す
+            logging.error('Exception in post_processing tasks: %s', '; '.join(deferred_errors))
+            return create_api_response('Failed', data=count_response, message='Unable to complete tasks', error='; '.join(deferred_errors))
         return create_api_response('Success', data=count_response, message=message)
     
     except Exception as e:
         job_status = "Failed"
-        error_message = str(e)
+        error_message = '; '.join(deferred_errors + [str(e)])
         message = "Unable to complete tasks"
         logging.exception(f'Exception in post_processing tasks: {error_message}')
         return create_api_response(job_status, message=message, error=error_message)
@@ -552,15 +666,18 @@ async def get_neighbours(
 @app.post("/graph_query")
 async def graph_query(
     credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
-    document_names: str = Form(None)
+    document_names: str = Form(None),
+    include_orphans: str = Form("false")
 ):
-    """Query the graph for results based on document names."""
+    """Query the graph for results based on document names.
+    include_orphans=true（全文書表示）のときは、どのチャンクにも結ばれていないエンティティも返す。"""
     try:
         start = time.time()
         result = await asyncio.to_thread(
             get_graph_results,
             credentials,
-            document_names=document_names
+            document_names=document_names,
+            include_orphans=str(include_orphans).strip().lower() in ("true", "1", "yes")
         )
         end = time.time()
         elapsed_time = end - start
@@ -744,7 +861,9 @@ async def update_extract_status(
                         'communityNodeCount' : result[0]['communityNodeCount'],
                         'communityRelCount' : result[0]['communityRelCount'],
                         'token_usage' : result[0]['token_usage'],
-                        'embedding_model' : result[0]['embedding_model']
+                        'embedding_model' : result[0]['embedding_model'],
+                        'extraction_method' : result[0].get('extraction_method'),
+                        'skipped_chunks' : result[0].get('skipped_chunks', 0)  # 抽出に失敗したチャンクの数（T16）
                         })
                     yield status
             except asyncio.CancelledError:
@@ -809,7 +928,9 @@ async def get_document_status(file_name, url, userName, password, database):
                 'communityNodeCount' : result[0]['communityNodeCount'],
                 'communityRelCount' : result[0]['communityRelCount'],
                 'token_usage' : result[0]['token_usage'],
-                'embedding_model' : result[0]['embedding_model']
+                'embedding_model' : result[0]['embedding_model'],
+                'extraction_method' : result[0].get('extraction_method'),
+                'skipped_chunks' : result[0].get('skipped_chunks', 0)  # 抽出に失敗したチャンクの数（T16）
                 }
         else:
             status = {'fileName':file_name, 'status':'Failed'}
@@ -898,19 +1019,23 @@ async def get_unconnected_nodes_list(credentials: Neo4jCredentials = Depends(get
 @app.post("/delete_unconnected_nodes")
 async def delete_orphan_nodes(
     credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
-    unconnected_entities_list=Form()
+    unconnected_entities_list=Form(),
+    user=Form(None)
 ):
     """Delete unconnected (orphan) nodes from the graph database."""
     try:
         start = time.time()
         graph = create_graph_database_connection(credentials)
-        graphDb_data_Access = graphDBdataAccess(graph)
-        result = graphDb_data_Access.delete_unconnected_nodes(unconnected_entities_list)
+        # グラフの手動修正の削除（M5、削除の記録は残さない）で消す。編集の対象でないノードは消さずに data.skipped に返す
+        result = await asyncio.to_thread(graph_edit_ops.delete_unconnected, graph, unconnected_entities_list,
+                                         graph_edit_api.default_user(user, credentials))
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name':'delete_unconnected_nodes','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,'unconnected_entities_list':unconnected_entities_list, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
         return create_api_response('Success',data=result,message="Unconnected entities delete successfully")
+    except EditError as e:
+        return create_api_response("Failed", data=e.data, message="Unable to delete the unconnected nodes", error=e.error_text())
     except Exception as e:
         job_status = "Failed"
         message="Unable to delete the unconnected nodes"
@@ -927,7 +1052,9 @@ async def get_duplicate_nodes(credentials: Neo4jCredentials = Depends(get_neo4j_
         start = time.time()
         graph = create_graph_database_connection(credentials)
         graphDb_data_Access = graphDBdataAccess(graph)
-        nodes_list, total_nodes = graphDb_data_Access.get_duplicate_nodes_list()
+        # 修正台帳の別物の組（distinct）に当たる組を候補から除く
+        excluded_pairs = graph_edit_read.distinct_element_pairs(graph)
+        nodes_list, total_nodes = graphDb_data_Access.get_duplicate_nodes_list(excluded_pairs)
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name':'get_duplicate_nodes','db_url':credentials.uri,'userName':credentials.userName, 'database':credentials.database, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
@@ -945,20 +1072,30 @@ async def get_duplicate_nodes(credentials: Neo4jCredentials = Depends(get_neo4j_
 @app.post("/merge_duplicate_nodes")
 async def merge_duplicate_nodes(
     credentials: Neo4jCredentials = Depends(get_neo4j_credentials),
-    duplicate_nodes_list=Form()
+    duplicate_nodes_list=Form(),
+    user=Form(None)
 ):
     """Merge duplicate nodes in the graph database."""
     try:
         start = time.time()
         graph = create_graph_database_connection(credentials)
-        graphDb_data_Access = graphDBdataAccess(graph)
-        result = graphDb_data_Access.merge_duplicate_nodes(duplicate_nodes_list)
+        # 各行をグラフの手動修正の統合（M4。統合先は first、名前とラベルは first のもの、説明は統合先のもの）で処理する。
+        # 前の行の統合で first か source が消えた行や、名前の衝突で断られた行は飛ばし、応答の skipped に添える（data の形は今のまま）
+        result, skipped = await asyncio.to_thread(graph_edit_ops.merge_duplicate_rows_report, graph, duplicate_nodes_list,
+                                                  graph_edit_api.default_user(user, credentials))
         end = time.time()
         elapsed_time = end - start
         json_obj = {'api_name':'merge_duplicate_nodes','db_url':credentials.uri, 'userName':credentials.userName, 'database':credentials.database,
                             'duplicate_nodes_list':duplicate_nodes_list, 'logging_time': formatted_time(datetime.now(timezone.utc)), 'elapsed_api_time':f'{elapsed_time:.2f}','email':credentials.email}
         logger.log_struct(json_obj, "INFO")
+        if skipped:
+            response = create_api_response('Success', data=result,
+                                           message=f"Duplicate entities merged; {len(skipped)} rows were skipped")
+            response["skipped"] = skipped
+            return response
         return create_api_response('Success',data=result,message="Duplicate entities merged successfully")
+    except EditError as e:
+        return create_api_response("Failed", data=e.data, message="Unable to merge the duplicate nodes", error=e.error_text())
     except Exception as e:
         job_status = "Failed"
         message="Unable to merge the duplicate nodes"
@@ -1278,7 +1415,19 @@ async def change_embedding_model(
         message = "Embedding model changed successfully."
         change_index = result.get("change_index")
         if change_index:
-            create_vector_fulltext_indexes(credentials, embedding_provider, embedding_model)
+            # 後処理の索引の作成は既にある索引を作り直さないので、次元が変わるときは消して作り直す口を使う
+            try:
+                graph = create_graph_database_connection(credentials)
+                await asyncio.to_thread(graphDBdataAccess(graph).drop_create_vector_index, "true", embedding_provider, embedding_model)
+            except Exception as e:
+                # 利用者のモデルは既に変わっている。索引だけが古い次元のまま残るので、そのことを返す
+                logging.exception(f'Embedding model was changed, but the vector index could not be re-created: {e}')
+                return create_api_response(
+                    "Failed",
+                    message=f"Embedding model was changed to {embedding_provider} {embedding_model}, but the vector index "
+                            f"could not be re-created. Please drop and create the vector index: {e}",
+                    error=str(e)
+                )
             message += " Vector index was dropped and recreated."
             
         elapsed_time = time.time() - start_time

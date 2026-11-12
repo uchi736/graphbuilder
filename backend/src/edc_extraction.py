@@ -1,9 +1,10 @@
 """EDC (Extract-Define-Canonicalize) API 連携アダプタ。
 
-モデルに "edc" を選ぶと、LLMGraphTransformer の代わりに別プロセスで動く
+抽出方式に EDC を選ぶと（/extract の extraction_method=edc。旧来の model=edc も同じ）、LLMGraphTransformer の代わりに別プロセスで動く
 EDC API (POST /extract) へチャンクテキストを送り、返ってきたトリプルを
 langchain の GraphDocument に変換して既存の保存パイプラインへ流す。
 EDC 本体には手を入れず、HTTP 経由でのみ連携する。
+EDC の LLM は EDC 側の設定で固定。Document.model に残す名前の決め方は src/extraction_methods.py にある。
 
 環境変数 LLM_MODEL_CONFIG_EDC (カンマ区切り、URL 以外は省略可):
     <base_url>[,<doctype>[,<chunk_method>[,<concurrency>]]]
@@ -47,6 +48,7 @@ from langchain_community.graphs.graph_document import GraphDocument, Node, Relat
 
 from src.shared.common_fn import get_value_from_env
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
+from src import skipped_chunks  # T16: 抽出に失敗したチャンクを文書に記録する
 
 DEFAULT_DOCTYPE = "auto"
 DEFAULT_CHUNK_METHOD = "recursive"
@@ -199,7 +201,11 @@ async def _classify_doctype(client, base_url, combined_chunk_document_list):
         return "auto"
 
 
-def _enrich_schema_enabled() -> bool:
+def _enrich_schema_enabled(options=None) -> bool:
+    """運用モード。取り込みごとの指定（options["schema_mode"]: fixed / fixed_extended）があればそれを、無ければ EDC_ENRICH_SCHEMA に従う。"""
+    mode = (options or {}).get("schema_mode")
+    if mode in ("fixed", "fixed_extended"):
+        return mode == "fixed_extended"
     return str(get_value_from_env("EDC_ENRICH_SCHEMA", "false")).strip().lower() in ("1", "true", "yes", "on")
 
 
@@ -252,9 +258,9 @@ def _resolve_self_reference(text):
     return head + sep + _SELF_REFERENCE.sub(name, body)
 
 
-async def _extract_chunk(client, semaphore, base_url, doc, doctype, chunk_method):
+async def _extract_chunk(client, semaphore, base_url, doc, doctype, chunk_method, options=None):
     payload = {"text": _resolve_self_reference(doc.page_content), "doctype": doctype, "chunk_method": chunk_method,
-               "enrich_schema": _enrich_schema_enabled()}
+               "enrich_schema": _enrich_schema_enabled(options)}
     async with semaphore:
         response = await client.post(f"{base_url}/extract", json=payload)
         response.raise_for_status()
@@ -269,18 +275,26 @@ async def _extract_chunk(client, semaphore, base_url, doc, doctype, chunk_method
     return _triplets_to_graph_document(triplets, doc, vocabulary), stats
 
 
-async def get_graph_from_edc(combined_chunk_document_list):
+async def get_graph_from_edc(combined_chunk_document_list, options=None):
     """結合済みチャンクのリストを EDC API で抽出し (GraphDocumentのリスト, token_usage) を返す。
+
+    options: 取り込みごとの初期スキーマの指定 {"doctype": auto | none | <文書種別の名前> | None, "schema_mode": fixed | fixed_extended | None}。
+    None の項目は backend の設定（LLM_MODEL_CONFIG_EDC の 2 番目の値、EDC_ENRICH_SCHEMA）に従う。
 
     GraphDocument.source には入力チャンクの Document をそのまま入れる
     (metadata の combined_chunk_ids が下流の HAS_ENTITY リンク作成に使われる)。
     EDC はトークン使用量を返さないため token_usage は常に 0。
     """
     base_url, doctype, chunk_method, concurrency = _get_edc_config()
+    requested = (options or {}).get("doctype")
+    if requested:
+        # 取り込みごとの指定。none は文書種別なし（語彙を限定せず発見）、auto は文書ごとに判定、それ以外は文書種別の名前で固定
+        doctype = None if str(requested).strip().lower() == "none" else str(requested).strip()
     timeout_seconds = get_value_from_env("EDC_EXTRACTION_TIMEOUT", DEFAULT_TIMEOUT_SECONDS, int)
     logging.info(
         f"EDC extraction: url={base_url}, doctype={doctype}, chunk_method={chunk_method}, "
-        f"concurrency={concurrency}, timeout={timeout_seconds}s"
+        f"concurrency={concurrency}, timeout={timeout_seconds}s, schema_mode={'fixed_extended' if _enrich_schema_enabled(options) else 'fixed'}"
+        + (" (per-request override)" if options and any((options or {}).values()) else "")
     )
 
     async with httpx.AsyncClient(timeout=httpx.Timeout(timeout_seconds, connect=10)) as client:
@@ -298,7 +312,7 @@ async def get_graph_from_edc(combined_chunk_document_list):
         semaphore = asyncio.Semaphore(concurrency)
         results = await asyncio.gather(
             *[
-                _extract_chunk(client, semaphore, base_url, doc, doctype, chunk_method)
+                _extract_chunk(client, semaphore, base_url, doc, doctype, chunk_method, options)
                 for doc in combined_chunk_document_list
             ],
             return_exceptions=True,
@@ -307,9 +321,10 @@ async def get_graph_from_edc(combined_chunk_document_list):
     graph_document_list = []
     failed_chunks = 0
     totals = {"truncated": 0, "noise": 0, "dropped": 0}
-    for result in results:
+    for doc, result in zip(combined_chunk_document_list, results):
         if isinstance(result, BaseException):
             failed_chunks += 1
+            skipped_chunks.note(doc.metadata.get("combined_chunk_ids"))
             logging.warning(f"Skipping chunk due to EDC extraction error: {result}")
         else:
             graph_document, stats = result

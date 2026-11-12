@@ -1,18 +1,80 @@
-GRAPH_CHUNK_LIMIT = 50
+# グラフ確認画面で 1 文書あたりに描くチャンクの上限。本家は 50 の固定値。環境変数 GRAPH_CHUNK_LIMIT で上書き、0 以下は上限なし（既定）
+GRAPH_CHUNK_LIMIT = 0
 
 # 共有グラフ運用時の保護対象ラベル。
 # チャット履歴(Session/Message)と外部プログラム(graphrag等)の管理ノードを、
 # 後処理（エンティティ埋め込み・名寄せ・コミュニティ投影・未接続列挙・スキーマ統合）から除外する
-PROTECTED_MANAGEMENT_LABELS = ["Session", "Message", "SchemaMeta", "ProcessedChunk", "GraphProvenance", "CondFact", "Cond"]
+# グラフの手動修正の管理用ノード（修正台帳・操作の履歴・排他。backend/src/graph_edit）
+GRAPH_EDIT_MANAGEMENT_LABELS = ["__GraphEdit__", "__GraphEditOp__", "__GraphLock__"]
+PROTECTED_MANAGEMENT_LABELS = ["Session", "Message", "SchemaMeta", "ProcessedChunk", "GraphProvenance", "CondFact", "Cond"] + GRAPH_EDIT_MANAGEMENT_LABELS
+# 章・節の層（段 3 B4）の Section は規則で毎回作り直すので、後処理（埋め込み・コミュニティ投影・未接続列挙・スキーマ統合）の対象から外す
+PROTECTED_MANAGEMENT_LABELS = PROTECTED_MANAGEMENT_LABELS + ['Section']
+# graph-evidence が書く根拠の記録 Evidence（11/9）も、後処理・件数・スキーマの対象から外す
+PROTECTED_MANAGEMENT_LABELS = PROTECTED_MANAGEMENT_LABELS + ['Evidence']
+# 節の要点の控え SectionSummary（11/9。後処理 build_section_summaries が書く。関係を持たない管理用のノード）も、後処理・件数・スキーマの対象から外す
+PROTECTED_MANAGEMENT_LABELS = PROTECTED_MANAGEMENT_LABELS + ['SectionSummary']
 # Cypherラベル式 (:!A&!B...) に連結する形式
 PROTECTED_LABELS_CYPHER = "".join(f"&!`{label}`" for label in PROTECTED_MANAGEMENT_LABELS)
 # WHERE NOT (e:A OR e:B ...) に連結する形式
 PROTECTED_LABELS_WHERE = " OR ".join(f"e:`{label}`" for label in PROTECTED_MANAGEMENT_LABELS)
 # 外部プログラムが張る関係型（スキーマ統合のリネーム対象から保護）
 PROTECTED_RELATIONSHIP_TYPES = ["NEXT", "LAST_MESSAGE", "REFERS_TO", "ALIAS_OF", "WHEN", "MENTIONS"]
+# 文書層・章・節の層（段 3）が張る関係型。スキーマ統合の付け替えの候補から外す（graphDB_dataAccess.get_nodelabels_relationships だけが使う）
+# PROTECTED_RELATIONSHIP_TYPES には足さない（グラフの手動修正の予約のリレーション種類がそこから作られ、APPLIES_TO は EDC の述語でもあるため）
+LAYER_RELATIONSHIP_TYPES = ['IS_VERSION_OF', 'LISTS', 'ABOLISHES', 'APPLIES_TO', 'REPLACES', 'HAS_SECTION', 'IN_SECTION']
 
 #query
+# グラフ確認画面の問い合わせ（C4 で書き直し）。対象の文書・チャンク・チャンクのエンティティ（全文書表示では
+# どのチャンクにも結ばれていないエンティティも）・コミュニティを集め、その間の関係をすべて 1 行で返す。
+# 本家の問い合わせ（GRAPH_QUERY_UPSTREAM）は行が掛け算で増え、7 本で 38 秒かかった。ノードの集合は同じで 0.5 秒。
 GRAPH_QUERY = """
+MATCH (d:Document)
+WHERE d.fileName IN $document_names
+CALL {{
+  WITH d
+  OPTIONAL MATCH (d)<-[:PART_OF|FIRST_CHUNK]-(c:Chunk)
+  RETURN c {chunk_limit_clause}
+}}
+WITH collect(DISTINCT d) AS docs, collect(DISTINCT c) AS chunks
+CALL {{
+  WITH chunks
+  UNWIND chunks AS c
+  MATCH (c)-[:HAS_ENTITY]->(e)
+  RETURN collect(DISTINCT e) AS ents
+}}
+CALL {{
+  OPTIONAL MATCH (o:__Entity__)
+  WHERE $include_orphans AND NOT EXISTS {{ (o)<-[:HAS_ENTITY]-(:Chunk) }} AND EXISTS {{ (o)--(:!Chunk&!Document) }}
+  RETURN collect(DISTINCT o) AS orphans
+}}
+WITH docs, chunks, ents + [o IN orphans WHERE NOT o IN ents] AS ents
+CALL {{
+  WITH ents
+  UNWIND ents AS n
+  OPTIONAL MATCH (n)-[:IN_COMMUNITY]->(p:__Community__)
+  OPTIONAL MATCH (p)-[:PARENT_COMMUNITY*]->(p2:__Community__)
+  RETURN collect(DISTINCT p) + collect(DISTINCT p2) AS comms
+}}
+// 段 3: 文書層（文書番号・型式のエンティティ）と章・節の層（Section）も描く
+CALL {{
+  WITH docs
+  UNWIND docs AS d
+  OPTIONAL MATCH (d)-[:IS_VERSION_OF|REFERS_TO|LISTS|ABOLISHES|APPLIES_TO]->(x:__Entity__)
+  OPTIONAL MATCH (d)-[:HAS_SECTION*1..6]->(sec:Section)
+  RETURN collect(DISTINCT x) + collect(DISTINCT sec) AS layer
+}}
+WITH docs + chunks + ents + comms + [l IN layer WHERE NOT l IN ents] AS nodes
+CALL {{
+  WITH nodes
+  UNWIND nodes AS n
+  MATCH (n)-[r]->(m)
+  WHERE m IN nodes
+  RETURN collect(DISTINCT r) AS rels
+}}
+RETURN nodes, rels
+"""
+
+GRAPH_QUERY_UPSTREAM = """
 MATCH docs = (d:Document) 
 WHERE d.fileName IN $document_names
 WITH docs, d 
@@ -22,7 +84,7 @@ ORDER BY d.createdAt DESC
 CALL {{
   WITH d
   OPTIONAL MATCH chunks = (d)<-[:PART_OF|FIRST_CHUNK]-(c:Chunk)
-  RETURN c, chunks LIMIT {graph_chunk_limit}
+  RETURN c, chunks {chunk_limit_clause}
 }}
 
 WITH collect(distinct docs) AS docs, 
@@ -32,7 +94,7 @@ WITH collect(distinct docs) AS docs,
 // Select relationships between selected chunks
 WITH *, 
      [c IN selectedChunks | 
-       [p = (c)-[:NEXT_CHUNK|SIMILAR]-(other) 
+       [p = (c)-[:NEXT_CHUNK|SIMILAR|REFERS_TO]-(other) 
        WHERE other IN selectedChunks | p]] AS chunkRels
 
 // Fetch entities and relationships between entities
@@ -52,6 +114,13 @@ WITH docs, chunks, chunkRels,
      collect(entityRels) AS entityRels, 
      entity
 
+// 全文書表示のときだけ、どのチャンクからも HAS_ENTITY で結ばれていないエンティティとその関係も描く
+CALL {{
+  OPTIONAL MATCH orphanRels = (o:__Entity__)-[]-(x:!Chunk&!Document)
+  WHERE $include_orphans AND NOT EXISTS {{ (o)<-[:HAS_ENTITY]-(:Chunk) }}
+  RETURN collect(orphanRels) AS orphanPaths
+}}
+
 WITH *
 
 CALL {{
@@ -63,7 +132,7 @@ CALL {{
          collect(parentcommunity) AS parentCommunities
 }}
 
-WITH apoc.coll.flatten(docs + chunks + chunkRels + entities + entityRels + communities + parentCommunities, true) AS paths
+WITH apoc.coll.flatten(docs + chunks + chunkRels + entities + entityRels + orphanPaths + communities + parentCommunities, true) AS paths
 
 // Distinct nodes and relationships
 CALL {{
@@ -387,12 +456,12 @@ VECTOR_GRAPH_SEARCH_ENTITY_QUERY = """
     CASE 
         WHEN e.embedding IS NULL OR ({embedding_match_min} <= vector.similarity.cosine($query_vector, e.embedding) AND vector.similarity.cosine($query_vector, e.embedding) <= {embedding_match_max}) THEN 
             collect {{
-                OPTIONAL MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){{0,1}}(:!Chunk&!Document&!__Community__) 
+                OPTIONAL MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF&!TOUCHED]-()){{0,1}}(:!Chunk&!Document&!__Community__&!Evidence) 
                 RETURN path LIMIT {entity_limit_minmax_case}
             }}
         WHEN e.embedding IS NOT NULL AND vector.similarity.cosine($query_vector, e.embedding) >  {embedding_match_max} THEN
             collect {{
-                OPTIONAL MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF]-()){{0,2}}(:!Chunk&!Document&!__Community__) 
+                OPTIONAL MATCH path=(e)(()-[rels:!HAS_ENTITY&!PART_OF&!TOUCHED]-()){{0,2}}(:!Chunk&!Document&!__Community__&!Evidence) 
                 RETURN path LIMIT {entity_limit_max_case} 
             }} 
         ELSE 
@@ -502,7 +571,7 @@ WITH d, avg_score,
             startNode(r).id,
             startNode(r)[head([k IN keys(startNode(r)) WHERE k =~ "(?i)(name|title|id|description)$"])],
             ""
-        ) + " " + type(r) + (CASE WHEN size([k IN keys(r) WHERE k <> 'embedding' AND toString(r[k]) <> '']) > 0 THEN " {{" + apoc.text.join([k IN keys(r) WHERE k <> 'embedding' AND toString(r[k]) <> '' | k + ": " + toString(r[k])], ", ") + "}}" ELSE "" END) + " " +
+        ) + " " + type(r) + (CASE WHEN size([k IN keys(r) WHERE NOT k IN ['embedding', 'source_chunk_id', 'evidence', 'evidence_kind', 'provenance_method'] AND (CASE WHEN valueType(r[k]) STARTS WITH 'LIST' THEN apoc.text.join([x IN r[k] | toString(x)], ' / ') ELSE toString(r[k]) END) <> '']) > 0 THEN " {{" + apoc.text.join([k IN keys(r) WHERE NOT k IN ['embedding', 'source_chunk_id', 'evidence', 'evidence_kind', 'provenance_method'] AND (CASE WHEN valueType(r[k]) STARTS WITH 'LIST' THEN apoc.text.join([x IN r[k] | toString(x)], ' / ') ELSE toString(r[k]) END) <> '' | k + ": " + (CASE WHEN valueType(r[k]) STARTS WITH 'LIST' THEN apoc.text.join([x IN r[k] | toString(x)], ' / ') ELSE toString(r[k]) END)], ", ") + "}}" ELSE "" END) + " " +
         coalesce(apoc.coll.removeAll(labels(endNode(r)), ['__Entity__'])[0], "") + ":" +
         coalesce(
             endNode(r).id,
@@ -605,7 +674,7 @@ RETURN {
   ],
   relationships: [
     r IN rels | 
-    startNode(r).id + " " + type(r) + (CASE WHEN size([k IN keys(r) WHERE k <> 'embedding' AND toString(r[k]) <> '']) > 0 THEN " {{" + apoc.text.join([k IN keys(r) WHERE k <> 'embedding' AND toString(r[k]) <> '' | k + ": " + toString(r[k])], ", ") + "}}" ELSE "" END) + " " + endNode(r).id
+    startNode(r).id + " " + type(r) + (CASE WHEN size([k IN keys(r) WHERE NOT k IN ['embedding', 'source_chunk_id', 'evidence', 'evidence_kind', 'provenance_method'] AND (CASE WHEN valueType(r[k]) STARTS WITH 'LIST' THEN apoc.text.join([x IN r[k] | toString(x)], ' / ') ELSE toString(r[k]) END) <> '']) > 0 THEN " {{" + apoc.text.join([k IN keys(r) WHERE NOT k IN ['embedding', 'source_chunk_id', 'evidence', 'evidence_kind', 'provenance_method'] AND (CASE WHEN valueType(r[k]) STARTS WITH 'LIST' THEN apoc.text.join([x IN r[k] | toString(x)], ' / ') ELSE toString(r[k]) END) <> '' | k + ": " + (CASE WHEN valueType(r[k]) STARTS WITH 'LIST' THEN apoc.text.join([x IN r[k] | toString(x)], ' / ') ELSE toString(r[k]) END)], ", ") + "}}" ELSE "" END) + " " + endNode(r).id
   ],
   outside: {
     nodes: [
@@ -744,6 +813,9 @@ CHAT_FULLTEXT_MODE = "fulltext"
 CHAT_ENTITY_VECTOR_MODE = "entity_vector"
 CHAT_VECTOR_GRAPH_MODE = "graph_vector"
 CHAT_VECTOR_GRAPH_FULLTEXT_MODE = "graph_vector_fulltext"
+# 参照追跡: graph+vector+fulltext と同じ検索に、本文中の参照（項・別表・他文書）の追跡を加えた方式（11/8）。
+# 普通の検索（既存の 6 方式）では参照をたどらず、参照の追跡はこの方式に集約する
+CHAT_VECTOR_GRAPH_FULLTEXT_REF_MODE = "graph_vector_fulltext_ref"
 CHAT_GLOBAL_VECTOR_FULLTEXT_MODE = "global_vector"
 CHAT_GRAPH_MODE = "graph"
 CHAT_DEFAULT_MODE = "graph_vector_fulltext"
@@ -800,6 +872,23 @@ CHAT_MODE_CONFIG_MAP= {
             "embedding_node_property":"embedding",
             "text_node_properties":["text"],
         },
+        CHAT_VECTOR_GRAPH_FULLTEXT_REF_MODE : {
+            "retrieval_query": VECTOR_GRAPH_SEARCH_QUERY,
+            "top_k": VECTOR_SEARCH_TOP_K,
+            "index_name": "vector",
+            "keyword_index": "keyword",
+            "document_filter": False,
+            "node_label": "Chunk",
+            "embedding_node_property":"embedding",
+            "text_node_properties":["text"],
+            # 方式ごとの検索設定の既定値（backend の設定より優先し、画面の上書きより劣後する）。
+            # 参照の追跡を全部有効にする。選び方は X05 で効果が出た組み合わせ
+            "retrieval_defaults": {
+                "reference_max": 2, "reference_select": "both", "reference_depth": 2,
+                "reference_documents": True, "reference_sections": True, "reference_document_layer": True,
+                "reference_presentation": "inline", "reference_prompt": True,
+            },
+        },
         CHAT_GLOBAL_VECTOR_FULLTEXT_MODE : {
             "retrieval_query": GLOBAL_VECTOR_SEARCH_QUERY,
             "top_k": GLOBAL_SEARCH_TOP_K,
@@ -811,31 +900,61 @@ CHAT_MODE_CONFIG_MAP= {
             "text_node_properties":["summary"],
         },
     }
+# 普通の検索（参照追跡以外のチャンクを検索する方式）では参照をたどらない。方式ごとの既定値として reference_max=0 を置く。
+# 画面の検索設定で 1 以上にすれば、その質問だけはたどる
+for _mode in (CHAT_VECTOR_MODE, CHAT_FULLTEXT_MODE, CHAT_VECTOR_GRAPH_MODE, CHAT_VECTOR_GRAPH_FULLTEXT_MODE):
+    CHAT_MODE_CONFIG_MAP[_mode].setdefault("retrieval_defaults", {})["reference_max"] = 0
 YOUTUBE_CHUNK_SIZE_SECONDS = 60
 
+# 再処理するチャンクの一覧。位置の順に並べ（同じ位置は id の順）、「最後の位置から再開」で選ぶための印を添える:
+# 埋め込みと HAS_ENTITY の有無、文書の処理済みのチャンク数
 QUERY_TO_GET_CHUNKS = """
             MATCH (d:Document)
             WHERE d.fileName = $filename
             WITH d
             OPTIONAL MATCH (d)<-[:PART_OF|FIRST_CHUNK]-(c:Chunk)
-            RETURN c.id as id, c.text as text, c.position as position 
+            RETURN c.id as id, c.text as text, c.position as position,
+                   c.embedding IS NOT NULL AS has_embedding, EXISTS { (c)-[:HAS_ENTITY]->() } AS has_entity,
+                   coalesce(toInteger(d.processed_chunk), 0) AS processed_chunk,
+                   c.id IN coalesce(d.skipped_chunk_ids, []) AS is_skipped
+            ORDER BY c.position, c.id
             """
             
+# 再処理の「エンティティを消して最初から」で消すエンティティ: この文書のチャンクから指され、
+# 他の文書のチャンクからは指されないもの。手動で修正したエンティティ（_curated）と、規則が作った共有のエンティティ（Standard・Model など method = 'rule' のもの、文書から規則のエッジで指されるもの。C8）は消さない。
+# 消すエンティティとのリレーションを失う、残るエンティティは版（_v）を 1 上げる（前の手動の操作の取り消しが、
+# 消えたリレーションを作り直さないため。設計メモ 2.3）
 QUERY_TO_DELETE_EXISTING_ENTITIES = """
                                 MATCH (d:Document {fileName:$filename})
                                 WITH d
                                 MATCH (d)<-[:PART_OF]-(c:Chunk)
                                 WITH d,c
                                 MATCH (c)-[:HAS_ENTITY]->(e)
-                                WHERE NOT EXISTS { (e)<-[:HAS_ENTITY]-()<-[:PART_OF]-(d2:Document) }
-                                DETACH DELETE e
+                                WHERE NOT EXISTS { (e)<-[:HAS_ENTITY]-(:Chunk)-[:PART_OF]->(d2:Document) WHERE d2 <> d }
+                                  AND coalesce(e._curated, false) <> true
+                                  AND coalesce(e.method, '') <> 'rule'
+                                  AND NOT EXISTS { (:Document)-[r]->(e) WHERE r.method = 'rule' }
+                                WITH collect(DISTINCT e) AS entities
+                                WITH entities, apoc.map.fromPairs([e IN entities | [elementId(e), true]]) AS deleted
+                                CALL (entities, deleted) {
+                                    UNWIND entities AS e
+                                    MATCH (e)--(k:__Entity__)
+                                    WHERE deleted[elementId(k)] IS NULL
+                                    WITH DISTINCT k
+                                    SET k._v = coalesce(k._v, 0) + 1
+                                    RETURN count(k) AS versioned
+                                }
+                                FOREACH (e IN entities | DETACH DELETE e)
+                                RETURN size(entities) AS deleted, versioned
                                 """   
 
+# その文書のチャンクのうち、埋め込みの無い最初のもの。「最後の位置から再開」の一覧は、今は QUERY_TO_GET_CHUNKS の印で選ぶ
+# （この問い合わせと次の WITHOUT_ENTITY の位置で一覧を切ると、共有のチャンクの位置の値のために未処理のチャンクが落ちる）
 QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION="""
                               MATCH (d:Document)
                               WHERE d.fileName = $filename
                               WITH d
-                              MATCH (c:Chunk) WHERE c.embedding is null 
+                              MATCH (d)<-[:PART_OF]-(c:Chunk) WHERE c.embedding is null 
                               RETURN c.id as id,c.position as position 
                               ORDER BY c.position LIMIT 1
                               """   

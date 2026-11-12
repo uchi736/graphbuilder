@@ -355,6 +355,22 @@ def create_document_retriever_chain(llm, retriever, embedding_provider, embeddin
         logging.error(f"Error creating document retriever chain: {e}", exc_info=True)
         raise
 
+def ensure_keyword_index(graph, keyword_index, node_label, text_node_properties):
+    """全文索引が無ければ、その全文索引だけを作る（後処理の作成文と同じ定義。埋め込みは書かない）。
+
+    from_existing_index は全文索引が無いと失敗する（修正前の from_existing_graph はその場で作っていた）。
+    全文索引を作るのは後処理だけなので、後処理の前の DB や、後処理が途中で止まった DB でも、既定のモードの検索を通す。
+    """
+    if graph.query("SHOW FULLTEXT INDEXES YIELD name WHERE name = $name RETURN name", {"name": keyword_index}):
+        return
+    properties = ", ".join(f"n.`{prop}`" for prop in text_node_properties)
+    logging.warning(f"Full-text index '{keyword_index}' does not exist. Creating it for (:{node_label}) on [{properties}].")
+    try:
+        graph.query(f"CREATE FULLTEXT INDEX `{keyword_index}` IF NOT EXISTS FOR (n:`{node_label}`) ON EACH [{properties}]")
+        graph.query("CALL db.awaitIndex($name, 120)", {"name": keyword_index})
+    except Exception as e:
+        raise ValueError(f"The full-text index '{keyword_index}' does not exist and could not be created: {e}") from e
+
 def initialize_neo4j_vector(graph, chat_mode_settings, embedding_provider, embedding_model):
     try:
         retrieval_query = chat_mode_settings.get("retrieval_query")
@@ -368,8 +384,10 @@ def initialize_neo4j_vector(graph, chat_mode_settings, embedding_provider, embed
         if not retrieval_query or not index_name:
             raise ValueError("Required settings 'retrieval_query' or 'index_name' are missing.")
         EMBEDDING_FUNCTION , _ = load_embedding_model(embedding_provider, embedding_model) 
+        # 既存の索引を開くだけにする（from_existing_graph は埋め込みの無いノードに別の形の文で埋め込みを書き込む）
         if keyword_index:
-            neo_db = Neo4jVector.from_existing_graph(
+            ensure_keyword_index(graph, keyword_index, node_label, text_node_properties)
+            neo_db = Neo4jVector.from_existing_index(
                 embedding=EMBEDDING_FUNCTION,
                 index_name=index_name,
                 retrieval_query=retrieval_query,
@@ -382,7 +400,7 @@ def initialize_neo4j_vector(graph, chat_mode_settings, embedding_provider, embed
             )
             logging.info(f"Successfully retrieved Neo4jVector Fulltext index '{index_name}' and keyword index '{keyword_index}'")
         else:
-            neo_db = Neo4jVector.from_existing_graph(
+            neo_db = Neo4jVector.from_existing_index(
                 embedding=EMBEDDING_FUNCTION,
                 index_name=index_name,
                 retrieval_query=retrieval_query,
@@ -734,7 +752,8 @@ def QA_RAG(graph, model, question, document_names, session_id, mode, write_acces
             except json.JSONDecodeError:
                 logging.warning(f"retrieval_settings is not valid JSON; using defaults: {overrides[:200]}")
                 overrides = None
-        chat_mode_settings["retrieval_settings"] = resolve_retrieval_settings(overrides if isinstance(overrides, dict) else None)
+        chat_mode_settings["retrieval_settings"] = resolve_retrieval_settings(overrides if isinstance(overrides, dict) else None,
+                                                                             mode_defaults=chat_mode_settings.get("retrieval_defaults"))
         document_names= list(map(str.strip, json.loads(document_names)))
         if document_names and not chat_mode_settings["document_filter"]:
             result =  {

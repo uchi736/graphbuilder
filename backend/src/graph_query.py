@@ -42,7 +42,7 @@ def get_graphDB_driver(credentials):
         logging.error(error_message, exc_info=True)
 
 
-def execute_query(driver, query,document_names,doc_limit=None):
+def execute_query(driver, query,document_names,doc_limit=None,**extra_params):
     """
     Executes a specified query using the Neo4j driver, with parameters based on the presence of a document name.
 
@@ -52,7 +52,7 @@ def execute_query(driver, query,document_names,doc_limit=None):
     try:
         if document_names:
             logging.info(f"Executing query for documents: {document_names}")
-            records, summary, keys = driver.execute_query(query, document_names=document_names)
+            records, summary, keys = driver.execute_query(query, document_names=document_names, **extra_params)
         else:
             logging.info(f"Executing query with a document limit of {doc_limit}")
             records, summary, keys = driver.execute_query(query, doc_limit=doc_limit)
@@ -97,6 +97,31 @@ def process_node(node):
         return node_element
     except Exception:
         logging.error("graph_query module:An unexpected error occurred while processing the node")
+
+# プロパティも返すリレーションタイプ（文書層のリレーション。始点が文書のものに限る）。画面の全文書のグラフの「文書間の関係のみ」の詳細欄が、版・目録上の日付・根拠チャンク・引用の表示に使用する
+DOCUMENT_LAYER_RELATIONSHIP_TYPES = ("IS_VERSION_OF", "REFERS_TO", "LISTS")
+
+
+def _json_value(value):
+    """プロパティの値を JSON に変換できる値にする。neo4j の日時型は ISO 8601 の文字列、それ以外の型は文字列とする。"""
+    if value is None or isinstance(value, (str, bool, int, float)):
+        return value
+    # neo4j の Duration は tuple の派生型のため、日時型の判定を list・tuple より先に行う
+    if isinstance(value, (time.Date, time.Time, time.DateTime, time.Duration)):
+        return value.iso_format()
+    if isinstance(value, (list, tuple)):
+        return [_json_value(item) for item in value]
+    return str(value)
+
+
+def process_relationship_properties(relation):
+    """文書層のリレーションのプロパティ。変換できない場合は None を返し、リレーション自体は返す（グラフの表示から欠落させない）。"""
+    try:
+        return {key: _json_value(relation.get(key)) for key in relation}
+    except Exception:
+        logging.warning(f"graph_query module: Failed to process properties of relationship {relation.element_id}", exc_info=True)
+        return None
+
 
 def extract_node_elements(records):
     """
@@ -164,6 +189,11 @@ def extract_relationships(records):
                         "start_node_element_id": process_node(nodes[0])["element_id"],
                         "end_node_element_id": process_node(nodes[1])["element_id"],
                     }
+                    # 文書層のリレーション（始点が文書）に限る。チャンク間の REFERS_TO（引用文などを持つ）は画面で使用しないため返さない
+                    if relation.type in DOCUMENT_LAYER_RELATIONSHIP_TYPES and "Document" in nodes[0].labels:
+                        properties = process_relationship_properties(relation)
+                        if properties is not None:
+                            relationship["properties"] = properties
                     relationships.append(relationship)
 
                 except Exception as inner_e:
@@ -194,7 +224,7 @@ def get_completed_documents(driver):
     return documents
 
 
-def get_graph_results(credentials, document_names):
+def get_graph_results(credentials, document_names, include_orphans=False):
     """
     Retrieves graph data by executing a specified Cypher query using credentials and parameters provided.
     Processes the results to extract nodes and relationships and packages them in a structured output.
@@ -209,8 +239,10 @@ def get_graph_results(credentials, document_names):
         logging.info("Starting graph query process")
         driver = get_graphDB_driver(credentials)  
         document_names= list(map(str, json.loads(document_names)))
-        query = GRAPH_QUERY.format(graph_chunk_limit=GRAPH_CHUNK_LIMIT)
-        records, summary , keys = execute_query(driver, query.strip(), document_names)
+        chunk_limit = get_value_from_env("GRAPH_CHUNK_LIMIT", GRAPH_CHUNK_LIMIT, "int")
+        chunk_limit_clause = f"LIMIT {chunk_limit}" if chunk_limit and chunk_limit > 0 else ""
+        query = GRAPH_QUERY.format(chunk_limit_clause=chunk_limit_clause)
+        records, summary , keys = execute_query(driver, query.strip(), document_names, include_orphans=bool(include_orphans))
         document_nodes = extract_node_elements(records)
         document_relationships = extract_relationships(records)
 

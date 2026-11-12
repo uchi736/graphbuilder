@@ -2,6 +2,7 @@ version: "3"
 
 services:
   backend:
+    mem_limit: 6g
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -38,6 +39,8 @@ services:
       - LLM_MODEL_CONFIG_BEDROCK_NOVA_PRO_V1=${LLM_MODEL_CONFIG_BEDROCK_NOVA_PRO_V1-}
       - LLM_MODEL_CONFIG_OLLAMA_LLAMA3=${LLM_MODEL_CONFIG_OLLAMA_LLAMA3-}
       - LLM_MODEL_CONFIG_GEMMA4=${LLM_MODEL_CONFIG_GEMMA4-}
+      - LLM_MODEL_CONFIG_GEMMA4CPU=${LLM_MODEL_CONFIG_GEMMA4CPU-}
+      - LLM_MODEL_CONFIG_LUNA=${LLM_MODEL_CONFIG_LUNA-}
       - LLM_MODEL_CONFIG_EDC=${LLM_MODEL_CONFIG_EDC-}
       - EDC_EXTRACTION_TIMEOUT=${EDC_EXTRACTION_TIMEOUT-}
       - EDC_ENRICH_SCHEMA=${EDC_ENRICH_SCHEMA-false}
@@ -62,6 +65,7 @@ services:
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/application_default_credentials.json
       - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT-}
     container_name: backend
+    restart: unless-stopped   # 11/12 機体の再起動で止まったままになったため
     extra_hosts:
       - host.docker.internal:host-gateway
     depends_on:
@@ -72,6 +76,7 @@ services:
       - net
 
   frontend:
+    mem_limit: 512m
     depends_on:
       - backend
     build:
@@ -79,7 +84,7 @@ services:
       dockerfile: Dockerfile
       args:
         - VITE_BACKEND_API_URL=${VITE_BACKEND_API_URL-http://localhost:8000}
-        - VITE_REACT_APP_SOURCES=${VITE_REACT_APP_SOURCES-local,wiki,s3}
+        - VITE_REACT_APP_SOURCES=${VITE_REACT_APP_SOURCES-local}
         - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID-}
         - VITE_BLOOM_URL=${VITE_BLOOM_URL-https://workspace-preview.neo4j.io/workspace/explore?connectURL={CONNECT_URL}&search=Show+me+a+graph&featureGenAISuggestions=true&featureGenAISuggestionsInternal=true}
         - VITE_TIME_PER_PAGE=${VITE_TIME_PER_PAGE-50}
@@ -103,6 +108,7 @@ services:
     env_file:
       - ./frontend/.env
     container_name: frontend
+    restart: unless-stopped   # 11/12 機体の再起動で止まったままになったため
     ports:
       - "8441:8080"
     networks:
@@ -110,8 +116,10 @@ services:
 
   # 専用 Neo4j（データ分離）。Community 5.26 はベクトルインデックスをネイティブ対応。
   database:
+    mem_limit: 7g
     image: neo4j:5.26-community
     container_name: neo4j-kgb
+    restart: unless-stopped   # 11/12 機体の再起動で止まったままになったため
     environment:
       - NEO4J_AUTH=neo4j/kgb-please-change
       - NEO4J_PLUGINS=["apoc"]

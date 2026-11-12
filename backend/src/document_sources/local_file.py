@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 import chardet
-from langchain_community.document_loaders import PyMuPDFLoader, UnstructuredFileLoader
+from langchain_community.document_loaders import UnstructuredFileLoader
 from langchain_core.documents import Document
 from langchain_core.document_loaders import BaseLoader
 
@@ -17,6 +17,38 @@ class ListLoader(BaseLoader):
         Returns the list of documents.
         """
         return self.documents
+
+class PdfPageLoader(BaseLoader):
+    """PDF をページごとの文字列で読む（pypdfium2。以前の langchain の PyMuPDF の読み込みの置き換え。AGPL の部品を使わない）。
+    1 ページを 1 つの Document にし、metadata に source と page（0 始まり。以前の読み込みと同じ）を入れる。
+    文字層の無いページは空の文字列になる（以前の読み込みと同じ）。"""
+
+    def __init__(self, file_path):
+        self.file_path = str(file_path)
+
+    def load(self):
+        # pdfium はスレッド安全ではないので、pdf_regions と同じプロセスに 1 つの錠の中で読む
+        from src.document_sources.pdf_regions import pdfpage
+        documents = []
+        with pdfpage.PDFIUM_LOCK:
+            doc = pdfpage.open_document(self.file_path)
+            try:
+                for i in range(len(doc)):
+                    page = doc[i]
+                    try:
+                        textpage = page.get_textpage()
+                        try:
+                            text = textpage.get_text_range() or ""
+                        finally:
+                            textpage.close()
+                    finally:
+                        page.close()
+                    documents.append(Document(page_content=text.replace("\r\n", "\n").replace("\r", "\n"),
+                                              metadata={"source": self.file_path, "page": i}))
+            finally:
+                doc.close()
+        return documents
+
 
 def detect_encoding(file_path):
     """
@@ -38,7 +70,7 @@ def convert_pdf_via_edc(file_path):
     EDC APIの /convert でPDFをページ毎テキストに変換する（PaddleX OCR、スキャンPDF対応）。
 
     EDC_PDF_CONVERT が無効・EDC未設定・変換失敗時は None を返し、
-    呼び出し側は PyMuPDF にフォールバックする。
+    呼び出し側はページごとの読み込み（PdfPageLoader）にフォールバックする。
     """
     from src.shared.common_fn import get_value_from_env
     if not get_value_from_env("EDC_PDF_CONVERT", "false", "bool"):
@@ -67,7 +99,7 @@ def convert_pdf_via_edc(file_path):
             for i, page_text in enumerate(pages)
         ]
     except Exception as exc:
-        logging.warning("EDC /convert failed (%s); falling back to PyMuPDF", exc)
+        logging.warning("EDC /convert failed (%s); falling back to the page loader", exc)
         return None
 
 def load_document_content(file_path):
@@ -90,19 +122,36 @@ def load_document_content(file_path):
         if (str(get_value_from_env("PDF_CHUNK_STRATEGY", "token")).strip().lower() == "markdown"
                 and get_value_from_env("MARKDOWN_CHUNKING", "true", "bool")):
             # Markdown に変換し、.md と同じ経路で分割する。
-            # 文字の層が無い PDF は None が返り、下の従来の読み込みに進む。
+            # 変換器は regions（文字層＋Nemotron Parse＋VLM、src/document_sources/pdf_regions）だけ。
+            # regions が失敗したとき（None・例外。ページ数が PDF_REGIONS_MAX_PAGES を超えるときも None）は、
+            # 文字層だけの簡易変換（pdf_regions/plain.py）に戻す。どちらも AGPL の部品を使わない。
+            # 文字の層が無い PDF は簡易変換でも None が返り、下の従来の読み込み（EDC の OCR・ページごとの読み込み）に進む。
+            # 以前の値 pymupdf4llm（AGPL。2026-11-10 に外した）は regions として扱う。
+            converter = str(get_value_from_env("PDF_CONVERTER", "regions")).strip().lower()
+            if converter != "regions":
+                logging.warning("PDF_CONVERTER %r is not available (pymupdf4llm was removed); using regions", converter)
+            name = Path(file_path).name
             try:
-                from src.document_sources.pdf_markdown import load_pdf_as_markdown
-                markdown_pages = load_pdf_as_markdown(file_path)
+                from src.document_sources.pdf_regions.graph_builder import load_pdf_as_markdown_regions
+                markdown_pages = load_pdf_as_markdown_regions(file_path)
             except Exception as exc:
-                logging.warning("PDF to Markdown conversion failed (%s); falling back to the default loader", exc)
+                logging.warning("PDF to Markdown conversion by regions failed (%s)", exc)
+                markdown_pages = None
+            if markdown_pages:
+                return ListLoader(markdown_pages), True
+            logging.warning("PDF %s: the regions converter returned nothing; falling back to the text-layer converter", name)
+            try:
+                from src.document_sources.pdf_regions.graph_builder import load_pdf_as_markdown_plain
+                markdown_pages = load_pdf_as_markdown_plain(file_path)
+            except Exception as exc:
+                logging.warning("PDF to Markdown conversion on the text layer failed (%s); falling back to the default loader", exc)
                 markdown_pages = None
             if markdown_pages:
                 return ListLoader(markdown_pages), True
         edc_pages = convert_pdf_via_edc(file_path)
         if edc_pages is not None:
             return ListLoader(edc_pages), False
-        loader = PyMuPDFLoader(file_path)
+        loader = PdfPageLoader(file_path)
         return loader, encoding_flag
     if file_extension == ".md":
         # Markdownは見出し構造を保持するため生テキストで読む

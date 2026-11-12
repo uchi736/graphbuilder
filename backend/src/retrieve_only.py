@@ -129,7 +129,8 @@ def retrieve_context(graph, question, document_names=None, mode=None, embedding_
 
     # 共有の設定辞書を書き換えないよう写しを作り、検索設定を載せる（QA_RAG と同じ）
     chat_mode_settings = dict(get_chat_mode_settings(mode=mode))
-    chat_mode_settings["retrieval_settings"] = resolve_retrieval_settings(_parse_retrieval_settings(retrieval_settings))
+    chat_mode_settings["retrieval_settings"] = resolve_retrieval_settings(_parse_retrieval_settings(retrieval_settings),
+                                                                         mode_defaults=chat_mode_settings.get("retrieval_defaults"))
     document_names = _parse_document_names(document_names)
     if document_names and not chat_mode_settings["document_filter"]:
         # /chat_bot は同じ条件で検索せずに案内文を返す。検索だけの口では失敗として返す

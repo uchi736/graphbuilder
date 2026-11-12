@@ -4,6 +4,8 @@ from src.shared.common_fn import load_embedding_model,execute_graph_query,get_va
 import logging
 from typing import List
 import hashlib
+import os
+import json
 import time
 from langchain_neo4j import Neo4jVector
 
@@ -23,10 +25,12 @@ def merge_relationship_between_chunk_and_entites(graph: Neo4jGraph, graph_docume
             batch_data.append(query_data)
           
     if batch_data:
+        # 保存したエンティティを __Entity__ と名前で引く。種類のラベルで探して無ければ作る作りだと、
+        # 保存の後に名前や種類が変わったとき __Entity__ を持たないノードが作られ、そこへ張られる（無ければ張らない）
         unwind_query = """
                     UNWIND $batch_data AS data
                     MATCH (c:Chunk {id: data.chunk_id})
-                    CALL apoc.merge.node([data.node_type], {id: data.node_id}) YIELD node AS n
+                    MATCH (n:__Entity__ {id: data.node_id})
                     MERGE (c)-[:HAS_ENTITY]->(n)
                 """
         execute_graph_query(graph,unwind_query, params={"batch_data": batch_data})
@@ -57,6 +61,17 @@ def create_chunk_embeddings(graph, chunkId_chunkDoc_list, file_name, embedding_p
     """       
     execute_graph_query(graph,query_to_create_embedding, params={"fileName":file_name, "data":data_for_query})
     
+def chunk_id_for(file_name: str, position: int, text: str) -> str:
+    """チャンクの ID。既定（CHUNK_ID_MODE=document）は 文書名＋文書内の位置＋本文 のハッシュ。
+    本文だけのハッシュ（CHUNK_ID_MODE=content、元の作り）だと、同じ本文の節（共通の判定基準、枠の定型文、
+    版をまたいで変わらなかった節）が別の文書どうしで 1 つのノードに統合され、PART_OF と NEXT_CHUNK が文書をまたぐ。
+    content は過去の実験の記録（本文のハッシュを ID にしている）を再現するためだけに残す。"""
+    mode = os.environ.get("CHUNK_ID_MODE", "document").strip().lower()
+    if mode == "content":
+        return hashlib.sha1(text.encode()).hexdigest()
+    return hashlib.sha1(f"{file_name}\x1f{position}\x1f{text}".encode()).hexdigest()
+
+
 def create_relation_between_chunks(graph, file_name, chunks: List[Document])->list:
     logging.info("creating FIRST_CHUNK and NEXT_CHUNK relationships between chunks")
     current_chunk_id = ""
@@ -65,10 +80,9 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
     relationships = []
     offset=0
     for i, chunk in enumerate(chunks):
-        page_content_sha1 = hashlib.sha1(chunk.page_content.encode())
         previous_chunk_id = current_chunk_id
-        current_chunk_id = page_content_sha1.hexdigest()
         position = i + 1 
+        current_chunk_id = chunk_id_for(file_name, position, chunk.page_content)
         if i>0:
             offset += len(chunks[i-1].page_content)
         if i == 0:
@@ -93,6 +107,8 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
         if 'page_number' in chunk.metadata:
             chunk_data['page_number'] = chunk.metadata['page_number']
         chunk_data['section'] = chunk.metadata.get('section')
+        # 段 3 B4: 見出しの経路を配列（JSON 文字列）でも保存する。section は長いと途中の段が省かれるため
+        chunk_data['section_path'] = json.dumps(chunk.metadata.get('section_path'), ensure_ascii=False) if chunk.metadata.get('section_path') else None
          
         if 'start_timestamp' in chunk.metadata and 'end_timestamp' in chunk.metadata:
             chunk_data['start_time'] = chunk.metadata['start_timestamp']
@@ -120,7 +136,8 @@ def create_relation_between_chunks(graph, file_name, chunks: List[Document])->li
         SET c.page_number = CASE WHEN data.page_number IS NOT NULL THEN data.page_number END,
             c.start_time = CASE WHEN data.start_time IS NOT NULL THEN data.start_time END,
             c.end_time = CASE WHEN data.end_time IS NOT NULL THEN data.end_time END,
-            c.section = CASE WHEN data.section IS NOT NULL THEN data.section END
+            c.section = CASE WHEN data.section IS NOT NULL THEN data.section END,
+            c.section_path = CASE WHEN data.section_path IS NOT NULL THEN data.section_path END
         WITH data, c
         MATCH (d:Document {fileName: data.f_name})
         MERGE (c)-[:PART_OF]->(d)

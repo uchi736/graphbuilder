@@ -131,7 +131,9 @@ def test_設定の上書きと不正な値():
         # 選択肢に無い値を既定値に戻すのは、参照の設定だけ。従来の項目（entity_order）は、従来どおり値をそのまま持つ
         os.environ["CHAT_ENTITY_ORDER"] = "bogus"
         assert rr.default_retrieval_settings()["entity_order"] == orig.default_retrieval_settings()["entity_order"] == "bogus"
-        assert rr.build_expansion_query(rr.default_retrieval_settings()) == orig.build_expansion_query(orig.default_retrieval_settings())
+        # 11/9: 展開で TOUCHED（graph-evidence の根拠の線）をたどらず Evidence を終点にしない除外を足した。その差だけを除いて比べる
+        new_q = rr.build_expansion_query(rr.default_retrieval_settings()).replace("&!TOUCHED", "").replace("&!Evidence", "")
+        assert new_q == orig.build_expansion_query(orig.default_retrieval_settings())
     finally:
         del os.environ["CHAT_REFERENCE_SELECT"], os.environ["CHAT_REFERENCE_DEPTH"]
         os.environ.pop("CHAT_ENTITY_ORDER", None)

@@ -111,7 +111,7 @@ for ge in g["entities"]:
     if m and m.group(1) not in ge["aliases"]: ge["aliases"] = ge["aliases"] + [m.group(1)]
 M = Matcher(g["entities"])
 gtype = {e["id"]: e["type"] for e in g["entities"]}
-VALUE_TYPES = ("Criterion", "Parameter")
+VALUE_TYPES = ("Criterion", "Parameter", "Value", "Condition")  # Value・Condition は社内規定の正解（rules/gold_rules.json）の型。技術基準の正解には無い
 EXTRA_VALUE_KEYS = {"6点": {norm2("6点")}}                     # 正解のエンティティ一覧に無い目的語
 REF_RELS = [r for r in g["relations"] if r["p"] == "REFERENCES"]
 DOCNUM = {"HS-VTR-T001E.pdf": "VTR-T001", "HS-VTR-T002F.pdf": "VTR-T002", "VTR-T003D.pdf": "VTR-T003",
@@ -335,7 +335,7 @@ def recount(method):
     DOCKEY = dict(DOCNUM, **{"VTR-T_発行目録.pdf": "VTR-T-INDEX"})
     std = {(ents[r["source"]]["props"].get("id"), ents[r["target"]]["props"].get("id")) for r in d["relationships"]
            if r["type"] == "REFERENCES" and "Standard" in ents[r["source"]]["labels"] and "Standard" in ents[r["target"]]["labels"]}
-    gold_pairs = [(x["from"], x["to"]) for x in g["doc_references"]]
+    gold_pairs = [(x["from"], x["to"]) for x in g.get("doc_references", [])]
     text_pairs = []
     for F, cs in file_chunks.items():
         for T, num in DOCNUM.items():

@@ -1,6 +1,8 @@
 # chunk_check.json（現状の経路のチャンク）を読み、枠の混入（独立行）、表の混線、本文の行の残存率を数える。読むだけ。
+# 本文の行の元は文字層（pypdfium2。2026-11-10 に PyMuPDF から置き換え。行の切れ目の位置が PyMuPDF と少し違うので、
+# 2026-10-16 の基準値と比べるときは同じ道具で測り直す）
 import json, re, glob, os, unicodedata, collections, statistics
-import fitz
+import pypdfium2 as pdfium
 D=json.load(open("/work/chunk_check.json",encoding="utf-8")); chunks=D["chunks"]
 def norm(s): return re.sub(r"\s+","",unicodedata.normalize("NFKC",s or ""))
 FRAME_LINE=re.compile(r"^\s*(配布先|承認|審査|作成|控|原|合計|番|号|改正回数|改正番号\s*\d*|来\s?歴|年\s?月\s?日|HS|回[汎管品生製技][^\s]{0,4}\s*\d?|'?\d{2}\.\d{2}\.\d{2}|\d{4}/\d{1,2}/\d{1,2}|[A-E])\s*$")
@@ -25,7 +27,12 @@ for r in D["rows"]:
     p=paths.get(name) or paths.get(name.replace("VTR-T003D","VTR-T003 D"))
     raw=""; 
     if p:
-        with fitz.open(p) as doc: raw="".join(pg.get_text() for pg in doc)
+        doc=pdfium.PdfDocument(p)
+        try:
+            for i in range(len(doc)):
+                tp=doc[i].get_textpage(); raw+=tp.get_text_range()+"\n"; tp.close()
+        finally:
+            doc.close()
     lines=[norm(l) for l in raw.splitlines() if len(norm(l))>=6]
     alltext=norm("".join(re.sub(r"^\[[^\]]*\]\n","",c["text"],count=1) for c in cs))
     cover=sum(1 for l in lines if l in alltext)/max(len(lines),1)

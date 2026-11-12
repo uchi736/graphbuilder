@@ -14,6 +14,7 @@ synth/eval_synth.py の写し。違いは次のとおり。
 import argparse
 import glob
 import json
+import os
 import pathlib
 import re
 import sys
@@ -24,7 +25,7 @@ import urllib.request
 from difflib import SequenceMatcher
 
 HERE = pathlib.Path(__file__).parent
-BACKEND = "http://localhost:8440"
+BACKEND = os.environ.get("GB_BACKEND", "http://localhost:8440")   # 11/9: 評価用の backend に向けられるように
 CRED = {"uri": "neo4j://database4:7687", "userName": "neo4j", "password": "kgb-please-change", "database": "neo4j", "email": "test@example.com"}
 REF2 = {"reference_max": 2, "reference_select": "both", "reference_depth": 2, "reference_presentation": "inline", "reference_prompt": True}
 SETTINGS = {
@@ -32,6 +33,10 @@ SETTINGS = {
     "参照あり": ("fulltext", REF2),
     "グラフあり": ("graph_vector_fulltext", {"reference_max": 0}),
     "参照＋グラフ": ("graph_vector_fulltext", REF2),
+    # 11/9 追加: 独立した検索方式「参照追跡」（方式の既定値で、章・節と文書層の参照もたどる。上書きはしない）
+    "参照追跡": ("graph_vector_fulltext_ref", {}),
+    # 11/9: 文書だけを指す参照の行き先を要点の一覧から LLM に選ばせる
+    "参照追跡一覧": ("graph_vector_fulltext_ref", {"reference_doc_select": "summary_list"}),
 }
 ROUTE = ("ref1", "ref2", "ent1", "ent2")
 REFUSAL = re.compile(r"(記載|情報|記述|明記|言及|定め|規定|データ|内容|数値|値).{0,24}(ありません|ございません|無い|ない|なし|見当たりません|見つかりません|含まれていません|含まれておりません|されていません|されておりません|確認できません|存在しません)"

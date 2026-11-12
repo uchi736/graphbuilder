@@ -18,6 +18,7 @@
   unanswerable は、回答が「書かれていない」と述べていれば正答（言い回しの照合による簡易判定）
 """
 import argparse
+import os
 import glob
 import json
 import pathlib
@@ -30,7 +31,7 @@ import urllib.request
 from difflib import SequenceMatcher
 
 HERE = pathlib.Path(__file__).parent
-BACKEND = "http://localhost:8440"
+BACKEND = os.environ.get("GB_BACKEND", "http://localhost:8440")   # 11/10（X24）: 評価用の backend（:8446）に向けられるように
 CRED = {"uri": "neo4j://database3:7687", "userName": "neo4j", "password": "kgb-please-change", "database": "neo4j", "email": "test@example.com"}
 SETTINGS = {
     "上位6": {"reference_max": 0},
@@ -42,7 +43,14 @@ SETTINGS = {
     "新・参照2": {"reference_max": 2, "reference_select": "both", "reference_depth": 2, "reference_presentation": "inline", "reference_prompt": True},
     # 切り分け用: 選び方だけ新しくする（見せ方と指示は従来）
     "新・選び方のみ": {"reference_max": 2, "reference_select": "both", "reference_depth": 2},
+    # 11/10（X24）: 独立した検索方式「参照追跡」（graph_vector_fulltext_ref、方式の既定値）。文書だけを指す参照の行き先の選び方 2 通り
+    "参照追跡": {},
+    "参照追跡・一覧": {"reference_doc_select": "summary_list"},
 }
+# 設定ごとの検索方式（無ければ従来の graph_vector_fulltext）
+MODES = {"参照追跡": "graph_vector_fulltext_ref", "参照追跡・一覧": "graph_vector_fulltext_ref"}
+# 応答の references から控える項目（X24: 一覧選択が働いたか・戻したか）
+REF_KEYS = ("chunk_id", "target_kind", "file_name", "position", "hop", "select", "locator", "via_label", "selection", "selection_fallback", "selection_stage", "selected_sections", "summary_coverage")
 ROUTE = ("ref1", "ref2", "ent1", "ent2")
 REFUSAL = re.compile(r"(記載|情報|記述|明記|言及|定め|規定|データ|内容|数値|値).{0,24}(ありません|ございません|無い|ない|なし|見当たりません|見つかりません|含まれていません|含まれておりません|されていません|されておりません|確認できません|存在しません)"
                      r"|わかりません|分かりません|お答えできません|お答えすることができません|回答できません|特定できません|判断できません|見当たりません|書かれていない|書かれていません")
@@ -103,8 +111,8 @@ def graph_lines(context: str) -> str:
     return "\n".join(re.findall(r"(?:Entities:|Relationships:)(.*?)(?=Document start|Text Content:|\Z)", context or "", flags=re.S))
 
 
-def call(question: str, settings: dict, llm: bool, tag: str) -> dict:
-    form = {**CRED, "question": question, "document_names": "[]", "mode": "graph_vector_fulltext", "model": "gemma4",
+def call(question: str, settings: dict, llm: bool, tag: str, mode: str = "graph_vector_fulltext") -> dict:
+    form = {**CRED, "question": question, "document_names": "[]", "mode": mode, "model": "gemma4",
             "embedding_provider": "vllm", "embedding_model": "cl-nagoya/ruri-v3-310m", "retrieval_settings": json.dumps(settings)}
     if llm:
         form.update({"session_id": tag, "history": "false"})
@@ -116,8 +124,10 @@ def call(question: str, settings: dict, llm: bool, tag: str) -> dict:
     if llm:
         info = x.get("info") or {}
         ids = [c.get("id") for c in ((info.get("nodedetails") or {}).get("chunkdetails") or [])]
-        return {"answer": (x.get("message") or "").strip(), "chunk_ids": ids, "context": (info.get("metric_details") or {}).get("contexts") or "", "via": []}
-    return {"answer": "", "chunk_ids": [c["id"] for c in x["chunks"]], "context": x.get("context") or "", "via": [c["id"] for c in x["chunks"] if c.get("via_reference")]}
+        refs = [{k: e.get(k) for k in REF_KEYS if e.get(k) is not None} for e in (info.get("references") or [])]
+        return {"answer": (x.get("message") or "").strip(), "chunk_ids": ids, "context": (info.get("metric_details") or {}).get("contexts") or "", "via": [e.get("chunk_id") for e in refs], "references": refs}
+    return {"answer": "", "chunk_ids": [c["id"] for c in x["chunks"]], "context": x.get("context") or "", "via": [c["id"] for c in x["chunks"] if c.get("via_reference")],
+            "references": [{k: e.get(k) for k in REF_KEYS if e.get(k) is not None} for e in (x.get("references") or [])]}
 
 
 def main():
@@ -130,6 +140,7 @@ def main():
     ap.add_argument("--no-llm", action="store_true")
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--questions", default=str(HERE / "questions" / "*.json"))
+    ap.add_argument("--qids", default="", help="流す問いの qid（カンマ区切り、または @ファイル（1 行 1 件））。X24 で絞り込みに使う")
     ap.add_argument("--db", default="database3", help="検索に使う Neo4j の別名（database3 / database5 / database6 ...）。書き出し JSON と同じグラフを指すこと")
     args = ap.parse_args()
     CRED["uri"] = f"neo4j://{args.db}:7687"
@@ -151,6 +162,9 @@ def main():
     wanted = set(args.types.split(",")) if args.types else None
     if wanted:
         questions = [q for q in questions if q["type"] in wanted]
+    if args.qids:
+        keep = [x.strip() for x in (open(args.qids[1:], encoding="utf-8").read().split() if args.qids.startswith("@") else args.qids.split(",")) if x.strip()]
+        questions = [q for q in questions if q["qid"] in set(keep)]
     if args.limit:
         questions = questions[:args.limit]
     names = args.settings.split(",")
@@ -179,7 +193,7 @@ def main():
                 continue
             t0 = time.time()
             try:
-                r = call(q["question"], SETTINGS[name], llm, f"synth-{q['qid']}-{int(t0)}")
+                r = call(q["question"], SETTINGS[name], llm, f"synth-{q['qid']}-{int(t0)}", MODES.get(name, "graph_vector_fulltext"))
             except Exception as e:
                 print(f"{q['qid']} {name} 失敗: {str(e)[:120]}", flush=True)
                 continue
@@ -191,7 +205,7 @@ def main():
                    "answer_rank": min((ids.index(i) + 1 for i in strict if i in ids), default=None), "entry_rank": min((ids.index(i) + 1 for i in entry if i in ids), default=None),
                    "answer_via_reference": bool(set(strict) & set(r["via"])), "chunks": len(ids),
                    "keys_in_chunk_text": bool(keys) and all(has_key(ctx_chunks, k) for k in keys), "keys_in_graph_lines": bool(keys) and all(has_key(lines, k) for k in keys),
-                   "context_chars": len(r["context"]), "sec": round(time.time() - t0, 1)}
+                   "context_chars": len(r["context"]), "sec": round(time.time() - t0, 1), "references": r.get("references") or []}
             if llm:
                 wrong = [norm(w) for w in q.get("wrong_values") or [] if norm(w)]
                 run["answer"] = r["answer"]

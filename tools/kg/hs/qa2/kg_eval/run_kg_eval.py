@@ -74,6 +74,14 @@ for r in G["refers_to"]:
         CHUNK_REF[IDX[r["source"]]].add(IDX[r["target"]]); CHUNK_REF[IDX[r["target"]]].add(IDX[r["source"]])
 
 
+ADMIN_RE = re.compile(r"発行目録|来歴|協議|通知票")
+
+
+def is_admin(i):
+    c = CHUNKS[IDS[i]]
+    return bool(ADMIN_RE.search(c["doc"]) or ADMIN_RE.search(c["section"] or ""))
+
+
 def doc_key(docname):
     n = docname.replace(".pdf", "")
     m = re.match(r"(?:HS-)?(RU|TP)-(\d{3})", n)
@@ -147,20 +155,29 @@ def cand_B(q):
 
 def cand_N(q):
     c, info = cand_B(q)
-    cands = set(c); struct = set()
+    cands = set(c); struct = {}   # chunk -> (score, tag)
+
+    def add(i, score, tag):
+        if is_admin(i) or (i in struct and struct[i][0] >= score):
+            return
+        struct[i] = (score, tag)
     exp = []
     for hit, others in alias_hits(q):
         if others:
             q2 = q + " " + " ".join(others[:6])
             exp.append(q2)
             v, b = base_lists(q2)
-            cands.update(v[:20] + b[:20])
+            for i in v[:20] + b[:20]:
+                if i not in cands:
+                    add(i, 1.0, "alias")
     info["expanded_queries"] = exp
     keys = ids_in_text(q)
     for k in keys:
         for d in KEY2DOC.get(k, []):
-            struct.update(DOCS_OF[d])
-        struct.update(MENTION_IDX.get(k, set()))
+            for i in DOCS_OF[d]:
+                add(i, 2.0, "doc_in_question")
+        for i in MENTION_IDX.get(k, set()):
+            add(i, 2.5, "mention_of_question_doc")
     info["doc_keys_in_question"] = sorted(keys)
     v, b = base_lists(q)
     rrf = collections.Counter()
@@ -168,13 +185,25 @@ def cand_N(q):
         for r, i in enumerate(L):
             rrf[i] += 1.0 / (60 + r + 1)
     docscore = {}
-    for i, s in rrf.items():
-        d = CHUNKS[IDS[i]]["doc"]; docscore[d] = max(docscore.get(d, 0), s)
+    for i, s_ in rrf.items():
+        d = CHUNKS[IDS[i]]["doc"]; docscore[d] = max(docscore.get(d, 0), s_)
     top_docs = [d for d, _ in sorted(docscore.items(), key=lambda kv: -kv[1])[:2]]
     for d in top_docs:
-        struct.update(DOCS_OF[d])
+        for i in DOCS_OF[d]:
+            add(i, 0.5, "two_stage")
     info["two_stage_docs"] = [d.replace(".pdf", "") for d in top_docs]
-    cands.update(struct); info["struct"] = sorted(struct)
+    # 上位 3 件の文書番号に言及する他文書のチャンク（正規表現の逆引き索引。グラフの文書間 REFERS_TO の対）
+    sc = P.rerank(q, [TEXTS[i] for i in c])
+    top3 = [c[j] for j in sorted(range(len(c)), key=lambda j: -sc[j])[:3]]
+    for r, i in enumerate(top3):
+        k = doc_key(CHUNKS[IDS[i]]["doc"])
+        for j in MENTION_IDX.get(k, set()):
+            add(j, 3.0 if r == 0 else 2.0, "mention_of_top_doc")
+    for i in list(struct):
+        if i in cands:
+            struct.pop(i)
+    cands.update(struct)
+    info["struct"] = {str(i): list(v) for i, v in struct.items()}
     return list(cands), info
 
 
@@ -196,28 +225,42 @@ def match_entities(q):
 
 def cand_G1(q):
     c, info = cand_B(q)
-    cands = set(c)
+    cands = set(c); struct = {}
+
+    def add(i, score, tag):
+        if i in cands or is_admin(i):
+            return
+        if i in struct and struct[i][0] >= score:
+            return
+        struct[i] = (score, tag)
     ents = match_entities(q)
     info["entities_matched"] = sorted(ENAME[e] for e in ents)[:40]
-    added_e = set(); added_n = set()
+    hits = collections.Counter()
     for e in ents:
-        chs = ENT_CHUNKS.get(e, set())
-        added_e.update(list(chs)[:40])
+        for i in list(ENT_CHUNKS.get(e, set()))[:40]:
+            hits[i] += 1
+    for i, n in hits.items():
+        add(i, 1.0 + min(n - 1, 2) * 0.5, "entity")
+    for e in ents:
         for nb in list(NEIGH.get(e, ()))[:60]:
-            added_n.update(list(ENT_CHUNKS.get(nb, set()))[:5])
-    cands.update(added_e); cands.update(list(added_n)[:120])
-    # 上位 6 件からの参照リンク（両向き）と、その文書を引く文書エンティティの出どころチャンク
+            for i in list(ENT_CHUNKS.get(nb, set()))[:5]:
+                add(i, 0.5, "neighbor")
+    # 上位 3 件のチャンク間参照リンク（両向き）と、その文書を引く文書エンティティの出どころチャンク
     sc = P.rerank(q, [TEXTS[i] for i in c])
-    top6 = [c[j] for j in sorted(range(len(c)), key=lambda j: -sc[j])[:TOP_N]]
-    refs = set()
-    for i in top6:
-        refs.update(CHUNK_REF.get(i, set()))
+    top3 = [c[j] for j in sorted(range(len(c)), key=lambda j: -sc[j])[:3]]
+    for r, i in enumerate(top3):
+        w = 3.0 if r == 0 else 2.0
+        for j in CHUNK_REF.get(i, set()):
+            add(j, w, "chunk_ref")
         k = doc_key(CHUNKS[IDS[i]]["doc"])
         for src in DOC_REF_IN.get(k, ()):
-            refs.update(list(ENT_CHUNKS.get(src, set()))[:10])
-    cands.update(refs)
-    info["added"] = {"entity_chunks": len(added_e), "neighbor_chunks": min(len(added_n), 120), "ref_chunks": len(refs)}
-    info["struct"] = sorted((added_e | refs) - set(c))
+            for j in ENT_CHUNKS.get(src, set()):
+                if k in ids_in_text(TEXTS[j][:2000]) and doc_key(CHUNKS[IDS[j]]["doc"]) != k:
+                    add(j, w, "doc_ref")
+    cands.update(struct)
+    tags = collections.Counter(v[1] for v in struct.values())
+    info["added"] = dict(tags)
+    info["struct"] = {str(i): list(v) for i, v in struct.items()}
     return list(cands), info
 
 
@@ -227,13 +270,15 @@ RESERVE = 2
 def select(q, cands, k=TOP_N, struct=None, reserve=0):
     sc = P.rerank(q, [TEXTS[i] for i in cands])
     order = [cands[j] for j in sorted(range(len(cands)), key=lambda j: -sc[j])]
-    rank = {c: r + 1 for r, c in enumerate(order)}
+    rank = {c_: r + 1 for r, c_ in enumerate(order)}
     if struct and reserve:
-        s_order = [c for c in order if c in struct]
-        head = order[:k - reserve]
-        extra = [c for c in s_order if c not in head][:reserve]
+        strong = [i for i in struct if struct[i][0] >= 2.0]
+        r = min(reserve, len(strong))
+        head = order[:k - r]
+        s_order = sorted([i for i in strong if i not in head], key=lambda i: (-struct[i][0], rank.get(i, 10 ** 6)))
+        extra = s_order[:r]
         sel = head + extra
-        rest = [c for c in order if c not in sel]
+        rest = [c_ for c_ in order if c_ not in sel]
         sel = (sel + rest)[:k]
     else:
         sel = order[:k]
@@ -329,7 +374,10 @@ def main():
     ap.add_argument("--conds", default="llm_only,B,N,G1"); ap.add_argument("--runs", type=int, default=1)
     ap.add_argument("--temperature", type=float, default=0.0); ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--qids", default="")
+    ap.add_argument("--topn", type=int, default=6); ap.add_argument("--reserve", type=int, default=2); ap.add_argument("--tag", default="")
     a = ap.parse_args()
+    global TOP_N, RESERVE
+    TOP_N, RESERVE = a.topn, a.reserve
     out = pathlib.Path(a.out); out.mkdir(parents=True, exist_ok=True)
     items = json.load(open(a.set, encoding="utf-8"))
     if a.qids:
@@ -349,9 +397,19 @@ def main():
             elif cond == "G0":
                 pass
             else:
-                cands, info = {"B": cand_B, "N": cand_N, "G1": cand_G1}[cond](q)
-                struct = set(info.pop("struct", [])) if cond in ("N", "G1") else None
-                sel, top10, rank = select(q, cands, struct=struct, reserve=RESERVE if struct else 0)
+                base_cond = cond.replace("plus", "")
+                cands, info = {"B": cand_B, "N": cand_N, "G1": cand_G1}[base_cond](q)
+                struct = {int(i_): tuple(v_) for i_, v_ in info.pop("struct", {}).items()} if base_cond in ("N", "G1") else None
+                if cond.endswith("plus"):
+                    # 統合: B の上位 6 件はそのまま、構造から足した強い候補（優先度 2 以上）を最大 RESERVE 件足す（Han らの統合条件）
+                    b_c, _ = cand_B(q)
+                    sel_b, _, rank = select(q, b_c, k=TOP_N)
+                    strong = sorted([i for i in (struct or {}) if struct[i][0] >= 2.0 and i not in sel_b], key=lambda i: -struct[i][0])
+                    sel = sel_b + strong[:RESERVE]
+                    top10 = sel
+                    rank = {i: r + 1 for r, i in enumerate(sel)}
+                else:
+                    sel, top10, rank = select(q, cands, k=TOP_N, struct=struct, reserve=RESERVE if struct else 0)
                 info["n_candidates"] = len(cands); info["top10"] = [f"{CHUNKS[IDS[i]]['doc'].replace('.pdf', '')}#{CHUNKS[IDS[i]]['position']}" for i in top10]
                 info["n_struct"] = len(struct) if struct else 0
                 gold_idx = {IDX[c] for g in it["gold_groups"] for c in g.get("ids", []) if c in IDX}
@@ -362,6 +420,8 @@ def main():
                 info["gold_in_candidates"] = sum(1 for i in gold_idx if i in rank)
                 info["gold_rerank_ranks"] = sorted(rank[i] for i in gold_idx if i in rank)
                 info["gold_from_struct"] = sum(1 for i in gold_idx if struct and i in struct)
+                info["gold_struct_tags"] = sorted(struct[i][1] for i in gold_idx if struct and i in struct)
+                info["selected_struct_tags"] = [struct[i][1] if struct and i in struct else "base" for i in sel]
                 ctx = build_context(sel)
             for run in range(a.runs):
                 if cond == "G0":
@@ -370,7 +430,7 @@ def main():
                 else:
                     ans, usage = llm(q, ctx, a.temperature)
                 sc = score(it, ans, sel)
-                rec = {"qid": it["qid"], "aspect": it["aspect"], "cond": cond, "run": run, "answer": ans, "score": sc,
+                rec = {"qid": it["qid"], "aspect": it["aspect"], "cond": cond + a.tag, "run": run, "answer": ans, "score": sc, "topn": TOP_N, "reserve": RESERVE,
                        "selected": [f"{CHUNKS[IDS[i]]['doc'].replace('.pdf', '')}#{CHUNKS[IDS[i]]['position']}" for i in sel] if sel else [],
                        "context_chars": len(ctx) if ctx else 0, "usage": usage, "retrieval_info": info, "sec": round(time.time() - t0, 1)}
                 results.append(rec)

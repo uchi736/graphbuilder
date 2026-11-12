@@ -18,7 +18,8 @@ import json, os, subprocess, sys, time, datetime, argparse, re
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 K = os.path.dirname(HERE)
-B = "http://localhost:8440"
+B = os.environ.get("GB_BACKEND", "http://localhost:8440")   # 11/9: 評価用の backend（backend-parser :8446）に向けられるように
+BACKEND_CONTAINER = os.environ.get("GB_BACKEND_CONTAINER", "backend")
 PASSWORD = "kgb-please-change"   # 評価用 Neo4j の開発用パスワード（リポジトリ内スクリプトに既出）
 ALLOWED = {"neo4j-kgb4", "neo4j-kgb5", "neo4j-kgb6"}
 EMB = ["--form-string", "embedding_provider=vllm", "--form-string", "embedding_model=cl-nagoya/ruri-v3-310m"]
@@ -69,6 +70,19 @@ def extract_args(method, doc, schemas):
     return model, nodes, rels, instr
 
 
+def edc_fields(method):
+    """EDC の初期スキーマの取り込みごとの指定（11/9 追加）。環境変数 HS_EDC_DOCTYPE（auto / none / 文書種別名）と
+    HS_EDC_SCHEMA_MODE（fixed / fixed_extended）があれば /extract に送る。無ければ従来どおり backend の設定に従う。"""
+    if method != "edc":
+        return []
+    out = ["--form-string", "extraction_method=edc"]
+    for env, field in (("HS_EDC_DOCTYPE", "edc_doctype"), ("HS_EDC_SCHEMA_MODE", "edc_schema_mode")):
+        v = os.environ.get(env, "").strip()
+        if v:
+            out += ["--form-string", f"{field}={v}"]
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("method", choices=["std", "schema", "edc"])
@@ -109,7 +123,8 @@ def main():
             "--form-string", f"model={model}", "--form-string", "source_type=local file", "--form-string", f"file_name={doc['name']}",
             "--form-string", "source_url=", "--form-string", f"allowedNodes={nodes}", "--form-string", f"allowedRelationship={rels}",
             "--form-string", "token_chunk_size=512", "--form-string", "chunk_overlap=50", "--form-string", "chunks_to_combine=1",
-            "--form-string", "language=", "--form-string", "retry_condition=", "--form-string", f"additional_instructions={instr}"] + EMB)
+            "--form-string", "language=", "--form-string", "retry_condition=", "--form-string", f"additional_instructions={instr}"] + EMB
+            + edc_fields(a.method))
         sec = round(time.time() - t0)
         try:
             r = json.loads(p.stdout); x = r.get("data") or {}
@@ -119,7 +134,7 @@ def main():
         except Exception as e:
             row = {"name": doc["name"], "category": doc["category"], "status": "unreadable", "sec": sec, "message": (p.stdout or p.stderr)[:200]}
         if a.method == "edc":
-            lg = sh(["docker", "logs", "backend", "--since", since], timeout=60)
+            lg = sh(["docker", "logs", BACKEND_CONTAINER, "--since", since], timeout=60)
             m = re.findall(r"EDC classified document as doctype '([^']*)'", lg.stdout + lg.stderr)
             row["doctype"] = m[-1] if m else None
         record["docs"].append(row)
@@ -141,7 +156,7 @@ def main():
     log("3) 書き出し")
     dump = os.path.join(out, "graph_dump.json")
     with open(dump, "w", encoding="utf-8") as f:
-        subprocess.run(["docker", "exec", "-e", f"NEO4J_URI=neo4j://{a.alias}:7687", "-i", "backend", "python", "-"],
+        subprocess.run(["docker", "exec", "-e", f"NEO4J_URI=neo4j://{a.alias}:7687", "-i", BACKEND_CONTAINER, "python", "-"],
                        stdin=open(os.path.join(K, "routes", "dump_graph.py"), encoding="utf-8"), stdout=f, stderr=subprocess.DEVNULL)
     try:
         d = json.load(open(dump, encoding="utf-8")); print({k: len(v) for k, v in d.items()}, flush=True)

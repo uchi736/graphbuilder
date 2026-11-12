@@ -138,7 +138,7 @@ const DrawerDropzone: React.FC<DrawerProps> = ({
               <StatusIndicator type={'danger'} />
               <span className='text-center mx-1'>
                 {filesData.length === 0
-                  ? `まだデータが取り込まれていないようです。メインアプリケーションにログインしてください。`
+                  ? `データが取り込まれていません。メインアプリケーションにログインしてください。`
                   : 'このデータを処理するにはログインが必要です。メインアプリケーションにログインしてください。'}
               </span>
             </Typography>

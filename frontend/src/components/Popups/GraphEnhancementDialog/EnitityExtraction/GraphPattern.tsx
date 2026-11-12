@@ -1,20 +1,56 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Select } from '@neo4j-ndl/react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { Select, Typography } from '@neo4j-ndl/react';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
 import { OptionType, TupleCreationProps } from '../../../../types';
 import { appLabels } from '../../../../utils/Constants';
 import { useFileContext } from '../../../../context/UsersFiles';
 import { useCredentials } from '../../../../context/UserCredentials';
+import { SchemaOption } from '../../../../services/SchemaOptions';
 interface IErrorState {
   showError: boolean;
   errorMessage: string;
 }
-const GraphPattern: React.FC<TupleCreationProps> = ({
+// 現在のグラフに存在するラベルとリレーションタイプ（グラフ設定を開いた時点で取得する）。選択肢に追加して表示する
+type GraphPatternProps = TupleCreationProps & {
+  graphLabels?: SchemaOption[];
+  graphRelationshipTypes?: SchemaOption[];
+};
+const NO_GRAPH_OPTIONS: SchemaOption[] = [];
+const COMMA_ERROR = 'カンマを含まない名称を入力してください。この欄ではカンマを使用できません';
+// 選択肢に現在のグラフの名称を追加する。同じ名称は 1 件にまとめ、件数を取得できた名称は表示名に件数を付与する。
+// 選択後の値は名称のみとする（handleNewValue が名称から選択肢を作成する）
+const withGraphOptions = (options: OptionType[], graphOptions: SchemaOption[]): OptionType[] => {
+  const countOf = new Map(graphOptions.map((option) => [option.name, option.count]));
+  const shown = (label: string, count: number | null | undefined) => {
+    if (typeof count === 'number') {
+      return `${label}（${count} 件）`;
+    }
+    return label;
+  };
+  const seen = new Set<string>();
+  const merged: OptionType[] = [];
+  options.forEach((option) => {
+    if (!seen.has(option.value)) {
+      seen.add(option.value);
+      merged.push({ value: option.value, label: shown(option.label, countOf.get(option.value)) });
+    }
+  });
+  graphOptions.forEach((option) => {
+    if (!seen.has(option.name)) {
+      seen.add(option.name);
+      merged.push({ value: option.name, label: shown(option.name, option.count) });
+    }
+  });
+  return merged;
+};
+const GraphPattern: React.FC<GraphPatternProps> = ({
   selectedSource,
   selectedType,
   selectedTarget,
   onPatternChange,
   onAddPattern,
+  graphLabels = NO_GRAPH_OPTIONS,
+  graphRelationshipTypes = NO_GRAPH_OPTIONS,
 }) => {
   const {
     sourceOptions,
@@ -38,6 +74,12 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
   });
   const sourceRef = useRef<HTMLDivElement | null>(null);
   const { userCredentials } = useCredentials();
+  const sourceSelectOptions = useMemo(() => withGraphOptions(sourceOptions, graphLabels), [sourceOptions, graphLabels]);
+  const targetSelectOptions = useMemo(() => withGraphOptions(targetOptions, graphLabels), [targetOptions, graphLabels]);
+  const typeSelectOptions = useMemo(
+    () => withGraphOptions(typeOptions, graphRelationshipTypes),
+    [typeOptions, graphRelationshipTypes]
+  );
   const deduplicateOptions = (options: OptionType[]): OptionType[] => {
     const seen = new Set<string>();
     return options.filter((option) => {
@@ -132,7 +174,7 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
         ...old,
         [type]: {
           showError: true,
-          errorMessage: 'カンマを含まないテキストを入力してください。このフィールドではカンマは使用できません',
+          errorMessage: COMMA_ERROR,
         },
       }));
     } else {
@@ -186,7 +228,7 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
         ...old,
         [type]: {
           showError: true,
-          errorMessage: 'カンマを含まないテキストを入力してください。このフィールドではカンマは使用できません',
+          errorMessage: COMMA_ERROR,
         },
       }));
     } else {
@@ -196,18 +238,26 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
   const isDisabled = !selectedSource?.value.length || !selectedTarget?.value.length || !selectedType?.value.length;
   return (
     <div className='bg-white rounded-lg shadow-md'>
-      <div className='flex align-self-center justify-center'>
-        <h5>{appLabels.graphPatternTuple}</h5>
+      <div className='flex'>
+        <Typography variant='subheading-small'>{appLabels.graphPatternTuple}</Typography>
       </div>
       <div className='flex gap-4 items-end mb-6 mt-3 justify-between'>
         <div className='w-1/4' ref={sourceRef}>
           <Select
-            label='ソースを選択/作成'
+            label='始点ノードのラベル'
             size='medium'
             errorText={showWarning.source.showError ? showWarning.source.errorMessage : ''}
             selectProps={{
               isClearable: true,
-              options: sourceOptions,
+              placeholder: '選択または入力',
+              options: sourceSelectOptions,
+              // 一覧が画面の下端で切れないよう、下の空きが足りない場合は上向きに開く（3 つの欄で共通）
+              // maxMenuHeight は開く向きの判定に使われる。一覧の高さは NDL の CSS（size='medium' は 280px）で決まるため、同じ値にする
+              menuPlacement: 'auto',
+              maxMenuHeight: 280,
+              menuPosition: 'fixed',
+              // NDL の CSS（.ndl-select-menu-list.ndl-medium の max-height）が react-select の縮めた値より優先されるため、!important で縮めた値を使う
+              styles: { menuList: (base) => ({ maxHeight: `${base.maxHeight}px !important` }) },
               onChange: (selected) => {
                 if (!selected) {
                   onPatternChange(null, selectedType, selectedTarget);
@@ -227,12 +277,17 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
           />
         </div>
         <Select
-          label='タイプを選択/作成'
+          label='リレーションタイプ'
           size='medium'
           errorText={showWarning.type.showError ? showWarning.type.errorMessage : ''}
           selectProps={{
             isClearable: true,
-            options: typeOptions,
+            placeholder: '選択または入力',
+            options: typeSelectOptions,
+            menuPlacement: 'auto',
+            maxMenuHeight: 280,
+            menuPosition: 'fixed',
+            styles: { menuList: (base) => ({ maxHeight: `${base.maxHeight}px !important` }) },
             onChange: (selected) => {
               if (!selected) {
                 onPatternChange(selectedSource, null, selectedTarget);
@@ -252,12 +307,17 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
           className='w-1/4'
         />
         <Select
-          label='ターゲットを選択/作成'
+          label='終点ノードのラベル'
           errorText={showWarning.target.showError ? showWarning.target.errorMessage : ''}
           size='medium'
           selectProps={{
             isClearable: true,
-            options: targetOptions,
+            placeholder: '選択または入力',
+            options: targetSelectOptions,
+            menuPlacement: 'auto',
+            maxMenuHeight: 280,
+            menuPosition: 'fixed',
+            styles: { menuList: (base) => ({ maxHeight: `${base.maxHeight}px !important` }) },
             onChange: (selected) => {
               if (!selected) {
                 onPatternChange(selectedSource, selectedType, null);
@@ -278,10 +338,10 @@ const GraphPattern: React.FC<TupleCreationProps> = ({
         />
         <div className='flex items-center' tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && handleAddPattern()}>
           <ButtonWithToolTip
-            text='追加'
+            text='パターンを追加'
             placement='top'
             onClick={handleAddPattern}
-            label='値を追加'
+            label='パターンを追加'
             size='medium'
             disabled={isDisabled}
           >

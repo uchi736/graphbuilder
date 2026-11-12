@@ -7,7 +7,7 @@ import {
   defaultChunksToCombineOptions,
   embeddingModels,
   EmbeddingModelOption,
-  DEFAULT_EMBEDDING_MODEL,
+  embeddingOptionOf,
 } from '../../../../utils/Constants';
 import { tokens } from '@neo4j-ndl/base';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
@@ -40,17 +40,14 @@ export default function AdditionalInstructionsText({
     setSelectedChunks_to_combine,
   } = useFileContext();
 
-  const [selectedEmbeddingModel, setSelectedEmbeddingModel] = useState<EmbeddingModelOption>(() => {
-    const config = getEmbeddingConfig();
-    const found = embeddingModels.find((opt) => opt.provider === config.provider && opt.model === config.model);
-    return found || DEFAULT_EMBEDDING_MODEL;
-  });
+  // 一覧に無いモデル（バックエンドの設定）でも設定どおりに表示する。既定（MiniLM）に落とすと「キャンセル」で設定を書き換えてしまう
+  const [selectedEmbeddingModel, setSelectedEmbeddingModel] = useState<EmbeddingModelOption>(() =>
+    embeddingOptionOf(getEmbeddingConfig())
+  );
 
-  const [displayEmbeddingModel, setDisplayEmbeddingModel] = useState<EmbeddingModelOption>(() => {
-    const config = getEmbeddingConfig();
-    const found = embeddingModels.find((opt) => opt.provider === config.provider && opt.model === config.model);
-    return found || DEFAULT_EMBEDDING_MODEL;
-  });
+  const [displayEmbeddingModel, setDisplayEmbeddingModel] = useState<EmbeddingModelOption>(() =>
+    embeddingOptionOf(getEmbeddingConfig())
+  );
 
   const [showDimensionWarning, setShowDimensionWarning] = useState(false);
   const [pendingEmbeddingModel, setPendingEmbeddingModel] = useState<EmbeddingModelOption | null>(null);
@@ -71,8 +68,8 @@ export default function AdditionalInstructionsText({
     const allowEmbeddingChange = localStorage.getItem('allowEmbeddingChange');
     setIsEmbeddingReadonly(allowEmbeddingChange === 'false');
 
-    const found = embeddingModels.find((opt) => opt.provider === config.provider && opt.model === config.model);
-    if (found && (found.provider !== selectedEmbeddingModel.provider || found.model !== selectedEmbeddingModel.model)) {
+    const found = embeddingOptionOf(config);
+    if (found.provider !== selectedEmbeddingModel.provider || found.model !== selectedEmbeddingModel.model) {
       setSelectedEmbeddingModel(found);
       setDisplayEmbeddingModel(found);
     }
@@ -268,7 +265,7 @@ export default function AdditionalInstructionsText({
         setShowDimensionWarning(false);
         setDropdownKey((prev) => prev + 1);
       } else {
-        const errorMsg = response?.data?.message || '埋め込みモデルの差し戻しに失敗しました';
+        const errorMsg = response?.data?.message || '埋め込みモデルの復元に失敗しました';
         showErrorToast(errorMsg);
         throw new Error(errorMsg);
       }
@@ -328,14 +325,14 @@ export default function AdditionalInstructionsText({
             originalValues.embeddingModel.model
           );
         } else {
-          const errorMsg = response?.data?.message || '埋め込みモデルの差し戻しに失敗しました';
+          const errorMsg = response?.data?.message || '埋め込みモデルの復元に失敗しました';
           showErrorToast(errorMsg);
           setIsCancelling(false);
           return;
         }
       } catch (error) {
         console.error('Error reverting embedding model:', error);
-        showErrorToast('埋め込みモデルの差し戻しに失敗しました。もう一度お試しください。');
+        showErrorToast('埋め込みモデルの復元に失敗しました。もう一度お試しください。');
         setIsCancelling(false);
         return;
       }
@@ -398,14 +395,12 @@ export default function AdditionalInstructionsText({
       <div>
         <Flex flexDirection='column'>
           <Flex justifyContent='space-between' flexDirection='row'>
-            <Typography variant={tablet ? 'subheading-medium' : 'subheading-large'}>
-              {buttonCaptions.provideAdditionalInstructions}
-            </Typography>
+            <Typography variant='subheading-medium'>{buttonCaptions.provideAdditionalInstructions}</Typography>
           </Flex>
           <Flex justifyContent='space-between' flexDirection='column' gap='6'>
             <TextArea
               helpText={buttonCaptions.helpInstructions}
-              label='処理設定'
+              label='追加指示'
               style={{
                 resize: 'vertical',
               }}
@@ -419,9 +414,7 @@ export default function AdditionalInstructionsText({
           </Flex>
         </Flex>
         <div className='mt-4'>
-          <div className='flex align-self-center justify-left'>
-            <h5>{appLabels.chunkingConfiguration}</h5>
-          </div>
+          <Typography variant='subheading-medium'>{appLabels.chunkingConfiguration}</Typography>
           <Select
             key={dropdownKey}
             label='埋め込みモデル'
@@ -488,7 +481,7 @@ export default function AdditionalInstructionsText({
             }}
             helpText={
               isEmbeddingReadonly
-                ? '埋め込みモデルは管理者によって設定されているため変更できません'
+                ? '埋め込みモデルは管理者が設定しているため変更できない'
                 : 'ベクトルインデックスと類似検索に使用する埋め込みモデルを選択してください'
             }
           />
@@ -514,7 +507,7 @@ export default function AdditionalInstructionsText({
                 `,
             }}
             type='creatable'
-            helpText='チャンク 1 つの大きさです。既定は 512 で、検索の並べ替え（リランカー）の入力長に質問と合わせて収まる大きさです。1 文書あたりに取り込む量の上限は MAX_TOKEN_CHUNK_SIZE で決まり、超えた分は取り込まれません。'
+            helpText='チャンク 1 つあたりの大きさ（トークン数）。既定値は 512 であり、質問と合わせて検索の並べ替え（リランカー）の入力長に収まる大きさである。1 文書あたりの取り込み量の上限は MAX_TOKEN_CHUNK_SIZE で決定され、超過分は取り込まれない。'
           />
           <Select
             label='チャンクオーバーラップ'
@@ -555,7 +548,7 @@ export default function AdditionalInstructionsText({
           <ButtonWithToolTip
             placement='top'
             label='キャンセルボタン'
-            text='すべての変更を破棄してダイアログを閉じます'
+            text='すべての変更を破棄してダイアログを閉じる'
             onClick={handleCancel}
             fill='outlined'
             loading={isCancelling}
@@ -566,7 +559,7 @@ export default function AdditionalInstructionsText({
           <ButtonWithToolTip
             placement='top'
             label='適用ボタン'
-            text='すべての設定変更を保存します'
+            text='すべての設定変更を保存する'
             onClick={handleApply}
             disabled={!hasChanges}
           >

@@ -18,6 +18,7 @@ export default function useServerSideEvent(
       status,
       total_chunks,
       model,
+      extraction_method,
       processed_chunk = 0,
       fileSize,
       chunkNodeCount,
@@ -27,6 +28,7 @@ export default function useServerSideEvent(
       entityEntityRelCount,
       communityRelCount,
       token_usage,
+      skipped_chunks,
     } = eventSourceRes;
     const alertShownStatus = JSON.parse(localStorage.getItem('alertShown') || 'null');
 
@@ -54,9 +56,11 @@ export default function useServerSideEvent(
                   nodesCount: nodeCount,
                   relationshipsCount: relationshipCount,
                   model: model,
+                  extraction_method: extraction_method ?? curfile.extraction_method,
                   processingTotalTime: processingTime?.toFixed(2),
                   processingProgress: Math.floor((processed_chunk / total_chunks) * 100),
                   token_usage: token_usage ?? 0,
+                  skipped_chunks: skipped_chunks ?? curfile.skipped_chunks,
                 };
               }
               return curfile;
@@ -74,6 +78,7 @@ export default function useServerSideEvent(
               nodesCount: nodeCount,
               relationshipsCount: relationshipCount,
               model: model,
+              extraction_method: extraction_method ?? curfile.extraction_method,
               processingTotalTime: processingTime?.toFixed(2),
               chunkNodeCount: chunkNodeCount ?? 0,
               entityNodeCount: entityNodeCount ?? 0,
@@ -82,6 +87,7 @@ export default function useServerSideEvent(
               entityEntityRelCount: entityEntityRelCount ?? 0,
               communityRelCount: communityRelCount ?? 0,
               token_usage: token_usage ?? 0,
+              skipped_chunks: skipped_chunks ?? curfile.skipped_chunks,
             };
           }
           return curfile;

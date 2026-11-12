@@ -14,6 +14,8 @@
 
 body {
   margin: 0;
+  /* 小書きの仮名・長音記号の前で改行しない（和文の禁則） */
+  line-break: strict;
 }
 
 .ndl-progress-bar-wrapper .ndl-header .ndl-heading::after{

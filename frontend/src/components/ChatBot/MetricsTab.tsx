@@ -14,6 +14,7 @@ import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
 import { metricsinfo } from '../../utils/Constants';
 import NotAvailableMetric from './NotAvailableMetric';
 import { IconButtonWithToolTip } from '../UI/IconButtonToolTip';
+import { DataGridJaLoading, DataGridJaNoData } from '../UI/DataGridJa';
 
 type MetricRow = {
   metric: string;
@@ -140,6 +141,8 @@ function MetricsTab({
                 }}
               />
             ),
+            NoDataPlaceholder: DataGridJaNoData,
+            LoadingPlaceholder: DataGridJaLoading,
             Navigation: null,
           }}
           isKeyboardNavigable={false}

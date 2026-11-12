@@ -25,12 +25,18 @@ function RetryConfirmationDialog({
 }) {
   const { filesData, setFilesData } = useFileContext();
   const file = filesData.find((c) => c.id === fileId);
+  // 抽出に失敗したチャンクのある完了済みのファイルでは「続きから」も選べる（そのチャンクだけ抽出し直す。T16）
+  const hasSkippedChunks = file?.status === 'Completed' && (file?.skipped_chunks ?? 0) > 0;
   const RetryOptionsForFile =
     file?.status === 'Failed' || file?.status === 'Cancelled'
       ? RETRY_OPIONS
       : RETRY_OPIONS.filter(
-          (option) => option !== 'start_from_beginning' && option !== 'start_from_last_processed_position'
+          (option) =>
+            option !== 'start_from_beginning' && (option !== 'start_from_last_processed_position' || hasSkippedChunks)
         );
+  // 続行で送るのは、この窓で選んだ表示中の選択肢だけ（前回の retryOption が残っていても、表示していなければ送らない）
+  const selectedRetryOption =
+    file?.retryOptionStatus && RetryOptionsForFile.includes(file.retryOption) ? file.retryOption : '';
   return (
     <Dialog isOpen={open} onClose={onClose}>
       <Dialog.Header>再処理オプション</Dialog.Header>
@@ -58,8 +64,8 @@ function RetryConfirmationDialog({
                 htmlAttributes={{
                   name: 'retryoptions',
                   onKeyDown: (e) => {
-                    if (e.code === 'Enter' && file?.retryOption.length) {
-                      retryHandler(file?.name as string, file?.retryOption as string);
+                    if (e.code === 'Enter' && selectedRetryOption.length) {
+                      retryHandler(file?.name as string, selectedRetryOption);
                     }
                   },
                 }}
@@ -78,12 +84,12 @@ function RetryConfirmationDialog({
               placement='left'
               label='再処理実行ボタン'
               text={
-                !file?.retryOption.length ? `いずれかのオプションを選択してください` : 'ステータスを「再処理可能」にリセット'
+                !selectedRetryOption.length ? `いずれかのオプションを選択してください` : 'ステータスを「再処理可能」にリセット'
               }
               loading={retryLoading}
-              disabled={!file?.retryOption.length}
+              disabled={!selectedRetryOption.length}
               onClick={() => {
-                retryHandler(file?.name as string, file?.retryOption as string);
+                retryHandler(file?.name as string, selectedRetryOption);
               }}
             >
               続行

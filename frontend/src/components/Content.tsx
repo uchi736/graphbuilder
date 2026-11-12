@@ -33,6 +33,7 @@ import {
 } from '../utils/Constants';
 import ButtonWithToolTip from './UI/ButtonWithToolTip';
 import DropdownComponent from './Dropdown';
+import { ExtractionMethodStatus, edcOptionsShortLabel } from './ExtractionMethodSelect';
 import GraphViewModal from './Graph/GraphViewModal';
 import { lazy } from 'react';
 import FallBackDialog from './UI/FallBackDialog';
@@ -56,6 +57,13 @@ import { ThemeWrapperContext } from '../context/ThemeWrapper';
 import { useAuth0 } from '@auth0/auth0-react';
 import React from 'react';
 import { clearEmbeddingConfig, clearChunkConfig, getEmbeddingModel } from '../utils/EmbeddingConfigUtils';
+import {
+  EXTRACTION_METHOD_EDC,
+  EXTRACTION_METHOD_STANDARD,
+  EXTRACTION_METHOD_STORAGE_KEY,
+} from '../utils/ExtractionMethodUtils';
+import { useDocumentUpdate } from '../hooks/useDocumentUpdate';
+import { showReplacedToast } from '../utils/DocumentUpdate';
 
 const ConfirmationDialog = lazy(() => import('./Popups/LargeFilePopUp/ConfirmationDialog'));
 
@@ -125,6 +133,9 @@ const Content: React.FC<ContentProps> = ({
     setProcessedCount,
     setchatModes,
     model,
+    extractionMethod,
+    edcOptions,
+    setExtractionMethod,
     additionalInstructions,
     setAdditionalInstructions,
   } = useFileContext();
@@ -247,7 +258,7 @@ const Content: React.FC<ContentProps> = ({
     afterFirstRender = true;
   }, [queue.items.length, userCredentials]);
   const isFirstTimeUser = useMemo(() => {
-    return localStorage.getItem('neo4j.connection') === null;
+    return localStorage.getItem('neo4j.connection') === null && localStorage.getItem('gb.tourSeen') === null;
   }, []);
   useEffect(() => {
     if (!isAuthenticated && !connectionStatus && isFirstTimeUser) {
@@ -299,6 +310,12 @@ const Content: React.FC<ContentProps> = ({
 
   const extractHandler = async (fileItem: CustomFile, uid: string) => {
     queue.remove((item) => item.name === fileItem.name);
+    // 続きからは前回と同じ抽出方式でしか動かない（backend の check_resume_method）。画面の選択ではなく、その文書の方式を送る（T16）
+    const methodForFile =
+      fileItem.retryOption === 'start_from_last_processed_position'
+        ? fileItem.extraction_method ||
+          (fileItem.model?.toLowerCase() === EXTRACTION_METHOD_EDC ? EXTRACTION_METHOD_EDC : EXTRACTION_METHOD_STANDARD)
+        : extractionMethod;
     try {
       if (userCredentials && connectionStatus && shouldShowTokenTracking(userCredentials.email)) {
         const tokenCheck = await checkTokenLimits(userCredentials);
@@ -313,6 +330,7 @@ const Content: React.FC<ContentProps> = ({
             return {
               ...curfile,
               status: 'Processing',
+              extraction_method: methodForFile,
             };
           }
           return curfile;
@@ -350,8 +368,12 @@ const Content: React.FC<ContentProps> = ({
         fileItem.googleProjectId,
         fileItem.language,
         fileItem.accessToken,
-        additionalInstructions
+        additionalInstructions,
+        methodForFile,
+        edcOptions.doctype,
+        edcOptions.schemaMode
       );
+      showReplacedToast(apiResponse?.data?.replaced, fileItem.name); // 取り込み直しで消した前の版の件数（C8）
       if (apiResponse?.status === 'Failed') {
         let errorobj = { error: apiResponse.error, message: apiResponse.message, fileName: apiResponse.file_name };
         throw new Error(JSON.stringify(errorobj));
@@ -372,7 +394,9 @@ const Content: React.FC<ContentProps> = ({
                 nodesCount: apiRes?.nodeCount,
                 relationshipsCount: apiRes?.relationshipCount,
                 model: apiRes?.model,
+                extraction_method: apiRes?.extraction_method ?? curfile.extraction_method,
                 token_usage: apiRes?.token_usage,
+                skipped_chunks: apiRes?.skipped_chunks ?? curfile.skipped_chunks,
               };
             }
             return curfile;
@@ -579,6 +603,9 @@ const Content: React.FC<ContentProps> = ({
     }
   };
 
+  // 文書の更新（C8）: 行の「更新」→ 同じ名前のファイルを選ぶ → アップロード → 抽出（handleGenerateGraph と同じ経路）
+  const { openUpdateChooser, updateInput } = useDocumentUpdate(handleGenerateGraph);
+
   const processWaitingFilesOnRefresh = useCallback(() => {
     let data = [];
     const processingFilesCount = filesData.filter((f) => f.status === 'Processing').length;
@@ -615,7 +642,16 @@ const Content: React.FC<ContentProps> = ({
     window.open(finalUrl, '_blank');
   };
 
+  const [previewAllDocuments, setPreviewAllDocuments] = useState<boolean>(false);
+  // 全文書表示の対象: 処理が完了した文書すべて（一覧の選択に関係なく）
+  const completedFiles = useMemo(() => filesData.filter((f) => f.status === 'Completed'), [filesData]);
   const handleGraphView = () => {
+    setPreviewAllDocuments(false);
+    setOpenGraphView(true);
+    setViewPoint('showGraphView');
+  };
+  const handleGraphViewAll = () => {
+    setPreviewAllDocuments(true);
     setOpenGraphView(true);
     setViewPoint('showGraphView');
   };
@@ -627,6 +663,8 @@ const Content: React.FC<ContentProps> = ({
     setConnectionStatus(false);
     localStorage.removeItem('password');
     localStorage.removeItem('selectedModel');
+    localStorage.removeItem(EXTRACTION_METHOD_STORAGE_KEY);
+    setExtractionMethod(EXTRACTION_METHOD_STANDARD);
     setUserCredentials({ uri: '', password: '', userName: '', database: '', email: '' });
     setSelectedNodes([]);
     setSelectedRels([]);
@@ -928,7 +966,8 @@ const Content: React.FC<ContentProps> = ({
         open={openGraphView}
         setGraphViewOpen={setOpenGraphView}
         viewPoint={viewPoint}
-        selectedRows={childRef.current?.getSelectedRows()}
+        selectedRows={previewAllDocuments ? completedFiles : childRef.current?.getSelectedRows()}
+        allDocuments={previewAllDocuments}
       />
       <div className={`n-bg-palette-neutral-bg-default main-content-wrapper`}>
         <Flex
@@ -948,15 +987,30 @@ const Content: React.FC<ContentProps> = ({
                 database={userCredentials?.database}
               />
               <div className='pt-1 flex! gap-1 items-center'>
-                <div>{!hasSelections ? <StatusIndicator type='danger' /> : <StatusIndicator type='success' />}</div>
                 <div>
-                  {hasSelections ? (
+                  {extractionMethod === EXTRACTION_METHOD_EDC ? (
+                    <StatusIndicator type='info' />
+                  ) : !hasSelections ? (
+                    <StatusIndicator type='warning' />
+                  ) : (
+                    <StatusIndicator type='success' />
+                  )}
+                </div>
+                <div>
+                  {extractionMethod === EXTRACTION_METHOD_EDC ? (
+                    // EDC はグラフスキーマを使わず、EDC の語彙（文書種別ごとの初期スキーマ）で抽出する。下部の抽出方式の表示と同じ短い表記を使う
+                    <span className='n-body-small'>
+                      EDC の語彙で抽出する（文書種別：{edcOptionsShortLabel(edcOptions)}）
+                    </span>
+                  ) : hasSelections ? (
                     <span className='n-body-small'>
                       {hasSelections} グラフスキーマ設定済み
-                      {hasSelections ? `(${selectedNodes.length} ラベル + ${selectedRels.length} リレーションタイプ)` : ''}
+                      {hasSelections
+                        ? `（ラベル ${selectedNodes.length} 種類・パターン ${selectedRels.length} 件）`
+                        : ''}
                     </span>
                   ) : (
-                    <span className='n-body-small'>グラフスキーマ未設定</span>
+                    <span className='n-body-small'>グラフスキーマ未設定（抽出を制限しない）</span>
                   )}
                 </div>
               </div>
@@ -970,9 +1024,9 @@ const Content: React.FC<ContentProps> = ({
                   ? '先にログインしてください'
                   : !connectionStatus
                     ? 'Neo4jに接続してください'
-                    : 'グラフの品質を向上させます'
+                    : '取り込み・グラフ整備・検索設定・保守の設定を開く'
               }
-              label='グラフ拡張設定'
+              label='グラフ設定'
               className='mr-2!'
               onClick={toggleEnhancementDialog}
               disabled={!connectionStatus || isReadOnlyUser}
@@ -1005,6 +1059,7 @@ const Content: React.FC<ContentProps> = ({
           </div>
         </Flex>
 
+        {updateInput}
         <FileTable
           connectionStatus={connectionStatus}
           setConnectionStatus={setConnectionStatus}
@@ -1017,6 +1072,7 @@ const Content: React.FC<ContentProps> = ({
             setRetryFile(id);
             toggleRetryPopup();
           }, [])}
+          onUpdate={openUpdateChooser}
           onChunkView={useCallback(
             async (name) => {
               setDocumentName(name);
@@ -1036,16 +1092,33 @@ const Content: React.FC<ContentProps> = ({
         ></FileTable>
 
         <Flex className={`p-2.5  mt-1.5 absolute bottom-0 w-full`} justifyContent='space-between' flexDirection={'row'}>
-          <div>
-            <DropdownComponent
-              onSelect={handleDropdownChange}
-              options={llms ?? ['']}
-              placeholder='LLMモデルを選択'
-              defaultValue={model}
-              view='ContentView'
-              isDisabled={false}
-            />
-          </div>
+          <Flex flexDirection='row' gap='4' alignItems='flex-start'>
+            {/* LLM の選択の見出しは部品の幅（150px）より長いため、隣の抽出方式の表示と重ならない幅を確保する */}
+            <div className='min-w-[200px]'>
+              <DropdownComponent
+                onSelect={handleDropdownChange}
+                options={llms ?? ['']}
+                placeholder='LLMモデルを選択'
+                defaultValue={model}
+                view='ContentView'
+                isDisabled={false}
+              />
+            </div>
+            {/* 抽出方式は表示のみとし、押下でグラフ設定（「取り込み」タブ）を開く。変更はグラフ設定で行う */}
+            <div className='self-end'>
+              <ExtractionMethodStatus
+                onOpenSettings={toggleEnhancementDialog}
+                disabledReason={
+                  !connectionStatus
+                    ? 'Neo4jに接続してください'
+                    : isReadOnlyUser
+                      ? '読み取り専用モードでは変更できない'
+                      : undefined
+                }
+                size={isTablet ? 'small' : 'medium'}
+              />
+            </div>
+          </Flex>
           <Flex flexDirection='row' gap='4' className='self-end mb-2.5' flexWrap='wrap'>
             <SpotlightTarget id='generategraphbtn'>
               <ButtonWithToolTip
@@ -1080,6 +1153,22 @@ const Content: React.FC<ContentProps> = ({
             >
               {buttonCaptions.deleteFiles}
               {selectedfileslength != undefined && selectedfileslength > 0 && `(${selectedfileslength})`}
+            </ButtonWithToolTip>
+            <ButtonWithToolTip
+              text={
+                completedFiles.length === 0
+                  ? '処理が完了した文書がない'
+                  : `処理が完了した ${completedFiles.length} 件の文書を一括で表示する（ファイル一覧での選択は不要）`
+              }
+              label='全文書をプレビュー'
+              onClick={handleGraphViewAll}
+              alwaysShowTooltip={true}
+              disabled={!connectionStatus || completedFiles.length === 0}
+              className='ml-0.5'
+              size={isTablet ? 'small' : 'medium'}
+              fill='outlined'
+            >
+              全文書をプレビュー ({completedFiles.length})
             </ButtonWithToolTip>
             <SpotlightTarget id='visualizegraphbtn'>
               <Flex flexDirection='row' gap='0'>

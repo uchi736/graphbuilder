@@ -12,6 +12,7 @@ import { multimodelmetric } from '../../types';
 import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 import { InformationCircleIconOutline } from '@neo4j-ndl/react/icons';
 import NotAvailableMetric from './NotAvailableMetric';
+import { DataGridJaLoading, DataGridJaNoData } from '../UI/DataGridJa';
 
 export default function MultiModeMetrics({
   data,
@@ -68,9 +69,7 @@ export default function MultiModeMetrics({
                 </IconButton>
               </Popover.Trigger>
               <Popover.Content className='p-2'>
-                <Typography variant='body-small'>
-                  回答がユーザーの質問にどの程度適切に応えているかを示します。
-                </Typography>
+                <Typography variant='body-small'>回答がユーザーの質問にどの程度適切に応えているかを示す。</Typography>
               </Popover.Content>
             </Popover>
           </Flex>
@@ -96,9 +95,7 @@ export default function MultiModeMetrics({
                 </IconButton>
               </Popover.Trigger>
               <Popover.Content className='p-2'>
-                <Typography variant='body-small'>
-                  回答が提供された情報をどの程度正確に反映しているかを示します。
-                </Typography>
+                <Typography variant='body-small'>回答が提供された情報をどの程度正確に反映しているかを示す。</Typography>
               </Popover.Content>
             </Popover>
           </Flex>
@@ -125,7 +122,7 @@ export default function MultiModeMetrics({
               </Popover.Trigger>
               <Popover.Content className='p-2'>
                 <Typography variant='body-small'>
-                  生成された回答と取得されたコンテキストの両方に含まれるエンティティの再現率を示します。
+                  生成された回答と取得されたコンテキストの両方に含まれるエンティティの再現率を示す。
                 </Typography>
               </Popover.Content>
             </Popover>
@@ -153,7 +150,7 @@ export default function MultiModeMetrics({
               </Popover.Trigger>
               <Popover.Content className='p-2'>
                 <Typography variant='body-small'>
-                  生成された回答が参照回答の意味をどの程度理解しているかを示します。
+                  生成された回答が参照回答の意味をどの程度理解しているかを示す。
                 </Typography>
               </Popover.Content>
             </Popover>
@@ -181,7 +178,7 @@ export default function MultiModeMetrics({
               </Popover.Trigger>
               <Popover.Content className='p-2'>
                 <Typography variant='body-small'>
-                  生成された回答が参照回答と語句レベルでどの程度一致しているかを示します。
+                  生成された回答が参照回答と語句レベルでどの程度一致しているかを示す。
                 </Typography>
               </Popover.Content>
             </Popover>
@@ -234,9 +231,7 @@ export default function MultiModeMetrics({
                 </IconButton>
               </Popover.Trigger>
               <Popover.Content className='p-2'>
-                <Typography variant='body-small'>
-                  回答がユーザーの質問にどの程度適切に応えているかを示します。
-                </Typography>
+                <Typography variant='body-small'>回答がユーザーの質問にどの程度適切に応えているかを示す。</Typography>
               </Popover.Content>
             </Popover>
           </Flex>
@@ -261,9 +256,7 @@ export default function MultiModeMetrics({
                 </IconButton>
               </Popover.Trigger>
               <Popover.Content className='p-2'>
-                <Typography variant='body-small'>
-                  回答が提供された情報をどの程度正確に反映しているかを示します。
-                </Typography>
+                <Typography variant='body-small'>回答が提供された情報をどの程度正確に反映しているかを示す。</Typography>
               </Popover.Content>
             </Popover>
           </Flex>
@@ -289,7 +282,7 @@ export default function MultiModeMetrics({
               </Popover.Trigger>
               <Popover.Content className='p-2'>
                 <Typography variant='body-small'>
-                  生成された回答と取得されたコンテキストの両方に含まれるエンティティの再現率を示します。
+                  生成された回答と取得されたコンテキストの両方に含まれるエンティティの再現率を示す。
                 </Typography>
               </Popover.Content>
             </Popover>
@@ -345,6 +338,8 @@ export default function MultiModeMetrics({
                   }}
                 />
               ),
+              NoDataPlaceholder: DataGridJaNoData,
+              LoadingPlaceholder: DataGridJaLoading,
               Navigation: null,
             }}
             isKeyboardNavigable={false}

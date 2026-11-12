@@ -1,5 +1,5 @@
-import { Dropzone, Flex, SpotlightTarget, Typography } from '@neo4j-ndl/react';
-import { useState, FunctionComponent, useEffect } from 'react';
+import { Button, Dropzone, Flex, SpotlightTarget, Typography } from '@neo4j-ndl/react';
+import { useState, FunctionComponent, useEffect, useRef, ChangeEvent } from 'react';
 import Loader from '../../../utils/Loader';
 import { v4 as uuidv4 } from 'uuid';
 import { useCredentials } from '../../../context/UserCredentials';
@@ -11,6 +11,7 @@ import { IconButtonWithToolTip } from '../../UI/IconButtonToolTip';
 import { uploadAPI } from '../../../utils/FileAPI';
 import { showErrorToast, showSuccessToast } from '../../../utils/Toasts';
 import { getEmbeddingModel } from '../../../utils/EmbeddingConfigUtils';
+import ReplaceConfirmDialog from '../../Popups/ReplaceConfirm';
 
 const DropZone: FunctionComponent = () => {
   const { filesData, setFilesData, model } = useFileContext();
@@ -18,7 +19,47 @@ const DropZone: FunctionComponent = () => {
   const [isClicked, setIsClicked] = useState<boolean>(false);
   const { userCredentials } = useCredentials();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const folderInputRef = useRef<HTMLInputElement>(null);
+  // フォルダを選ぶ: フォルダ内の対応ファイルだけを、ドロップしたときと同じ経路に渡す
+  const SUPPORTED_EXT = ['pdf', 'jpeg', 'jpg', 'png', 'svg', 'html', 'docx', 'txt', 'pptx', 'xls', 'md', 'xlsx'];
+  const onFolderSelected = (e: ChangeEvent<HTMLInputElement>) => {
+    const all = Array.from(e.target.files ?? []);
+    const picked = all.filter((f) => SUPPORTED_EXT.includes(f.name.substring(f.name.lastIndexOf('.') + 1).toLowerCase()));
+    e.target.value = '';
+    if (!picked.length) {
+      showErrorToast('フォルダに対応ファイルがありません');
+      return;
+    }
+    if (picked.length < all.length) {
+      showSuccessToast(`${picked.length} 件を受け付けました（対応外 ${all.length - picked.length} 件は除外）`);
+    }
+    onDropHandler(picked);
+  };
+  // 取り込み済み（Completed）の文書と同じ名前のファイルは、前の版を置き換えることを確かめてから追加する（C8）
+  const [pendingDrop, setPendingDrop] = useState<{ files: Partial<globalThis.File>[]; replacing: string[] } | null>(
+    null
+  );
   const onDropHandler = (f: Partial<globalThis.File>[]) => {
+    // 処理中・アップロード中・待機中の文書と同じ名前は受け付けない（アップロードで文書の状態が New に戻り、走っている抽出と混ざる）
+    const busy = f.filter((x) =>
+      filesData.some((r) => r.name === x.name && ['Processing', 'Uploading', 'Waiting'].includes(r.status))
+    );
+    if (busy.length) {
+      showErrorToast(
+        `処理中の文書と同じ名前のファイルは追加できません（${busy.map((x) => x.name).join('、')}）。処理が完了してから追加してください`
+      );
+    }
+    const files = f.filter((x) => !busy.includes(x));
+    const replacing = files
+      .filter((x) => filesData.some((r) => r.name === x.name && r.status === 'Completed'))
+      .map((x) => x.name as string);
+    if (replacing.length) {
+      setPendingDrop({ files, replacing });
+    } else if (files.length) {
+      addDroppedFiles(files);
+    }
+  };
+  const addDroppedFiles = (f: Partial<globalThis.File>[]) => {
     setIsClicked(true);
     setSelectedFiles(f.map((f) => f as File));
     setIsLoading(false);
@@ -73,6 +114,10 @@ const DropZone: FunctionComponent = () => {
             processingProgress: defaultValues.processingProgress,
             token_usage: defaultValues.token_usage,
             embedding_model: defaultValues.embedding_model,
+            // 再処理の指定を外し、大きさを新しい版にする（指定が残ると前のチャンクを使う再処理になり、新しい版が読まれない。C8）
+            retryOption: defaultValues.retryOption,
+            retryOptionStatus: defaultValues.retryOptionStatus,
+            size: file.size,
           });
         }
       }
@@ -260,6 +305,39 @@ const DropZone: FunctionComponent = () => {
           }}
         />
       </SpotlightTarget>
+      <Flex flexDirection='row' justifyContent='flex-end' className='mt-2'>
+        <input
+          ref={folderInputRef}
+          type='file'
+          multiple
+          style={{ display: 'none' }}
+          onChange={onFolderSelected}
+          {...({ webkitdirectory: '', directory: '' } as Record<string, string>)}
+        />
+        <Button size='small' fill='outlined' onClick={() => folderInputRef.current?.click()}>
+          フォルダを選択
+        </Button>
+      </Flex>
+      <ReplaceConfirmDialog
+        open={pendingDrop !== null}
+        names={pendingDrop?.replacing ?? []}
+        hasNewFiles={(pendingDrop?.files.length ?? 0) > (pendingDrop?.replacing.length ?? 0)}
+        onReplace={() => {
+          const p = pendingDrop;
+          setPendingDrop(null);
+          if (p) {
+            addDroppedFiles(p.files);
+          }
+        }}
+        onSkip={() => {
+          const p = pendingDrop;
+          setPendingDrop(null);
+          if (p) {
+            addDroppedFiles(p.files.filter((x) => !p.replacing.includes(x.name as string)));
+          }
+        }}
+        onCancel={() => setPendingDrop(null)}
+      />
     </>
   );
 };

@@ -1,6 +1,17 @@
 import { Checkbox, Flex, Typography } from '@neo4j-ndl/react';
 import { capitalize } from '../../../../utils/Utils';
 import { useMemo } from 'react';
+import { POST_PROCESSING_JOBS } from '../../../../utils/Constants';
+import { postProcessingPayload } from '../../../../utils/PostProcessingUtils';
+
+// 表示名（一覧に無いジョブは API の名前を読みやすくしたもの）と流れる順番
+const jobOf = (task: string) => POST_PROCESSING_JOBS.find((job) => job.title === task);
+const jobLabel = (task: string) =>
+  jobOf(task)?.label ??
+  task
+    .split('_')
+    .map((s) => capitalize(s))
+    .join(' ');
 
 export default function SelectedJobList({
   postProcessingTasks,
@@ -11,15 +22,12 @@ export default function SelectedJobList({
   isGdsActive: boolean;
   isSchema: boolean;
 }) {
+  // 実際に送るジョブ（スキーマ設定中の統合・GDS の無いコミュニティを除く）を、流れる順番に並べる
   const ongoingPostProcessingTasks = useMemo(
     () =>
-      (isGdsActive
-        ? isSchema
-          ? postProcessingTasks.filter((task) => task !== 'graph_checkup')
-          : postProcessingTasks
-        : isSchema
-          ? postProcessingTasks.filter((task) => task !== 'graph_checkup' && task !== 'enable_communities')
-          : postProcessingTasks.filter((task) => task !== 'enable_communities')),
+      postProcessingPayload(postProcessingTasks, isGdsActive, isSchema).sort(
+        (a, b) => (jobOf(a)?.order ?? 99) - (jobOf(b)?.order ?? 99)
+      ),
     [isGdsActive, isSchema, postProcessingTasks]
   );
   return (
@@ -28,14 +36,7 @@ export default function SelectedJobList({
         return (
           <Checkbox
             key={idx}
-            label={
-              <Typography variant='label'>
-                {task
-                  .split('_')
-                  .map((s) => capitalize(s))
-                  .join(' ')}
-              </Typography>
-            }
+            label={<Typography variant='label'>{jobLabel(task)}</Typography>}
             isChecked={true}
             isDisabled={true}
             ariaLabel='Selected-postprocessing-jobs'

@@ -8,6 +8,7 @@ import { BannerType } from '@neo4j-ndl/react';
 import Queue from './utils/Queue';
 import FileTable from './components/FileTable';
 
+import type { EdcExtractionOptions } from './utils/ExtractionMethodUtils';
 export interface CustomFileBase extends Partial<globalThis.File> {
   processingTotalTime: number | string;
   status: string;
@@ -38,6 +39,8 @@ export interface CustomFileBase extends Partial<globalThis.File> {
   createdAt?: Date;
   token_usage: number;
   embedding_model?: string;
+  extraction_method?: string; // standard / edc（Document.extraction_method）
+  skipped_chunks?: number; // 抽出に失敗したチャンクの数（Document.skipped_chunks、T16）
 }
 export interface CustomFile extends CustomFileBase {
   id: string;
@@ -179,6 +182,7 @@ export interface FileTableProps {
   onChunkView: (name: string) => void;
   handleGenerateGraph: () => void;
   onRetry: (id: string) => void;
+  onUpdate?: (id: string) => void; // 文書の更新（C8）
 }
 
 export interface CustomModalProps {
@@ -280,6 +284,7 @@ export interface GraphViewModalProps {
   nodeValues?: ExtendedNode[];
   relationshipValues?: ExtendedRelationship[];
   selectedRows?: CustomFile[] | undefined;
+  allDocuments?: boolean;
 }
 
 export type GraphType = 'Entities' | 'DocumentChunk' | 'Communities';
@@ -345,6 +350,8 @@ export interface fileStatus {
   communityRelCount: number;
   token_usage?: number;
   embedding_model?: string;
+  extraction_method?: string;
+  skipped_chunks?: number;
 }
 export interface PollingAPI_Response extends Partial<AxiosResponse> {
   data: statusupdate;
@@ -890,6 +897,10 @@ export interface FileContextType {
   setFilesData: Dispatch<SetStateAction<CustomFile[]>>;
   model: string;
   setModel: Dispatch<SetStateAction<string>>;
+  extractionMethod: string;
+  setExtractionMethod: Dispatch<SetStateAction<string>>;
+  edcOptions: EdcExtractionOptions;
+  setEdcOptions: Dispatch<SetStateAction<EdcExtractionOptions>>;
   graphType: string;
   setGraphType: Dispatch<SetStateAction<string>>;
   selectedTokenChunkSize: number;
@@ -1119,4 +1130,188 @@ export interface SchemaSelectionProps {
   onCancel: () => void;
   view?: string;
   message?: string;
+}
+
+// グラフの手動修正（docs/graph-edit/DESIGN.md の 3 章の入口が返す形）
+export type GraphEditErrorCode =
+  | 'NOT_FOUND'
+  | 'STALE'
+  | 'CONFLICT'
+  | 'RESERVED'
+  | 'INVALID'
+  | 'BUSY'
+  | 'NOT_UNDOABLE'
+  | 'NETWORK'
+  | 'UNKNOWN';
+
+export interface GraphEditApiResponse<T> {
+  status: 'Success' | 'Failed';
+  data?: T;
+  error?: string;
+  message?: string;
+}
+
+export interface GraphEditRelationship extends NeoRelationship {
+  properties?: Record<string, any>;
+}
+
+export interface GraphEditLedgerSummary {
+  aliases: string[];
+  type_override: string[] | null;
+  curated_keys: string[];
+}
+
+export interface GraphEditNodeDetail {
+  node: NeoNode;
+  relationships: GraphEditRelationship[];
+  neighbors: NeoNode[];
+  chunk_count: number;
+  documents: string[];
+  ledger: GraphEditLedgerSummary;
+  editable: boolean;
+  // 規則で作ったノード（統合先とリレーションの端にだけ使える）
+  merge_target_only?: boolean;
+  reason?: string;
+}
+
+export interface GraphEditEntityHit {
+  node: NeoNode;
+  chunk_count: number;
+  documents: string[];
+}
+
+export interface GraphEditNeighborhood {
+  nodes: NeoNode[];
+  relationships: GraphEditRelationship[];
+}
+
+export interface GraphEditVocabulary {
+  labels: string[];
+  relationship_types: string[];
+  edc_labels: string[];
+  edc_relationship_types: string[];
+  reserved_labels: string[];
+  reserved_relationship_types: string[];
+}
+
+export interface GraphEditNodeRef {
+  element_id: string;
+  expected_id: string;
+}
+
+export interface GraphEditRelationshipExpected {
+  src: string;
+  type: string;
+  tgt: string;
+}
+
+export type GraphEditDescriptionMode = 'target' | 'concat' | 'custom';
+
+export type GraphEditPropertyValue = string | number | boolean | null;
+
+export interface GraphEditNodeResult {
+  node: NeoNode;
+  op_id: string;
+}
+
+export interface GraphEditMergeResult extends GraphEditNodeResult {
+  merged_ids: string[];
+}
+
+export interface GraphEditDeleteResult {
+  deleted_ids: string[];
+  op_id: string;
+}
+
+export interface GraphEditRelationshipResult {
+  relationship: GraphEditRelationship;
+  op_id: string;
+}
+
+export interface GraphEditOpResult {
+  op_id: string;
+}
+
+export interface GraphEditHistoryRow {
+  op_id: string;
+  seq: number;
+  op: string;
+  user: string;
+  at: string;
+  summary: string;
+  undone: boolean;
+  undoable: boolean;
+  reason?: string;
+}
+
+export interface GraphEditUndoResult {
+  op_id: string;
+  restored_ids: string[];
+}
+
+export type GraphEditLedgerKind =
+  | 'alias'
+  | 'tombstone_node'
+  | 'tombstone_rel'
+  | 'type_override'
+  | 'curated'
+  | 'manual_rel'
+  | 'distinct';
+
+export interface GraphEditLedgerRow {
+  uid: string;
+  kind: string;
+  created_at?: string;
+  op_id?: string;
+  [key: string]: any;
+}
+
+export interface GraphEditUidResult {
+  uid: string;
+  op_id: string;
+}
+
+// 画面の中で使う形
+export interface GraphEditCandidate {
+  element_id: string;
+  id: string;
+  labels?: string[];
+}
+
+export interface GraphEditSelection {
+  nodeIds: string[];
+  relationshipId?: string;
+}
+
+export interface GraphEditContextMenuRequest {
+  x: number;
+  y: number;
+  type: EntityType;
+  id: string;
+}
+
+export interface GraphEditRelationshipTarget {
+  element_id: string;
+  type: string;
+  source: GraphEditCandidate;
+  target: GraphEditCandidate;
+}
+
+export interface GraphEditStructureChange {
+  removedNodeIds?: string[];
+  removedRelationshipIds?: string[];
+  changedNodes?: NeoNode[];
+  addedRelationships?: GraphEditRelationship[];
+  survivorElementId?: string;
+}
+
+// /merge_duplicate_nodes で飛ばした行（前の行の統合で統合先か似たエンティティが消えた行、名前の衝突で断られた行）
+export interface MergeDuplicateSkippedRow {
+  row: number;
+  first_element_id: string;
+  reason: string;
+  error?: string | null;
+}
+export interface MergeDuplicateNodesResponse extends commonserverresponse {
+  skipped?: MergeDuplicateSkippedRow[];
 }

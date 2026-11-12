@@ -163,7 +163,7 @@ const SchemaFromTextDialog = ({ open, onClose, onApply }: SchemaFromTextProps) =
         <Dialog.Header>エンティティグラフ抽出設定</Dialog.Header>
         <Dialog.Content className='n-flex n-flex-col n-gap-token-4'>
           <TextArea
-            helpText='テキストを解析してエンティティを抽出します'
+            helpText='テキストを解析してエンティティを抽出する'
             label='ドキュメントテキスト'
             style={{
               resize: 'vertical',

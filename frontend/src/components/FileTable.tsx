@@ -43,7 +43,6 @@ import {
   calculateProcessedCount,
   getFileSourceStatus,
   isProcessingFileValid,
-  capitalizeWithUnderscore,
   getParsedDate,
 } from '../utils/Utils';
 import { SourceNode, CustomFile, FileTableProps, UserCredentials, statusupdate, ChildRef } from '../types';
@@ -51,10 +50,12 @@ import { useCredentials } from '../context/UserCredentials';
 import {
   ArrowPathIconSolid,
   ClipboardDocumentIconSolid,
+  CloudArrowUpIconSolid,
   DocumentTextIconSolid,
   ExploreIcon,
 } from '@neo4j-ndl/react/icons';
 import CustomProgressBar from './UI/CustomProgressBar';
+import { useDataGridJa } from './UI/DataGridJa';
 import subscribe from '../services/PollingAPI';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
@@ -63,6 +64,12 @@ import { XMarkIconOutline } from '@neo4j-ndl/react/icons';
 import cancelAPI from '../services/CancelAPI';
 import { IconButtonWithToolTip } from './UI/IconButtonToolTip';
 import { batchSize, largeFileSize, llms } from '../utils/Constants';
+import {
+  EDC_MODEL_FILTER,
+  EXTRACTION_METHOD_EDC,
+  effectiveExtractionMethod,
+  modelColumnLabel,
+} from '../utils/ExtractionMethodUtils';
 import { showErrorToast, showNormalToast } from '../utils/Toasts';
 import { ThemeWrapperContext } from '../context/ThemeWrapper';
 import BreakDownPopOver from './BreakDownPopOver';
@@ -73,9 +80,18 @@ import React from 'react';
 let onlyfortheFirstRender = true;
 
 const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, ref) => {
-  const { connectionStatus, setConnectionStatus, onInspect, onRetry, onChunkView } = props;
-  const { filesData, setFilesData, model, rowSelection, setRowSelection, setSelectedRows, setProcessedCount, queue } =
-    useFileContext();
+  const { connectionStatus, setConnectionStatus, onInspect, onRetry, onChunkView, onUpdate } = props;
+  const {
+    filesData,
+    setFilesData,
+    model,
+    extractionMethod,
+    rowSelection,
+    setRowSelection,
+    setSelectedRows,
+    setProcessedCount,
+    queue,
+  } = useFileContext();
   const { userCredentials, isReadOnlyUser } = useCredentials();
   const columnHelper = createColumnHelper<CustomFile>();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -183,7 +199,17 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                 <div>
                   <StatusIndicator type={statusCheck(info.getValue())} />
                 </div>
-                <div>{info.getValue()}</div>
+                <div className='flex flex-col'>
+                  <div>{info.getValue()}</div>
+                  {info.getValue() === 'Completed' && (info.row.original?.skipped_chunks ?? 0) > 0 && (
+                    <span
+                      className='n-body-small n-text-palette-warning-text whitespace-nowrap'
+                      title='抽出処理が例外で中断したチャンク（出力上限到達など）。再処理オプションで「Start From Last Processed Position」（続きから）を選択すると、該当チャンクのみ再抽出する'
+                    >
+                      {`抽出失敗チャンク ${info.row.original?.skipped_chunks} 件`}
+                    </span>
+                  )}
+                </div>
                 {(info.getValue() === 'Completed' || info.getValue() === 'Failed' || info.getValue() === 'Cancelled') &&
                   !isReadOnlyUser && (
                     <span className='mx-1'>
@@ -197,6 +223,18 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                       >
                         <ArrowPathIconSolid className='n-size-token-4' />
                       </IconButtonWithToolTip>
+                      {onUpdate && info.row.original?.fileSource === 'local file' && (
+                        <IconButtonWithToolTip
+                          placement='right'
+                          text='更新（同じファイル名の新しい版で再取り込み）'
+                          size='small'
+                          label='更新'
+                          clean
+                          onClick={() => onUpdate(info?.row?.id as string)}
+                        >
+                          <CloudArrowUpIconSolid className='n-size-token-4' />
+                        </IconButtonWithToolTip>
+                      )}
                     </span>
                   )}
               </div>
@@ -491,7 +529,8 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
         id: 'model',
         cell: (info) => {
           const model = info.getValue();
-          return <i>{capitalizeWithUnderscore(model)}</i>;
+          // EDC で抽出した行は「LLM / EDC」。まだ抽出していない行は画面で選んでいる抽出方式で出す
+          return <i>{modelColumnLabel(model, effectiveExtractionMethod(info.row.original, extractionMethod))}</i>;
         },
         header: () => <span>モデル</span>,
         footer: (info) => info.column.id,
@@ -523,6 +562,20 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                   },
                 };
               }),
+              {
+                title: (
+                  <span
+                    className={`${llmtypeFilter === EDC_MODEL_FILTER ? 'n-bg-palette-primary-bg-selected' : ''} p-2`}
+                  >
+                    EDC（抽出方式）
+                  </span>
+                ),
+                onClick: () => {
+                  setLLmtypeFilter(EDC_MODEL_FILTER);
+                  table.getColumn('model')?.setFilterValue(true);
+                  skipPageResetRef.current = true;
+                },
+              },
             ],
             hasDefaultSortingActions: false,
           },
@@ -647,6 +700,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
       statusFilter,
       filetypeFilter,
       llmtypeFilter,
+      extractionMethod,
       fileSourceFilter,
       isReadOnlyUser,
       colorMode,
@@ -690,6 +744,9 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
         if (llmtypeFilter === 'All') {
           return true;
         }
+        if (llmtypeFilter === EDC_MODEL_FILTER) {
+          return effectiveExtractionMethod(row.original, extractionMethod) === EXTRACTION_METHOD_EDC;
+        }
         return row.original.model === llmtypeFilter;
       },
     },
@@ -701,10 +758,21 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
     enableSorting: true,
     getSortedRowModel: getSortedRowModel(),
   });
+  // 件数の表示は下の TableResults で独自に表示するため、表示件数の選択だけを日本語の部品に置き換える
+  const dataGridJa = useDataGridJa(table);
 
   useEffect(() => {
     skipPageResetRef.current = false;
   }, [filesData.length]);
+
+  // 「EDC（抽出方式）」で絞り込んでいる間に抽出方式を替えたら、絞り込みをやり直す。
+  // 未抽出の行の方式は画面の選択で決まるが、表の絞り込みは行のデータか絞り込みの値が変わったときにしかやり直されないためである
+  useEffect(() => {
+    if (llmtypeFilter === EDC_MODEL_FILTER) {
+      table.getColumn('model')?.setFilterValue(true);
+      skipPageResetRef.current = true;
+    }
+  }, [extractionMethod]);
 
   const handleFileUploadError = (error: AxiosError) => {
     // @ts-ignore
@@ -778,6 +846,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                   relationshipsCount: item?.relationshipCount ?? 0,
                   status: waitingFile ? 'Waiting' : getFileSourceStatus(item),
                   model: item?.model ?? model,
+                  extraction_method: item?.extraction_method,
                   id: !waitingFile ? uuidv4() : waitingFile.id,
                   sourceUrl: item?.url != 'None' && item?.url != '' ? item.url : '',
                   fileSource: item?.fileSource ?? 'None',
@@ -794,7 +863,8 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                       ? Math.floor((item?.processed_chunk / item?.total_chunks) * 100)
                       : undefined,
                   accessToken: item?.accessToken ?? '',
-                  retryOption: item.retry_condition ?? '',
+                  // 再処理の指定は「再処理可能」の文書だけ写す。完了した後も DB に残る retry_condition を、次の生成で送らないため（T16）
+                  retryOption: item.status === 'Ready to Reprocess' ? (item.retry_condition ?? '') : '',
                   retryOptionStatus: false,
                   chunkNodeCount: item.chunkNodeCount ?? 0,
                   chunkRelCount: item.chunkRelCount ?? 0,
@@ -805,6 +875,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                   createdAt: item.createdAt != undefined ? getParsedDate(item?.createdAt) : undefined,
                   token_usage: item.token_usage ?? 0,
                   embedding_model: item.embedding_model ?? '',
+                  skipped_chunks: item.skipped_chunks ?? 0,
                 });
               }
             });
@@ -885,6 +956,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                 relationshipsCount: item?.relationshipCount ?? existingFile.relationshipsCount,
                 processingTotalTime: item?.processingTime ?? existingFile.processingTotalTime,
                 token_usage: item.token_usage ?? existingFile.token_usage ?? 0,
+                skipped_chunks: item.skipped_chunks ?? existingFile.skipped_chunks,
               };
             }
             return existingFile;
@@ -1009,6 +1081,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
       relationshipCount = 0,
       processingTime = 0,
       model,
+      extraction_method,
       status,
       processed_chunk = 0,
       total_chunks,
@@ -1020,6 +1093,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
       communityRelCount,
       token_usage,
       embedding_model,
+      skipped_chunks,
     } = file_name;
     if (fileName && total_chunks) {
       setFilesData((prevfiles) =>
@@ -1031,6 +1105,8 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
               nodesCount: nodeCount,
               relationshipsCount: relationshipCount,
               model: model,
+              skipped_chunks: skipped_chunks ?? curfile.skipped_chunks,
+              extraction_method: extraction_method ?? curfile.extraction_method,
               processingTotalTime: processingTime?.toFixed(2),
               processingProgress: Math.floor((processed_chunk / total_chunks) * 100),
               chunkNodeCount: chunkNodeCount ?? 0,
@@ -1145,7 +1221,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                         <span>
                           <InformationCircleIconOutline className='n-size-token-6' />
                         </span>
-                        {` まだデータが取り込まれていないようです。ナレッジグラフの構築を始めるには、メインアプリケーションにログインしてください。`}
+                        {` データが取り込まれていません。ナレッジグラフの構築を開始するには、メインアプリケーションにログインしてください。`}
                         <span></span>
                       </Flex>
                     </DataGridComponents.TableResults>
@@ -1159,7 +1235,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                           <span>
                             <InformationCircleIconOutline className='n-size-token-6' />
                           </span>
-                          {`リソース制限のため、大きなファイルは最大1万文字までの部分的な処理となる場合があります。`}
+                          {`1 文書あたりの取り込み上限は ${import.meta.env.VITE_MAX_TOKEN_CHUNK_SIZE ?? '200,000'} トークンである。超過分は取り込まれない。`}
                         </Flex>
                         {queueSize > 0 && (
                           <Flex
@@ -1169,7 +1245,7 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                             className={`${isCancellingQueue ? 'opacity-50' : 'animate-pulse'} bg-palette-warning-bg-weak rounded-md px-3 py-2 border border-palette-warning-border`}
                           >
                             <InformationCircleIconOutline className='n-size-token-5 text-palette-warning-text' />
-                            <Typography variant='body-medium' className='font-semibold text-palette-warning-text'>
+                            <Typography variant='body-medium' className='font-semibold! text-palette-warning-text'>
                               {isCancellingQueue
                                 ? '待機キューのファイルをキャンセルしています...'
                                 : `${queueSize} 件のファイルがキューで待機中です`}
@@ -1193,8 +1269,11 @@ const FileTable: ForwardRefRenderFunction<ChildRef, FileTableProps> = (props, re
                     </DataGridComponents.TableResults>
                   );
                 }
-                return <DataGridComponents.TableResults></DataGridComponents.TableResults>;
+                return <dataGridJa.TableResults />;
               },
+              RowsPerPage: dataGridJa.RowsPerPage,
+              NoDataPlaceholder: dataGridJa.NoDataPlaceholder,
+              LoadingPlaceholder: dataGridJa.LoadingPlaceholder,
               PaginationNumericButton: ({ isSelected, innerProps, ...restProps }) => {
                 return (
                   <DataGridComponents.PaginationNumericButton

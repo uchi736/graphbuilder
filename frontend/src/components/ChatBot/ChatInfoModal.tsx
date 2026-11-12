@@ -393,10 +393,10 @@ const ChatInfoModal: React.FC<chatInfoMessage> = ({
               )}
               <Box>
                 <Typography variant='body-large'>
-                  チャット回答の品質を評価するために、いくつかの主要メトリクスを使用しています。下のボタンをクリックすると、
+                  チャット回答の品質を評価するため、主要なメトリクスを使用している。下のボタンをクリックすると、
                   <span className='font-bold'>ragasフレームワーク</span>
-                  によるこのやり取りの詳細スコアを表示できます。これらのスコアは、チャットボットの正確性と有用性を継続的に改善するために役立ちます。処理には通常
-                  <span className='font-bold'>約20秒</span>かかります。しばらくすると詳細スコアが表示されます。
+                  によるこの応答の詳細スコアを表示できる。これらのスコアは、チャットボットの正確性と有用性の継続的な改善に役立つ。処理には通常
+                  <span className='font-bold'>約20秒</span>を要し、完了後に詳細スコアが表示される。
                 </Typography>
               </Box>
             </Stack>

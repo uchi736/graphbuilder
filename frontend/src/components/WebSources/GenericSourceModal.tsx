@@ -49,7 +49,7 @@ export default function GenericModal({
           <div className='flex flex-col'>
             <Typography variant='h2'>Webソース</Typography>
             <Typography variant='body-medium' className='mb-2'>
-              任意のWebソースをナレッジグラフに変換します
+              任意の Web ソースをナレッジグラフに変換する
             </Typography>
           </div>
         </div>

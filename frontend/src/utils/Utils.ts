@@ -431,19 +431,21 @@ export const capitalizeWithUnderscore = (s: string) => capitalize(s).split('_').
 export const getDescriptionForChatMode = (mode: string): string => {
   switch (mode.toLowerCase()) {
     case chatModeLables.vector:
-      return 'テキストチャンクのベクトルインデックスを利用して意味的類似検索を行います。';
+      return 'テキストチャンクのベクトルインデックスを利用して意味的類似検索を行う。';
     case chatModeLables.graph:
-      return 'テキストからCypherへの変換でデータベースに問い合わせ、的確で文脈に沿った回答を返します。';
+      return 'テキストから Cypher への変換でデータベースに問い合わせ、的確で文脈に沿った回答を返す。';
     case chatModeLables['graph+vector']:
-      return 'チャンクのベクトルインデックスとグラフの関係を組み合わせ、概念間のつながりを考慮した文脈的に関連性の高い検索を行います。';
+      return 'チャンクのベクトルインデックスとグラフのリレーションを組み合わせ、概念間の関連を考慮した、文脈的に関連性の高い検索を行う。';
     case chatModeLables.fulltext:
-      return 'チャンクの全文インデックスによる高速なキーワード検索で、特定の語句を含むドキュメントを効率的に特定します。';
+      return 'チャンクの全文インデックスによる高速なキーワード検索で、特定の語句を含む文書を効率的に特定する。';
     case chatModeLables['graph+vector+fulltext']:
-      return 'ベクトル・グラフ・全文インデックスを統合し、意味的類似性・文脈的関連性・キーワード検索を組み合わせた網羅的な検索を行います。';
+      return 'ベクトル・グラフ・全文インデックスを統合し、意味的類似性・文脈的関連性・キーワード検索を組み合わせた網羅的な検索を行う。';
+    case chatModeLables.参照追跡:
+      return 'graph+vector+fulltext と同じ検索に、本文中の参照（「〜項による」「別表」「他の文書番号」）の追跡を加え、参照先のチャンクを文脈に含める。普通の検索では参照をたどらない。';
     case chatModeLables['entity search+vector']:
-      return 'エンティティノードのベクトルインデックスとグラフの関係を組み合わせ、エンティティ中心の精度の高い検索を行います。';
+      return 'エンティティノードのベクトルインデックスとグラフのリレーションを組み合わせ、エンティティ中心の精度の高い検索を行う。';
     case chatModeLables['global search+vector+fulltext']:
-      return 'コミュニティノードのベクトル・全文インデックスを使い、グラフ全体から文脈に即した回答を生成します。';
+      return 'コミュニティノードのベクトル・全文インデックスを利用し、グラフ全体から文脈に即した回答を生成する。';
     default:
       return 'チャットモードの説明はありません'; // Fallback description
   }

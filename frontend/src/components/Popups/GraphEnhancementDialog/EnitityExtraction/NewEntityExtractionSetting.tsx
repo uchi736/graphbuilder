@@ -17,6 +17,10 @@ import {
   deduplicateNodeByValue,
 } from '../../../../utils/Utils';
 import TooltipWrapper from '../../../UI/TipWrapper';
+import EdcSettings from './EdcSettings';
+import { GraphSchemaOptions, loadGraphSchemaOptions } from '../../../../services/SchemaOptions';
+import { EXTRACTION_METHOD_EDC } from '../../../../utils/ExtractionMethodUtils';
+import { useHasSelections } from '../../../../hooks/useHasSelections';
 
 export default function NewEntityExtractionSetting({
   view,
@@ -76,6 +80,9 @@ export default function NewEntityExtractionSetting({
     setImporterRels,
     setImporterPattern,
     importerPattern,
+    extractionMethod,
+    selectedNodes,
+    selectedRels,
   } = useFileContext();
   const { userCredentials } = useCredentials();
   const [openGraphView, setOpenGraphView] = useState<boolean>(false);
@@ -88,6 +95,39 @@ export default function NewEntityExtractionSetting({
 
   const [isSchemaMenuOpen, setIsSchemaMenuOpen] = useState<boolean>(false);
   const schemaBtnRef = useRef<HTMLButtonElement>(null);
+  // 抽出方式が EDC の場合、グラフスキーマは使用しないため表示せず、EDC の設定を表示する
+  const isEdc = extractionMethod === EXTRACTION_METHOD_EDC;
+  const hasGraphSchema = useHasSelections(selectedNodes, selectedRels);
+  // グラフスキーマの選択肢として、現在のグラフに存在するラベルとリレーションタイプを取得する（グラフスキーマを表示した時点で 1 回）
+  const [graphOptions, setGraphOptions] = useState<GraphSchemaOptions | null>(null);
+  const [graphOptionsStatus, setGraphOptionsStatus] = useState<'idle' | 'loading' | 'loaded' | 'failed'>('idle');
+  const aliveRef = useRef<boolean>(true);
+
+  useEffect(() => {
+    aliveRef.current = true;
+    return () => {
+      aliveRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isEdc || graphOptionsStatus !== 'idle') {
+      return;
+    }
+    setGraphOptionsStatus('loading');
+    loadGraphSchemaOptions()
+      .then((options) => {
+        if (aliveRef.current) {
+          setGraphOptions(options);
+          setGraphOptionsStatus('loaded');
+        }
+      })
+      .catch(() => {
+        if (aliveRef.current) {
+          setGraphOptionsStatus('failed');
+        }
+      });
+  }, [isEdc, graphOptionsStatus]);
 
   useEffect(() => {
     if (userDefinedPattern.length > 0) {
@@ -127,7 +167,7 @@ export default function NewEntityExtractionSetting({
     updateLocalStorage(userCredentials!, 'selectedNodeLabels', []);
     updateLocalStorage(userCredentials!, 'selectedRelationshipLabels', []);
     updateLocalStorage(userCredentials!, 'selectedPattern', []);
-    showNormalToast(`スキーマ設定を削除しました`);
+    showNormalToast(`グラフスキーマをクリアしました`);
     // Importer clear
     setImporterNodes([]);
     setImporterRels([]);
@@ -135,7 +175,7 @@ export default function NewEntityExtractionSetting({
   };
 
   const handleFinalApply = (pattern: string[], nodeLables: OptionType[], relationshipLabels: OptionType[]) => {
-    showNormalToast(`スキーマ設定を適用しました`);
+    showNormalToast(`グラフスキーマを適用しました`);
     if (view === 'Tabs' && closeEnhanceGraphSchemaDialog != undefined) {
       closeEnhanceGraphSchemaDialog();
     }
@@ -323,18 +363,45 @@ export default function NewEntityExtractionSetting({
     openDataImporterSchema();
   }, []);
 
+  if (isEdc) {
+    return <EdcSettings hasGraphSchema={hasGraphSchema} />;
+  }
+
+  // 適用済みのグラフスキーマの状態（selectedRels はパターン「始点,リレーションタイプ,終点」の一覧）
+  const currentSchemaText =
+    selectedRels.length > 0
+      ? `パターン ${selectedRels.length} 件を設定済み`
+      : hasGraphSchema
+        ? `ラベル ${selectedNodes.length} 件を設定済み`
+        : '未設定';
+
   return (
     <div>
-      <Typography variant='body-medium'>
-        <span>
-          1. 特定のノードラベルとリレーションシップラベルを選択して、ナレッジグラフの構造を事前に定義します。
-        </span>
-        <br></br>
-        <span>
-          2.
-          ユースケースにとって重要なリレーションシップとエンティティだけを抽出して分析対象を絞り込みます。ドメインに合わせた、よりクリーンで洞察に富んだグラフ表現を実現できます。
-        </span>
-      </Typography>
+      <section className='flex flex-col gap-2'>
+        <Typography variant='subheading-medium'>グラフスキーマ（標準抽出で使用）</Typography>
+        <div className='flex flex-col gap-1 n-bg-palette-primary-bg-weak rounded-lg p-3'>
+          <Typography variant='body-medium'>
+            LLM が生成するノードラベルとリレーションタイプを制限する。
+            <strong>未設定の場合は制限しない</strong>
+            {`（現在：${currentSchemaText}）。`}
+          </Typography>
+          <Typography variant='body-medium'>
+            {`選択肢には現在のグラフに存在するラベルとリレーションタイプを${graphOptions?.hasCounts ? '件数付きで' : ''}表示する。`}
+            管理用の名称と、日本語・空白などを含む名称（手動修正と同じ規則）は表示しない。一覧にない名称は入力により追加できる。別のスキーマは「スキーマの追加元」から読み込む。
+          </Typography>
+          <Typography variant='body-medium'>
+            {`パターン（始点ノードのラベル・リレーションタイプ・終点ノードのラベルの組）は、3 つを選択して「+ 追加」で選択中のパターンに加え、「適用」で確定する。設定はこのブラウザに保存され、以後の取り込みに適用される。取り込み済みのグラフは変更しない。`}
+          </Typography>
+          {graphOptionsStatus === 'loading' && (
+            <Typography variant='body-small'>現在のグラフのラベルとリレーションタイプを取得中…</Typography>
+          )}
+          {graphOptionsStatus === 'failed' && (
+            <Typography variant='body-small' className='n-text-palette-danger-text'>
+              現在のグラフのラベルとリレーションタイプを取得できない。名称は入力により追加できる。
+            </Typography>
+          )}
+        </div>
+      </section>
       <div className='mt-4'>
         <GraphPattern
           selectedSource={selectedSource}
@@ -349,6 +416,8 @@ export default function NewEntityExtractionSetting({
             )
           }
           selectedTupleOptions={tupleOptions}
+          graphLabels={graphOptions?.labels}
+          graphRelationshipTypes={graphOptions?.relationshipTypes}
         ></GraphPattern>
         <PatternContainer
           pattern={combinedPatterns}
@@ -357,6 +426,7 @@ export default function NewEntityExtractionSetting({
           highlightPattern={highlightPattern ?? ''}
           nodes={combinedNodes}
           rels={combinedRels}
+          headingVariant='subheading-small'
         ></PatternContainer>
         <Flex className='my-8! mb-2 flex! items-center' flexDirection='row' justifyContent='flex-end'>
           <DropdownButton
@@ -423,7 +493,7 @@ export default function NewEntityExtractionSetting({
                 text={tooltips.clearGraphSettings}
                 placement='top'
                 onClick={handleFinalClear}
-                label='グラフ設定をクリア'
+                label='グラフスキーマをクリア'
                 disabled={!combinedPatterns.length}
               >
                 {buttonCaptions.clearSettings}
@@ -433,7 +503,7 @@ export default function NewEntityExtractionSetting({
               text={tooltips.applySettings}
               placement='top'
               onClick={() => handleFinalApply(combinedPatterns, combinedNodes, combinedRels)}
-              label='グラフ設定を適用'
+              label='グラフスキーマを適用'
               disabled={!combinedPatterns.length}
             >
               {buttonCaptions.applyGraphSchema}

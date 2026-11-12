@@ -34,7 +34,7 @@ const spotlightsforunauthenticated = [
     children: (
       <>
         <Spotlight.Header>Neo4jにログイン</Spotlight.Header>
-        <Spotlight.Body>Googleアカウントまたはメールアドレスでログインできます</Spotlight.Body>
+        <Spotlight.Body>Google アカウントまたはメールアドレスでログインできる</Spotlight.Body>
       </>
     ),
   },
@@ -52,7 +52,7 @@ const spotlightsforunauthenticated = [
     children: (
       <>
         <Spotlight.Header>ドキュメントのアップロード</Spotlight.Header>
-        <Spotlight.Body>任意の非構造化ファイルをアップロードできます</Spotlight.Body>
+        <Spotlight.Body>任意の非構造化ファイルをアップロードできる</Spotlight.Body>
       </>
     ),
   },
@@ -69,7 +69,7 @@ const spotlightsforunauthenticated = [
     children: (
       <>
         <Spotlight.Header>抽出処理の開始</Spotlight.Header>
-        <Spotlight.Body>「グラフ生成」をクリックしてください</Spotlight.Body>
+        <Spotlight.Body>「グラフを生成」をクリックしてください</Spotlight.Body>
       </>
     ),
   },
@@ -78,7 +78,7 @@ const spotlightsforunauthenticated = [
     children: (
       <>
         <Spotlight.Header>ナレッジグラフの可視化</Spotlight.Header>
-        <Spotlight.Body>テーブルから処理完了済みのファイルを1つ以上選択して可視化できます</Spotlight.Body>
+        <Spotlight.Body>ファイル一覧から処理済みのファイルを 1 つ以上選択して可視化できる</Spotlight.Body>
       </>
     ),
   },
@@ -106,7 +106,7 @@ const spotlights = [
     children: (
       <>
         <Spotlight.Header>ドキュメントのアップロード</Spotlight.Header>
-        <Spotlight.Body>任意の非構造化ファイルをアップロードできます</Spotlight.Body>
+        <Spotlight.Body>任意の非構造化ファイルをアップロードできる</Spotlight.Body>
       </>
     ),
   },
@@ -123,7 +123,7 @@ const spotlights = [
     children: (
       <>
         <Spotlight.Header>抽出処理の開始</Spotlight.Header>
-        <Spotlight.Body>「グラフ生成」をクリックしてください</Spotlight.Body>
+        <Spotlight.Body>「グラフを生成」をクリックしてください</Spotlight.Body>
       </>
     ),
   },
@@ -132,7 +132,7 @@ const spotlights = [
     children: (
       <>
         <Spotlight.Header>ナレッジグラフの可視化</Spotlight.Header>
-        <Spotlight.Body>テーブルから処理完了済みのファイルを1つ以上選択して可視化できます</Spotlight.Body>
+        <Spotlight.Body>ファイル一覧から処理済みのファイルを 1 つ以上選択して可視化できる</Spotlight.Body>
       </>
     ),
   },
@@ -254,7 +254,16 @@ const PageLayout: React.FC = () => {
     []
   );
   const { messages, setClearHistoryData, clearHistoryData, setMessages, setIsDeleteChatLoading } = useMessageContext();
-  const isFirstTimeUser = useMemo(() => localStorage.getItem('neo4j.connection') === null, []);
+  // backend の設定で接続する場合は接続情報がブラウザに保存されないため、案内表示を 1 回出したら gb.tourSeen で止める
+  const isFirstTimeUser = useMemo(
+    () => localStorage.getItem('neo4j.connection') === null && localStorage.getItem('gb.tourSeen') === null,
+    []
+  );
+  useEffect(() => {
+    if (isFirstTimeUser) {
+      localStorage.setItem('gb.tourSeen', '1');
+    }
+  }, [isFirstTimeUser]);
 
   const [combinedPatternsVal, setCombinedPatternsVal] = useState<string[]>([]);
   const [combinedNodesVal, setCombinedNodesVal] = useState<OptionType[]>([]);

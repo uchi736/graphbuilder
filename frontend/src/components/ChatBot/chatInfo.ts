@@ -30,7 +30,7 @@ export const handleGraphNodeClick = async (
       setOpenGraphView(true);
       setViewPoint('chatInfoView');
     } else {
-      showNormalToast('選択したノードに関連するノードやリレーションシップが見つかりません。');
+      showNormalToast('選択したノードに関連するノードやリレーションが見つかりません。');
     }
   } catch (error: any) {
     console.error('Error fetching neighbors:', error);

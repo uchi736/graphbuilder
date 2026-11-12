@@ -45,7 +45,7 @@ const ChunkPopUp = ({
           <div className='flex flex-col'>
             <Typography variant='h2'>テキストチャンク</Typography>
             <Typography variant='body-medium' className='mb-2'>
-              これらのテキストチャンクは、ナレッジグラフの構築と、さまざまな検索戦略による正確な情報検索のために抽出されたものです。
+              これらのテキストチャンクは、ナレッジグラフの構築と、各種の検索戦略による正確な情報検索のために抽出したものである。
             </Typography>
           </div>
         </div>

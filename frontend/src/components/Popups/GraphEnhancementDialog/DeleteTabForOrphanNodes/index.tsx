@@ -4,6 +4,7 @@ import { orphanNodeProps } from '../../../../types';
 import { getOrphanNodes } from '../../../../services/GetOrphanNodes';
 import { useCredentials } from '../../../../context/UserCredentials';
 import Legend from '../../../UI/Legend';
+import { useDataGridJa } from '../../../UI/DataGridJa';
 import { calcWordColor } from '@neo4j-devtools/word-color';
 import { DocumentIconOutline } from '@neo4j-ndl/react/icons';
 import ButtonWithToolTip from '../../../UI/ButtonWithToolTip';
@@ -27,7 +28,7 @@ export default function DeletePopUpForOrphanNodes({
   deleteHandler,
   loading,
 }: {
-  deleteHandler: (selectedEntities: string[]) => Promise<void>;
+  deleteHandler: (selectedEntities: string[]) => Promise<boolean>;
   loading: boolean;
 }) {
   const { breakpoints } = tokens;
@@ -161,7 +162,7 @@ export default function DeletePopUpForOrphanNodes({
             </Flex>
           );
         },
-        header: () => <span>関連ドキュメント </span>,
+        header: () => <span>関連文書</span>,
         footer: (info) => info.column.id,
       }),
       columnHelper.accessor((row) => row.chunkConnections, {
@@ -196,13 +197,19 @@ export default function DeletePopUpForOrphanNodes({
       },
     },
   });
+  const dataGridJa = useDataGridJa(table);
 
   const selectedFilesCheck = table.getSelectedRowModel().rows.length
     ? `選択したノードを削除 (${table.getSelectedRowModel().rows.length})`
     : '削除するノードを選択';
 
   const onDeleteHandler = async () => {
-    await deleteHandler(table.getSelectedRowModel().rows.map((r) => r.id));
+    const deleted = await deleteHandler(table.getSelectedRowModel().rows.map((r) => r.id));
+    if (!deleted) {
+      // 失敗したときは表から消さない（エラーは deleteHandler がトーストで出す）
+      setShowDeletePopUp(false);
+      return;
+    }
     const selectedRows = table.getSelectedRowModel().rows.map((r) => r.id);
     setTotalOrphanNodes((prev) => prev - selectedRows.length);
     for (let index = 0; index < selectedRows.length; index++) {
@@ -232,17 +239,17 @@ export default function DeletePopUpForOrphanNodes({
           <Flex flexDirection='column'>
             <Flex justifyContent='space-between' flexDirection='row'>
               <Typography variant={isTablet ? 'subheading-medium' : 'subheading-large'}>
-                孤立ノードの削除(1バッチあたり100ノード)
+                孤立ノードの削除（一覧は最大 100 件）
               </Typography>
               {totalOrphanNodes > 0 && (
                 <Typography variant={isTablet ? 'subheading-medium' : 'subheading-large'}>
-                  ノード総数: {totalOrphanNodes}
+                  ノード総数：{totalOrphanNodes}
                 </Typography>
               )}
             </Flex>
             <Flex justifyContent='space-between' flexDirection='row'>
               <Typography variant={isTablet ? 'body-small' : 'body-medium'}>
-                この機能は、他のどの情報ともつながっていないエンティティを特定して削除することで、ナレッジグラフの精度向上に役立ちます。こうした「孤立した」エンティティは、過去の解析の残骸やデータ処理時のエラーによって生じることがあります。これらを削除することで、よりクリーンで効率的なナレッジグラフを構築でき、より適切で有益な回答につながります。
+                チャンクと文書以外のノードとのリレーションを持たないエンティティ（孤立ノード）を一覧表示する。規則により生成したノード（章・節・文書番号・型式）は表示しない。選択したエンティティを削除すると、チャンクとのリレーションも削除される。孤立ノードは、過去の取り込みの残存分や抽出時のエラーにより生じる。
               </Typography>
             </Flex>
           </Flex>
@@ -257,10 +264,11 @@ export default function DeletePopUpForOrphanNodes({
             headerStyle: 'clean',
           }}
           rootProps={{
-            className: 'max-h-[355px] overflow-y-auto!',
+            className: 'max-h-[480px] overflow-y-auto!',
           }}
           isLoading={isLoading}
           components={{
+            ...dataGridJa,
             Body: () => (
               <DataGridComponents.Body
                 innerProps={{

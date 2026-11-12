@@ -49,7 +49,7 @@ const Header: React.FC<HeaderProp> = ({ chatOnly, deleteOnClick, setOpenConnecti
   const [showChatModeOption, setShowChatModeOption] = useState<boolean>(false);
   const { setIsOpen } = useSpotlightContext();
   const isFirstTimeUser = useMemo(() => {
-    return localStorage.getItem('neo4j.connection') === null;
+    return localStorage.getItem('neo4j.connection') === null && localStorage.getItem('gb.tourSeen') === null;
   }, []);
   useEffect(() => {
     if (!connectionStatus && isFirstTimeUser) {

@@ -21,6 +21,7 @@ import {
 import { useCredentials } from './UserCredentials';
 import Queue from '../utils/Queue';
 import { getChunkConfig } from '../utils/EmbeddingConfigUtils';
+import { EdcExtractionOptions, initialEdcOptions, initialExtractionMethod } from '../utils/ExtractionMethodUtils';
 
 const FileContext = createContext<FileContextType | undefined>(undefined);
 
@@ -39,6 +40,9 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     new Queue(JSON.parse(persistedQueue ?? JSON.stringify({ queue: [] })).queue)
   );
   const [model, setModel] = useState<string>(isProdDefaultModel ? selectedModel : isProdEnv ? PRODMODELS[0] : llms[0]);
+  // 抽出方式（standard / edc）。LLM とは別に持ち、選んだ値は localStorage に残す（DEV でも復元する）
+  const [extractionMethod, setExtractionMethod] = useState<string>(initialExtractionMethod);
+  const [edcOptions, setEdcOptions] = useState<EdcExtractionOptions>(initialEdcOptions);
   const [graphType, setGraphType] = useState<string>('Knowledge Graph Entities');
   const [selectedNodes, setSelectedNodes] = useState<readonly OptionType[]>([]);
   const [selectedRels, setSelectedRels] = useState<readonly OptionType[]>([]);
@@ -78,6 +82,10 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     'enable_hybrid_search_and_fulltext_search_in_bloom',
     'materialize_entity_similarities',
     'enable_communities',
+    'link_chunk_references',
+    'build_document_layer',
+    'build_section_layer',
+    'attach_provenance',
   ]);
   const [processedCount, setProcessedCount] = useState<number>(0);
   const [postProcessingVal, setPostProcessingVal] = useState<boolean>(false);
@@ -139,6 +147,10 @@ const FileContextProvider: FC<FileContextProviderProps> = ({ children }) => {
     setFilesData,
     model,
     setModel,
+    extractionMethod,
+    setExtractionMethod,
+    edcOptions,
+    setEdcOptions,
     graphType,
     setGraphType,
     selectedRels,

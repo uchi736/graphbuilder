@@ -204,6 +204,9 @@ export default function DropZoneForSmallLayouts() {
             processingProgress: defaultValues.processingProgress,
             token_usage: defaultValues.token_usage,
             embedding_model: defaultValues.embedding_model,
+            // 再処理の指定を外す（残っていると前のチャンクを使う再処理になり、新しい版が読まれない。C8）
+            retryOption: defaultValues.retryOption,
+            retryOptionStatus: defaultValues.retryOptionStatus,
           });
         }
       }

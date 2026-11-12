@@ -9,7 +9,7 @@ Knowledge Graph Builder のフロントエンド。React + Vite 製で、Neo4j D
 ## 機能
 
 - ドラッグ&ドロップでのファイル取り込み（ローカル / S3 / GCS / Web / Wikipedia / YouTube）
-- モデル選択（`gemma4` / `edc`）— 一覧は `VITE_LLM_MODELS` で制御
+- LLM の選択（`gemma4`）と抽出方式の選択（標準 / EDC）— LLM の一覧は `VITE_LLM_MODELS`、抽出方式は backend の `GET /extraction_methods`（EDC が使えないときは選べない）
 - グラフ可視化・スキーマ表示・チャット（複数モード）
 - Neo4j 自動再接続（localStorage のセッション利用）
 
@@ -40,7 +40,7 @@ compose ではビルド引数として渡す（ルート `.env` / `docker-compos
 | 変数 | 用途 |
 |---|---|
 | `VITE_BACKEND_API_URL` | バックエンドAPIのURL（例 `http://<ホストIP>:8440`） |
-| `VITE_LLM_MODELS` | モデル選択肢（本フォークでは `gemma4,edc`） |
+| `VITE_LLM_MODELS` | LLM の選択肢（本フォークでは `gemma4`。EDC は抽出方式の選択に分けた） |
 | `VITE_CHAT_MODES` | チャットモード一覧 |
 | `VITE_REACT_APP_SOURCES` | 入力ソース一覧（local,youtube,wiki,s3 など） |
 | `VITE_CHUNK_SIZE` / `VITE_CHUNK_OVERLAP` / `VITE_TOKENS_PER_CHUNK` | チャンク設定の既定値 |

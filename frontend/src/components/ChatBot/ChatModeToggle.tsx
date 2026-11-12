@@ -105,10 +105,10 @@ export default function ChatModeToggle({
       id: 'retrieval-settings',
       title: (
         <div>
-          <Typography variant='subheading-small'>検索の詳細設定</Typography>
+          <Typography variant='subheading-small'>検索設定</Typography>
           <div>
             <Typography variant='body-small'>
-              候補の数、起点のエンティティの上限、展開の上限、文脈に入れる行の条件を変更します
+              候補数、起点エンティティの上限、展開の上限、文脈に含める行の条件を変更する
             </Typography>
           </div>
         </div>

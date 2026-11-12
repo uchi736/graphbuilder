@@ -3,12 +3,15 @@ import api from '../API/Index';
 export const graphQueryAPI = async (
   query_type: string,
   document_names: (string | undefined)[] | undefined,
-  signal: AbortSignal
+  signal: AbortSignal,
+  includeOrphans: boolean = false
 ) => {
   try {
     const formData = new FormData();
     formData.append('query_type', query_type ?? 'entities');
     formData.append('document_names', JSON.stringify(document_names));
+    // 全文書表示のときは、どのチャンクにも結ばれていないエンティティも返してもらう
+    formData.append('include_orphans', includeOrphans ? 'true' : 'false');
 
     const response = await api.post(`/graph_query`, formData, {
       headers: {

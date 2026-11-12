@@ -38,7 +38,10 @@ export const extractAPI = async (
   gcs_project_id?: string,
   language?: string,
   access_token?: string,
-  additional_instructions?: string
+  additional_instructions?: string,
+  extraction_method?: string,
+  edc_doctype?: string,
+  edc_schema_mode?: string
 ): Promise<any> => {
   const urlExtract = `${url()}/extract`;
   const method: Method = 'post';
@@ -147,6 +150,17 @@ export const extractAPI = async (
       embedding_provider: embeddingProvider,
       embedding_model: embeddingModel,
     };
+  }
+  // 抽出方式（standard / edc）。LLM の選択とは別に送る（6 つの分岐すべてに効かせるため、ここで 1 回だけ足す）
+  if (extraction_method) {
+    additionalParams.extraction_method = extraction_method;
+  }
+  // EDC の初期スキーマの指定（取り込みごと）。空は送らず backend の設定に従う
+  if (extraction_method === 'edc' && edc_doctype) {
+    additionalParams.edc_doctype = edc_doctype;
+  }
+  if (extraction_method === 'edc' && edc_schema_mode) {
+    additionalParams.edc_schema_mode = edc_schema_mode;
   }
   const response = await apiCall(urlExtract, method, additionalParams);
   return response;

@@ -1,4 +1,4 @@
-import { Banner, Button, Dialog, LoadingSpinner, Radio, Select, TextArea } from '@neo4j-ndl/react';
+import { Banner, Button, LoadingSpinner, Radio, Select, TextArea } from '@neo4j-ndl/react';
 import { useEffect, useMemo, useState } from 'react';
 import { describeGraphEditError, getNodeDetail, isGraphEditError, mergeEntities } from '../../../services/GraphEdit';
 import {
@@ -14,19 +14,18 @@ import {
   NameOption,
   ReservedNames,
   conflictCandidates,
+  descriptionText,
   entityName,
   validateLabels,
   visibleLabels,
 } from '../../../utils/GraphEditUtils';
 import LabelsSelect from './LabelsSelect';
 import { LegendsChip } from '../LegendsChip';
+import { GraphEditDialog } from './GraphEditDialog';
 
 const DESCRIPTION_PREVIEW_LENGTH = 160;
 
-const descriptionOf = (detail?: GraphEditNodeDetail) => {
-  const value = detail?.node.properties.description;
-  return typeof value === 'string' ? value : '';
-};
+const descriptionOf = (detail?: GraphEditNodeDetail) => descriptionText(detail?.node);
 
 const shorten = (text: string, length: number) => (text.length > length ? `${text.slice(0, length)}…` : text);
 
@@ -38,7 +37,6 @@ const DESCRIPTION_MODES: { value: GraphEditDescriptionMode; label: string }[] = 
 
 // M4 統合。選んだ 2 つ以上のエンティティを 1 つにまとめる。残す名前・種類・説明のまとめ方を選ぶ。
 export default function MergeEntitiesDialog({
-  open,
   initialCandidates,
   initialKeepName,
   vocabulary,
@@ -48,7 +46,6 @@ export default function MergeEntitiesDialog({
   onClose,
   onMerged,
 }: {
-  open: boolean;
   initialCandidates: GraphEditCandidate[];
   initialKeepName?: string;
   vocabulary: GraphEditVocabulary | null;
@@ -232,181 +229,179 @@ export default function MergeEntitiesDialog({
   };
 
   return (
-    <Dialog isOpen={open} onClose={onClose} size='large' htmlAttributes={{ 'aria-label': 'エンティティの統合' }}>
-      <Dialog.Header>エンティティの統合</Dialog.Header>
-      <Dialog.Content className='flex flex-col gap-4'>
-        <div className='n-body-medium'>
-          {candidates.length} 件のエンティティを 1
-          つに統合する。リレーションは統合先に付け替え、使用されなくなる名前は別名として修正台帳に記録する。
+    <GraphEditDialog
+      title='エンティティの統合'
+      size='large'
+      contentClassName='flex flex-col gap-4'
+      submitLabel='統合する'
+      submitting={submitting}
+      isSubmitDisabled={!canSubmit}
+      onSubmit={handleMerge}
+      onClose={onClose}
+    >
+      <div className='n-body-medium'>
+        {candidates.length} 件のエンティティを 1
+        つに統合する。リレーションは統合先に付け替え、使用されなくなる名前は別名として修正台帳に記録する。
+      </div>
+      {loadError && (
+        <Banner
+          type='danger'
+          usage='inline'
+          description={loadError}
+          actions={[{ label: '再読込', as: 'button', onClick: () => setReloadToken((token) => token + 1) }]}
+        />
+      )}
+      {!allLoaded && !loadError && (
+        <div className='flex flex-row items-center gap-2'>
+          <LoadingSpinner size='small' />
+          <span className='n-body-small'>各エンティティの詳細を読み込んでいます…</span>
         </div>
-        {loadError && (
-          <Banner
-            type='danger'
-            usage='inline'
-            description={loadError}
-            actions={[{ label: '再読込', as: 'button', onClick: () => setReloadToken((token) => token + 1) }]}
-          />
-        )}
-        {!allLoaded && !loadError && (
-          <div className='flex flex-row items-center gap-2'>
-            <LoadingSpinner size='small' />
-            <span className='n-body-small'>各エンティティの詳細を読み込んでいます…</span>
-          </div>
-        )}
-        <section className='flex flex-col gap-2'>
-          <div className='n-body-medium font-bold!'>統合先（保持するエンティティ）</div>
-          {candidates.map((candidate) => {
-            const detail = details[candidate.element_id];
-            const description = descriptionOf(detail);
-            return (
-              <div
-                key={candidate.element_id}
-                className='flex flex-row gap-2 items-start border border-palette-neutral-border-weak rounded p-2'
-              >
-                <Radio
-                  ariaLabel={`${nameOf(candidate.element_id)} を統合先にする`}
-                  isChecked={targetId === candidate.element_id}
-                  isDisabled={detail === undefined || (ruleTargetId !== '' && candidate.element_id !== ruleTargetId)}
-                  onChange={() => selectTarget(candidate.element_id)}
-                />
-                <div className='flex flex-col flex-1 gap-1 min-w-0'>
-                  <div className='flex flex-row flex-wrap items-center gap-2'>
-                    <span className='n-body-medium font-bold!'>{nameOf(candidate.element_id)}</span>
-                    {labelsOf(candidate.element_id).map((label) => (
-                      <LegendsChip key={label} type='node' label={label} scheme={scheme} />
-                    ))}
-                  </div>
-                  {detail && (
-                    <div className='n-body-small n-text-palette-neutral-text-weak'>
-                      チャンク {detail.chunk_count} 件・文書：{(detail.documents ?? []).join('、') || 'なし'}
-                    </div>
-                  )}
-                  {description && (
-                    <div className='n-body-small whitespace-pre-wrap' title={description}>
-                      {shorten(description, DESCRIPTION_PREVIEW_LENGTH)}
-                    </div>
-                  )}
-                  {detail?.editable === false && !detail.merge_target_only && (
-                    <div className='n-body-small n-text-palette-danger-text'>
-                      このノードは統合できません。{detail.reason ?? ''}
-                    </div>
-                  )}
-                  {detail?.merge_target_only && (
-                    <div className='n-body-small n-text-palette-neutral-text-weak'>
-                      規則により生成したノードである。統合先となり、名前とラベルは変更されない。
-                    </div>
-                  )}
+      )}
+      <section className='flex flex-col gap-2'>
+        <div className='n-body-medium font-bold!'>統合先（保持するエンティティ）</div>
+        {candidates.map((candidate) => {
+          const detail = details[candidate.element_id];
+          const description = descriptionOf(detail);
+          return (
+            <div
+              key={candidate.element_id}
+              className='flex flex-row gap-2 items-start border border-palette-neutral-border-weak rounded p-2'
+            >
+              <Radio
+                ariaLabel={`${nameOf(candidate.element_id)} を統合先にする`}
+                isChecked={targetId === candidate.element_id}
+                isDisabled={detail === undefined || (ruleTargetId !== '' && candidate.element_id !== ruleTargetId)}
+                onChange={() => selectTarget(candidate.element_id)}
+              />
+              <div className='flex flex-col flex-1 gap-1 min-w-0'>
+                <div className='flex flex-row flex-wrap items-center gap-2'>
+                  <span className='n-body-medium font-bold!'>{nameOf(candidate.element_id)}</span>
+                  {labelsOf(candidate.element_id).map((label) => (
+                    <LegendsChip key={label} type='node' label={label} scheme={scheme} />
+                  ))}
                 </div>
-                {candidates.length > 2 && candidate.element_id !== targetId && (
-                  <Button size='small' fill='text' onClick={() => removeCandidate(candidate.element_id)}>
-                    除外
-                  </Button>
+                {detail && (
+                  <div className='n-body-small n-text-palette-neutral-text-weak'>
+                    チャンク {detail.chunk_count} 件・文書：{(detail.documents ?? []).join('、') || 'なし'}
+                  </div>
+                )}
+                {description && (
+                  <div className='n-body-small whitespace-pre-wrap' title={description}>
+                    {shorten(description, DESCRIPTION_PREVIEW_LENGTH)}
+                  </div>
+                )}
+                {detail?.editable === false && !detail.merge_target_only && (
+                  <div className='n-body-small n-text-palette-danger-text'>
+                    このノードは統合できません。{detail.reason ?? ''}
+                  </div>
+                )}
+                {detail?.merge_target_only && (
+                  <div className='n-body-small n-text-palette-neutral-text-weak'>
+                    規則により生成したノードである。統合先となり、名前とラベルは変更されない。
+                  </div>
                 )}
               </div>
-            );
-          })}
-        </section>
-        <Select<NameOption, false>
-          type='creatable'
-          label='統合後の名称'
-          size='medium'
-          isFluid={true}
-          isDisabled={ruleTargetId !== ''}
-          errorText={allLoaded && trimmedName === '' ? '統合後の名称を選択または入力してください。' : ''}
-          helpText={aliasNames.length > 0 ? `別名として保持する名前：${aliasNames.join('、')}` : undefined}
-          selectProps={{
-            isDisabled: ruleTargetId !== '',
-            options: nameOptions,
-            value: trimmedName ? { value: trimmedName, label: trimmedName } : null,
-            onChange: (option) => {
-              setKeepName(option?.value ?? '');
-              setNameTouched(true);
-            },
-            onCreateOption: (input) => {
-              setKeepName(input.trim());
-              setNameTouched(true);
-            },
-            formatCreateLabel: (input) => `「${input.trim()}」を名称として使用`,
-            menuPosition: 'fixed',
-            placeholder: '名称を選択または入力',
-          }}
-        />
-        <LabelsSelect
-          value={labels}
-          onChange={(next) => {
-            setLabels(next);
-            setLabelsTouched(true);
-          }}
-          vocabulary={vocabulary}
-          reserved={reserved}
-          currentLabels={targetLabels}
-          extraLabels={otherLabels}
-          errorText={labelsError}
-          isDisabled={!allLoaded || ruleTargetId !== ''}
-        />
-        <section className='flex flex-col gap-2'>
-          <div className='n-body-medium font-bold!'>説明の統合方法</div>
-          {DESCRIPTION_MODES.map((mode) => (
-            <Radio
-              key={mode.value}
-              label={mode.label}
-              isChecked={descriptionMode === mode.value}
-              onChange={() => {
-                setDescriptionMode(mode.value);
-                if (mode.value === 'custom' && customDescription === '') {
-                  setCustomDescription(concatenatedDescription);
-                }
-              }}
-            />
-          ))}
-          {descriptionMode === 'custom' && (
-            <TextArea
-              label='統合後の説明'
-              isFluid={true}
-              value={customDescription}
-              style={{ resize: 'vertical' }}
-              htmlAttributes={{
-                rows: 5,
-                onChange: (event) => setCustomDescription(event.target.value),
-              }}
-            />
-          )}
-        </section>
-        {ruleTargets.length > 1 && (
-          <Banner
-            type='danger'
-            usage='inline'
-            description='規則により生成したノード同士は統合できません。いずれかを除外してください。'
+              {candidates.length > 2 && candidate.element_id !== targetId && (
+                <Button size='small' fill='text' onClick={() => removeCandidate(candidate.element_id)}>
+                  除外
+                </Button>
+              )}
+            </div>
+          );
+        })}
+      </section>
+      <Select<NameOption, false>
+        type='creatable'
+        label='統合後の名称'
+        size='medium'
+        isFluid={true}
+        isDisabled={ruleTargetId !== ''}
+        errorText={allLoaded && trimmedName === '' ? '統合後の名称を選択または入力してください。' : ''}
+        helpText={aliasNames.length > 0 ? `別名として保持する名前：${aliasNames.join('、')}` : undefined}
+        selectProps={{
+          isDisabled: ruleTargetId !== '',
+          options: nameOptions,
+          value: trimmedName ? { value: trimmedName, label: trimmedName } : null,
+          onChange: (option) => {
+            setKeepName(option?.value ?? '');
+            setNameTouched(true);
+          },
+          onCreateOption: (input) => {
+            setKeepName(input.trim());
+            setNameTouched(true);
+          },
+          formatCreateLabel: (input) => `「${input.trim()}」を名称として使用`,
+          menuPosition: 'fixed',
+          placeholder: '名称を選択または入力',
+        }}
+      />
+      <LabelsSelect
+        value={labels}
+        onChange={(next) => {
+          setLabels(next);
+          setLabelsTouched(true);
+        }}
+        vocabulary={vocabulary}
+        reserved={reserved}
+        currentLabels={targetLabels}
+        extraLabels={otherLabels}
+        errorText={labelsError}
+        isDisabled={!allLoaded || ruleTargetId !== ''}
+      />
+      <section className='flex flex-col gap-2'>
+        <div className='n-body-medium font-bold!'>説明の統合方法</div>
+        {DESCRIPTION_MODES.map((mode) => (
+          <Radio
+            key={mode.value}
+            label={mode.label}
+            isChecked={descriptionMode === mode.value}
+            onChange={() => {
+              setDescriptionMode(mode.value);
+              if (mode.value === 'custom' && customDescription === '') {
+                setCustomDescription(concatenatedDescription);
+              }
+            }}
+          />
+        ))}
+        {descriptionMode === 'custom' && (
+          <TextArea
+            label='統合後の説明'
+            isFluid={true}
+            value={customDescription}
+            style={{ resize: 'vertical' }}
+            htmlAttributes={{
+              rows: 5,
+              onChange: (event) => setCustomDescription(event.target.value),
+            }}
           />
         )}
-        {errorText && <Banner type='danger' usage='inline' description={errorText} />}
-        {conflicts.length > 0 && (
-          <div className='flex flex-row flex-wrap items-center gap-2'>
-            <span className='n-body-small'>
-              同じ名前の候補：{conflicts.map((candidate) => candidate.id).join('、')}
-            </span>
-            <Button
-              size='small'
-              fill='outlined'
-              onClick={() => {
-                setCandidates((previous) => [...previous, ...conflicts]);
-                setConflicts([]);
-                setErrorText('');
-              }}
-            >
-              これらも統合対象に追加
-            </Button>
-          </div>
-        )}
-      </Dialog.Content>
-      <Dialog.Actions>
-        <Button fill='outlined' onClick={onClose} isDisabled={submitting}>
-          キャンセル
-        </Button>
-        <Button onClick={handleMerge} isLoading={submitting} isDisabled={!canSubmit}>
-          統合する
-        </Button>
-      </Dialog.Actions>
-    </Dialog>
+      </section>
+      {ruleTargets.length > 1 && (
+        <Banner
+          type='danger'
+          usage='inline'
+          description='規則により生成したノード同士は統合できません。いずれかを除外してください。'
+        />
+      )}
+      {errorText && <Banner type='danger' usage='inline' description={errorText} />}
+      {conflicts.length > 0 && (
+        <div className='flex flex-row flex-wrap items-center gap-2'>
+          <span className='n-body-small'>
+            同じ名前の候補：{conflicts.map((candidate) => candidate.id).join('、')}
+          </span>
+          <Button
+            size='small'
+            fill='outlined'
+            onClick={() => {
+              setCandidates((previous) => [...previous, ...conflicts]);
+              setConflicts([]);
+              setErrorText('');
+            }}
+          >
+            これらも統合対象に追加
+          </Button>
+        </div>
+      )}
+    </GraphEditDialog>
   );
 }

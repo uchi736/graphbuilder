@@ -16,6 +16,7 @@ import { extractAPI } from '../utils/FileAPI';
 import { BannerAlertProps, ContentProps, CustomFile, OptionType, chunkdata, FileTableHandle } from '../types';
 import deleteAPI from '../services/DeleteFiles';
 import { postProcessing } from '../services/PostProcessing';
+import { mergePostProcessingCounts, postProcessingPayload } from '../utils/PostProcessingUtils';
 import { triggerStatusUpdateAPI } from '../services/ServerSideStatusUpdateAPI';
 import useServerSideEvent from '../hooks/useSse';
 import {
@@ -61,6 +62,7 @@ import {
   EXTRACTION_METHOD_EDC,
   EXTRACTION_METHOD_STANDARD,
   EXTRACTION_METHOD_STORAGE_KEY,
+  recordedExtractionMethod,
 } from '../utils/ExtractionMethodUtils';
 import { useDocumentUpdate } from '../hooks/useDocumentUpdate';
 import { showReplacedToast } from '../utils/DocumentUpdate';
@@ -192,40 +194,13 @@ const Content: React.FC<ContentProps> = ({
             }
           }
 
-          const payload = isGdsActive
-            ? hasSelections
-              ? postProcessingTasks.filter((task) => task !== 'graph_schema_consolidation')
-              : postProcessingTasks
-            : hasSelections
-              ? postProcessingTasks.filter(
-                  (task) => task !== 'graph_schema_consolidation' && task !== 'enable_communities'
-                )
-              : postProcessingTasks.filter((task) => task !== 'enable_communities');
+          const payload = postProcessingPayload(postProcessingTasks, isGdsActive, hasSelections);
           if (payload.length) {
             const response = await postProcessing(payload);
             if (response.data.status === 'Success') {
               const communityfiles = response.data?.data;
               if (Array.isArray(communityfiles) && communityfiles.length) {
-                communityfiles?.forEach((c: any) => {
-                  setFilesData((prev) => {
-                    return prev.map((f) => {
-                      if (f.name === c.filename) {
-                        return {
-                          ...f,
-                          chunkNodeCount: c.chunkNodeCount ?? 0,
-                          entityNodeCount: c.entityNodeCount ?? 0,
-                          communityNodeCount: c.communityNodeCount ?? 0,
-                          chunkRelCount: c.chunkRelCount ?? 0,
-                          entityEntityRelCount: c.entityEntityRelCount ?? 0,
-                          communityRelCount: c.communityRelCount ?? 0,
-                          nodesCount: c.nodeCount,
-                          relationshipsCount: c.relationshipCount,
-                        };
-                      }
-                      return f;
-                    });
-                  });
-                });
+                setFilesData((prev) => mergePostProcessingCounts(prev, communityfiles));
               }
               showSuccessToast('すべてのQ&A機能が利用可能になりました。');
             } else {
@@ -313,8 +288,7 @@ const Content: React.FC<ContentProps> = ({
     // 続きからは前回と同じ抽出方式でしか動かない（backend の check_resume_method）。画面の選択ではなく、その文書の方式を送る（T16）
     const methodForFile =
       fileItem.retryOption === 'start_from_last_processed_position'
-        ? fileItem.extraction_method ||
-          (fileItem.model?.toLowerCase() === EXTRACTION_METHOD_EDC ? EXTRACTION_METHOD_EDC : EXTRACTION_METHOD_STANDARD)
+        ? recordedExtractionMethod(fileItem)
         : extractionMethod;
     try {
       if (userCredentials && connectionStatus && shouldShowTokenTracking(userCredentials.email)) {
@@ -487,26 +461,7 @@ const Content: React.FC<ContentProps> = ({
 
         const communityfiles = response.data?.data;
         if (Array.isArray(communityfiles) && communityfiles.length) {
-          const updateFileData = (f: any, c: any) => {
-            if (f.name !== c.filename) {
-              return f;
-            }
-            return {
-              ...f,
-              chunkNodeCount: c.chunkNodeCount ?? 0,
-              entityNodeCount: c.entityNodeCount ?? 0,
-              communityNodeCount: c.communityNodeCount ?? 0,
-              chunkRelCount: c.chunkRelCount ?? 0,
-              entityEntityRelCount: c.entityEntityRelCount ?? 0,
-              communityRelCount: c.communityRelCount ?? 0,
-              nodesCount: c.nodeCount,
-              relationshipsCount: c.relationshipCount,
-            };
-          };
-
-          communityfiles?.forEach((c: any) => {
-            setFilesData((prev) => prev.map((f) => updateFileData(f, c)));
-          });
+          setFilesData((prev) => mergePostProcessingCounts(prev, communityfiles));
         }
         showSuccessToast('すべてのQ&A機能が利用可能になりました。');
       } catch (error) {

@@ -3,6 +3,7 @@ import {
   ExtendedNode,
   GraphEditCandidate,
   GraphEditLedgerRow,
+  GraphEditRelationshipExpected,
   GraphEditRelationshipTarget,
   GraphEditSelection,
   GraphEditVocabulary,
@@ -12,6 +13,7 @@ import {
   UserCredentials,
 } from '../types';
 import { processGraphData } from './Utils';
+import { RULE_METHOD } from './DocumentRelations';
 
 // グラフの手動修正の画面で使う定数と純粋な関数（docs/graph-edit/DESIGN.md の 2 章と 6 章）
 
@@ -21,7 +23,7 @@ export const GRAPH_EDIT_VIEWPOINTS = ['showGraphView', 'tableView', 'chatInfoVie
 export const EMPTY_GRAPH_EDIT_SELECTION: GraphEditSelection = { nodeIds: [] };
 
 // 予約の名前（バックエンドの /graph_edit/vocabulary が返す一覧と合わせて使う）
-export const DEFAULT_RESERVED_LABELS = [
+const DEFAULT_RESERVED_LABELS = [
   'Chunk',
   '__Community__',
   'Session',
@@ -38,7 +40,7 @@ export const DEFAULT_RESERVED_LABELS = [
   'Section',
   '__KGBuilder__',
 ];
-export const DEFAULT_RESERVED_RELATIONSHIP_TYPES = [
+const DEFAULT_RESERVED_RELATIONSHIP_TYPES = [
   'HAS_ENTITY',
   'PART_OF',
   'NEXT_CHUNK',
@@ -55,10 +57,10 @@ export const DEFAULT_RESERVED_RELATIONSHIP_TYPES = [
   'HAS_SECTION',
   'IN_SECTION',
 ];
-export const ENTITY_LABEL = '__Entity__';
-export const DOCUMENT_LABEL = 'Document';
+const ENTITY_LABEL = '__Entity__';
+const DOCUMENT_LABEL = 'Document';
 // 取り込みが型の名前を付け替える予約の名前（小文字。backend の common_fn.RESERVED_NODE_TYPES と同じ）。種類には選べない
-export const RESERVED_TYPE_NAMES_LOWER = [
+const RESERVED_TYPE_NAMES_LOWER = [
   'document',
   'chunk',
   'session',
@@ -69,14 +71,13 @@ export const RESERVED_TYPE_NAMES_LOWER = [
   'section',
 ];
 // 規則で作ったノード（文書層の文書番号 Standard・型式 Model。method='rule'）。backend の validate.entity_block と同じ判定
-export const RULE_METHOD = 'rule';
-export const RULE_MADE_REASON =
+const RULE_MADE_REASON =
   '規則により生成したノード（文書番号・型式）は後処理（文書層の生成）のたびに再生成されるため、名前・ラベル・プロパティの変更と削除はできない。統合先（名前とラベルは変更されない）とリレーションの端点には使用できる。';
 export const isRuleMadeNode = (node?: { properties?: Record<string, any> } | null) =>
   node?.properties?.method === RULE_METHOD;
 
-export const LABEL_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
-export const RELATIONSHIP_TYPE_PATTERN = /^[A-Z][A-Z0-9_]*$/;
+const LABEL_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
+const RELATIONSHIP_TYPE_PATTERN = /^[A-Z][A-Z0-9_]*$/;
 
 // 右クリックの操作の一覧を、グラフ表示のダイアログ（z-index は modal）より手前に出す
 export const GRAPH_EDIT_POPOVER_Z_INDEX = 'calc(var(--z-index-alias-modal) + 1)';
@@ -106,6 +107,15 @@ export const entityName = (node?: { properties?: Record<string, any> } | null): 
 };
 
 export const visibleLabels = (labels: string[] = []) => labels.filter((label) => label !== ENTITY_LABEL);
+
+// 説明（description）が文字列ならその値、それ以外は空文字
+export const descriptionText = (node?: { properties?: Record<string, any> } | null): string => {
+  const value = node?.properties?.description;
+  return typeof value === 'string' ? value : '';
+};
+
+// 候補の表示名。名前が空なら要素 ID
+export const candidateName = (candidate: GraphEditCandidate) => candidate.id || candidate.element_id;
 
 export const toCandidate = (node: ExtendedNode | NeoNode): GraphEditCandidate => ({
   element_id: 'element_id' in node ? node.element_id : node.id,
@@ -155,6 +165,13 @@ export const relationshipEditBlockReason = (
   }
   return '';
 };
+
+// リレーションの修正・削除で送る、表示中の端点の名前と種類
+export const relationshipExpected = (relationship: GraphEditRelationshipTarget): GraphEditRelationshipExpected => ({
+  src: relationship.source.id,
+  type: relationship.type,
+  tgt: relationship.target.id,
+});
 
 export const toRelationshipTarget = (
   relationship: Relationship,
@@ -259,14 +276,14 @@ export const validateRelationshipType = (type: string, reserved: ReservedNames):
 };
 
 // バックエンドが返すリレーション（graph_query と同じ形）を描画部品の形にする（processGraphData と同じ写し方）
-export const toDisplayRelationship = (relationship: NeoRelationship): Relationship => ({
+const toDisplayRelationship = (relationship: NeoRelationship): Relationship => ({
   id: relationship.element_id,
   from: relationship.start_node_element_id,
   to: relationship.end_node_element_id,
   caption: relationship.type,
 });
 
-export interface DisplayGraph {
+interface DisplayGraph {
   nodes: ExtendedNode[];
   relationships: Relationship[];
   scheme: Scheme;
@@ -413,19 +430,18 @@ export const nextNodeSelection = (
   };
 };
 
-export const addNodeToSelection = (previous: GraphEditSelection, nodeId: string): GraphEditSelection => {
-  return previous.nodeIds.includes(nodeId) ? { nodeIds: previous.nodeIds } : { nodeIds: [...previous.nodeIds, nodeId] };
-};
+// /graph_edit/rename などが CONFLICT のときの data.conflicts の各ノードと、その名前
+export const conflictNodes = (data: any): any[] =>
+  (Array.isArray(data?.conflicts) ? data.conflicts : []).map((item: any) => item?.node ?? item);
 
-// /graph_edit/rename などが CONFLICT のときの data.conflicts を統合の候補に直す
-export const conflictCandidates = (data: any): GraphEditCandidate[] => {
-  const conflicts: any[] = Array.isArray(data?.conflicts) ? data.conflicts : [];
-  return conflicts
-    .map((item) => item?.node ?? item)
+export const conflictNodeName = (node: any): string => String(node?.properties?.id ?? node?.id ?? '');
+
+// data.conflicts を統合の候補に直す
+export const conflictCandidates = (data: any): GraphEditCandidate[] =>
+  conflictNodes(data)
     .filter((node) => node && typeof node.element_id === 'string')
     .map((node) => ({
       element_id: node.element_id,
-      id: String(node.properties?.id ?? node.id ?? ''),
+      id: conflictNodeName(node),
       labels: visibleLabels(node.labels ?? []),
     }));
-};

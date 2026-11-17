@@ -7,11 +7,6 @@ export type DocumentViewScope = 'all' | 'documents';
 // 集約したリレーションの種類。reference は文書間の参照、listing は発行目録への掲載、external は未取り込み文書への参照である
 export type DocumentRelationKind = 'reference' | 'listing' | 'external';
 
-// 入力のリレーション。properties は backend がリレーションのプロパティを返す場合にのみ存在する
-export interface DocumentRelationSource extends Relationship {
-  properties?: Record<string, unknown>;
-}
-
 // 描画用に生成するリレーション。properties は詳細欄に表示する項目名と値の組である
 export interface DocumentRelationship extends ExtendedRelationship {
   kind: DocumentRelationKind;
@@ -20,27 +15,25 @@ export interface DocumentRelationship extends ExtendedRelationship {
   properties: Record<string, string | number>;
 }
 
-export interface DocumentRelationOptions {
+interface DocumentRelationOptions {
   // 未取り込み文書（文書番号ノードのみが存在する文書）への参照を含めるかどうか
   includeExternal: boolean;
-  // 文書で絞り込む場合の Document ノードの id。空の場合は全文書を対象とする
-  documentFilter?: string[];
-  // リレーションの要素 ID ごとのプロパティ。リレーション自体に properties がない場合に参照する
+  // リレーションの要素 ID ごとのプロパティ（collectDocumentRelationProperties の結果）
   relationshipProperties?: Record<string, Record<string, unknown>>;
 }
 
-export interface DocumentRelationGraph {
+interface DocumentRelationGraph {
   nodes: ExtendedNode[];
   relationships: DocumentRelationship[];
 }
 
-export interface DocumentRelationScope {
+interface DocumentRelationScope {
   nodeIds: Set<string>;
   relationshipIds: Set<string>;
 }
 
 // 生成したリレーションの id の接頭辞。データベースの要素 ID とは重複しない
-export const DOCUMENT_RELATION_ID_PREFIX = 'docrel';
+const DOCUMENT_RELATION_ID_PREFIX = 'docrel';
 // 未取り込み文書の文書番号ノードの色
 export const EXTERNAL_DOCUMENT_COLOR = '#b9c1c9';
 // 未取り込み文書の文書番号ノードの大きさ（半径）。描画部品の既定の大きさ（25）では既定の倍率で
@@ -51,8 +44,6 @@ const EXTERNAL_DOCUMENT_SIZE = 36;
 const EXTERNAL_DOCUMENT_CAPTION_SIZE = 1;
 // 文書ノードの描画用の表示名から除く拡張子（取り込み対象のファイル形式に限る。「Node.js」「Ver.2」のような題名の末尾は除かない）
 const DOCUMENT_EXTENSION = /\.(pdf|docx?|pptx?|xlsx?|txt|md|html?|csv|json)$/i;
-// プロパティを保持する文書層のリレーションタイプ
-export const DOCUMENT_LAYER_RELATIONSHIP_TYPES = ['IS_VERSION_OF', 'REFERS_TO', 'LISTS'];
 
 // 種類ごとのリレーションタイプと描画の色・線幅。描画部品は破線に対応しないため、LISTS は色と線幅で区別する。
 // 表示範囲の下に表示する種類ごとの件数の凡例も、この色と線幅を使用する
@@ -62,7 +53,8 @@ export const RELATION_STYLES: Record<DocumentRelationKind, { caption: string; co
   external: { caption: 'REFERS_TO', color: '#c9d1d8', width: 1 },
 };
 
-const RULE_METHOD = 'rule';
+// 規則で生成したノードとリレーションの method の値
+export const RULE_METHOD = 'rule';
 // 文書カードの先頭行（例：「文書番号 HS-VTR-T002 版 F 過給機性能試験」）。リレーションのプロパティがない場合に版の記号を取得する
 const CARD_HEADLINE = /^文書番号 (\S+) 版 (\S+)/;
 
@@ -85,18 +77,18 @@ interface DocumentVersion {
 
 type PropertyRow = [string, string | number | undefined];
 
-export const isDocumentNode = (node: ExtendedNode): boolean =>
+const isDocumentNode = (node: ExtendedNode): boolean =>
   (node.labels ?? []).includes('Document') && Boolean(node.properties?.fileName);
 
 // 文書番号ノード（文書層の後処理が規則により生成した Standard）かどうか
-export const isDocumentNumberNode = (node: ExtendedNode): boolean =>
+const isDocumentNumberNode = (node: ExtendedNode): boolean =>
   (node.labels ?? []).includes('Standard') && node.properties?.method === RULE_METHOD;
 
 const documentName = (node: ExtendedNode | undefined): string =>
   String(node?.properties?.fileName ?? node?.caption ?? node?.id ?? '');
 
 // 文書ノードの描画用の表示名。拡張子を除いたファイル名とする（例：VTR-T004C.pdf → VTR-T004C）
-export const documentCaption = (node: ExtendedNode): string => documentName(node).replace(DOCUMENT_EXTENSION, '');
+const documentCaption = (node: ExtendedNode): string => documentName(node).replace(DOCUMENT_EXTENSION, '');
 
 const numberName = (node: ExtendedNode | undefined): string =>
   String(node?.properties?.id ?? node?.caption ?? node?.id ?? '');
@@ -236,21 +228,20 @@ export const documentRelationScope = (
 // 取り込み済み文書の版がない文書番号ノード（未取り込み文書）は、includeExternal の場合に限り灰色のノードとして描画する
 export const buildDocumentRelationGraph = (
   nodes: ExtendedNode[],
-  relationships: DocumentRelationSource[],
+  relationships: Relationship[],
   options: DocumentRelationOptions
 ): DocumentRelationGraph => {
-  const { includeExternal, documentFilter, relationshipProperties } = options;
+  const { includeExternal, relationshipProperties } = options;
   const nodeById = new Map(nodes.map((node) => [node.id, node]));
   const documents = nodes.filter(isDocumentNode);
   const documentIds = new Set(documents.map((node) => node.id));
-  const propertiesOf = (rel: DocumentRelationSource): Record<string, unknown> =>
-    rel.properties ?? relationshipProperties?.[rel.id] ?? {};
+  const propertiesOf = (rel: Relationship): Record<string, unknown> => relationshipProperties?.[rel.id] ?? {};
 
   // 対象は始点が文書、終点が文書番号ノードの文書層のリレーションのみとする
   const versionsOf = new Map<string, DocumentVersion[]>();
   const ownNumbers = new Map<string, Set<string>>();
-  const references: DocumentRelationSource[] = [];
-  const listings: DocumentRelationSource[] = [];
+  const references: Relationship[] = [];
+  const listings: Relationship[] = [];
   relationships.forEach((rel) => {
     const target = nodeById.get(rel.to);
     if (!documentIds.has(rel.from) || target === undefined || !isDocumentNumberNode(target)) {
@@ -307,51 +298,44 @@ export const buildDocumentRelationGraph = (
   const versionTargets = (numberId: string, sourceId: string): DocumentVersion[] =>
     (versionsOf.get(numberId) ?? []).filter((version) => version.documentId !== sourceId);
 
-  references.forEach((rel) => {
-    // 自身の文書番号への参照は対象外とする
-    if (ownNumbers.get(rel.from)?.has(rel.to)) {
-      return;
-    }
-    const properties = propertiesOf(rel);
-    const number = numberName(nodeById.get(rel.to));
-    const record = (entry: CollapsedRelation, revision: string | undefined) => {
-      addUnique(entry.numbers, number);
-      addUnique(entry.revisions, revision);
-      entry.chunks += numberOf(properties.chunks);
-      quotesOf(properties.quotes).forEach((quote) => addUnique(entry.quotes, quote));
-    };
-    if (isExternal(rel.to)) {
-      if (includeExternal) {
-        record(collapse('external', rel.from, rel.to), undefined);
+  // 文書番号ノードを経由するリレーションを集約する。未取り込み文書は externalKind、取り込み済み文書は ingestedKind とし、
+  // recordDetail で種類ごとの項目（参照は根拠チャンクと引用、掲載は目録上の版と日付）を記録する
+  const collapseVia = (
+    rels: Relationship[],
+    externalKind: DocumentRelationKind,
+    ingestedKind: DocumentRelationKind,
+    recordDetail: (entry: CollapsedRelation, properties: Record<string, unknown>) => void
+  ) => {
+    rels.forEach((rel) => {
+      // 自身の文書番号へのリレーションは対象外とする
+      if (ownNumbers.get(rel.from)?.has(rel.to)) {
+        return;
       }
-      return;
-    }
-    versionTargets(rel.to, rel.from).forEach((version) => {
-      record(collapse('reference', rel.from, version.documentId), version.revision);
+      const properties = propertiesOf(rel);
+      const number = numberName(nodeById.get(rel.to));
+      const record = (entry: CollapsedRelation, revision: string | undefined) => {
+        addUnique(entry.numbers, number);
+        addUnique(entry.revisions, revision);
+        recordDetail(entry, properties);
+      };
+      if (isExternal(rel.to)) {
+        if (includeExternal) {
+          record(collapse(externalKind, rel.from, rel.to), undefined);
+        }
+        return;
+      }
+      versionTargets(rel.to, rel.from).forEach((version) => {
+        record(collapse(ingestedKind, rel.from, version.documentId), version.revision);
+      });
     });
+  };
+  collapseVia(references, 'external', 'reference', (entry, properties) => {
+    entry.chunks += numberOf(properties.chunks);
+    quotesOf(properties.quotes).forEach((quote) => addUnique(entry.quotes, quote));
   });
-
-  listings.forEach((rel) => {
-    if (ownNumbers.get(rel.from)?.has(rel.to)) {
-      return;
-    }
-    const properties = propertiesOf(rel);
-    const number = numberName(nodeById.get(rel.to));
-    const record = (entry: CollapsedRelation, revision: string | undefined) => {
-      addUnique(entry.numbers, number);
-      addUnique(entry.revisions, revision);
-      addUnique(entry.listedRevisions, textOf(properties.rev));
-      addUnique(entry.listedDates, textOf(properties.date));
-    };
-    if (isExternal(rel.to)) {
-      if (includeExternal) {
-        record(collapse('listing', rel.from, rel.to), undefined);
-      }
-      return;
-    }
-    versionTargets(rel.to, rel.from).forEach((version) => {
-      record(collapse('listing', rel.from, version.documentId), version.revision);
-    });
+  collapseVia(listings, 'listing', 'listing', (entry, properties) => {
+    addUnique(entry.listedRevisions, textOf(properties.rev));
+    addUnique(entry.listedDates, textOf(properties.date));
   });
 
   const graphRelationships: DocumentRelationship[] = [...collapsed.entries()].map(([id, entry]) => {
@@ -388,14 +372,7 @@ export const buildDocumentRelationGraph = (
       })),
   ];
 
-  const scope = documentRelationScope(graphNodes, graphRelationships, documentFilter);
-  if (scope === null) {
-    return { nodes: graphNodes, relationships: graphRelationships };
-  }
-  return {
-    nodes: graphNodes.filter((node) => scope.nodeIds.has(node.id)),
-    relationships: graphRelationships.filter((rel) => scope.relationshipIds.has(rel.id)),
-  };
+  return { nodes: graphNodes, relationships: graphRelationships };
 };
 
 // 描画するノードの色からラベルの凡例の色を生成する
@@ -411,19 +388,14 @@ export const documentRelationScheme = (nodes: ExtendedNode[]): Scheme => {
   return scheme;
 };
 
-// backend の応答のリレーションから、文書層のリレーションのプロパティを要素 ID ごとに取り出す。
-// プロパティを返さない backend の場合は空のオブジェクトを返す
+// backend の応答のリレーションから、プロパティを要素 ID ごとに取り出す。
+// backend がプロパティを返すのは文書層のリレーション（IS_VERSION_OF・REFERS_TO・LISTS で始点が文書のもの）のみである
 export const collectDocumentRelationProperties = (
   rawRelationships: { element_id?: string; type?: string; properties?: Record<string, unknown> }[]
 ): Record<string, Record<string, unknown>> => {
   const result: Record<string, Record<string, unknown>> = {};
   rawRelationships.forEach((rel) => {
-    if (
-      typeof rel.element_id === 'string' &&
-      rel.properties !== undefined &&
-      rel.properties !== null &&
-      DOCUMENT_LAYER_RELATIONSHIP_TYPES.includes(rel.type ?? '')
-    ) {
+    if (typeof rel.element_id === 'string' && rel.properties !== undefined && rel.properties !== null) {
       result[rel.element_id] = rel.properties;
     }
   });

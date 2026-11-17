@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
-import { DataGridComponents, LoadingSpinner, Select, Typography } from '@neo4j-ndl/react';
+import { useContext, useMemo } from 'react';
+import { DataGrid, DataGridComponents, LoadingSpinner, Select, Typography } from '@neo4j-ndl/react';
 import { Table } from '@tanstack/react-table';
+import { ThemeWrapperContext } from '../../context/ThemeWrapper';
 
 // NDL の DataGrid の既定の英語（件数の表示・表示件数の選択・空表示）を置き換える部品
 
@@ -8,7 +9,7 @@ import { Table } from '@tanstack/react-table';
 const PAGE_SIZE_VALUES = [10, 25, 50, 100];
 
 // 件数の表示。数え方は NDL の既定と同じ（読み込み済みの行数。一覧に上限がある表や追加読み込みの表では総数と異なるため「全」は付けない）
-export function DataGridJaResults<T>({ table }: { table: Table<T> }) {
+function DataGridJaResults<T>({ table }: { table: Table<T> }) {
   const { pageIndex, pageSize } = table.getState().pagination;
   const total = table.getCoreRowModel().rows.length;
   const from = pageIndex * pageSize + 1;
@@ -23,7 +24,7 @@ export function DataGridJaResults<T>({ table }: { table: Table<T> }) {
 }
 
 // 1 ページの表示件数の選択。children を渡すと既定の「Show」と選択欄が置き換わる
-export function DataGridJaRowsPerPage<T>({ table }: { table: Table<T> }) {
+function DataGridJaRowsPerPage<T>({ table }: { table: Table<T> }) {
   const { pageSize } = table.getState().pagination;
   const options = Array.from(new Set([...PAGE_SIZE_VALUES, pageSize]))
     .sort((a, b) => a - b)
@@ -88,5 +89,39 @@ export function useDataGridJa<T>(table: Table<T>) {
       LoadingPlaceholder: DataGridJaLoading,
     }),
     [table]
+  );
+}
+
+// 罫線・縞・明暗のテーマに合わせた表（修正台帳・設定値の一覧）。hasNavigation が false の場合はページ送りを表示しない
+export function DataGridJaTable<T>({
+  table,
+  isLoading,
+  heightClass = 'max-h-[420px]',
+  hasNavigation,
+}: {
+  table: Table<T>;
+  isLoading: boolean;
+  heightClass?: string;
+  hasNavigation: boolean;
+}) {
+  const { colorMode } = useContext(ThemeWrapperContext);
+  const dataGridJa = useDataGridJa(table);
+  return (
+    <DataGrid
+      isResizable={true}
+      tableInstance={table}
+      styling={{ borderStyle: 'all-sides', hasZebraStriping: true, headerStyle: 'clean' }}
+      rootProps={{ className: `${heightClass} overflow-y-auto!` }}
+      isLoading={isLoading}
+      components={{
+        ...(hasNavigation
+          ? dataGridJa
+          : { NoDataPlaceholder: DataGridJaNoData, LoadingPlaceholder: DataGridJaLoading, Navigation: null }),
+        Body: () => (
+          <DataGridComponents.Body innerProps={{ className: colorMode === 'dark' ? 'tbody-dark' : 'tbody-light' }} />
+        ),
+      }}
+      isKeyboardNavigable={false}
+    />
   );
 }

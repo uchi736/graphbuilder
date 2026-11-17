@@ -15,7 +15,7 @@ import SettingsOverview from './SettingsOverview';
 import GraphEditLedgerTab from './GraphEditLedger';
 import { RetrievalSettingsPanel } from '../../ChatBot/RetrievalSettingsDialog';
 import { OptionType } from '../../../types';
-import { describeGraphEditFailure } from '../../../services/GraphEdit';
+import { describeCaughtGraphEditFailure, describeGraphEditFailure } from '../../../services/GraphEdit';
 import { showErrorToast, showSuccessToast } from '../../../utils/Toasts';
 
 // タブの番号。TabPanel の id（tabpanel-<番号>）が重ならないよう、中のタブは 10 番台・30 番台にする
@@ -89,7 +89,7 @@ export default function GraphEnhancementDialog({
     } catch (error) {
       setorphanDeleteAPIloading(false);
       showErrorToast(
-        `孤立ノードを削除できませんでした。${describeGraphEditFailure(error instanceof Error ? error.message : String(error))}`
+        `孤立ノードを削除できませんでした。${describeCaughtGraphEditFailure(error)}`
       );
       return false;
     }

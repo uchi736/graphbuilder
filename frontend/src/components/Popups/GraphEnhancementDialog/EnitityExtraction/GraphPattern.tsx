@@ -17,6 +17,15 @@ type GraphPatternProps = TupleCreationProps & {
 };
 const NO_GRAPH_OPTIONS: SchemaOption[] = [];
 const COMMA_ERROR = 'カンマを含まない名称を入力してください。この欄ではカンマを使用できません';
+// 3 つの選択欄に共通の一覧の指定。一覧が画面の下端で切れないよう、下の空きが足りない場合は上向きに開く。
+// maxMenuHeight は開く向きの判定に使われる。一覧の高さは NDL の CSS（size='medium' は 280px）で決まるため、同じ値にする。
+// NDL の CSS（.ndl-select-menu-list.ndl-medium の max-height）が react-select の縮めた値より優先されるため、!important で縮めた値を使う
+const MENU_PROPS = {
+  menuPlacement: 'auto' as const,
+  maxMenuHeight: 280,
+  menuPosition: 'fixed' as const,
+  styles: { menuList: (base: { maxHeight?: unknown }) => ({ maxHeight: `${base.maxHeight}px !important` }) },
+};
 // 選択肢に現在のグラフの名称を追加する。同じ名称は 1 件にまとめ、件数を取得できた名称は表示名に件数を付与する。
 // 選択後の値は名称のみとする（handleNewValue が名称から選択肢を作成する）
 const withGraphOptions = (options: OptionType[], graphOptions: SchemaOption[]): OptionType[] => {
@@ -251,13 +260,7 @@ const GraphPattern: React.FC<GraphPatternProps> = ({
               isClearable: true,
               placeholder: '選択または入力',
               options: sourceSelectOptions,
-              // 一覧が画面の下端で切れないよう、下の空きが足りない場合は上向きに開く（3 つの欄で共通）
-              // maxMenuHeight は開く向きの判定に使われる。一覧の高さは NDL の CSS（size='medium' は 280px）で決まるため、同じ値にする
-              menuPlacement: 'auto',
-              maxMenuHeight: 280,
-              menuPosition: 'fixed',
-              // NDL の CSS（.ndl-select-menu-list.ndl-medium の max-height）が react-select の縮めた値より優先されるため、!important で縮めた値を使う
-              styles: { menuList: (base) => ({ maxHeight: `${base.maxHeight}px !important` }) },
+              ...MENU_PROPS,
               onChange: (selected) => {
                 if (!selected) {
                   onPatternChange(null, selectedType, selectedTarget);
@@ -284,10 +287,7 @@ const GraphPattern: React.FC<GraphPatternProps> = ({
             isClearable: true,
             placeholder: '選択または入力',
             options: typeSelectOptions,
-            menuPlacement: 'auto',
-            maxMenuHeight: 280,
-            menuPosition: 'fixed',
-            styles: { menuList: (base) => ({ maxHeight: `${base.maxHeight}px !important` }) },
+            ...MENU_PROPS,
             onChange: (selected) => {
               if (!selected) {
                 onPatternChange(selectedSource, null, selectedTarget);
@@ -314,10 +314,7 @@ const GraphPattern: React.FC<GraphPatternProps> = ({
             isClearable: true,
             placeholder: '選択または入力',
             options: targetSelectOptions,
-            menuPlacement: 'auto',
-            maxMenuHeight: 280,
-            menuPosition: 'fixed',
-            styles: { menuList: (base) => ({ maxHeight: `${base.maxHeight}px !important` }) },
+            ...MENU_PROPS,
             onChange: (selected) => {
               if (!selected) {
                 onPatternChange(selectedSource, selectedType, null);

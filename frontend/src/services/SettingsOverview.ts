@@ -39,8 +39,10 @@ interface SettingsOverviewResponse {
   error?: string;
 }
 
-export const getSettingsOverview = async (signal?: AbortSignal) => {
+// includeCounts が false のときは検証件数を照会せず、設定値だけを返す（counts は空）
+export const getSettingsOverview = async (signal?: AbortSignal, includeCounts = true) => {
   const formData = new FormData();
+  formData.append('include_counts', includeCounts ? 'true' : 'false');
   const response = await api.post<SettingsOverviewResponse>('/settings_overview', formData, { signal });
   return response.data;
 };

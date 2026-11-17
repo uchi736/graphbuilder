@@ -12,6 +12,7 @@ import {
 import {
   GraphEditCandidate,
   GraphEditNodeDetail,
+  GraphEditNodeResult,
   GraphEditPropertyValue,
   GraphEditVocabulary,
   NeoNode,
@@ -21,8 +22,10 @@ import { showErrorToast, showNormalToast, showSuccessToast } from '../../../util
 import {
   ReservedNames,
   conflictCandidates,
+  descriptionText,
   entityName,
   isSystemPropertyKey,
+  toCandidate,
   validateLabels,
   visibleLabels,
 } from '../../../utils/GraphEditUtils';
@@ -82,7 +85,7 @@ export default function EntityEditor({
     setDetail(loaded);
     setName(entityName(loaded.node));
     setLabels(visibleLabels(loaded.node.labels));
-    setDescription(typeof properties.description === 'string' ? properties.description : '');
+    setDescription(descriptionText(loaded.node));
     setStringProps(
       Object.fromEntries(Object.entries(properties).filter(([key, value]) => isEditableStringProperty(key, value)))
     );
@@ -142,12 +145,12 @@ export default function EntityEditor({
   const properties = detail.node.properties ?? {};
   const currentId = entityName(detail.node);
   const currentLabels = visibleLabels(detail.node.labels);
-  const candidate: GraphEditCandidate = { element_id: detail.node.element_id, id: currentId, labels: currentLabels };
+  const candidate = toCandidate(detail.node);
   const busy = saving !== '' || loading;
   const trimmedName = name.trim();
   const labelsError = validateLabels(labels, reserved, currentLabels);
   const labelsChanged = !sameLabels(labels, currentLabels);
-  const originalDescription = typeof properties.description === 'string' ? properties.description : '';
+  const originalDescription = descriptionText(detail.node);
 
   const buildPropsChange = () => {
     const change: Record<string, GraphEditPropertyValue> = {};
@@ -174,75 +177,62 @@ export default function EntityEditor({
     }
   };
 
-  const handleRename = async () => {
-    setSaving('rename');
+  // 保存の共通の流れ。成功したら通知して表示へ反映し、詳細を取り直す
+  const runSave = async (
+    kind: Exclude<SavingState, ''>,
+    save: () => Promise<GraphEditNodeResult>,
+    successText: string,
+    onError: (error: unknown) => Promise<void> = handleFailure
+  ) => {
+    setSaving(kind);
     try {
-      const result = await renameEntity({
-        element_id: detail.node.element_id,
-        expected_id: currentId,
-        new_id: trimmedName,
-        user,
-      });
-      showSuccessToast(`名前を「${currentId}」から「${trimmedName}」に変更しました。旧名称は別名として保持されます。`);
+      const result = await save();
+      showSuccessToast(successText);
       onNodeChanged(result.node);
       await loadDetail();
     } catch (error) {
-      if (isGraphEditError(error, 'CONFLICT')) {
-        // 理由が付くのは、旧い名前と正規化キーが同じ別のエンティティがある・新しい名前が他のエンティティの別名のとき
-        const reason = error.data?.reason ? String(error.data.reason) : '';
-        showNormalToast(
-          reason
-            ? `${reason}統合を提案します。`
-            : `「${trimmedName}」と同じ名前（または正規化すると同じ名前）のエンティティがあります。統合を提案します。`
-        );
-        onProposeMerge([candidate, ...conflictCandidates(error.data)], trimmedName);
-      } else {
-        await handleFailure(error);
+      await onError(error);
+    } finally {
+      setSaving('');
+    }
+  };
+
+  const target = { element_id: detail.node.element_id, expected_id: currentId, user };
+
+  const handleRename = () =>
+    runSave(
+      'rename',
+      () => renameEntity({ ...target, new_id: trimmedName }),
+      `名前を「${currentId}」から「${trimmedName}」に変更しました。旧名称は別名として保持されます。`,
+      async (error) => {
+        if (isGraphEditError(error, 'CONFLICT')) {
+          // 理由が付くのは、旧い名前と正規化キーが同じ別のエンティティがある・新しい名前が他のエンティティの別名のとき
+          const reason = error.data?.reason ? String(error.data.reason) : '';
+          showNormalToast(
+            reason
+              ? `${reason}統合を提案します。`
+              : `「${trimmedName}」と同じ名前（または正規化すると同じ名前）のエンティティがあります。統合を提案します。`
+          );
+          onProposeMerge([candidate, ...conflictCandidates(error.data)], trimmedName);
+        } else {
+          await handleFailure(error);
+        }
       }
-    } finally {
-      setSaving('');
-    }
-  };
+    );
 
-  const handleSetLabels = async () => {
-    setSaving('labels');
-    try {
-      const result = await setEntityLabels({
-        element_id: detail.node.element_id,
-        expected_id: currentId,
-        labels,
-        user,
-      });
-      showSuccessToast(
-        `ラベルを ${labels.join('・')} に変更しました。次回以降の取り込みでもこのラベルに固定されます。`
-      );
-      onNodeChanged(result.node);
-      await loadDetail();
-    } catch (error) {
-      await handleFailure(error);
-    } finally {
-      setSaving('');
-    }
-  };
+  const handleSetLabels = () =>
+    runSave(
+      'labels',
+      () => setEntityLabels({ ...target, labels }),
+      `ラベルを ${labels.join('・')} に変更しました。次回以降の取り込みでもこのラベルに固定されます。`
+    );
 
-  const handleSaveProps = async () => {
-    setSaving('props');
-    try {
-      const result = await updateEntityProps({
-        element_id: detail.node.element_id,
-        expected_id: currentId,
-        props: propsChange,
-        user,
-      });
-      showSuccessToast('プロパティを保存しました。修正した項目は次の取り込みで上書きされません。');
-      onNodeChanged(result.node);
-      await loadDetail();
-    } catch (error) {
-      await handleFailure(error);
-    } finally {
-      setSaving('');
-    }
-  };
+  const handleSaveProps = () =>
+    runSave(
+      'props',
+      () => updateEntityProps({ ...target, props: propsChange }),
+      'プロパティを保存しました。修正した項目は次の取り込みで上書きされません。'
+    );
 
   const handleAddProperty = () => {
     const key = newKey.trim();
@@ -289,7 +279,7 @@ export default function EntityEditor({
   );
 
   return (
-    <div className='flex flex-col gap-3' data-testid='graph-edit-entity-editor'>
+    <div className='flex flex-col gap-3'>
       <div className='flex flex-row flex-wrap items-center gap-2'>
         <Typography variant='subheading-medium'>{currentId}</Typography>
         {currentLabels.map((label) => (

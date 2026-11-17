@@ -6,12 +6,12 @@ import { EXTRACTION_METHOD_LABELS, EXTRACTION_METHOD_STANDARD } from '../utils/E
 // 抽出方式の一覧（GET /extraction_methods）を、メイン画面の表示とグラフ設定の「取り込み」タブで共有する。
 // 一覧は部品の表示ごとに再取得し、同時に表示された部品の取得は 1 回の要求に集約する
 
-// backend から取得できない場合（旧版の backend・通信の失敗）は標準のみを表示する
-export const FALLBACK_METHODS: ExtractionMethodOption[] = [
+// backend から取得できない場合は標準のみを表示する
+const FALLBACK_METHODS: ExtractionMethodOption[] = [
   { id: EXTRACTION_METHOD_STANDARD, label: EXTRACTION_METHOD_LABELS[EXTRACTION_METHOD_STANDARD], available: true },
 ];
 
-export interface ExtractionMethodsState {
+interface ExtractionMethodsState {
   methods: ExtractionMethodOption[];
   // 取得を 1 回以上完了したかどうか（失敗を含む）
   loaded: boolean;
@@ -28,7 +28,7 @@ const publish = (next: ExtractionMethodsState) => {
   listeners.forEach((listener) => listener(next));
 };
 
-export const refreshExtractionMethods = (): Promise<void> => {
+const refreshExtractionMethods = (): Promise<void> => {
   if (inflight) {
     return inflight;
   }

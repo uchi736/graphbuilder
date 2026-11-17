@@ -427,6 +427,12 @@ export const capitalizeWithPlus = (s: string) => {
     .join('+');
 };
 export const capitalizeWithUnderscore = (s: string) => capitalize(s).split('_').join(' ');
+// 「_」区切りの名前を語ごとに先頭を大文字にして空白でつなぐ（例: start_from_beginning → Start From Beginning）
+export const capitalizeEachWord = (s: string) =>
+  s
+    .split('_')
+    .map((word) => capitalize(word))
+    .join(' ');
 
 export const getDescriptionForChatMode = (mode: string): string => {
   switch (mode.toLowerCase()) {

@@ -23,14 +23,15 @@ import { tokens } from '@neo4j-ndl/base';
 import GraphViewModal from '../../../Graph/GraphViewModal';
 import { handleGraphNodeClick } from '../../../ChatBot/chatInfo';
 import { ThemeWrapperContext } from '../../../../context/ThemeWrapper';
-import { describeGraphEditError, describeGraphEditFailure, markDistinct } from '../../../../services/GraphEdit';
+import {
+  describeCaughtGraphEditFailure,
+  describeGraphEditError,
+  markDistinct,
+} from '../../../../services/GraphEdit';
 import { showErrorToast, showSuccessToast } from '../../../../utils/Toasts';
 import { graphEditUser, visibleLabels } from '../../../../utils/GraphEditUtils';
 
 const isCancelled = (error: any) => error?.code === 'ERR_CANCELED' || error?.name === 'CanceledError';
-
-const failureText = (error: unknown) =>
-  describeGraphEditFailure(error instanceof Error ? error.message : String(error));
 
 // 「非同一として登録」（M10）。処理中は押せないようにする
 function DistinctButton({ onMark, isDisabled }: { onMark: () => Promise<void>; isDisabled: boolean }) {
@@ -93,7 +94,7 @@ export default function DeduplicationTab() {
     } catch (error) {
       setLoading(false);
       if (!isCancelled(error)) {
-        showErrorToast(`重複の候補を取得できませんでした。${failureText(error)}`);
+        showErrorToast(`重複の候補を取得できませんでした。${describeCaughtGraphEditFailure(error)}`);
       }
     }
   }, [userCredentials]);
@@ -139,7 +140,7 @@ export default function DeduplicationTab() {
       }
     } catch (error) {
       setmergeAPIloading(false);
-      showErrorToast(`重複ノードを統合できませんでした。${failureText(error)}`);
+      showErrorToast(`重複ノードを統合できませんでした。${describeCaughtGraphEditFailure(error)}`);
     }
   };
 

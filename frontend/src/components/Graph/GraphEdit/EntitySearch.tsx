@@ -23,13 +23,7 @@ const toOption = (hit: GraphEditEntityHit): EntityOption => {
 };
 
 // 「エンティティの名前検索」入力欄。/graph_edit/search_entities の結果から選ぶ。
-export default function EntitySearch({
-  onSelect,
-  isDisabled = false,
-}: {
-  onSelect: (hit: GraphEditEntityHit) => void;
-  isDisabled?: boolean;
-}) {
+export default function EntitySearch({ onSelect }: { onSelect: (hit: GraphEditEntityHit) => void }) {
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
   useEffect(
     () => () => {
@@ -51,7 +45,7 @@ export default function EntitySearch({
         return;
       }
       timerRef.current = setTimeout(() => {
-        searchEntities(query, 20)
+        searchEntities(query)
           .then((hits) => resolve((hits ?? []).map(toOption)))
           .catch((error) => {
             showErrorToast(describeGraphEditError(error));
@@ -61,13 +55,12 @@ export default function EntitySearch({
     });
 
   return (
-    <div data-testid='graph-edit-entity-search'>
+    <div>
       <Select
         type='async'
         label='エンティティの名前検索'
         size='small'
         isFluid={true}
-        isDisabled={isDisabled}
         selectProps={{
           loadOptions,
           cacheOptions: false,

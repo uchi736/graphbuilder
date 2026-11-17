@@ -10,7 +10,7 @@ export interface SchemaOption {
 export interface GraphSchemaOptions {
   labels: SchemaOption[];
   relationshipTypes: SchemaOption[];
-  // 件数を取得できたか（backend の再起動前と POST /schema_options の失敗時は false）
+  // 件数を取得できたか（POST /schema_options の失敗時は false）
   hasCounts: boolean;
 }
 

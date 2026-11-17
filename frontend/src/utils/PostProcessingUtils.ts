@@ -1,6 +1,6 @@
 import { CustomFile } from '../types';
 
-// 取り込みの後の自動の後処理（Content.tsx）と同じ絞り込み。スキーマを設定しているときはスキーマ統合を、GDS が無いときはコミュニティを外す
+// 後処理に送るジョブの絞り込み。スキーマを設定しているときはスキーマ統合を、GDS が無いときはコミュニティを外す
 export const postProcessingPayload = (tasks: string[], isGdsActive: boolean, hasSelections: boolean): string[] =>
   tasks.filter(
     (task) =>
@@ -8,7 +8,7 @@ export const postProcessingPayload = (tasks: string[], isGdsActive: boolean, has
   );
 
 // /post_processing が返す文書ごとの件数（graphDBdataAccess.update_node_relationship_count）
-export interface PostProcessingCountRow {
+interface PostProcessingCountRow {
   filename: string;
   chunkNodeCount?: number;
   entityNodeCount?: number;
@@ -20,7 +20,7 @@ export interface PostProcessingCountRow {
   relationshipCount?: number;
 }
 
-// 件数をファイルの一覧に反映する（Content.tsx の自動の後処理と同じ項目）
+// 件数をファイルの一覧に反映する
 export const mergePostProcessingCounts = (files: CustomFile[], rows: PostProcessingCountRow[]): CustomFile[] => {
   const byName = new Map(rows.map((row): [string, PostProcessingCountRow] => [row.filename, row]));
   return files.map((f) => {

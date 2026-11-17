@@ -27,8 +27,8 @@ export const saveExtractionMethod = (method: string) => {
 };
 
 // EDC の初期スキーマの指定（取り込みごとに送る。空は backend の設定に従う）。抽出方式と同じくブラウザに保存する
-export const EDC_OPTIONS_STORAGE_KEY = 'edcExtractionOptions';
-export const EDC_SCHEMA_MODES = ['fixed', 'fixed_extended'] as const;
+const EDC_OPTIONS_STORAGE_KEY = 'edcExtractionOptions';
+const EDC_SCHEMA_MODES = ['fixed', 'fixed_extended'] as const;
 export type EdcSchemaMode = (typeof EDC_SCHEMA_MODES)[number];
 export interface EdcExtractionOptions {
   // '' = backend の設定に従う、'auto' = 文書ごとに判定、'none' = 文書種別なし（語彙を使わず発見）、それ以外 = 文書種別の名前で固定
@@ -36,7 +36,7 @@ export interface EdcExtractionOptions {
   // '' = backend の設定に従う
   schemaMode: '' | EdcSchemaMode;
 }
-export const EMPTY_EDC_OPTIONS: EdcExtractionOptions = { doctype: '', schemaMode: '' };
+const EMPTY_EDC_OPTIONS: EdcExtractionOptions = { doctype: '', schemaMode: '' };
 
 export const initialEdcOptions = (): EdcExtractionOptions => {
   try {
@@ -67,19 +67,16 @@ export const withMethodDetail = (label: string, detail: string): string => {
   return `${label}（${detail}）`;
 };
 
-// 行の抽出方式。未抽出の行は画面の選択、方式の記録が無い旧い行は model=edc なら EDC、ほかは標準
+// 行に記録された抽出方式。方式の記録が無い旧い行は model=edc なら EDC、ほかは標準
+export const recordedExtractionMethod = (row: { extraction_method?: string; model?: string }): string =>
+  row.extraction_method ||
+  ((row.model ?? '').toLowerCase() === EXTRACTION_METHOD_EDC ? EXTRACTION_METHOD_EDC : EXTRACTION_METHOD_STANDARD);
+
+// 行の抽出方式。未抽出の行は画面の選択、それ以外は記録された方式
 export const effectiveExtractionMethod = (
   row: { status?: string; extraction_method?: string; model?: string },
   selected: string
-): string => {
-  if (row.status && PENDING_STATUSES.includes(row.status)) {
-    return selected;
-  }
-  if (row.extraction_method) {
-    return row.extraction_method;
-  }
-  return (row.model ?? '').toLowerCase() === EXTRACTION_METHOD_EDC ? EXTRACTION_METHOD_EDC : EXTRACTION_METHOD_STANDARD;
-};
+): string => (row.status && PENDING_STATUSES.includes(row.status) ? selected : recordedExtractionMethod(row));
 
 // モデル列の表示。標準は LLM 名、EDC は「LLM 名 / EDC」。LLM が分からないときは「LLM 不明」
 export const modelColumnLabel = (model: string | undefined, method: string): string => {

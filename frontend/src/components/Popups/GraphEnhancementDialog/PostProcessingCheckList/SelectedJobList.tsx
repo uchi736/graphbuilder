@@ -1,17 +1,12 @@
 import { Checkbox, Flex, Typography } from '@neo4j-ndl/react';
-import { capitalize } from '../../../../utils/Utils';
+import { capitalizeEachWord } from '../../../../utils/Utils';
 import { useMemo } from 'react';
 import { POST_PROCESSING_JOBS } from '../../../../utils/Constants';
 import { postProcessingPayload } from '../../../../utils/PostProcessingUtils';
 
 // 表示名（一覧に無いジョブは API の名前を読みやすくしたもの）と流れる順番
 const jobOf = (task: string) => POST_PROCESSING_JOBS.find((job) => job.title === task);
-const jobLabel = (task: string) =>
-  jobOf(task)?.label ??
-  task
-    .split('_')
-    .map((s) => capitalize(s))
-    .join(' ');
+const jobLabel = (task: string) => jobOf(task)?.label ?? capitalizeEachWord(task);
 
 export default function SelectedJobList({
   postProcessingTasks,

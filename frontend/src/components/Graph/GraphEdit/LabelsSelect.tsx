@@ -13,7 +13,6 @@ export default function LabelsSelect({
   extraLabels = [],
   errorText,
   isDisabled = false,
-  label = 'ラベル',
 }: {
   value: string[];
   onChange: (labels: string[]) => void;
@@ -23,7 +22,6 @@ export default function LabelsSelect({
   extraLabels?: string[];
   errorText?: string;
   isDisabled?: boolean;
-  label?: string;
 }) {
   const groups = useMemo(
     () => labelOptionGroups(vocabulary, reserved, currentLabels, extraLabels),
@@ -32,7 +30,7 @@ export default function LabelsSelect({
   return (
     <Select<NameOption, true, NameOptionGroup>
       type='creatable'
-      label={label}
+      label='ラベル'
       size='medium'
       isFluid={true}
       isDisabled={isDisabled}

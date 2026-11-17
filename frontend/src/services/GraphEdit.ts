@@ -20,12 +20,13 @@ import {
   GraphEditUndoResult,
   GraphEditVocabulary,
 } from '../types';
+import { conflictNodeName, conflictNodes } from '../utils/GraphEditUtils';
 
 // グラフの手動修正の入口（docs/graph-edit/DESIGN.md の 3 章）。
 // 接続情報（uri, userName, password, database）は API/Index の interceptor が付ける。
 
 // 失敗のコードの日本語の文言。コードそのものはバックエンドの英語のまま比較に使う。
-export const GRAPH_EDIT_ERROR_MESSAGES: Record<GraphEditErrorCode, string> = {
+const GRAPH_EDIT_ERROR_MESSAGES: Record<GraphEditErrorCode, string> = {
   NOT_FOUND:
     '対象のエンティティまたはリレーションが見つかりません。他の操作で削除された可能性があります。表示を更新してください。',
   STALE:
@@ -39,17 +40,12 @@ export const GRAPH_EDIT_ERROR_MESSAGES: Record<GraphEditErrorCode, string> = {
   UNKNOWN: '操作に失敗しました。',
 };
 
-const KNOWN_ERROR_CODES: GraphEditErrorCode[] = [
-  'NOT_FOUND',
-  'STALE',
-  'CONFLICT',
-  'RESERVED',
-  'INVALID',
-  'BUSY',
-  'NOT_UNDOABLE',
-];
+// バックエンドが返すコード（NETWORK と UNKNOWN は画面側で付ける）
+const KNOWN_ERROR_CODES: GraphEditErrorCode[] = (Object.keys(GRAPH_EDIT_ERROR_MESSAGES) as GraphEditErrorCode[]).filter(
+  (code) => code !== 'NETWORK' && code !== 'UNKNOWN'
+);
 
-export class GraphEditError extends Error {
+class GraphEditError extends Error {
   constructor(
     public readonly code: GraphEditErrorCode,
     public readonly detail: string,
@@ -61,7 +57,7 @@ export class GraphEditError extends Error {
 }
 
 // バックエンドの error（"CODE: 詳細"）を GraphEditError に直す
-export const parseGraphEditError = (error?: string | null, data?: any): GraphEditError => {
+const parseGraphEditError = (error?: string | null, data?: any): GraphEditError => {
   const text = (error ?? '').trim();
   const matched = /^([A-Z_]+)\s*:\s*([\s\S]*)$/.exec(text);
   if (matched && KNOWN_ERROR_CODES.includes(matched[1] as GraphEditErrorCode)) {
@@ -73,15 +69,10 @@ export const parseGraphEditError = (error?: string | null, data?: any): GraphEdi
   return new GraphEditError('UNKNOWN', text, data);
 };
 
-const conflictNames = (data: any): string[] => {
-  const conflicts: any[] = Array.isArray(data?.conflicts) ? data.conflicts : [];
-  return conflicts
-    .map((item) => {
-      const node = item?.node ?? item;
-      return String(node?.properties?.id ?? node?.id ?? '');
-    })
+const conflictNames = (data: any): string[] =>
+  conflictNodes(data)
+    .map(conflictNodeName)
     .filter((name) => name !== '');
-};
 
 // 画面に出す日本語の文。詳細（英語のことがある）は括弧に添える。
 export const describeGraphEditError = (error: unknown): string => {
@@ -113,12 +104,16 @@ export const describeGraphEditError = (error: unknown): string => {
 export const describeGraphEditFailure = (error?: string | null, data?: any): string =>
   describeGraphEditError(parseGraphEditError(error, data));
 
+// 既存の入口を呼んで投げられた例外を日本語にする
+export const describeCaughtGraphEditFailure = (error: unknown): string =>
+  describeGraphEditFailure(error instanceof Error ? error.message : String(error));
+
 export const isGraphEditError = (error: unknown, code: GraphEditErrorCode): error is GraphEditError =>
   error instanceof GraphEditError && error.code === code;
 
 type FormValue = string | number | boolean | null | undefined;
 
-const postGraphEdit = async <T>(path: string, params: Record<string, FormValue>, signal?: AbortSignal): Promise<T> => {
+const postGraphEdit = async <T>(path: string, params: Record<string, FormValue>): Promise<T> => {
   const formData = new FormData();
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
@@ -127,12 +122,9 @@ const postGraphEdit = async <T>(path: string, params: Record<string, FormValue>,
   });
   let body: GraphEditApiResponse<T>;
   try {
-    const response = await api.post<GraphEditApiResponse<T>>(`/graph_edit/${path}`, formData, { signal });
+    const response = await api.post<GraphEditApiResponse<T>>(`/graph_edit/${path}`, formData);
     body = response.data;
   } catch (error: any) {
-    if (error?.code === 'ERR_CANCELED' || error?.name === 'CanceledError') {
-      throw error;
-    }
     const status = error?.response?.status;
     const detail = status ? `HTTP ${status} ${path}` : String(error?.message ?? path);
     throw new GraphEditError('NETWORK', detail);
@@ -147,11 +139,11 @@ const postGraphEdit = async <T>(path: string, params: Record<string, FormValue>,
 };
 
 // 読み取り
-export const getNodeDetail = (elementId: string, signal?: AbortSignal) =>
-  postGraphEdit<GraphEditNodeDetail>('node_detail', { element_id: elementId }, signal);
+export const getNodeDetail = (elementId: string) =>
+  postGraphEdit<GraphEditNodeDetail>('node_detail', { element_id: elementId });
 
-export const searchEntities = (q: string, limit = 20, signal?: AbortSignal) =>
-  postGraphEdit<GraphEditEntityHit[]>('search_entities', { q, limit }, signal);
+// 件数の上限はバックエンドの既定（20 件）
+export const searchEntities = (q: string) => postGraphEdit<GraphEditEntityHit[]>('search_entities', { q });
 
 export const getNeighborhood = (elementId: string) =>
   postGraphEdit<GraphEditNeighborhood>('neighborhood', { element_id: elementId });
@@ -202,10 +194,8 @@ export const createRelationship = (params: {
   target_element_id: string;
   target_expected_id: string;
   type: string;
-  props: Record<string, GraphEditPropertyValue>;
   user: string;
-}) =>
-  postGraphEdit<GraphEditRelationshipResult>('create_relationship', { ...params, props: JSON.stringify(params.props) });
+}) => postGraphEdit<GraphEditRelationshipResult>('create_relationship', params);
 
 // M7 リレーションの削除
 export const deleteRelationship = (params: {
@@ -215,19 +205,17 @@ export const deleteRelationship = (params: {
   user: string;
 }) => postGraphEdit<GraphEditOpResult>('delete_relationship', { ...params, expected: JSON.stringify(params.expected) });
 
-// M8 リレーションの種類・向き・プロパティの修正
+// M8 リレーションの種類・向きの修正
 export const updateRelationship = (params: {
   element_id: string;
   expected: GraphEditRelationshipExpected;
   new_type?: string;
   reverse: boolean;
-  props?: Record<string, GraphEditPropertyValue>;
   user: string;
 }) =>
   postGraphEdit<GraphEditRelationshipResult>('update_relationship', {
     ...params,
     expected: JSON.stringify(params.expected),
-    props: params.props === undefined ? undefined : JSON.stringify(params.props),
   });
 
 // M9 操作の履歴と取り消し

@@ -56,7 +56,7 @@ export default function PostProcessingCheckList() {
       return;
     }
     setPostProcessingVal(true);
-    const slow = runList.some((job) => job.uses_llm) ? '。LLM を使用するジョブを含むため、時間がかかります' : '';
+    const slow = runList.some((job) => job.group === 'llm') ? '。LLM を使用するジョブを含むため、時間がかかります' : '';
     showNormalToast(`後処理を開始しました（${payload.length} 件）${slow}`);
     try {
       const response = await postProcessing(payload);
@@ -101,7 +101,7 @@ export default function PostProcessingCheckList() {
                 />
                 <Typography variant={tablet ? 'body-small' : 'body-medium'}>{job.description}</Typography>
                 <Flex flexDirection='row' gap='2' alignItems='center'>
-                  {job.uses_llm && (
+                  {job.group === 'llm' && (
                     <Tag type='default' size='small'>
                       LLM を使用
                     </Tag>

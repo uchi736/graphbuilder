@@ -58,7 +58,6 @@ const ResultOverview: React.FunctionComponent<OverViewProps> = ({
       : relationships;
   const labelCounts: Record<string, number> = {};
   scopedNodes.forEach((n) => (n.labels ?? []).forEach((l) => (labelCounts[l] = (labelCounts[l] ?? 0) + 1)));
-  const nodeCount = (_nodes: ExtendedNode[], label: string): number => labelCounts[label] ?? 0;
 
   // 凡例の並び: Document と Chunk を先頭、残りは件数の多い順（範囲内に 0 件の種類は出さない）
   const pinned = [graphLabels.document, graphLabels.chunk];
@@ -81,7 +80,6 @@ const ResultOverview: React.FunctionComponent<OverViewProps> = ({
     const key = r.caption || '';
     relCounts[key] = (relCounts[key] ?? 0) + 1;
   });
-  const relationshipCount = (_relationships: ExtendedRelationship[], label: string): number => relCounts[label] ?? 0;
 
   // リレーションの凡例: 件数の多い順
   const groupedAndSortedRelationships: ExtendedRelationship[] = Object.values(
@@ -243,7 +241,7 @@ const ResultOverview: React.FunctionComponent<OverViewProps> = ({
                   key={nodeLabel}
                   label={nodeLabel}
                   scheme={newScheme}
-                  count={nodeCount(nodes, nodeLabel)}
+                  count={labelCounts[nodeLabel] ?? 0}
                   onClick={() => handleNodeClick(nodeLabel)}
                 />
               ))}
@@ -265,7 +263,7 @@ const ResultOverview: React.FunctionComponent<OverViewProps> = ({
                   key={index}
                   label={relType.caption || ''}
                   type='relationship'
-                  count={relationshipCount(relationships as ExtendedRelationship[], relType.caption || '')}
+                  count={relCounts[relType.caption || ''] ?? 0}
                   onClick={() => handleRelationshipClick(relType.caption || '')}
                   scheme={{}}
                 />

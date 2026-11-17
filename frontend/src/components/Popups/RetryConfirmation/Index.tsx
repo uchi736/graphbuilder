@@ -1,7 +1,7 @@
 import { Banner, Dialog, Flex, Radio } from '@neo4j-ndl/react';
 import { RETRY_OPIONS } from '../../../utils/Constants';
 import { useFileContext } from '../../../context/UsersFiles';
-import { capitalize } from '../../../utils/Utils';
+import { capitalizeEachWord } from '../../../utils/Utils';
 import { BannerAlertProps } from '../../../types';
 import ButtonWithToolTip from '../../UI/ButtonWithToolTip';
 import { memo } from 'react';
@@ -70,10 +70,7 @@ function RetryConfirmationDialog({
                   },
                 }}
                 isChecked={o === file?.retryOption && file?.retryOptionStatus}
-                label={o
-                  .split('_')
-                  .map((s) => capitalize(s))
-                  .join(' ')}
+                label={capitalizeEachWord(o)}
               />
             );
           })}

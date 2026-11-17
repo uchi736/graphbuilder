@@ -1,25 +1,22 @@
 import {
   Banner,
   Button,
-  DataGrid,
-  DataGridComponents,
   Flex,
   StatusIndicator,
   Typography,
   useMediaQuery,
 } from '@neo4j-ndl/react';
 import { tokens } from '@neo4j-ndl/base';
-import { Fragment, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Table, createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { useCredentials } from '../../../../context/UserCredentials';
-import { ThemeWrapperContext } from '../../../../context/ThemeWrapper';
 import {
   OverviewCount,
   OverviewSetting,
   SettingsOverviewData,
   getSettingsOverview,
 } from '../../../../services/SettingsOverview';
-import { DataGridJaLoading, DataGridJaNoData } from '../../../UI/DataGridJa';
+import { DataGridJaTable } from '../../../UI/DataGridJa';
 
 // 保守: 設定値と検証件数の一覧（参照のみ）。動作を制限する設定の現在値と、グラフの検証項目の件数を表示する。
 // グラフ設定の「保守」タブの中の「設定値と検証件数」に配置する
@@ -77,36 +74,6 @@ function SettingName({ name }: { name: string }) {
     <Typography variant='code' style={wrapStyle}>
       {breakAfterUnderscore(name)}
     </Typography>
-  );
-}
-
-function OverviewGrid<T>({
-  table,
-  isLoading,
-  heightClass = 'max-h-[420px]',
-}: {
-  table: Table<T>;
-  isLoading: boolean;
-  heightClass?: string;
-}) {
-  const { colorMode } = useContext(ThemeWrapperContext);
-  return (
-    <DataGrid
-      isResizable
-      tableInstance={table}
-      styling={{ borderStyle: 'all-sides', hasZebraStriping: true, headerStyle: 'clean' }}
-      rootProps={{ className: `${heightClass} overflow-y-auto!` }}
-      isLoading={isLoading}
-      components={{
-        Body: () => (
-          <DataGridComponents.Body innerProps={{ className: colorMode === 'dark' ? 'tbody-dark' : 'tbody-light' }} />
-        ),
-        NoDataPlaceholder: DataGridJaNoData,
-        LoadingPlaceholder: DataGridJaLoading,
-        Navigation: null,
-      }}
-      isKeyboardNavigable={false}
-    />
   );
 }
 
@@ -293,10 +260,10 @@ export default function SettingsOverview() {
         />
       )}
       <Typography variant='subheading-medium'>設定値</Typography>
-      <OverviewGrid table={settingsTable} isLoading={isLoading} heightClass='max-h-[60vh]' />
+      <DataGridJaTable table={settingsTable} isLoading={isLoading} heightClass='max-h-[60vh]' hasNavigation={false} />
       <Typography variant='body-small'>{SOURCE_NOTE}</Typography>
       <Typography variant='subheading-medium'>検証件数</Typography>
-      <OverviewGrid table={countsTable} isLoading={isLoading} />
+      <DataGridJaTable table={countsTable} isLoading={isLoading} hasNavigation={false} />
     </Flex>
   );
 }

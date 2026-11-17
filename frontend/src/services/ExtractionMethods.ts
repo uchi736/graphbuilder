@@ -22,22 +22,20 @@ export interface EdcSettings {
 }
 
 // 共通の語彙（backbone）の件数と、定義ファイルを読み込めたかどうか
-export interface EdcVocabularySummary {
+interface EdcVocabularySummary {
   available: boolean;
   error: string | null;
   backbone_node_label_count: number | null;
   backbone_relationship_type_count: number | null;
 }
 
-// 抽出方式の選択肢（GET /extraction_methods）。EDC は利用可否・EDC 側の LLM・文書種別・backend の EDC 設定も返る。
-// settings・vocabulary・doctypes_source と文書種別の件数は、backend の再起動前（旧版）の応答には含まれない
+// 抽出方式の選択肢（GET /extraction_methods）。EDC は利用可否・EDC 側の LLM・文書種別・backend の EDC 設定も返る
 export interface ExtractionMethodOption {
   id: string;
   label: string;
   available: boolean;
   llm?: string | null;
   llm_id?: string | null;
-  llm_status?: string | null;
   reason?: string | null;
   // 使用できない理由の詳細（接続できない場合は例外の名前、依存サービスの停止の場合は /health の状態の原文）。ポインタを合わせると表示する
   reason_detail?: string | null;

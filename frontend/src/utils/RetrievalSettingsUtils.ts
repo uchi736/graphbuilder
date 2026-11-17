@@ -1,6 +1,6 @@
 // チャット検索の詳細設定（画面に出ていなかった制限値）をブラウザに保存する。
 // 保存するのは既定値から変更した項目だけで、チャット送信時にバックエンドへ渡す。
-export type RetrievalSettingValue = number | boolean | string;
+type RetrievalSettingValue = number | boolean | string;
 export type RetrievalSettings = Record<string, RetrievalSettingValue>;
 
 const STORAGE_KEY = 'retrievalSettings';

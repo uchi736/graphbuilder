@@ -4,7 +4,7 @@ import { uploadAPI } from './FileAPI';
 import { showNormalToast } from './Toasts';
 
 // /extract の応答の data.replaced
-export interface ReplacedCounts {
+interface ReplacedCounts {
   chunks: number;
   entities: number;
   sections: number;

@@ -12,7 +12,6 @@ const CHUNK_STRATEGY_LABELS: Record<string, string> = {
 };
 const REFERENCE_MODE_LABELS: Record<string, string> = {
   llm: 'LLM のみ（既定）',
-  hybrid: '規則で解決できる参照は規則、残りは LLM',
   rule: '規則のみ（LLM を使用しない）',
 };
 
@@ -29,7 +28,7 @@ export default function IngestSummary() {
       return;
     }
     let alive = true;
-    getSettingsOverview()
+    getSettingsOverview(undefined, false)
       .then((res) => {
         if (res.status !== 'Success' || !res.data) {
           throw new Error(res.error ?? res.message ?? '');
@@ -58,9 +57,8 @@ export default function IngestSummary() {
     };
   }, [userCredentials]);
 
-  // backend の設定の表示。値が空の場合は backend の既定（PDF_CHUNK_STRATEGY は token、CHUNK_REFERENCE_MODE は llm）とする。
-  // 説明の後に、環境変数の名前と値を補足として表示する
-  const fromBackend = (name: string, labels: Record<string, string>, fallback: string): ReactNode => {
+  // backend の設定の表示（未設定の項目は backend が既定値を返す）。説明の後に、環境変数の名前と値を補足として表示する
+  const fromBackend = (name: string, labels: Record<string, string>): ReactNode => {
     if (failed) {
       return '取得できない（バックエンドの再起動と接続の後に表示される）';
     }
@@ -70,7 +68,7 @@ export default function IngestSummary() {
     if (settings === null) {
       return '取得中…';
     }
-    const value = String(settings[name] || fallback)
+    const value = String(settings[name] ?? '')
       .trim()
       .toLowerCase();
     return (
@@ -83,8 +81,8 @@ export default function IngestSummary() {
   };
   const rows: [string, ReactNode][] = [
     ['抽出方式', <ExtractionMethodSelect key='method' />],
-    ['PDF の分割', fromBackend('PDF_CHUNK_STRATEGY', CHUNK_STRATEGY_LABELS, 'token')],
-    ['参照リンクの生成方式', fromBackend('CHUNK_REFERENCE_MODE', REFERENCE_MODE_LABELS, 'llm')],
+    ['PDF の分割', fromBackend('PDF_CHUNK_STRATEGY', CHUNK_STRATEGY_LABELS)],
+    ['参照リンクの生成方式', fromBackend('CHUNK_REFERENCE_MODE', REFERENCE_MODE_LABELS)],
   ];
   return (
     <section className='flex flex-col gap-2'>

@@ -1,13 +1,6 @@
 import { Typography } from '@neo4j-ndl/react';
 import { RETRY_OPIONS, RETRY_OPTION_HELP, RETRY_OPTION_LABELS } from '../../../../utils/Constants';
-import { capitalize } from '../../../../utils/Utils';
-
-// 再処理オプションのダイアログ（RetryConfirmation）と抽出方式のエラー文に表示される英語の表示名（例: Start From Beginning）
-const englishLabel = (option: string) =>
-  option
-    .split('_')
-    .map((s) => capitalize(s))
-    .join(' ');
+import { capitalizeEachWord } from '../../../../utils/Utils';
 
 // 更新・再処理の手順: 文書の更新（同じファイル名での再取り込み）と、再処理オプションの 3 つの選択肢。
 // 文面は、更新（document_replace.clear_previous_chunks）・手動で修正したエンティティ（_curated）・続きからの抽出方式の確認の動きに合わせる
@@ -31,7 +24,7 @@ export default function MaintenanceGuide() {
         {RETRY_OPIONS.map((option) => (
           <div key={option} className='flex flex-col gap-1'>
             <Typography variant='body-medium' className='font-semibold!'>
-              {`${RETRY_OPTION_LABELS[option] ?? option}（再処理オプションのダイアログでは ${englishLabel(option)}）`}
+              {`${RETRY_OPTION_LABELS[option] ?? option}（再処理オプションのダイアログでは ${capitalizeEachWord(option)}）`}
             </Typography>
             <Typography variant='body-medium'>{RETRY_OPTION_HELP[option]}</Typography>
             <Typography variant='body-small' className='text-palette-neutral-text-weak'>

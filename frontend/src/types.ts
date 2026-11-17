@@ -1155,7 +1155,7 @@ export interface GraphEditRelationship extends NeoRelationship {
   properties?: Record<string, any>;
 }
 
-export interface GraphEditLedgerSummary {
+interface GraphEditLedgerSummary {
   aliases: string[];
   type_override: string[] | null;
   curated_keys: string[];
@@ -1249,15 +1249,6 @@ export interface GraphEditUndoResult {
   restored_ids: string[];
 }
 
-export type GraphEditLedgerKind =
-  | 'alias'
-  | 'tombstone_node'
-  | 'tombstone_rel'
-  | 'type_override'
-  | 'curated'
-  | 'manual_rel'
-  | 'distinct';
-
 export interface GraphEditLedgerRow {
   uid: string;
   kind: string;
@@ -1306,7 +1297,7 @@ export interface GraphEditStructureChange {
 }
 
 // /merge_duplicate_nodes で飛ばした行（前の行の統合で統合先か似たエンティティが消えた行、名前の衝突で断られた行）
-export interface MergeDuplicateSkippedRow {
+interface MergeDuplicateSkippedRow {
   row: number;
   first_element_id: string;
   reason: string;

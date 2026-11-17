@@ -64,10 +64,12 @@ import DocumentRelationPanel from './DocumentRelationPanel';
 const NEIGHBORHOOD_FIT_DELAY_MS = 800;
 // 文書間の関係のみの表示の説明（ヘッダーの説明欄に表示する）。未取り込み文書への参照を表示しない場合と表示する場合で切り替える。
 // 色の名前は DocumentRelations.ts の描画の色（RELATION_STYLES・EXTERNAL_DOCUMENT_COLOR）に対応する
-const DOCUMENT_RELATIONS_INFO =
-  '文書番号ノードを経由する参照を、文書間の矢印 1 本に集約して表示する。濃い青の矢印は文書間の参照（REFERS_TO）、青灰色の矢印は発行目録への掲載（LISTS、発行目録から掲載文書への向き）である。矢印をクリックすると、経由した文書番号と版を右側の欄に表示する。';
-const DOCUMENT_RELATIONS_INFO_WITH_EXTERNAL =
-  '文書番号ノードを経由する参照を、文書間の矢印 1 本に集約して表示する。濃い青の矢印は文書間の参照（REFERS_TO）、薄い灰色の矢印は未取り込み文書への参照（REFERS_TO）、青灰色の矢印は発行目録への掲載（LISTS、発行目録から掲載文書への向き）、灰色のノードは未取り込み文書の文書番号ノードである。矢印をクリックすると、経由した文書番号と版を右側の欄に表示する。';
+const documentRelationsInfo = (includeExternal: boolean) =>
+  `文書番号ノードを経由する参照を、文書間の矢印 1 本に集約して表示する。濃い青の矢印は文書間の参照（REFERS_TO）、${
+    includeExternal ? '薄い灰色の矢印は未取り込み文書への参照（REFERS_TO）、' : ''
+  }青灰色の矢印は発行目録への掲載（LISTS、発行目録から掲載文書への向き）${
+    includeExternal ? '、灰色のノードは未取り込み文書の文書番号ノード' : ''
+  }である。矢印をクリックすると、経由した文書番号と版を右側の欄に表示する。`;
 
 const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   open,
@@ -647,19 +649,19 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   const resetEditState = () => {
     setEditSelection(EMPTY_GRAPH_EDIT_SELECTION);
     setContextMenu(null);
+    setEditPinnedIds([]);
   };
 
   const toggleEditMode = () => {
     setEditMode((previous) => !previous);
     resetEditState();
-    setEditPinnedIds([]);
     setSelected(undefined);
     setSearchQuery('');
   };
 
   // 文書間の関係のみの表示の描画データを、読み込んだ全ノードと全リレーションから生成する
-  const deriveRelationGraph = (external: boolean, sourceNodes = allNodes, sourceRels = allRelationships) => {
-    const graph = buildDocumentRelationGraph(sourceNodes, sourceRels, {
+  const deriveRelationGraph = (external: boolean) => {
+    const graph = buildDocumentRelationGraph(allNodes, allRelationships, {
       includeExternal: external,
       relationshipProperties: relationshipPropsRef.current,
     });
@@ -673,14 +675,11 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     if (scope === viewScope) {
       return;
     }
-    setSearchQuery('');
-    setViewNodes((prev) => prev.map((n) => ({ ...n, selected: false })));
-    setViewRels((prev) => prev.map((r) => ({ ...r, selected: false })));
+    clearSelection();
     setSelected(undefined);
     if (scope === 'documents') {
       setEditMode(false);
       resetEditState();
-      setEditPinnedIds([]);
       deriveRelationGraph(includeExternal);
     }
     setViewScope(scope);
@@ -698,7 +697,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
   // グラフの再読込（更新ボタン）の後は、文書間の関係のみの表示の描画データも再生成する
   useEffect(() => {
     if (relationsMode) {
-      deriveRelationGraph(includeExternal, allNodes, allRelationships);
+      deriveRelationGraph(includeExternal);
     }
   }, [allNodes, allRelationships]);
 
@@ -727,7 +726,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
 
   const checkBoxView = viewPoint !== graphLabels.chatInfoView;
   // 文書間の関係のみの表示の説明。未取り込み文書への参照の表示の有無で切り替える
-  const relationsInfo = includeExternal ? DOCUMENT_RELATIONS_INFO_WITH_EXTERNAL : DOCUMENT_RELATIONS_INFO;
+  const relationsInfo = documentRelationsInfo(includeExternal);
   // 描画対象がない場合の判定。文書間の関係のみの表示では、描画する文書の有無で判定する
   const noGraphData = relationsMode
     ? relationNodes.length === 0
@@ -777,7 +776,7 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     graphApi('refreshMode');
   };
 
-  // when modal closes reset all states to default
+  // when modal closes reset all states to default（フォークで足した表示範囲・文書間の関係の状態は開く時に初期化する）
   const onClose = () => {
     graphQueryAbortControllerRef?.current?.abort();
     setStatus('unknown');
@@ -793,10 +792,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
     setSelected(undefined);
     setEditMode(false);
     resetEditState();
-    setEditPinnedIds([]);
-    setViewScope('all');
-    setRelationNodes([]);
-    setRelationRels([]);
   };
 
   const handleSchemaView = async (rawNodes: any[], rawRelationships: any[]) => {
@@ -912,7 +907,6 @@ const GraphViewModal: React.FunctionComponent<GraphViewModalProps> = ({
                     {editMode && (
                       <div
                         className='absolute top-4 left-4 px-2 py-1 rounded n-body-small n-bg-palette-primary-bg-weak n-text-palette-primary-text'
-                        data-testid='graph-edit-mode-badge'
                       >
                         編集モード（Ctrl または Shift を押しながらクリックで複数選択、右クリックで操作の一覧を表示）
                         {visibleNodes.length < node.length &&

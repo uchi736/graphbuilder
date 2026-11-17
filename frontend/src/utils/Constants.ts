@@ -182,13 +182,6 @@ export const embeddingModels: EmbeddingModelOption[] = [
     value: 'vllm-cl-nagoya/ruri-v3-310m',
   },
 ];
-export const DEFAULT_EMBEDDING_MODEL: EmbeddingModelOption = {
-  provider: 'sentence-transformer',
-  model: 'all-MiniLM-L6-v2',
-  dimension: 384,
-  label: 'Sentence Transformer all-MiniLM-L6-v2',
-  value: 'sentence-transformer-all-MiniLM-L6-v2',
-};
 // 埋め込みモデルの表示用の選択肢。一覧に無いモデル（バックエンドの EMBEDDING_PROVIDER / EMBEDDING_MODEL）も設定どおりに表す。
 // 既定（MiniLM）に落とすと、追加指示・チャンク分割の設定の「キャンセル」が保存済みの設定を MiniLM に書き換えてしまう
 export const embeddingOptionOf = (config: {
@@ -275,14 +268,14 @@ export const buttonCaptions = {
 };
 
 // 後処理のジョブ。title は /post_processing の tasks に送る名前で、変えない。label は画面の表示名。
-// order はバックエンドが流す順番（backend/score.py の post_processing と同じ。backend/tests/test_post_processing_order.py で突き合わせる）
-export type PostProcessingGroup = 'index' | 'layer' | 'llm';
+// order はバックエンドが流す順番（backend/score.py の post_processing と同じ。backend/tests/test_post_processing_order.py で突き合わせる）。
+// LLM を使用するのは group が llm のジョブである
+type PostProcessingGroup = 'index' | 'layer' | 'llm';
 export interface PostProcessingJob {
   title: string;
   label: string;
   group: PostProcessingGroup;
   order: number;
-  uses_llm: boolean;
   description: string;
 }
 export const POST_PROCESSING_GROUPS: { id: PostProcessingGroup; label: string; description: string }[] = [
@@ -308,16 +301,14 @@ export const POST_PROCESSING_JOBS: PostProcessingJob[] = [
     label: 'チャンク間の参照リンク',
     group: 'llm',
     order: 1,
-    uses_llm: true,
     description:
-      'チャンクの本文から他の節・他の文書への参照（「〜による」「別に定める〜基準」「表-1 参照」など）を抽出し、参照元のチャンクから参照先のチャンクへ REFERS_TO を生成する。参照先の節を特定できない場合は、参照先の文書へ生成する。文書をまたぐ質問で、参照元の節が委ねている参照先を追跡できるようにする。生成方式はバックエンドの CHUNK_REFERENCE_MODE で決定され、llm（既定）と hybrid は LLM を使用する。文書層と章・節の層がこの結果を使用するため、最初に実行する。',
+      'チャンクの本文から他の節・他の文書への参照（「〜による」「別に定める〜基準」「表-1 参照」など）を抽出し、参照元のチャンクから参照先のチャンクへ REFERS_TO を生成する。参照先の節を特定できない場合は、参照先の文書へ生成する。文書をまたぐ質問で、参照元の節が委ねている参照先を追跡できるようにする。生成方式はバックエンドの CHUNK_REFERENCE_MODE で決定され、llm（既定）は LLM を使用し、rule は LLM を使用しない。文書層と章・節の層がこの結果を使用するため、最初に実行する。',
   },
   {
     title: 'graph_schema_consolidation',
     label: 'ラベルとリレーションタイプの統合',
     group: 'llm',
     order: 2,
-    uses_llm: true,
     description:
       'LLM を使用して、大規模なグラフスキーマの多数のノードラベルとリレーションタイプを、より少数の適切なものに統合し、抽出済み・既存のグラフに適用する。グラフスキーマを設定している場合は選択できない。バックエンドの GRAPH_SCHEMA_CONSOLIDATION_ENABLED が false の場合は処理を行わない。',
   },
@@ -326,7 +317,6 @@ export const POST_PROCESSING_JOBS: PostProcessingJob[] = [
     label: '文書層',
     group: 'layer',
     order: 3,
-    uses_llm: false,
     description:
       '文書層を規則のみで生成する（LLM は使用しない）。ファイル名と本文から文書番号ノード（Standard）を生成し、各文書を IS_VERSION_OF で文書番号ノードに関連付ける。同じ文書番号を指すエンティティは 1 つに統合し、文書間の参照 REFERS_TO・発行目録の LISTS・適用先の型式 APPLIES_TO を生成する。',
   },
@@ -335,7 +325,6 @@ export const POST_PROCESSING_JOBS: PostProcessingJob[] = [
     label: '表記ゆれの統合',
     group: 'layer',
     order: 4,
-    uses_llm: false,
     description:
       '名前の違いが空白・ハイフン・大文字小文字・全角半角のみで、種類（ラベル）も同じエンティティを規則のみで 1 つに統合する（LLM は使用しない）。言及（HAS_ENTITY）の多いものを残し、リレーションは付け替え、重複するリレーションは 1 本にまとめ、統合した側の名前は残す側の別名（aliases）に追加する。種類が異なるもの、文書層の文書番号、手動の修正で別物として登録した組は統合しない。統合前の状態はバックエンドの logs/entity_variants に記録する。文書層の後に実行する。既定では実行しない。',
   },
@@ -344,7 +333,6 @@ export const POST_PROCESSING_JOBS: PostProcessingJob[] = [
     label: '章・節の層',
     group: 'layer',
     order: 5,
-    uses_llm: false,
     description:
       '章・節の層を規則のみで生成する（LLM は使用しない）。分割時の見出しの経路から見出しノード（Section）の木構造を生成し、各チャンクを最も深い見出しに IN_SECTION で関連付け、参照リンクの参照先を章・節へ付け替える。文書への PART_OF は変更しない。',
   },
@@ -353,25 +341,22 @@ export const POST_PROCESSING_JOBS: PostProcessingJob[] = [
     label: '由来情報と安定キー',
     group: 'layer',
     order: 6,
-    uses_llm: false,
     description:
-      '由来情報と安定キーを規則のみで付与する（LLM は使用しない）。チャンクからエンティティへの HAS_ENTITY に、エンティティ名を含む文（mention）を付与する。各チャンクに、文書名・章・節の番号・節内の順位から成る安定キー（stable_key）を付与する。安定キーは変換器を替えてチャンク ID が変わっても、章・節と分割が同じであれば変わらない。エンティティ間のリレーションの根拠の文（evidence）は、既定の検索の文脈から除外する設定がある場合のみ付与する。章・節の層を使用するため、章・節の層の後に実行する。',
+      '由来情報と安定キーを規則のみで付与する（LLM は使用しない）。チャンクからエンティティへの HAS_ENTITY に、エンティティ名を含む文（mention）を付与する。各チャンクに、文書名・章・節の番号・節内の順位から成る安定キー（stable_key）を付与する。安定キーは変換器を替えてチャンク ID が変わっても、章・節と分割が同じであれば変わらない。エンティティ間のリレーションに根拠の文（evidence）を付与する（既定の検索の文脈には出さない）。章・節の層を使用するため、章・節の層の後に実行する。',
   },
   {
     title: 'build_section_summaries',
     label: '節の要点',
     group: 'llm',
     order: 7,
-    uses_llm: true,
     description:
-      '章・節の層の見出しノード（Section）ごとに、見出しの経路と本文の先頭から検索用の要点（1〜2 文・80 字以内）を LLM で作成し、Section の summary に書き込む。章は下位の節の要点も使用する。本文が変わっていない節は作り直さない（章・節の層を作り直した後も、控えから書き戻す）。参照追跡の検索で、文書のみを指す参照の参照先を節の要点の一覧から選択する場合（検索設定「文書のみを指す参照の参照先の選択方法」）に使用する。使用する LLM はバックエンドの SECTION_SUMMARY_MODEL（既定 gemma4）で決定される。章・節の層を使用するため、章・節の層の後に実行する。',
+      '章・節の層の見出しノード（Section）ごとに、見出しの経路と本文の先頭から検索用の要点（1〜2 文・80 字以内）を LLM で作成し、Section の summary に書き込む。章は下位の節の要点も使用する。本文が変わっていない節は作り直さない（章・節の層を作り直した後も、控えから書き戻す）。チャンク間の参照リンクの生成で、参照先の節を LLM に選ばせる一覧に表示する。使用する LLM はバックエンドの SECTION_SUMMARY_MODEL（既定 gemma4）で決定される。章・節の層を使用するため、章・節の層の後に実行する。',
   },
   {
     title: 'materialize_text_chunk_similarities',
     label: 'チャンクの類似リンク',
     group: 'index',
     order: 8,
-    uses_llm: false,
     description:
       '埋め込みが類似するチャンク同士を、k 近傍法と類似度のしきい値（バックエンドの KNN_MIN_SCORE）で選択し、SIMILAR で関連付ける。',
   },
@@ -380,7 +365,6 @@ export const POST_PROCESSING_JOBS: PostProcessingJob[] = [
     label: '全文インデックスとベクトルインデックス',
     group: 'index',
     order: 9,
-    uses_llm: false,
     description:
       '全文インデックス（チャンクの本文、エンティティの名前と説明、コミュニティの要約）とベクトルインデックス（チャンク・エンティティ・コミュニティ）を再作成する。キーワード検索とハイブリッド検索に使用する。再作成中は、チャットの検索結果が欠落する場合がある。',
   },
@@ -389,7 +373,6 @@ export const POST_PROCESSING_JOBS: PostProcessingJob[] = [
     label: 'エンティティの埋め込み',
     group: 'index',
     order: 10,
-    uses_llm: false,
     description:
       '埋め込みのないエンティティに埋め込みを付与する。エンティティの類似検索と重複ノードの候補抽出に使用する。文書層で統合したエンティティも対象とするため、文書層の後に実行する（バックエンドの ENTITY_EMBEDDING が true の場合のみ動作する）。',
   },
@@ -398,7 +381,6 @@ export const POST_PROCESSING_JOBS: PostProcessingJob[] = [
     label: 'コミュニティの生成',
     group: 'llm',
     order: 11,
-    uses_llm: true,
     description:
       'エンティティの集合（コミュニティ）を生成し、LLM で要約を付与する。GraphRAG のローカル検索・グローバル検索に使用する。GDS が有効な場合のみ選択できる。',
   },

@@ -40,7 +40,7 @@ export default function GraphEditContextMenu({
       }}
     >
       <Popover.Content className='p-1' style={{ zIndex: GRAPH_EDIT_POPOVER_Z_INDEX, minWidth: 260, maxWidth: 360 }}>
-        <div data-no-focus-lock='true' className='flex flex-col' data-testid='graph-edit-context-menu'>
+        <div data-no-focus-lock='true' className='flex flex-col'>
           <div className='px-3 pt-1 pb-1 n-body-small n-text-palette-neutral-text-weak textellipsis' title={title}>
             {title}
           </div>
@@ -51,7 +51,6 @@ export default function GraphEditContextMenu({
               type='button'
               role='menuitem'
               disabled={item.isDisabled}
-              data-testid={`graph-edit-menu-${item.id}`}
               className={`flex flex-col items-start w-full text-left px-3 py-1.5 rounded border-0 bg-transparent ${
                 item.isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:n-bg-palette-neutral-hover'
               } ${item.isDanger && !item.isDisabled ? 'n-text-palette-danger-text' : ''}`}

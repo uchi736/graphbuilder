@@ -21,14 +21,15 @@ import {
 import { showErrorToast, showSuccessToast } from '../../../utils/Toasts';
 import {
   EMPTY_GRAPH_EDIT_SELECTION,
-  addNodeToSelection,
   buildReservedNames,
   entityName,
   graphEditUser,
   isRuleMadeNode,
+  nextNodeSelection,
   nodeEditBlockReason,
   nodeLinkBlockReason,
   relationshipEditBlockReason,
+  relationshipExpected,
   toCandidate,
   toRelationshipTarget,
 } from '../../../utils/GraphEditUtils';
@@ -51,7 +52,7 @@ type DialogState =
   | { kind: 'changeRelationshipType'; relationship: GraphEditRelationshipTarget }
   | { kind: 'deleteRelationship'; relationship: GraphEditRelationshipTarget };
 
-export interface GraphEditPanelProps {
+interface GraphEditPanelProps {
   nodes: ExtendedNode[];
   relationships: Relationship[];
   scheme: Scheme;
@@ -64,6 +65,8 @@ export interface GraphEditPanelProps {
   onStructureChanged: (change: GraphEditStructureChange) => Promise<void>;
   onShowNeighborhood: (elementId: string) => Promise<void>;
 }
+
+const nodeName = (node: ExtendedNode) => entityName(node) || node.id;
 
 const HINTS = [
   'エンティティをクリックすると、この欄で名前・ラベル・説明などを編集できる。',
@@ -125,16 +128,17 @@ export default function GraphEditPanel({
   const selectedRelationship =
     selection.relationshipId === undefined ? undefined : relationshipById.get(selection.relationshipId);
 
-  const relationshipTargetOf = (relationship: Relationship | undefined): GraphEditRelationshipTarget | undefined => {
-    if (relationship === undefined) {
-      return undefined;
-    }
-    const source = nodeById.get(relationship.from);
-    const target = nodeById.get(relationship.to);
-    if (source === undefined || target === undefined) {
-      return undefined;
-    }
-    return toRelationshipTarget(relationship, source, target);
+  // リレーションの操作の対象（端点が表示中に無ければ undefined）と、編集できない理由（空文字なら編集できる）
+  const relationshipEditOf = (relationship: Relationship | undefined) => {
+    const source = relationship ? nodeById.get(relationship.from) : undefined;
+    const target = relationship ? nodeById.get(relationship.to) : undefined;
+    return {
+      target:
+        relationship !== undefined && source !== undefined && target !== undefined
+          ? toRelationshipTarget(relationship, source, target)
+          : undefined,
+      blockReason: relationshipEditBlockReason(relationship, source, target, reserved),
+    };
   };
 
   const closeDialog = () => setDialog(null);
@@ -153,7 +157,7 @@ export default function GraphEditPanel({
     try {
       const result = await updateRelationship({
         element_id: relationship.element_id,
-        expected: { src: relationship.source.id, type: relationship.type, tgt: relationship.target.id },
+        expected: relationshipExpected(relationship),
         reverse: true,
         user: editUser,
       });
@@ -208,7 +212,7 @@ export default function GraphEditPanel({
           title: '統合対象に追加',
           description: alreadySelected ? '選択済みです' : `選択中の ${selection.nodeIds.length} 件に追加します`,
           isDisabled: !linkable || alreadySelected,
-          onClick: () => setSelection((previous) => addNodeToSelection(previous, contextMenu.id)),
+          onClick: () => setSelection((previous) => nextNodeSelection(previous, contextMenu.id, true)),
         },
         {
           id: 'create-relationship',
@@ -235,46 +239,32 @@ export default function GraphEditPanel({
       ];
       return { title: `エンティティ：${entityName(node) || contextMenu.id}`, note: blockReason, items };
     }
-    const relationship = relationshipById.get(contextMenu.id);
-    const target = relationshipTargetOf(relationship);
-    const blockReason = relationshipEditBlockReason(
-      relationship,
-      relationship ? nodeById.get(relationship.from) : undefined,
-      relationship ? nodeById.get(relationship.to) : undefined,
-      reserved
-    );
+    const { target, blockReason } = relationshipEditOf(relationshipById.get(contextMenu.id));
     const editable = blockReason === '' && target !== undefined;
+    const withTarget = (run: (relationship: GraphEditRelationshipTarget) => void) => () => {
+      if (target !== undefined) {
+        run(target);
+      }
+    };
     const items: GraphEditMenuItem[] = [
       {
         id: 'change-type',
         title: 'リレーションタイプを変更',
         isDisabled: !editable,
-        onClick: () => {
-          if (target !== undefined) {
-            setDialog({ kind: 'changeRelationshipType', relationship: target });
-          }
-        },
+        onClick: withTarget((relationship) => setDialog({ kind: 'changeRelationshipType', relationship })),
       },
       {
         id: 'reverse',
         title: '向きを反転',
         isDisabled: !editable || working,
-        onClick: () => {
-          if (target !== undefined) {
-            handleReverse(target);
-          }
-        },
+        onClick: withTarget(handleReverse),
       },
       {
         id: 'delete-relationship',
         title: '削除',
         isDanger: true,
         isDisabled: !editable,
-        onClick: () => {
-          if (target !== undefined) {
-            setDialog({ kind: 'deleteRelationship', relationship: target });
-          }
-        },
+        onClick: withTarget((relationship) => setDialog({ kind: 'deleteRelationship', relationship })),
       },
     ];
     const title = target ? relationshipText(target.source.id, target.type, target.target.id) : contextMenu.id;
@@ -282,15 +272,9 @@ export default function GraphEditPanel({
   })();
 
   const renderRelationship = (relationship: Relationship) => {
-    const target = relationshipTargetOf(relationship);
-    const blockReason = relationshipEditBlockReason(
-      relationship,
-      nodeById.get(relationship.from),
-      nodeById.get(relationship.to),
-      reserved
-    );
+    const { target, blockReason } = relationshipEditOf(relationship);
     return (
-      <div className='flex flex-col gap-2' data-testid='graph-edit-relationship'>
+      <div className='flex flex-col gap-2'>
         <Typography variant='subheading-medium'>リレーション</Typography>
         <div>
           <LegendsChip type='relationship' label={relationship.caption ?? ''} scheme={{}} />
@@ -328,12 +312,12 @@ export default function GraphEditPanel({
     const ruleMade = selectedNodes.filter((node) => isRuleMadeNode(node));
     const candidates = selectedNodes.map(toCandidate);
     return (
-      <div className='flex flex-col gap-2' data-testid='graph-edit-multi-selection'>
+      <div className='flex flex-col gap-2'>
         <Typography variant='subheading-medium'>選択中のエンティティ（{selectedNodes.length} 件）</Typography>
         <ul className='pl-4 n-body-medium'>
           {selectedNodes.map((node) => (
             <li key={node.id} className='flex flex-row items-center gap-2'>
-              <span className='flex-1 min-w-0 textellipsis'>{entityName(node) || node.id}</span>
+              <span className='flex-1 min-w-0 textellipsis'>{nodeName(node)}</span>
               <Button
                 size='small'
                 fill='text'
@@ -350,14 +334,14 @@ export default function GraphEditPanel({
           <Banner
             type='warning'
             usage='inline'
-            description={`編集できないノードが含まれています：${blocked.map((node) => entityName(node) || node.id).join('、')}`}
+            description={`編集できないノードが含まれています：${blocked.map(nodeName).join('、')}`}
           />
         )}
         {ruleMade.length > 0 && (
           <Banner
             type='warning'
             usage='inline'
-            description={`規則により生成したノードを含みます（${ruleMade.map((node) => entityName(node) || node.id).join('、')}）。統合ではこのノードが統合先となり、名前とラベルは変更されません。削除はできません。`}
+            description={`規則により生成したノードを含みます（${ruleMade.map(nodeName).join('、')}）。統合ではこのノードが統合先となり、名前とラベルは変更されません。削除はできません。`}
           />
         )}
         <div className='flex flex-row flex-wrap gap-2'>
@@ -422,7 +406,7 @@ export default function GraphEditPanel({
       return renderMultiSelection();
     }
     return (
-      <div className='flex flex-col gap-1 n-body-small' data-testid='graph-edit-hints'>
+      <div className='flex flex-col gap-1 n-body-small'>
         <div className='n-body-medium font-bold!'>編集モード</div>
         <ul className='list-disc pl-5'>
           {HINTS.map((hint) => (
@@ -442,7 +426,6 @@ export default function GraphEditPanel({
         {/* 入力欄や選択の一覧で Escape を押しても、グラフ表示のダイアログ（document で Escape を受ける）を閉じない */}
         <div
           className='mx-4 flex flex-col gap-4'
-          data-testid='graph-edit-panel'
           onKeyDown={(event) => {
             if (event.key === 'Escape') {
               event.stopPropagation();
@@ -474,7 +457,6 @@ export default function GraphEditPanel({
 
       {dialog?.kind === 'merge' && (
         <MergeEntitiesDialog
-          open={true}
           initialCandidates={dialog.candidates}
           initialKeepName={dialog.keepName}
           vocabulary={vocabulary}
@@ -495,11 +477,10 @@ export default function GraphEditPanel({
       )}
       {dialog?.kind === 'deleteNodes' && (
         <DeleteEntitiesDialog
-          open={true}
           candidates={dialog.candidates}
           user={editUser}
           onClose={closeDialog}
-          onDeleted={async (_result, elementIds) => {
+          onDeleted={async (elementIds) => {
             closeDialog();
             setSelection(EMPTY_GRAPH_EDIT_SELECTION);
             await afterStructureChange({ removedNodeIds: elementIds });
@@ -508,7 +489,6 @@ export default function GraphEditPanel({
       )}
       {dialog?.kind === 'createRelationship' && (
         <CreateRelationshipDialog
-          open={true}
           source={dialog.source}
           target={dialog.target}
           vocabulary={vocabulary}
@@ -524,7 +504,6 @@ export default function GraphEditPanel({
       )}
       {dialog?.kind === 'changeRelationshipType' && (
         <ChangeRelationshipTypeDialog
-          open={true}
           relationship={dialog.relationship}
           vocabulary={vocabulary}
           reserved={reserved}
@@ -543,7 +522,6 @@ export default function GraphEditPanel({
       )}
       {dialog?.kind === 'deleteRelationship' && (
         <DeleteRelationshipDialog
-          open={true}
           relationship={dialog.relationship}
           user={editUser}
           onClose={closeDialog}

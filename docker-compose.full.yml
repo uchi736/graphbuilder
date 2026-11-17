@@ -1,0 +1,206 @@
+# ナレッジグラフ一式（Neo4j・backend・frontend・EDC）を 1 本で起動する。
+#
+#   cp .env.example .env          # モデルの接続先と画面の公開ホストを書く
+#   scripts/fetch_tokenizers.sh   # 初回のみ（導入時だけ社外へ通信する）
+#   docker compose -f docker-compose.full.yml up -d --build
+#   scripts/check.sh              # 接続先に届くかを確かめる
+#
+# 含まないもの: モデルの配信（生成・埋め込み・リランク・PDF 変換・OCR）。GPU の構成が環境ごとに違うため、
+# .env に接続先（OpenAI 互換の URL）を書く。既定値は「同じホストで配信している」場合の値。
+# backend と EDC の間はこの compose の中のネットワークで届くので、EDC のホスト側のポートには依存しない。
+
+x-host-gateway: &host-gateway
+  extra_hosts:
+    - host.docker.internal:host-gateway
+
+services:
+  # 専用 Neo4j（データ分離）。Community 5.26 はベクトルインデックスをネイティブ対応。
+  database:
+    image: neo4j:5.26-community
+    container_name: ${CONTAINER_PREFIX:-}neo4j-kgb
+    restart: unless-stopped
+    mem_limit: ${NEO4J_MEM_LIMIT:-7g}
+    environment:
+      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD:-kgb-please-change}
+      - NEO4J_PLUGINS=["apoc"]
+      - NEO4J_apoc_export_file_enabled=true
+      - NEO4J_apoc_import_file_enabled=true
+      - NEO4J_apoc_import_file_use__neo4j__config=true
+      - NEO4J_dbms_security_procedures_unrestricted=apoc.*
+      - NEO4J_server_memory_heap_initial__size=1G
+      - NEO4J_server_memory_heap_max__size=${NEO4J_HEAP_MAX:-4G}
+      - NEO4J_server_memory_pagecache_size=${NEO4J_PAGECACHE:-2G}
+    ports:
+      - "${BIND_ADDR:-0.0.0.0}:${NEO4J_HTTP_PORT:-7475}:7474"
+      - "${BIND_ADDR:-0.0.0.0}:${NEO4J_BOLT_PORT:-7688}:7687"
+    volumes:
+      - neo4j-kgb-data:/data
+      - neo4j-kgb-logs:/logs
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:7474 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    networks:
+      - net
+
+  # EDC（スキーマ統制の抽出エンジン）。ソースは edc-api/（取り込み元は edc-api/VENDORED.md）。
+  edc-api:
+    build:
+      context: ./edc-api
+    container_name: ${CONTAINER_PREFIX:-}edc-api
+    restart: unless-stopped
+    mem_limit: ${EDC_MEM_LIMIT:-2g}
+    <<: *host-gateway
+    environment:
+      - LLM_PROVIDER=vllm
+      - VLLM_ENDPOINT=${LLM_BASE_URL:-http://host.docker.internal:8000/v1}
+      - VLLM_MODEL=${LLM_MODEL:-google/gemma-4-26B-A4B-it}
+      - VLLM_API_KEY=${LLM_API_KEY:-dummy}
+      # 1 回 600 秒 × 2 回で諦める（backend 側の待ち EDC_EXTRACTION_TIMEOUT より先に切れないよう調整する）
+      - VLLM_TIMEOUT=${EDC_LLM_TIMEOUT:-600}
+      - VLLM_MAX_RETRIES=${EDC_LLM_MAX_RETRIES:-2}
+      - VLLM_EMBEDDING_ENDPOINT=${EMBED_BASE_URL:-http://host.docker.internal:8003/v1}
+      - VLLM_EMBEDDING_MODEL=${EMBED_MODEL:-cl-nagoya/ruri-v3-310m}
+      # 類似度による統合は無効（ruri では別のリレーション同士も 0.79〜0.96 に詰まるため、LLM の判定だけで決める）
+      - CANON_MERGE_THRESHOLD=${CANON_MERGE_THRESHOLD:-off}
+      - EDC_MAX_TOKENS=${EDC_MAX_TOKENS:-4096}
+      # スキャン PDF の OCR（EDC の /convert）。OCR サーバーが無い環境では使わなければよい
+      - PDF_PROCESSOR=onprem
+      - PDF_BACKEND=paddleocr_remote
+      - PADDLEX_ENDPOINT=${OCR_URL:-http://host.docker.internal:8005}
+      - PADDLEX_TIMEOUT=${OCR_TIMEOUT:-180}
+    volumes:
+      # 文書タイプの追加を、イメージを作り直さずに反映する
+      - ./edc-api/schemas:/app/schemas:ro
+    ports:
+      - "${BIND_ADDR:-0.0.0.0}:${EDC_PORT:-8081}:8080"
+    networks:
+      - net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ${CONTAINER_PREFIX:-}backend
+    restart: unless-stopped
+    mem_limit: ${BACKEND_MEM_LIMIT:-6g}
+    <<: *host-gateway
+    depends_on:
+      database:
+        condition: service_healthy
+      edc-api:
+        condition: service_started
+    volumes:
+      - ./backend:/code
+      - ./edc-api/schemas:/edc_schemas:ro
+    # backend/.env は任意。書いた値は起動時に下の environment より優先される（score.py の load_dotenv(override=True)）
+    env_file:
+      - path: ./backend/.env
+        required: false
+    environment:
+      # ---- 接続先（.env の値から組み立てる） ----
+      - NEO4J_URI=neo4j://database:7687
+      - NEO4J_USERNAME=neo4j
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD:-kgb-please-change}
+      - NEO4J_DATABASE=neo4j
+      - LLM_MODEL_CONFIG_GEMMA4=${LLM_MODEL:-google/gemma-4-26B-A4B-it},${LLM_BASE_URL:-http://host.docker.internal:8000/v1},${LLM_API_KEY:-dummy}
+      - LLM_MODEL_CONFIG_EDC=http://edc-api:8080,${EDC_DOCTYPE:-auto},${EDC_CHUNK_METHOD:-recursive},${EDC_CONCURRENCY:-4}
+      - EDC_LLM_MODEL=${LLM_MODEL:-google/gemma-4-26B-A4B-it}
+      - EDC_SCHEMAS_DIR=/edc_schemas
+      - EMBEDDING_PROVIDER=vllm
+      - EMBEDDING_MODEL=${EMBED_MODEL:-cl-nagoya/ruri-v3-310m}
+      - VLLM_EMBEDDING_ENDPOINT=${EMBED_BASE_URL:-http://host.docker.internal:8003/v1},${EMBED_API_KEY:-dummy}
+      - CHAT_RERANK_ENABLED=${CHAT_RERANK_ENABLED:-true}
+      - CHAT_RERANK_URL=${RERANK_URL:-http://host.docker.internal:8006/v1/rerank}
+      - CHAT_RERANK_MODEL=${RERANK_MODEL:-cl-nagoya/ruri-v3-reranker-310m}
+      - PDF_REGIONS_PARSE_URL=${PARSE_URL:-http://host.docker.internal:8022/v1}
+      - PDF_REGIONS_PARSE_MODEL=${PARSE_MODEL:-nemotron-parse}
+      # 文書台帳（任意）。空なら使わない
+      - DOCUMENT_REGISTRY_DSN=${DOCUMENT_REGISTRY_DSN-}
+      # ---- 画面で選ぶ LLM の名前（LLM_MODEL_CONFIG_GEMMA4 の枠を使う） ----
+      - GRAPH_CLEANUP_MODEL=${GRAPH_CLEANUP_MODEL:-gemma4}
+      - DEFAULT_DIFFBOT_CHAT_MODEL=${DEFAULT_DIFFBOT_CHAT_MODEL:-gemma4}
+      - CHUNK_REFERENCE_MODEL=${CHUNK_REFERENCE_MODEL:-gemma4}
+      # ---- 取り込みと抽出 ----
+      - IS_EMBEDDING=${IS_EMBEDDING-true}
+      - ENTITY_EMBEDDING=${ENTITY_EMBEDDING-true}
+      - KNN_MIN_SCORE=${KNN_MIN_SCORE-0.94}
+      - UPDATE_GRAPH_CHUNKS_PROCESSED=${UPDATE_GRAPH_CHUNKS_PROCESSED-20}
+      - EDC_ENRICH_SCHEMA=${EDC_ENRICH_SCHEMA-true}
+      - EDC_FOLD_UNKNOWN_RELATIONS=${EDC_FOLD_UNKNOWN_RELATIONS-true}
+      - EDC_DROP_SENTENCE_NAMES=${EDC_DROP_SENTENCE_NAMES-true}
+      - EDC_EXTRACTION_TIMEOUT=${EDC_EXTRACTION_TIMEOUT-}
+      - EDC_PROPOSALS_DIR=${EDC_PROPOSALS_DIR-}
+      - EDC_PDF_CONVERT=${EDC_PDF_CONVERT-}
+      - EDC_CONVERT_TIMEOUT=${EDC_CONVERT_TIMEOUT-}
+      - GRAPH_SCHEMA_CONSOLIDATION_ENABLED=${GRAPH_SCHEMA_CONSOLIDATION_ENABLED-false}
+      - MARKDOWN_CHUNKING=${MARKDOWN_CHUNKING-}
+      - PDF_CHUNK_STRATEGY=${PDF_CHUNK_STRATEGY:-markdown}
+      - CHUNK_TOKENIZER=${CHUNK_TOKENIZER:-/code/tokenizers/ruri-v3-310m/tokenizer.json}
+      - MAX_TOKEN_CHUNK_SIZE=${MAX_TOKEN_CHUNK_SIZE-200000}
+      - DEFAULT_TOKEN_CHUNK_SIZE=${VITE_TOKENS_PER_CHUNK-512}
+      - DEFAULT_CHUNK_OVERLAP=${VITE_CHUNK_OVERLAP-50}
+      - DEFAULT_CHUNKS_TO_COMBINE=${VITE_CHUNK_TO_COMBINE-1}
+      - LOCAL_LLM_MAX_TOKENS=${LOCAL_LLM_MAX_TOKENS-4096}
+      # ---- チャットの検索 ----
+      - CHAT_CANDIDATE_K=${CHAT_CANDIDATE_K:-20}
+      - CHAT_RERANK_TOP_N=${CHAT_RERANK_TOP_N:-6}
+      - CHAT_RERANK_MAX_CHARS=${CHAT_RERANK_MAX_CHARS:-3000}
+      - CHAT_CONTEXT_CHAR_BUDGET=${CHAT_CONTEXT_CHAR_BUDGET:-14000}
+      - CHAT_PROMPT_TOKEN_CUTOFF=${CHAT_PROMPT_TOKEN_CUTOFF:-8}
+      - CHAT_LINE_RERANK_ENABLED=${CHAT_LINE_RERANK_ENABLED:-true}
+      - CHAT_LINE_MAX=${CHAT_LINE_MAX:-120}
+      - CHAT_REFERENCE_MAX=${CHAT_REFERENCE_MAX:-2}
+      # ---- 認証と利用量の記録は使わない ----
+      - TRACK_USER_USAGE=${TRACK_USER_USAGE:-false}
+      - AUTHENTICATION_REQUIRED=${AUTHENTICATION_REQUIRED:-False}
+      # ---- 社外へ通信しない ----
+      - RAGAS_DO_NOT_TRACK=true
+      - ORT_DISABLE_TELEMETRY=1
+      - TIKTOKEN_CACHE_DIR=/code/tokenizers/tiktoken-cache
+      - GCP_LOG_METRICS_ENABLED=False
+      - GCS_FILE_CACHE=False
+    ports:
+      - "${BIND_ADDR:-0.0.0.0}:${BACKEND_PORT:-8440}:8000"
+    networks:
+      - net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # ブラウザから見た backend の URL。ビルド時に画面へ焼き込むので、変えたら frontend を作り直す
+        - VITE_BACKEND_API_URL=${VITE_BACKEND_API_URL:-http://${PUBLIC_HOST:-localhost}:${BACKEND_PORT:-8440}}
+        - VITE_REACT_APP_SOURCES=${VITE_REACT_APP_SOURCES-local}
+        - VITE_LLM_MODELS=${VITE_LLM_MODELS-gemma4}
+        - VITE_LLM_MODELS_PROD=${VITE_LLM_MODELS_PROD-gemma4}
+        - VITE_CHAT_MODES=${VITE_CHAT_MODES-vector,graph_vector,graph,fulltext,graph_vector_fulltext,graph_vector_fulltext_ref,entity_vector}
+        - VITE_ENV=${VITE_ENV-DEV}
+        - VITE_SKIP_AUTH=${VITE_SKIP_AUTH-true}
+        - VITE_TIME_PER_PAGE=${VITE_TIME_PER_PAGE-50}
+        - VITE_CHUNK_SIZE=${VITE_CHUNK_SIZE-5242880}
+        - VITE_LARGE_FILE_SIZE=${VITE_LARGE_FILE_SIZE-5242880}
+        - VITE_BATCH_SIZE=${VITE_BATCH_SIZE-2}
+        - VITE_TOKENS_PER_CHUNK=${VITE_TOKENS_PER_CHUNK-512}
+        - VITE_CHUNK_OVERLAP=${VITE_CHUNK_OVERLAP-50}
+        - VITE_CHUNK_TO_COMBINE=${VITE_CHUNK_TO_COMBINE-1}
+        - DEPLOYMENT_ENV=local
+    container_name: ${CONTAINER_PREFIX:-}frontend
+    restart: unless-stopped
+    mem_limit: 512m
+    depends_on:
+      - backend
+    ports:
+      - "${BIND_ADDR:-0.0.0.0}:${FRONTEND_PORT:-8441}:8080"
+    networks:
+      - net
+
+networks:
+  net:
+
+volumes:
+  neo4j-kgb-data:
+  neo4j-kgb-logs:

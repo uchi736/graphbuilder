@@ -1,0 +1,29 @@
+Example 1:
+Text: 1. 適用 この基準は、XY形送風機に用いるケーシング素材の品質要求基準として適用する。材質:FC250相当材 (JISG5501)
+Triples: [['この基準', 'applies_to', 'ケーシング'], ['ケーシング', 'part_of', 'XY形送風機'], ['ケーシング', 'made_of', 'FC250相当材'], ['FC250相当材', 'conforms_to', 'JIS G 5501']]
+Relations: ['applies_to', 'part_of', 'made_of', 'conforms_to']
+Answer:
+applies_to: 主語の基準・要求が、目的語の部品・型式・材質に適用される。
+part_of: 主語の部品が、目的語の型式や上位の部品の一部として用いられる。
+made_of: 主語の部品・素材が、目的語の材質でできている。
+conforms_to: 主語の材質・試験・試験片が、目的語の規格に準拠する。
+
+Example 2:
+Text: | 材 質 | 引張強さ N/mm2 | 硬さ HB | |---|---|---| | FC250相当材 | ≧250 | 241以下 | (2)引張試験 同一溶解毎に供試材を1本採取し、JIS Z 2201 4号試験片により試験を行うこと。
+Triples: [['FC250相当材', 'has_limit', '引張強さ≧250N/mm2'], ['引張試験', 'has_condition', '同一溶解毎に1本'], ['引張試験', 'uses_specimen', 'JIS Z 2201 4号試験片']]
+Relations: ['has_limit', 'has_condition', 'uses_specimen']
+Answer:
+has_limit: 主語の材質・特性・部位が、目的語の規格値・許容値・判定基準を満たさなければならない。
+has_condition: 主語の試験・処理が、目的語の条件・頻度・数量で行われる。
+uses_specimen: 主語の試験が、目的語の試験片・供試材を用いる。
+
+Example 3:
+Text: 4. 溶接補修 鋳造欠陥の補修はTig溶接とし、湯口部の溶接補修は認めない。補修後は全数カラーチェックを行うこと。補修要領はQC-B-012による。
+Triples: [['鋳造欠陥', 'requires_process', '溶接補修'], ['溶接補修', 'uses_method', 'Tig溶接'], ['溶接補修', 'prohibits', '湯口部'], ['溶接補修', 'requires_test', 'カラーチェック'], ['溶接補修', 'governed_by', 'QC-B-012']]
+Relations: ['requires_process', 'uses_method', 'prohibits', 'requires_test', 'governed_by']
+Answer:
+requires_process: 主語の部品・材質・欠陥に、目的語の工程・処理が求められる。
+uses_method: 主語の処理・試験が、目的語の方法・材料・計測具を用いる。
+prohibits: 主語の処理が、目的語の欠陥・部位・材質・施工者には認められない。
+requires_test: 主語の部品・材質・処理に、目的語の試験・検査の実施が求められる。
+governed_by: 主語の処理・補修・判定が、目的語の基準・要領に従う。

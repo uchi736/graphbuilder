@@ -194,6 +194,8 @@ tools/kg/**/emb_cache.json
 tools/**/pdf/
 tools/**/*.pdf
 tools/**/*.png
+# 報告書の生成スクリプト（社内文書の規格値を例として書き込んでいる）
+tools/kg/hs/gold_add/report/
 
 # 作業中の控えと実行時の記録（コミットしない）
 *.bak

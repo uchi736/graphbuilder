@@ -1,0 +1,26 @@
+Example 1:
+Text: 3-2 軸受温度 循環ポンプの軸受温度は、軸受ハウジング上部2点で測温抵抗体により計測し、各点80℃以下であること。
+Triples: [['軸受温度', 'measured_at', '軸受ハウジング上部'], ['軸受温度', 'measured_by', '測温抵抗体'], ['軸受温度', 'has_value', '2点'], ['軸受温度', 'judged_by', '各点80℃以下']]
+Relations: ['measured_at', 'measured_by', 'has_value', 'judged_by']
+Answer:
+measured_at: 主語の計測項目が、目的語の箇所・部位で計測される。
+measured_by: 主語の計測項目が、目的語の計測機器・計測手段で計測される。
+has_value: 主語の項目・条件が、目的語の数値・点数・設定値を持つ。
+judged_by: 主語の試験・計測項目の合否が、目的語の判定基準・許容値で判定される。
+
+Example 2:
+Text: 4-1 性能試験 定格回転速度にて30分間運転した後、電磁流量計により吐出流量を計測する。計測値は試験成績書に記録する。
+Triples: [['性能試験', 'has_step', '定格回転速度にて30分間運転'], ['定格回転速度にて30分間運転', 'precedes', '吐出流量の計測'], ['吐出流量', 'recorded_in', '試験成績書']]
+Relations: ['has_step', 'precedes', 'recorded_in']
+Answer:
+has_step: 主語の試験・手順が、目的語のステップ・操作を含む。
+precedes: 主語の手順が、目的語の手順より先に行われる。
+recorded_in: 主語の結果・計測値が、目的語の様式・文書に記録される。
+
+Example 3:
+Text: 5. 判定 合否の判定は顧客承認図及び社内基準QP-301による。騒音の計測方法は別紙試験方案W00312を参照のこと。
+Triples: [['合否の判定', 'governed_by', 'QP-301'], ['騒音の計測方法', 'refers_to', 'W00312']]
+Relations: ['governed_by', 'refers_to']
+Answer:
+governed_by: 主語の試験・判定が、目的語の規格・承認図・指示書を根拠とする。
+refers_to: 主語が、目的語の他の文書・条項・規格を参照する。

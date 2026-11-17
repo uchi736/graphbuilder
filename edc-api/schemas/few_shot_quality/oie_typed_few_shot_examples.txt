@@ -1,0 +1,19 @@
+Example 1:
+Text: 1. 適用 この基準は、XY形送風機に用いるケーシング素材の品質要求基準として適用する。材質:FC250相当材 (JISG5501)
+Triplets: [['この基準', 'Standard', 'applies_to', 'ケーシング', 'Part'], ['ケーシング', 'Part', 'part_of', 'XY形送風機', 'Model'], ['ケーシング', 'Part', 'made_of', 'FC250相当材', 'Material'], ['FC250相当材', 'Material', 'conforms_to', 'JIS G 5501', 'Standard']]
+
+Example 2:
+Text: | 材 質 | 引張強さ N/mm2 | 硬さ HB | |---|---|---| | FC250相当材 | ≧250 | 241以下 |
+Triplets: [['FC250相当材', 'Material', 'has_limit', '引張強さ≧250N/mm2', 'Criterion'], ['FC250相当材', 'Material', 'has_limit', '硬さHB241以下', 'Criterion']]
+
+Example 3:
+Text: (2)引張試験 同一溶解毎に供試材を1本採取し、JIS Z 2201 4号試験片により試験を行うこと。
+Triplets: [['引張試験', 'TestItem', 'has_condition', '同一溶解毎に1本', 'Parameter'], ['引張試験', 'TestItem', 'uses_specimen', 'JIS Z 2201 4号試験片', 'Specimen']]
+
+Example 4:
+Text: 4. 溶接補修 鋳造欠陥の補修はTig溶接とし、湯口部の溶接補修は認めない。補修後は全数カラーチェックを行い、溶接補修記録を検査課へ提出すること。補修要領はQC-B-012による。
+Triplets: [['鋳造欠陥', 'Defect', 'requires_process', '溶接補修', 'Process'], ['溶接補修', 'Process', 'uses_method', 'Tig溶接', 'Process'], ['溶接補修', 'Process', 'prohibits', '湯口部', 'Location'], ['溶接補修', 'Process', 'requires_test', 'カラーチェック', 'TestItem'], ['溶接補修記録', 'Document', 'performed_by', '検査課', 'Organization'], ['溶接補修', 'Process', 'governed_by', 'QC-B-012', 'Standard']]
+
+Example 5:
+Text: 改正回数 A B 年 月 日 01.04.01 03.07.15 作成 審査 承認 配布先 製造課 検査課 来歴 一部見直し
+Triplets: []

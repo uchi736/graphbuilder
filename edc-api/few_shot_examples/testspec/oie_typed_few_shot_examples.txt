@@ -1,0 +1,19 @@
+Example 1:
+Text: 3-2 軸受温度 循環ポンプの軸受温度は、軸受ハウジング上部2点で測温抵抗体により計測し、各点80℃以下であること。
+Triplets: [['軸受温度', 'MeasurementItem', 'measured_at', '軸受ハウジング上部', 'Location'], ['軸受温度', 'MeasurementItem', 'measured_by', '測温抵抗体', 'Instrument'], ['軸受温度', 'MeasurementItem', 'has_value', '2点', 'Parameter'], ['軸受温度', 'MeasurementItem', 'judged_by', '各点80℃以下', 'Criterion'], ['軸受温度', 'MeasurementItem', 'applies_to', '循環ポンプ', 'Equipment']]
+
+Example 2:
+Text: 4-1 性能試験 定格回転速度にて30分間運転した後、電磁流量計により吐出流量を計測する。計測値は試験成績書に記録する。
+Triplets: [['性能試験', 'TestItem', 'has_step', '定格回転速度にて30分間運転', 'Step'], ['性能試験', 'TestItem', 'has_step', '吐出流量の計測', 'Step'], ['定格回転速度にて30分間運転', 'Step', 'precedes', '吐出流量の計測', 'Step'], ['吐出流量', 'MeasurementItem', 'measured_by', '電磁流量計', 'Instrument'], ['吐出流量', 'MeasurementItem', 'recorded_in', '試験成績書', 'Document']]
+
+Example 3:
+Text: 5. 判定 合否の判定は顧客承認図及び社内基準QP-301による。騒音の計測方法は別紙試験方案W00312を参照のこと。
+Triplets: [['合否の判定', 'TestItem', 'governed_by', '顧客承認図', 'Standard'], ['合否の判定', 'TestItem', 'governed_by', 'QP-301', 'Standard'], ['騒音の計測方法', 'Step', 'refers_to', 'W00312', 'Document']]
+
+Example 4:
+Text: 但し、試験設備の容量により定格回転速度に達しない場合は、品証課の承認を得た上で到達可能な最高回転速度で運転する。
+Triplets: [['到達可能な最高回転速度での運転', 'Step', 'requires', '品証課の承認', 'Step'], ['品証課の承認', 'Step', 'performed_by', '品証課', 'Organization']]
+
+Example 5:
+Text: 改正番号 A B C 年 月 日 2001/4/1 2003/7/15 作成 審査 承認 品証課 配布先 製造課 検査課 来歴 一部見直し
+Triplets: []

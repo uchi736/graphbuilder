@@ -20,69 +20,73 @@
 
 ## システム構成
 
-3リポジトリ + ホスト常駐サービスで構成される（詳細は [docs/SYSTEM.md](docs/SYSTEM.md)）。
+Neo4j・backend・frontend・EDC は本リポジトリの `docker-compose.full.yml` 1 本で起動する。モデルの配信は含まず、`.env` に接続先を書く（詳細は [docs/SYSTEM.md](docs/SYSTEM.md)）。
 
-| コンポーネント | ポート | 提供元 |
+| コンポーネント | 既定のポート | 提供元 |
 |---|---|---|
-| frontend | 8441 | 本リポジトリ（docker-compose） |
-| backend | 8440 | 本リポジトリ（docker-compose） |
-| Neo4j 5.26 Community + APOC | 7475 / 7688 | 本リポジトリ（docker-compose） |
-| edc-api | 8080 | [EDC](https://github.com/uchi736/EDC)（別compose） |
-| vLLM chat (gemma4) | 8000 | ホスト常駐プロセス |
-| vLLM embedding (ruri-v3-310m) | 8003 | ホスト常駐プロセス（GB / EDC / graphrag 共用） |
-| PaddleX OCR | 8005 | ホスト常駐プロセス（EDC `/convert` 用） |
+| frontend | 8441 | 本リポジトリ（`frontend/`） |
+| backend | 8440 | 本リポジトリ（`backend/`） |
+| Neo4j 5.26 Community + APOC | 7475 / 7688 | 本リポジトリ（compose） |
+| edc-api（スキーマ統制の抽出） | 8081 | 本リポジトリ（`edc-api/`。[EDC](https://github.com/uchi736/EDC) の複製、取り込み元は `edc-api/VENDORED.md`） |
+| 生成（OpenAI 互換） | 8000 | 外部。`.env` の `LLM_BASE_URL` |
+| 埋め込み（ruri-v3-310m、768 次元） | 8003 | 外部。`.env` の `EMBED_BASE_URL` |
+| リランク（ruri-v3-reranker-310m） | 8006 | 外部。`.env` の `RERANK_URL`（無い環境は `CHAT_RERANK_ENABLED=false`） |
+| PDF の構造の読み取り（Nemotron Parse） | 8022 | 外部・任意。`.env` の `PARSE_URL`（届かないときは文字層だけの簡易変換に戻る） |
+| OCR（PaddleX） | 8005 | 外部・任意。`.env` の `OCR_URL`（スキャン PDF を EDC の `/convert` で読む場合のみ） |
+| 文書台帳（PostgreSQL） | 5432 | 外部・任意。`.env` の `DOCUMENT_REGISTRY_DSN`（作り方は `tools/kg/registry/setup_db.sh`） |
 
-## 起動手順（オンプレ / docker-compose）
+## 起動手順（オンプレ / docker compose）
 
 ### 前提
 
-- Neo4j 5.23 以降相当（本構成は同梱の 5.26 Community）
-- ホスト側で vLLM（chat :8000 / embedding :8003）が稼働していること
-- EDCを使う場合は EDCコンテナ（:8080）とPaddleX OCR（:8005）が稼働していること
+- Docker Compose v2.24 以降
+- 生成・埋め込み・リランクの各サーバーが稼働しており、コンテナから届くこと
 
-### 1. 環境変数
-
-`.env`（リポジトリルート）/ `backend/.env` / `frontend/.env` は **gitignore されている**ため、clone後に用意する。
-`backend/example.env` を雛形に作成し、最低限このオンプレ構成のキーを設定する:
+### 1. 設定
 
 ```bash
-# 抽出LLM（ローカル gemma4 vLLM, OpenAI互換）
-LLM_MODEL_CONFIG_GEMMA4=google/gemma-4-26B-A4B-it,http://host.docker.internal:8000/v1,dummy
-# EDC抽出エンジン（抽出専用）: <base_url>[,<doctype>[,<chunk_method>[,<concurrency>]]]
-LLM_MODEL_CONFIG_EDC=http://host.docker.internal:8080,auto,recursive,2
-
-# 埋め込み（vLLM ruri-v3-310m, 768次元）
-EMBEDDING_PROVIDER=vllm
-EMBEDDING_MODEL=cl-nagoya/ruri-v3-310m
-VLLM_EMBEDDING_ENDPOINT=http://192.168.0.250:8003/v1,dummy
-IS_EMBEDDING=true
-ENTITY_EMBEDDING=true
-
-# 前処理・共有グラフ
-EDC_PDF_CONVERT=true
-MARKDOWN_CHUNKING=true
-GRAPH_SCHEMA_CONSOLIDATION_ENABLED=false
-
-# フロント（ビルド時に焼き込み。変更時は frontend 再ビルド要）
-VITE_BACKEND_API_URL=http://<ホストIP>:8440
-VITE_LLM_MODELS=gemma4
-VITE_CHAT_MODES=vector,graph_vector,graph,fulltext,graph_vector_fulltext,entity_vector
+cp .env.example .env
 ```
 
-### 2. ビルドと起動
+`.env` の「1. モデルの接続先」と「2. 画面」（ブラウザから見たホスト名 `PUBLIC_HOST`）を書く。同じホストでモデルを配信している場合、接続先は既定値（`host.docker.internal`）のままでよい。`backend/.env` と `frontend/.env` は不要である（`backend/.env` を置いた場合はその値が優先される）。
+
+### 2. トークナイザーの取得（初回のみ）
 
 ```bash
-docker compose build backend frontend
-docker compose up -d
+scripts/fetch_tokenizers.sh
 ```
 
-ブラウザで `http://<ホストIP>:8441` を開き、接続する。
+チャンクの長さを数えるトークナイザーと tiktoken のキャッシュを `backend/tokenizers/`（git の追跡外）に置く。**導入時にこのスクリプトだけが社外へ通信する**（huggingface.co と openaipublic.blob.core.windows.net）。社外へ出られない環境では、出られる環境で作った `backend/tokenizers/` をフォルダごと運ぶ。
 
-### 3. 初回のみ
+### 3. ビルドと起動
+
+```bash
+docker compose -f docker-compose.full.yml up -d --build
+```
+
+### 4. 接続先の点検
+
+```bash
+scripts/check.sh
+```
+
+backend のコンテナの中から、Neo4j・生成・埋め込み・EDC・リランク・トークナイザーを確かめる。`NG` が出た項目は `.env` を直して 3. をやり直す。
+
+ブラウザで `http://<PUBLIC_HOST>:8441` を開き、接続する（Neo4j の接続先は `neo4j://database:7687`、利用者 `neo4j`、パスワードは `.env` の `NEO4J_PASSWORD`）。
+
+### 5. 初回のみ
 
 1. 接続時にベクトル索引の次元不一致アラートが出たら索引を再作成（旧384 → ruri 768）
 2. 文書を取り込み（抽出方式は「EDC（スキーマ統制）」推奨、「標準」も可。LLM は `gemma4`）
 3. グラフ強化メニューから**後処理を実行**（フルテキスト索引・SIMILAR・エンティティ埋め込み）
+
+### 補足
+
+- **LLM の名前 `gemma4`**: 画面と設定に出る `gemma4` は接続先の枠の名前であり、`.env` の `LLM_MODEL` に別のモデルを書いた場合もこの名前のまま使う。
+- **frontend の作り直し**: `PUBLIC_HOST`・`BACKEND_PORT`・`VITE_*` はビルド時に画面へ焼き込む。変えた場合は `docker compose -f docker-compose.full.yml up -d --build frontend`。
+- **EDC の更新**: `edc-api/` は直接編集せず、取り込み元を直してから `scripts/sync_edc.sh <EDC の checkout>` で取り込み直す。文書タイプとスキーマ（`edc-api/schemas/`）はマウントしているので、イメージの作り直しは不要である。
+- **`all predefined address pools have been fully subnetted` で起動できない場合**: Docker の既定のアドレスを使い切っている。`networks.net.ipam.config` に空いているサブネットを書いた compose ファイルを `-f` で重ねる。
+- **`docker-compose.yml`（従来）**: EDC を別の compose で起動する従来の構成。新しく構築する環境では `docker-compose.full.yml` を使う。
 
 ## 抽出方式と LLM
 

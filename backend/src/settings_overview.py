@@ -13,13 +13,15 @@ import os
 import re
 import shlex
 import time
+from contextlib import contextmanager
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Form
 
 from src import document_layer_rules
 from src.api_response import create_api_response
 from src.entities.user_credential import Neo4jCredentials, get_neo4j_credentials
+from src.rerank_retriever import RETRIEVAL_SETTING_SPECS
 from src.shared import constants
 
 # 名前がこれに当たる設定は返さない（一覧に誤って足しても漏らさない）
@@ -32,76 +34,46 @@ OVERVIEW_ENV = [
     ("CHUNK_TOKENIZER", "取り込み",
      "チャンクのトークン数を算出するトークナイザ（tokenizer.json のパスまたは tiktoken の名称）。読み込めない場合は警告を出力し、gpt2 で算出する。", "gpt2"),
     ("PDF_CHUNK_STRATEGY", "取り込み",
-     "PDF の分割方式。markdown は Markdown に変換し見出しで分割する（MARKDOWN_CHUNKING が true の場合のみ）。token は上流版と同じくトークン数で分割する。",
+     "PDF の分割方式。markdown は Markdown に変換し見出しで分割する（MARKDOWN_CHUNKING が true の場合のみ）。token は上流版と同じくトークン数で分割する。"
+     "Markdown への変換は、本文の文字を文字層から、ページの構造を Nemotron Parse から取り、図は図中の文字と題のみを残す。"
+     "失敗した場合（ページ数が PDF_REGIONS_MAX_PAGES を超える場合を含む）は、文字層のみの簡易変換（ページの印と本文の行、番号の見出し）に戻す。",
      "token"),
     ("MARKDOWN_CHUNKING", "取り込み", "Markdown を見出しで分割するかどうか。false の場合は PDF_CHUNK_STRATEGY=markdown も無効になる。", "true"),
-    ("PDF_CONVERTER", "取り込み",
-     "PDF を Markdown に変換する方式（PDF_CHUNK_STRATEGY=markdown の場合のみ）。regions のみ。"
-     "本文の文字を文字層から、ページの構造を Nemotron Parse から取り、図は既定で図中の文字と題のみを残す。"
-     "失敗した場合（ページ数が PDF_REGIONS_MAX_PAGES を超える場合を含む）は、文字層のみの簡易変換（ページの印と本文の行、番号の見出し）に戻す。"
-     "以前の値 pymupdf4llm は AGPL の部品のため外しており、指定されていれば警告して regions として扱う。",
-     "regions"),
-    ("PDF_REGIONS_PARSE_URL", "取り込み", "PDF_CONVERTER=regions で使用する Nemotron Parse の接続先（OpenAI 互換）。",
+    ("PDF_REGIONS_PARSE_URL", "取り込み", "PDF の Markdown への変換で使用する Nemotron Parse の接続先（OpenAI 互換）。",
      "http://host.docker.internal:8022/v1"),
     ("PDF_REGIONS_PARSE_MODEL", "取り込み", "Nemotron Parse のモデル名。", "nemotron-parse"),
-    ("PDF_REGIONS_TRIAGE_URL", "取り込み", "PDF_CONVERTER=regions で図の種類を判定する軽量の VLM の接続先。",
-     "http://host.docker.internal:8030/v1"),
-    ("PDF_REGIONS_TRIAGE_MODEL", "取り込み", "図の種類を判定する VLM のモデル名。", "google/gemma-4-E4B-it"),
-    ("PDF_REGIONS_VLM_URL", "取り込み", "PDF_CONVERTER=regions で図・グラフの説明文を作成する VLM の接続先。",
-     "http://host.docker.internal:8000/v1"),
-    ("PDF_REGIONS_VLM_MODEL", "取り込み", "図・グラフの説明文を作成する VLM のモデル名。", "google/gemma-4-26B-A4B-it"),
-    ("PDF_REGIONS_FIGURES", "取り込み",
-     "PDF_CONVERTER=regions での図の扱い。text（既定）は VLM を使用せず図中の文字と題のみを残す。"
-     "describe は種類を判定し図・グラフに説明文（自動生成の印付き）を付ける（説明文には読み誤りが含まれることがある）。"
-     "off は図を出力しない。", "text"),
     ("PDF_REGIONS_TIMEOUT", "取り込み",
-     "PDF_CONVERTER=regions での 1 回の要求の時間切れ（秒）。応答の時間切れは送り直さず、時間切れ・接続の失敗・5xx が 2 回続いた接続先は"
+     "PDF の Markdown への変換での 1 回の要求の時間切れ（秒）。応答の時間切れは送り直さず、時間切れ・接続の失敗・5xx が 2 回続いた接続先は"
      " 300 秒のあいだ呼ばない。", "180"),
-    ("PDF_REGIONS_RETRIES", "取り込み", "PDF_CONVERTER=regions で接続の失敗・5xx の場合に送り直す回数（応答の時間切れは送り直さない）。", "2"),
+    ("PDF_REGIONS_RETRIES", "取り込み", "PDF の Markdown への変換で接続の失敗・5xx の場合に送り直す回数（応答の時間切れは送り直さない）。", "2"),
     ("PDF_REGIONS_PARSE_CONCURRENCY", "取り込み",
      "Nemotron Parse への同時の要求の上限。同じコンテナの全作業プロセスで共有する（PDF_REGIONS_LOCK_DIR のロック用ファイル）。"
      "この変換器からの要求だけを数える。", "2"),
-    ("PDF_REGIONS_VLM_CONCURRENCY", "取り込み",
-     "図の判定・説明の VLM それぞれへの同時の要求の上限。同じコンテナの全作業プロセスで共有する。26B は画像付きの同時 6 本で停止した記録がある。",
-     "2"),
     ("PDF_REGIONS_DEADLINE", "取り込み",
-     "PDF_CONVERTER=regions で文書 1 本にかける時間の上限（秒、0 は無し）。超えたら残りのページは文字層だけで組み立て、図の説明を省く。", "600"),
-    ("PDF_REGIONS_MAX_PAGES", "取り込み", "PDF_CONVERTER=regions で変換するページ数の上限。超える PDF は文字層のみの簡易変換で変換する（Nemotron Parse・VLM を使用しない）。", "300"),
+     "PDF の Markdown への変換で文書 1 本にかける時間の上限（秒、0 は無し）。超えたら残りのページは文字層だけで組み立てる。", "600"),
+    ("PDF_REGIONS_MAX_PAGES", "取り込み", "PDF の Markdown への変換でページ数の上限。超える PDF は文字層のみの簡易変換で変換する（Nemotron Parse を使用しない）。", "300"),
     ("PDF_REGIONS_LOCK_DIR", "取り込み",
-     "PDF_CONVERTER=regions で、作業プロセスをまたぐ同時数の上限に使うロック用ファイルの置き場所（空なら一時フォルダの pdf_regions_slots）。", ""),
-    ("PDF_REGIONS_TITLE", "取り込み", "PDF_CONVERTER=regions で、枠の題名の欄を文書の先頭に見出し（## 題名）として置くかどうか。", "true"),
+     "PDF の Markdown への変換で、作業プロセスをまたぐ同時数の上限に使うロック用ファイルの置き場所（空なら一時フォルダの pdf_regions_slots）。", ""),
+    ("PDF_REGIONS_TITLE", "取り込み", "PDF の Markdown への変換で、枠の題名の欄を文書の先頭に見出し（## 題名）として置くかどうか。", "true"),
     ("MARKDOWN_MIN_CHUNK_TOKENS", "取り込み",
      "本文がこの値に満たないチャンク（見出しのみの節など）を、同じ文書の前後のチャンクに統合する（Markdown の分割）。", "80"),
-    ("CHUNK_ID_MODE", "取り込み",
-     "チャンク ID の生成方式。document は文書名・位置・本文のハッシュを使用する。content は本文のみを使用し、同一本文の節は文書をまたいで 1 つのノードになる（過去の記録の再現用）。",
-     "document"),
     ("LOCAL_LLM_MAX_TOKENS", "抽出", "ローカル LLM（OpenAI 互換の接続）の 1 回あたりの出力上限（トークン数）。超過すると抽出の出力が途中で打ち切られる。", "8192"),
     ("UPDATE_GRAPH_CHUNKS_PROCESSED", "抽出", "抽出で一度に処理するチャンク数。この単位ごとに取り消しの有無を確認し、進捗を記録する。", "20"),
     ("KNN_MIN_SCORE", "後処理", "チャンク間に SIMILAR を生成する類似度の下限（後処理 materialize_text_chunk_similarities）。", "0.8"),
     ("DUPLICATE_SCORE_VALUE", "後処理", "「グラフ整備」の「重複ノード」で候補とする埋め込みの類似度の下限。", "0.97"),
     ("DUPLICATE_TEXT_DISTANCE", "後処理", "「グラフ整備」の「重複ノード」で候補とする名称の編集距離の上限（名称が 6 文字以上の場合、この値未満を候補とする）。", "3"),
     ("CHUNK_REFERENCE_MODE", "後処理",
-     "参照リンク（REFERS_TO）の生成方式。llm は LLM のみ、hybrid は規則で解決できない参照のみ LLM、rule は規則のみを使用する。", "llm"),
+     "参照リンク（REFERS_TO）の生成方式。llm は LLM のみ、rule は規則のみを使用する。", "llm"),
     ("CHUNK_REFERENCE_MODEL", "後処理", "参照リンクの抽出に使用する LLM。未設定の場合は GRAPH_CLEANUP_MODEL、それも未設定の場合は gemma4 を使用する。", "gemma4"),
     ("SECTION_SUMMARY_MODEL", "後処理",
      "節の要点（後処理 build_section_summaries）の作成に使用する LLM。LLM_MODEL_CONFIG_<名前> の OpenAI 互換の接続（モデル名,接続先,鍵）を使用する。",
      "gemma4"),
-    ("SECTION_SUMMARY_CONCURRENCY", "後処理",
-     "節の要点の作成で LLM へ同時に送る要求の数。3 を超える値は 3 として扱う（gemma4 は同時の要求で停止した記録がある）。"
-     "上限は 1 プロセスあたりで、同じプロセスの一覧選択の要求と共有する（backend の別のワーカーの一覧選択の要求とは共有しない）。"
-     "節の要点の作成そのものは、同じコンテナの中では同時に 1 本だけ流れる（2 本目は 1 本目の終了を待つ）。", "3"),
     ("SECTION_SUMMARY_TIMEOUT", "後処理",
      "節の要点の作成の 1 回の要求の時間切れ（秒）。失敗した節は 2 回まで送り直し、それでも失敗すれば飛ばす。"
      "接続の失敗・時間切れ・HTTP 401/403/404/429/5xx が 8 回続いた場合と、接続先の設定が読めない場合は、以後の節を LLM に送らずに後処理を Failed にする"
      "（入力が変わらない節の要点の書き戻しは続ける）。LLM に送った節の 1 割を超えて失敗した場合も Failed にする。", "120"),
     ("DOCUMENT_NUMBERS_CONFIG", "後処理",
      "文書番号の規則（系列・正規形）の設定ファイル。文書層の後処理（build_document_layer）が読み込む。", document_layer_rules.DEFAULT_CONFIG),
-    ("DOCUMENT_REGISTRY_TABLE", "後処理",
-     "文書台帳の正本の表（人が直す Postgres の表）の名前。文書層の後処理が、表の値を文書から取り出した値より優先して文書番号ノードに写す。"
-     "接続先は DOCUMENT_REGISTRY_DSN（接続文字列のためこの一覧には表示しない）。DOCUMENT_REGISTRY_DSN が空の場合と、表につながらない場合は表を使わない。",
-     "document_registry"),
-    ("GRAPH_CHUNK_LIMIT", "グラフ表示",
-     "グラフ確認画面で 1 文書あたりに描画するチャンクの上限。0 以下は上限なし。上流版は 50 固定。", str(constants.GRAPH_CHUNK_LIMIT)),
     ("CHAT_RERANK_ENABLED", "チャット検索",
      "チャットの検索でリランク（候補を取得した後に並べ替える 2 段階の検索）を使用するかどうか。"
      "リランクの対象は、チャンクを検索するチャットモード（vector・graph+vector・fulltext・graph+vector+fulltext）である。"
@@ -109,14 +81,9 @@ OVERVIEW_ENV = [
     ("CHAT_RERANK_URL", "チャット検索", "リランカーの接続先。接続できない場合は警告を出力し、検索スコアの順序のまま使用する。",
      "http://host.docker.internal:8006/v1/rerank"),
     ("CHAT_REFERENCE_DOC_SELECT_MODEL", "チャット検索",
-     "参照追跡で、文書のみを指す参照の参照先を節の要点の一覧から選択する場合（検索設定「文書のみを指す参照の参照先の選択方法」）に使用する LLM。"
+     "網羅型の質問向けの検索（src/entity_collect.py）で、質問から語を抜き出す LLM。"
      "LLM_MODEL_CONFIG_<名前> の OpenAI 互換の接続を使用する。", "gemma4"),
-    ("CHAT_REFERENCE_DOC_SELECT_TIMEOUT", "チャット検索",
-     "上記の LLM の 1 回の要求の時間切れ（秒）。時間切れ・失敗の場合は、リランクで選択する。"
-     "1 つの質問の中で一度失敗した場合は、その質問の残りの参照は LLM を呼ばずにリランクで選択する。"
-     "同じプロセスで節の要点の作成が同時要求の上限を使っている場合は、空きを 10 秒まで待ち、空かなければリランクで選択する。", "60"),
-    ("CHAT_LINE_RERANK_ENABLED", "チャット検索",
-     "文脈に含めるエンティティとリレーションの行もリランクで選択するかどうか。false の場合は文字数の上限まで順に格納する。", "true"),
+    ("CHAT_REFERENCE_DOC_SELECT_TIMEOUT", "チャット検索", "上記の LLM の 1 回の要求の時間切れ（秒）。", "60"),
     ("EMBEDDING_PROVIDER", "埋め込み",
      "埋め込みの提供元。未設定時の既定値が処理によって異なる（文書層の後処理のみ vllm）ため、必ず設定する。", "sentence-transformer（文書層の後処理は vllm）"),
     ("EMBEDDING_MODEL", "埋め込み", "埋め込みモデル。未設定時の既定値が処理によって異なる。",
@@ -126,17 +93,18 @@ OVERVIEW_ENV = [
 # 未設定のときに代わりに読む環境変数
 FALLBACK_ENV = {"CHUNK_REFERENCE_MODEL": "GRAPH_CLEANUP_MODEL"}
 
-# リランク有効のとき、チャンクを検索するチャットモードで代わりに適用される設定: (環境変数名, 検索設定の表示名)。None は使用されない
-# 表示名は rerank_retriever.py の RETRIEVAL_SETTING_SPECS の表示名と一字一句同じにする（langchain 系に依存させないため import せず、写しを持つ）
-RERANK_REPLACES = {"VECTOR_SEARCH_TOP_K": ("CHAT_CANDIDATE_K", "候補チャンク数"),
-                   "CHAT_SEARCH_KWARG_SCORE_THRESHOLD": ("CHAT_CANDIDATE_MIN_SCORE", "候補のスコアしきい値"),
+# リランク有効のとき、チャンクを検索するチャットモードで代わりに適用される検索設定の環境変数名。None は使用されない
+RERANK_REPLACES = {"VECTOR_SEARCH_TOP_K": "CHAT_CANDIDATE_K",
+                   "CHAT_SEARCH_KWARG_SCORE_THRESHOLD": "CHAT_CANDIDATE_MIN_SCORE",
                    "CHAT_DOC_SPLIT_SIZE": None,
-                   "VECTOR_GRAPH_SEARCH_ENTITY_LIMIT": ("CHAT_ENTITY_LIMIT", "起点の上限（文書ごと）")}
+                   "VECTOR_GRAPH_SEARCH_ENTITY_LIMIT": "CHAT_ENTITY_LIMIT"}
 
 
 def _rerank_replacement(name) -> str:
-    """リランク有効時に代わりに適用される設定の呼び方。例: 検索設定の「候補チャンク数」（CHAT_CANDIDATE_K）"""
-    env, label = RERANK_REPLACES[name]
+    """リランク有効時に代わりに適用される設定の呼び方。例: 検索設定の「候補チャンク数」（CHAT_CANDIDATE_K）。
+    表示名は検索設定の定義（rerank_retriever.RETRIEVAL_SETTING_SPECS）から引く。"""
+    env = RERANK_REPLACES[name]
+    label = next(spec[7] for spec in RETRIEVAL_SETTING_SPECS if spec[2] == env)
     return f"検索設定の「{label}」（{env}）"
 
 
@@ -220,7 +188,7 @@ COUNTS = [
      "MATCH (e:__Entity__:Section) RETURN count(e) AS value", 0),
 ]
 
-COUNT_TIMEOUT_SECONDS = 20  # 照会 1 本の時間の上限
+COUNT_TIMEOUT_SECONDS = 20  # 照会 1 本の時間の上限（schema_options も read_session で同じ上限を使う）
 DETAIL_ITEMS = 30           # 内訳に並べる件数の上限
 
 ENV_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
@@ -338,11 +306,6 @@ def collect_settings(env_file=ENV_FILE) -> list:
     if (str(effective.get("PDF_CHUNK_STRATEGY", "")).strip().lower() == "markdown"
             and not _truthy(effective.get("MARKDOWN_CHUNKING", "true"))):
         by_name["PDF_CHUNK_STRATEGY"]["note"] = "MARKDOWN_CHUNKING が false のため無効（トークン数で分割している）"
-    if (str(effective.get("PDF_CHUNK_STRATEGY", "")).strip().lower() != "markdown"
-            or not _truthy(effective.get("MARKDOWN_CHUNKING", "true"))):
-        by_name["PDF_CONVERTER"]["note"] = "PDF_CHUNK_STRATEGY が markdown でないか MARKDOWN_CHUNKING が false のため無効"
-    elif str(effective.get("PDF_CONVERTER", "regions") or "regions").strip().lower() != "regions":
-        by_name["PDF_CONVERTER"]["note"] = "regions 以外の値（pymupdf4llm は外した）。regions として扱っている"
     if _truthy(effective.get("CHAT_RERANK_ENABLED", "false")):
         for name, replacement in RERANK_REPLACES.items():
             if name in by_name:
@@ -395,17 +358,13 @@ def collect_counts(run) -> list:
     return rows
 
 
-def collect_overview(credentials) -> dict:
-    """設定値と検証件数をまとめて返す。資格情報が通らなければ例外にする（設定も返さない）。"""
+@contextmanager
+def read_session(credentials):
+    """接続して読み取りのセッションを開き、read(work, *args) を渡す。read は work(tx, *args) を読み取りのトランザクションで、
+    1 本 COUNT_TIMEOUT_SECONDS 秒までで実行する。抜けると接続を閉じる。
+    画面が接続を backend の設定に任せたとき（ユーザー名・パスワードを送らない）は、ほかの API と同じく環境変数で補う
+    （ほかの API の Neo4jGraph は、空の値を NEO4J_URI・NEO4J_USERNAME・NEO4J_PASSWORD・NEO4J_DATABASE で補う）。"""
     from neo4j import GraphDatabase, READ_ACCESS, unit_of_work
-
-    @unit_of_work(timeout=COUNT_TIMEOUT_SECONDS)
-    def read_all(tx, text):
-        return [record.data() for record in tx.run(text)]
-
-    start = time.time()
-    # 画面が接続を backend の設定に任せたとき（ユーザー名・パスワードを送らない）は、ほかの API と同じく環境変数で補う
-    # （ほかの API の Neo4jGraph は、空の値を NEO4J_URI・NEO4J_USERNAME・NEO4J_PASSWORD・NEO4J_DATABASE で補う）
     uri = credentials.uri or os.environ.get("NEO4J_URI")
     user = credentials.userName or os.environ.get("NEO4J_USERNAME")
     password = credentials.password or os.environ.get("NEO4J_PASSWORD")
@@ -414,9 +373,21 @@ def collect_overview(credentials) -> dict:
     try:
         driver.verify_connectivity()
         with driver.session(database=database, default_access_mode=READ_ACCESS) as session:
-            counts = collect_counts(lambda text: session.execute_read(read_all, text))
+            yield lambda work, *args: session.execute_read(unit_of_work(timeout=COUNT_TIMEOUT_SECONDS)(work), *args)
     finally:
         driver.close()
+
+
+def _read_all(tx, text):
+    return [record.data() for record in tx.run(text)]
+
+
+def collect_overview(credentials, include_counts=True) -> dict:
+    """設定値と検証件数をまとめて返す。include_counts が偽なら件数は照会せず counts を空にする。
+    資格情報が通らなければ例外にする（設定も返さない）。"""
+    start = time.time()
+    with read_session(credentials) as read:
+        counts = collect_counts(lambda text: read(_read_all, text)) if include_counts else []
     return {"settings": collect_settings(), "counts": counts, "process": process_info(),
             "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "elapsed": round(time.time() - start, 2)}
@@ -426,10 +397,11 @@ router = APIRouter()
 
 
 @router.post("/settings_overview")
-async def settings_overview(credentials: Neo4jCredentials = Depends(get_neo4j_credentials)):
-    """保守: 設定値と検証件数の一覧（参照のみ）。"""
+async def settings_overview(credentials: Neo4jCredentials = Depends(get_neo4j_credentials), include_counts=Form("true")):
+    """保守: 設定値と検証件数の一覧（参照のみ）。include_counts=false なら設定値だけを返す（counts は空）。"""
     try:
-        data = await asyncio.to_thread(collect_overview, credentials)
+        with_counts = str(include_counts).strip().lower() not in ("false", "0", "no")
+        data = await asyncio.to_thread(collect_overview, credentials, with_counts)
         logging.info("settings_overview: %d settings, %d counts, %.2fs", len(data["settings"]), len(data["counts"]), data["elapsed"])
         return create_api_response("Success", data=data)
     except Exception as e:

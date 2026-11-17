@@ -11,7 +11,6 @@
   残すエンティティのうち HAS_ENTITY を失うものと消すエンティティの隣のものは、版（_v）を 1 上げる（グラフの手動修正。C6）。
   貸し出し（lease）は呼び出し側（main.processing_source の run_with_lease）で取る。このモジュールは graph_edit を import しない。
 文書の削除（graphDB_dataAccess.delete_file_from_graph）: 貸し出しの中で、削除の前に delete_rule_layer を呼ぶ。
-  sweep_deleted_documents（取り残しの掃除）は、C6 の削除の手順（B2）が取り残しを出さないので削除の経路からは呼ばない（一度きりの掃除と試験に使う）。
 文書層と節の層は後処理（build_document_layer・build_section_layer）で作り直す。
 """
 import logging
@@ -20,7 +19,7 @@ from src.shared.common_fn import execute_graph_query
 
 RULE = "rule"
 # 規則が文書ノードから張るエッジ（document_layer.py の書き込みと揃える）。REPLACES は 新しい版 → 古い版 なので入る向きも消す。
-# 現行版の印 HAS_CURRENT_VERSION は Standard → Document なので、入る向きとして消す（11/10）
+# 現行版の印 HAS_CURRENT_VERSION は Standard → Document なので、入る向きとして消す
 RULE_DOCUMENT_EDGES = ["IS_VERSION_OF", "REFERS_TO", "LISTS", "APPLIES_TO", "ABOLISHES", "REPLACES"]
 
 
@@ -81,7 +80,7 @@ def clear_previous_chunks(graph, file_name):
         FOREACH (e IN entities | DETACH DELETE e)
         RETURN size(entities) AS n, versioned""", params=p)
     counts["entities"] = rows[0]["n"] if rows else 0
-    # 他の文書とも共有のチャンク（CHUNK_ID_MODE=content の名残）は消さず、この文書との PART_OF・FIRST_CHUNK だけ外す
+    # 他の文書とも共有のチャンク（過去に本文だけのハッシュで取り込んだ DB に残る共有のチャンク）は消さず、この文書との PART_OF・FIRST_CHUNK だけ外す
     execute_graph_query(graph, """
         MATCH (d:Document {fileName: $f})<-[r:PART_OF]-(c:Chunk)
         WHERE EXISTS { (c)-[:PART_OF]->(o:Document) WHERE o.fileName <> $f }
@@ -94,23 +93,3 @@ def clear_previous_chunks(graph, file_name):
         logging.info(f"{file_name}: 前の版を消してから分割し直す {counts}")
     return counts
 
-
-def sweep_deleted_documents(graph, file_names, source_types):
-    """文書の削除の取り残しを消し、{documents, chunks} を返す。
-    本家のエンティティごとの削除は、エンティティがどれも他の文書と共有のチャンクの行を落とすため、そのチャンクが PART_OF を失って残り、
-    文書のチャンクがすべてそうなら文書ノードも残る。"""
-    p = {"files": list(file_names), "sources": list(source_types)}
-    rows = execute_graph_query(graph, """
-        MATCH (d:Document) WHERE d.fileName IN $files AND coalesce(d.fileSource, "None") IN $sources
-        CALL (d) {
-            OPTIONAL MATCH (d)<-[:PART_OF]-(c:Chunk) WHERE NOT EXISTS { (c)-[:PART_OF]->(o:Document) WHERE o <> d }
-            DETACH DELETE c
-            RETURN count(c) AS k
-        }
-        DETACH DELETE d
-        RETURN count(*) AS documents, sum(k) AS chunks""", params=p)
-    documents, chunks = (rows[0]["documents"], rows[0]["chunks"] or 0) if rows else (0, 0)
-    chunks += _count(graph, """
-        MATCH (c:Chunk) WHERE c.fileName IN $files AND NOT EXISTS { (c)-[:PART_OF]->(:Document) }
-        DETACH DELETE c RETURN count(*) AS n""", p)
-    return {"documents": documents, "chunks": chunks}

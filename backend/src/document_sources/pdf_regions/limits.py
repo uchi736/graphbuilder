@@ -1,4 +1,4 @@
-"""接続先（Nemotron Parse・E4B・26B）ごとの同時数の上限と、応答しない接続先を一時的に呼ばない遮断。
+"""接続先（Nemotron Parse）ごとの同時数の上限と、応答しない接続先を一時的に呼ばない遮断。
 
 同時数の上限は 2 段で掛ける。
     プロセスの中  接続先ごとに 1 つのセマフォ（同じプロセスで同時に走る変換どうしで共有する）
@@ -8,7 +8,7 @@
 上限はこの変換器からの要求だけに掛かる（同じ接続先を使う他のアプリの要求は数えない）。
 
 遮断: 時間切れ・接続の失敗・5xx が続けて FAILURES_TO_OPEN 回起きた接続先は、COOLDOWN 秒のあいだ呼ばずにすぐ失敗にする
-（gemma4 26B のハングでは、復帰に数分かかる）。プロセスの中で共有する。
+（ハングした vLLM は復帰に数分かかる）。プロセスの中で共有する。
 """
 from __future__ import annotations
 
@@ -72,7 +72,6 @@ class Endpoint:
 
     def __init__(self, url: str, limit: int, lock_dir: Optional[str]):
         self.url = url
-        self.limit = limit
         self._sem = threading.BoundedSemaphore(limit)
         self._files = _make_slots(url, limit, lock_dir)
         self._state = threading.Lock()

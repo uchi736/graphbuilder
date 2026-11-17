@@ -1,6 +1,7 @@
 import asyncio
 import base64
 import gc
+import importlib
 import json
 import logging
 import os
@@ -45,6 +46,7 @@ from src.ragas_eval import get_additional_metrics, get_ragas_metrics
 from src.shared.common_fn import formatted_time, get_value_from_env, get_remaining_token_limits, get_user_embedding_model, change_user_embedding_model
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
 from src.graph_edit import api as graph_edit_api, ops as graph_edit_ops, read as graph_edit_read
+from src.graph_edit.lease import run_with_lease
 from src.graph_edit.validate import EditError
 from src.graph_edit.router import router as graph_edit_router
 from Secweb.XContentTypeOptions import XContentTypeOptions
@@ -136,18 +138,14 @@ app.add_middleware(
 app.add_middleware(SessionMiddleware, secret_key=os.urandom(24))
 app.add_api_route("/health", health([healthy_condition, healthy]))
 app.add_api_route("/extraction_methods", list_extraction_methods, methods=["GET"])  # 抽出方式の選択肢（標準 / EDC）。資格情報は要らない
-# 保守: 設定値と検証件数の一覧（参照のみ、POST /settings_overview）。本体は src/settings_overview.py。読み込めない場合も本体は起動する
-try:
-    from src.settings_overview import router as settings_overview_router
-    app.include_router(settings_overview_router)
-except Exception:
-    logging.exception("settings_overview is not available")
-# グラフスキーマ設定欄の選択肢の件数（参照のみ、POST /schema_options）。本体は src/schema_options.py。読み込めない場合も本体は起動する
-try:
-    from src.schema_options import router as schema_options_router
-    app.include_router(schema_options_router)
-except Exception:
-    logging.exception("schema_options is not available")
+# 参照のみの API。読み込めない場合も本体は起動する
+#   src/settings_overview.py … 保守: 設定値と検証件数の一覧（POST /settings_overview）
+#   src/schema_options.py    … グラフスキーマ設定欄の選択肢の件数（POST /schema_options）
+for _module in ("settings_overview", "schema_options"):
+    try:
+        app.include_router(importlib.import_module(f"src.{_module}").router)
+    except Exception:
+        logging.exception(f"{_module} is not available")
 app.include_router(graph_edit_router)  # グラフの手動修正の入口（src/graph_edit/router.py、docs/graph-edit/DESIGN.md の 3 章）
 
 
@@ -360,11 +358,26 @@ async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_cred
                 error_message = "Authentication required: Your session is missing required credentials. Please log in again to continue."
                 raise Exception(error_message)
         tasks = set(map(str.strip, json.loads(tasks)))
-        api_name = 'post_processing'
         reference_summary = None
         summaries_summary = None
         count_response = []
         start = time.time()
+        # 文書層と章・節の層は同じチャンクから同じ目録を作るので、行が同じなら 1 回だけ作って共有する（chunk_reference_rules.catalogue_of）
+        catalogue_memo = {}
+
+        async def run_step(name, fn, *args, defer=False, **kwargs):
+            """1 段を別のスレッドで流し、戻り値の summary を返す。defer=True の段は、例外を deferred_errors に貯めて None を返す
+            （残りの段は流し、最後に Failed で返す）。"""
+            try:
+                result = await asyncio.to_thread(fn, *args, **kwargs)
+                return result.get('summary') if isinstance(result, dict) else result
+            except Exception as e:
+                if not defer:
+                    raise
+                logging.exception(f'{name} failed: {e}')
+                deferred_errors.append(f'{name} failed: {e}')
+                return None
+
         # 流す順番（画面の POST_PROCESSING_JOBS の order と同じ。tests/test_post_processing_order.py で確かめる）:
         #   参照リンク → スキーマ統合 → 文書層 → 表記ゆれの統合 → 章・節の層 → 由来情報と安定キー → 節の要点 → チャンクの類似 → 索引 → エンティティの埋め込み → コミュニティ
         # 表記ゆれの統合は文書層の後（文書番号の名寄せは文書層が先に済ませ、残りのエンティティだけを見る）、由来情報の前（言及の文は残ったエンティティの名前と aliases で探す）
@@ -372,20 +385,16 @@ async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_cred
         #   （参照リンクは自分が張った規則のリンクを消して張り直すが、章・節の層が張る節への REFERS_TO は消さない。chunk_references.py）
         # スキーマ統合は層の前: 付け替えの後で層が Standard・Section・SectionRef を作り直し、索引とコミュニティは付け替え後のラベルを見る
         # 索引・埋め込み・コミュニティは層の後: 全文索引はその時点のラベルで張られ、文書層は文書番号のエンティティを Standard に統合する。
-        #   チャンクの類似は既存の vector 索引で近傍を引くので、索引の作り直しより前（本家と同じ前後関係）
+        #   チャンクの類似は既存の vector 索引で近傍を引くので、索引の作り直しより前（上流版と同じ前後関係）
         if 'link_chunk_references' in tasks:
             # 本文の「〜による」「〜参照」をたどり、チャンクから参照先のチャンクへ REFERS_TO を張る
             from src.chunk_references import link_chunk_references
-            api_name = 'post_processing/link_chunk_references'
-            try:
-                reference_summary = (await asyncio.to_thread(link_chunk_references, graph))['summary']
+            reference_summary = await run_step('link_chunk_references', link_chunk_references, graph, defer=True)
+            if reference_summary is not None:
                 logging.info('Chunk references linked: %s', json.dumps(reference_summary, ensure_ascii=False))
                 if reference_summary['aborted'] or reference_summary['skipped_documents']:
                     # LLM が止まっているなどで、文書単位で何も書けなかった。成功としては返さないが、残りの段は流す
                     deferred_errors.append(f'link_chunk_references did not complete: {json.dumps(reference_summary, ensure_ascii=False)}')
-            except Exception as e:
-                logging.exception(f'link_chunk_references failed: {e}')
-                deferred_errors.append(f'link_chunk_references failed: {e}')
 
         if 'graph_schema_consolidation' in tasks:
             # LLMによるラベル・関係型の一括リネームは、EDC/graphragが正規化した語彙を壊しうるため
@@ -393,7 +402,6 @@ async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_cred
             if get_value_from_env('GRAPH_SCHEMA_CONSOLIDATION_ENABLED', 'true', 'bool'):
                 try:
                     await asyncio.to_thread(graph_schema_consolidation, graph)
-                    api_name = 'post_processing/graph_schema_consolidation'
                     logging.info('Updated nodes and relationship labels')
                 except Exception as e:
                     logging.exception(f'graph_schema_consolidation failed: {e}')
@@ -401,90 +409,68 @@ async def post_processing(credentials: Neo4jCredentials = Depends(get_neo4j_cred
             else:
                 logging.info('graph_schema_consolidation is disabled by GRAPH_SCHEMA_CONSOLIDATION_ENABLED=false')
 
+        # 文書層・表記ゆれの統合・章・節の層・由来情報は、書き換えの間は貸し出し（lease）を取り、グラフの手動修正の操作と取り込みの保存を
+        # 待たせる（run_with_lease。docs/graph-edit/DESIGN.md の 2.6）
         if "build_document_layer" in tasks:
             # 段 3 B2・B3: 文書層（文書番号のエンティティ・版・文書どうしの参照・目録・適用先）。規則だけで作る
             from src.document_layer import build_document_layer
-            api_name = 'post_processing/build_document_layer'
-            # 書き換えの間は貸し出し（lease）を取り、グラフの手動修正の操作と取り込みの保存を待たせる（docs/graph-edit/DESIGN.md の 2.6）
-            from src.graph_edit.lease import run_with_lease
-            document_layer_summary = (await asyncio.to_thread(run_with_lease, graph, "document_layer", build_document_layer, graph))["summary"]
+            document_layer_summary = await run_step('build_document_layer', run_with_lease, graph, 'document_layer', build_document_layer, graph, memo=catalogue_memo)
             logging.info(f'document layer: {document_layer_summary}')
         if "merge_entity_variants" in tasks:
             # 表記ゆれのエンティティ（空白・ハイフン・大文字小文字・全角半角だけの違いで種類も同じもの）を規則で 1 つに統合する。
             # 既定の後処理には入れない。統合前の状態は logs/entity_variants/<時刻>.json（src/entity_variants.py の restore_entity_variants で戻せる）
             from src.entity_variants import merge_entity_variants
-            api_name = 'post_processing/merge_entity_variants'
-            from src.graph_edit.lease import run_with_lease
-            entity_variants_summary = (await asyncio.to_thread(run_with_lease, graph, "entity_variants", merge_entity_variants, graph))["summary"]
+            entity_variants_summary = await run_step('merge_entity_variants', run_with_lease, graph, 'entity_variants', merge_entity_variants, graph)
             logging.info('entity variants: %s', json.dumps(entity_variants_summary, ensure_ascii=False))
         if "build_section_layer" in tasks:
             # 段 3 B4: 章・節の層（見出しの木・チャンクの所属・節への参照）。分割時の見出しの経路だけから作る
             from src.section_layer import build_section_layer
-            api_name = 'post_processing/build_section_layer'
-            from src.graph_edit.lease import run_with_lease
-            section_layer_summary = (await asyncio.to_thread(run_with_lease, graph, "section_layer", build_section_layer, graph))["summary"]
+            section_layer_summary = await run_step('build_section_layer', run_with_lease, graph, 'section_layer', build_section_layer, graph, memo=catalogue_memo)
             logging.info(f'section layer: {section_layer_summary}')
         if "attach_provenance" in tasks:
             # 由来情報と安定キー（HAS_ENTITY の言及の文・リレーションの根拠の文・Chunk.stable_key）。規則だけで付ける。
             # 安定キーは章・節の層の IN_SECTION {primary} を使うので、章・節の層の後に流す。
             # 失敗しても残りの段（類似リンク・索引など）は流し、最後に Failed で返す（LLM を使う段と同じ扱い）
             from src.provenance import attach_provenance
-            api_name = 'post_processing/attach_provenance'
-            from src.graph_edit.lease import run_with_lease
-            try:
-                provenance_summary = (await asyncio.to_thread(run_with_lease, graph, "provenance", attach_provenance, graph))["summary"]
+            provenance_summary = await run_step('attach_provenance', run_with_lease, graph, 'provenance', attach_provenance, graph, defer=True)
+            if provenance_summary is not None:
                 logging.info('provenance: %s', json.dumps(provenance_summary, ensure_ascii=False))
-            except Exception as e:
-                logging.exception(f'attach_provenance failed: {e}')
-                deferred_errors.append(f'attach_provenance failed: {e}')
 
         if "build_section_summaries" in tasks:
-            # 節の要点（参照追跡の一覧選択の材料）。章・節の層の Section に LLM（SECTION_SUMMARY_MODEL、既定 gemma4）で要点を付ける。
+            # 節の要点（参照リンクの結び先の一覧 chunk_references._describe が読む）。章・節の層の Section に LLM（SECTION_SUMMARY_MODEL、既定 gemma4）で要点を付ける。
             # 章・節の層の後に流す。層は Section を毎回作り直すので、入力が変わらない節の要点は控え（SectionSummary）から LLM なしで書き戻す。
             # Section の属性を書くだけなので貸し出し（lease）は取らない（数分かかり、その間グラフの手動修正を止めないため）。
             # 章・節の層の作り直しの途中には節を読まず（層の貸し出しが返るまで待つ）、同じコンテナでは同時に 1 本だけ流す。
             # 失敗した節は飛ばして続ける。LLM が続けて応答しない・接続先の設定の誤り・失敗が多い（complete = False）・例外のときは、
             # 残りの段は流して最後に Failed で返す
             from src.section_summaries import build_section_summaries
-            api_name = 'post_processing/build_section_summaries'
-            try:
-                summaries_summary = (await asyncio.to_thread(build_section_summaries, graph))['summary']
+            summaries_summary = await run_step('build_section_summaries', build_section_summaries, graph, defer=True)
+            if summaries_summary is not None:
                 logging.info('section summaries: %s', json.dumps(summaries_summary, ensure_ascii=False))
                 if not summaries_summary.get('complete', True):
                     deferred_errors.append(f'build_section_summaries did not complete: {json.dumps(summaries_summary, ensure_ascii=False)}')
-            except Exception as e:
-                logging.exception(f'build_section_summaries failed: {e}')
-                deferred_errors.append(f'build_section_summaries failed: {e}')
         elif "build_section_layer" in tasks:
             # 章・節の層を作り直し、節の要点の段は流さないとき（画面・ingest.py の既定の後処理）: 層の作り直しで消えた要点を、
             # 入力が変わらない節だけ控え（SectionSummary）から書き戻す。LLM は呼ばない。控えが無い DB（要点を作ったことが無い）では何もしない。
             # 新しい節・本文が変わった節の要点は、後処理「節の要点」を流すまで無い（件数は pending）
             from src.section_summaries import build_section_summaries
-            api_name = 'post_processing/restore_section_summaries'
-            try:
-                restored_summary = (await asyncio.to_thread(build_section_summaries, graph, restore_only=True))['summary']
+            restored_summary = await run_step('restoring section summaries', build_section_summaries, graph, restore_only=True, defer=True)
+            if restored_summary is not None:
                 logging.info('section summaries (restore only): %s', json.dumps(restored_summary, ensure_ascii=False))
-            except Exception as e:
-                logging.exception(f'restoring section summaries failed: {e}')
-                deferred_errors.append(f'restoring section summaries failed: {e}')
 
         if "materialize_text_chunk_similarities" in tasks:
             await asyncio.to_thread(update_graph, graph, embedding_provider, embedding_model)
-            api_name = 'post_processing/update_similarity_graph'
             logging.info('Updated KNN Graph')
 
         if "enable_hybrid_search_and_fulltext_search_in_bloom" in tasks:
             await asyncio.to_thread(create_vector_fulltext_indexes, credentials, embedding_provider, embedding_model)
-            api_name = 'post_processing/enable_hybrid_search_and_fulltext_search_in_bloom'
             logging.info('Full Text index created')
 
         if get_value_from_env("ENTITY_EMBEDDING","False","bool") and "materialize_entity_similarities" in tasks:
             await asyncio.to_thread(create_entity_embedding, graph, embedding_provider, embedding_model)
-            api_name = 'post_processing/create_entity_embedding'
             logging.info('Entity Embeddings created')
 
         if "enable_communities" in tasks:
-            api_name = 'create_communities'
             await asyncio.to_thread(create_communities, credentials.uri, credentials.userName, credentials.password, credentials.database, credentials.email, embedding_provider, embedding_model)
             logging.info('created communities') 
 

@@ -9,7 +9,7 @@
 - 読み取りの誤りを防ぐ形: ハイフンの異体（「3−5項」「3ー5項」「3—5項」）、「上記3項目」、「( 2 )」、条の中の「第2項」
 - E9・E10 の付け直し（section_layer.resolve_section_refs）: 章の番号・範囲・付属・号・解けない番号・文書番号による参照先の文書の決定・
   自分の文書を指す位置の語（「上記2項」）・同じ文書番号の別の版・文書層の一文からの節への線・
-  同じ参照の結び先のまとめ（既定は無効）・何度流しても同じ結果
+  何度流しても同じ結果
 実行: docker exec -w /code backend python -m pytest -q -p no:cacheprovider tests/test_section_ref_rules.py
 """
 import os
@@ -200,15 +200,11 @@ class FakeGraph:
         raise AssertionError("想定外の照会: " + cypher[:80])
 
 
-def layer(graph=None, rows=None, merge=False):
+def layer(graph=None, rows=None):
     rows = rows or ROWS
     sections, chunk_sections = SL.sections_from_catalogue(rows, cfg)
     chunk_section = {cid: next((sid for sid, p in lst if p), lst[0][0]) for cid, lst in chunk_sections.items()}
-    saved, SL.MERGE_LLM_TARGETS = SL.MERGE_LLM_TARGETS, merge
-    try:
-        refs, summary = SL.resolve_section_refs(graph or FakeGraph(), rows, sections, chunk_sections, chunk_section, cfg)
-    finally:
-        SL.MERGE_LLM_TARGETS = saved
+    refs, summary = SL.resolve_section_refs(graph or FakeGraph(), rows, sections, chunk_sections, chunk_section, cfg)
     return sections, chunk_sections, chunk_section, refs, summary
 
 
@@ -260,12 +256,12 @@ def test_resolve_section_refs():
     # 「上記2-1と同じ」の 2-1 は a2 自身の中にある。節のチャンクが参照元だけなので線を張らない（11/9、X20 で誤り判定の 2 本の型）
     assert not any(k == (A, "2-1") for k, *_ in got.get("a2", []))
     assert summary["self_only_skipped"] >= 1
-    # 同じ参照（a4 の一文）の結び先 b3・b4 は、既定（まとめ無効）では従来どおりチャンクごとの主所属の節へ
+    # 同じ参照（a4 の一文）の結び先 b3・b4 は、チャンクごとの主所属の節へ
     assert got["a4"] == [((B, "3-5"), "chunk", "HS-VTR-T902", None), ((B, "3-6"), "chunk", "HS-VTR-T902", None)]
     # 号「3)」: 一文に文書番号が無く LLM の文書が別（B）なので、参照元の節には解かない → LLM の結び先（b1 の主所属）
     assert ((B, "1"), "chunk", None, "3)") in got["a1"]
     assert summary["resolved_by_number"] == 4 and summary["resolved_by_standard"] == 1
-    assert summary["unresolved_locator"] == 2 and summary["merged_llm_targets"] == 0
+    assert summary["unresolved_locator"] == 2
     # E10（M3）: 文書層の一文から a3 → B の 3-5。E9 の線と同じなので 1 本
     assert summary["standard_section_refs"] == 1
     assert len([k for k in refs if k[0] == "a3"]) == 2
@@ -345,13 +341,20 @@ def test_other_version_of_same_number_is_not_dropped():
     assert [(label(sections, k[1]), v["via"]) for k, v in refs.items()] == [((B, "3-5"), "standard")]
 
 
-def test_merge_switch_and_idempotent():
-    for merge in (False, True):
-        _s, _cs, _c, refs1, s1 = layer(merge=merge)
-        _s, _cs, _c, refs2, s2 = layer(FakeGraph(links=list(reversed(LINKS))), merge=merge)
-        assert refs1 == refs2 and s1 == s2, ("リンクを読む順で結果が変わる", merge)
-    assert SL.MERGE_LLM_TARGETS is False, "まとめ（承認済みの M1〜M6 の外）は既定で無効"
-    sections, _cs, _c, refs, summary = layer(merge=True)
-    # 有効にすると、同じ参照の結び先 b3・b4 を両方含む最も深い節 1 つ（3-5）にまとめる
-    assert sorted(label(sections, k[1]) for k in refs if k[0] == "a4") == [(B, "3-5")]
-    assert summary["merged_llm_targets"] == 1
+def test_idempotent():
+    _s, _cs, _c, refs1, s1 = layer()
+    _s, _cs, _c, refs2, s2 = layer(FakeGraph(links=list(reversed(LINKS))))
+    assert refs1 == refs2 and s1 == s2, "リンクを読む順で結果が変わる"
+
+
+def test_catalogue_is_shared_with_document_layer_only_for_the_same_rows():
+    """文書層（find_references）が作った目録を、同じ行の一覧なら章・節の層が使い回し、結果は作り直したときと同じ。"""
+    from src.chunk_reference_rules import find_references
+    memo = {}
+    find_references(ROWS, memo)
+    shared = memo["catalogue"]
+    assert SL.sections_from_catalogue(ROWS, cfg, memo) == SL.sections_from_catalogue(ROWS, cfg)
+    assert memo["catalogue"] is shared
+    other = ROWS[:-1]
+    SL.sections_from_catalogue(other, cfg, memo)
+    assert memo["catalogue"] is not shared   # 行が違えば作り直す

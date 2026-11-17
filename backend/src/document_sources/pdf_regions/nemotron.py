@@ -15,7 +15,6 @@ import re
 import threading
 import time
 from dataclasses import dataclass
-from html.parser import HTMLParser
 from typing import Optional
 
 from . import limits
@@ -64,7 +63,7 @@ def parse_blocks(raw: str) -> list:
     return out
 
 
-# ---- 表: LaTeX の tabular / HTML の table → セルの格子 ----
+# ---- 表: LaTeX の tabular → セルの格子 ----
 def _split_top(text: str, sep: str) -> list:
     """波括弧の外にある区切り（エスケープされていないもの）で分ける"""
     parts, depth, cur, i = [], 0, [], 0
@@ -136,7 +135,7 @@ def _span_command(cell: str, name: str):
 _LATEX_WRAP = re.compile(r"\\(?:thead|textbf|textit|emph|underline|makecell|text|mathrm|mathbf|mathit|operatorname|sout|st)"
                          r"\s*(?:\[[^\]]*\])?\s*\{")
 
-# 記号の命令を文字に直す表（vlm.py の説明文の数式でも使う）。範囲の ~ と \sim は文字層と同じ全角の「～」にする
+# 記号の命令を文字に直す表。範囲の ~ と \sim は文字層と同じ全角の「～」にする
 LATEX_SYMBOLS = {"pi": "π", "Pi": "Π", "Delta": "Δ", "delta": "δ", "rho": "ρ", "eta": "η", "alpha": "α", "beta": "β",
                  "gamma": "γ", "theta": "θ", "mu": "μ", "sigma": "σ", "Sigma": "Σ", "omega": "ω", "Omega": "Ω", "phi": "φ",
                  "varphi": "φ", "Phi": "Φ", "lambda": "λ", "tau": "τ", "epsilon": "ε", "varepsilon": "ε", "nu": "ν",
@@ -182,8 +181,8 @@ def _latex_text(cell: str) -> str:
     return re.sub(r"\s+", " ", s).strip()
 
 
-def _place(rows) -> list:
-    """(中身, colspan, rowspan) の行の並びを、結合セルの値を繰り返した格子にする"""
+def place(rows) -> list:
+    """展開前のセル (中身, colspan, rowspan) の行の並びを、結合セルの値を繰り返した格子にする（GFM に書くとき用）"""
     grid, pending = [], {}   # pending: (行, 列) → 値（上の行の rowspan）
     for r, cells in enumerate(rows):
         line, c = [], 0
@@ -231,75 +230,17 @@ def latex_rows(text: str) -> Optional[list]:
     return rows or None
 
 
-def latex_grid(text: str) -> Optional[list]:
-    rows = latex_rows(text)
-    return _place(rows) if rows else None
-
-
-class _TableHTML(HTMLParser):
-    def __init__(self):
-        super().__init__(convert_charrefs=True)
-        self.rows, self.cell, self.attrs = [], None, None
-
-    def handle_starttag(self, tag, attrs):
-        if tag == "tr":
-            self.rows.append([])
-        elif tag in ("td", "th"):
-            self.cell, self.attrs = [], dict(attrs)
-        elif tag == "br" and self.cell is not None:
-            self.cell.append(" ")
-
-    def handle_endtag(self, tag):
-        if tag in ("td", "th") and self.cell is not None:
-            if not self.rows:
-                self.rows.append([])
-            def num(key):
-                try:
-                    return max(1, int(self.attrs.get(key) or 1))
-                except ValueError:
-                    return 1
-            self.rows[-1].append((re.sub(r"\s+", " ", "".join(self.cell)).strip(), num("colspan"), num("rowspan")))
-            self.cell = None
-
-    def handle_data(self, data):
-        if self.cell is not None:
-            self.cell.append(data)
-
-
-def html_rows(text: str) -> Optional[list]:
-    if "<table" not in text.lower():
-        return None
-    p = _TableHTML()
-    p.feed(text)
-    rows = [r for r in p.rows if r]
-    return rows or None
-
-
-def html_grid(text: str) -> Optional[list]:
-    rows = html_rows(text)
-    return _place(rows) if rows else None
-
-
 def table_rows(text: str) -> Optional[list]:
-    """表を、展開前のセル (中身, colspan, rowspan) の行の並びにする。字数の比較はこちらで数える（結合セルを 1 回だけ数える）"""
+    """表（LaTeX の tabular）を、展開前のセル (中身, colspan, rowspan) の行の並びにする。字数の比較はこちらで数える
+    （結合セルを 1 回だけ数える）。tabular でなければ None"""
     if "\\begin{tabular}" in (text or ""):
         return latex_rows(text)
-    return html_rows(text or "")
-
-
-def place(rows) -> list:
-    """展開前のセルの行の並びを、結合セルの値を繰り返した格子にする（GFM に書くとき用）"""
-    return _place(rows)
-
-
-def table_grid(text: str) -> Optional[list]:
-    rows = table_rows(text)
-    return _place(rows) if rows else None
+    return None
 
 
 def plain_text(text: str) -> str:
     """表以外の領域の出力を本文の文字にする（文字層の無い領域で使う）。表は結合セルを繰り返さずに行ごとに並べる"""
-    if "\\begin{tabular}" in text or "<table" in text.lower():
+    if "\\begin{tabular}" in text:
         rows = table_rows(text) or []
         return "\n".join(" ".join(c for c, _cs, _rs in row if c) for row in rows)
     s = re.sub(r"<br\s*/?>", "\n", text, flags=re.I)
@@ -323,14 +264,13 @@ class NemotronClient:
     """
 
     def __init__(self, base_url: str, model: str = "nemotron-parse", timeout: float = 180.0, retries: int = 2,
-                 concurrency: int = 2, client=None, deadline: Optional[float] = None, lock_dir: Optional[str] = None):
+                 concurrency: int = 2, deadline: Optional[float] = None, lock_dir: Optional[str] = None):
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.timeout = float(timeout)
         self.retries = max(0, int(retries))
         self.deadline = deadline
         self._endpoint = limits.endpoint(self.base_url, concurrency, lock_dir)
-        self._client = client
         self.calls = 0
         self.failures = 0
         self._lock = threading.Lock()
@@ -346,20 +286,15 @@ class NemotronClient:
         left = limits.remaining(self.deadline)
         return self.timeout if left is None else max(1.0, min(self.timeout, left))
 
-    def _post(self, payload: dict, tag: str) -> dict:
+    def _post(self, payload: dict) -> dict:
         import httpx
-        client = self._client
-        timeout = self._timeout_now()
-        if client is None:
-            with httpx.Client(timeout=timeout) as c:
-                r = c.post(self.base_url + "/chat/completions", json=payload, headers={"Authorization": "Bearer EMPTY"})
-        else:
-            r = client.post(self.base_url + "/chat/completions", json=payload, headers={"Authorization": "Bearer EMPTY"},
-                            timeout=timeout)
+        with httpx.Client(timeout=self._timeout_now()) as c:
+            r = c.post(self.base_url + "/chat/completions", json=payload, headers={"Authorization": "Bearer EMPTY"})
         r.raise_for_status()
         return r.json()
 
-    def parse_raw(self, png: bytes, tag: str = "") -> str:
+    def parse(self, png: bytes, tag: str = "") -> list:
+        """画像を送り、領域の並びを返す。tag は失敗の文に入れる名前"""
         payload = self.payload(png)
         last = None
         for attempt in range(self.retries + 1):
@@ -369,7 +304,7 @@ class NemotronClient:
                     with self._lock:
                         self.calls += 1
                     try:
-                        body = self._post(payload, tag)
+                        body = self._post(payload)
                     except Exception as error:   # 接続の失敗・時間切れ・HTTP のエラー
                         last = error
                         if limits.is_unavailable_error(error):
@@ -388,7 +323,7 @@ class NemotronClient:
                 if finish not in (None, "stop", "eos") or not content.strip():
                     last = ParseError(f"incomplete generation (finish_reason={finish!r})")
                     break
-                return content
+                return parse_blocks(content)
             if attempt < self.retries:
                 wait = 1.0 + 2.0 * attempt
                 left = limits.remaining(self.deadline)
@@ -398,6 +333,3 @@ class NemotronClient:
         with self._lock:
             self.failures += 1
         raise ParseError(f"Nemotron Parse failed for {tag or 'image'}: {last}")
-
-    def parse(self, png: bytes, tag: str = "") -> list:
-        return parse_blocks(self.parse_raw(png, tag))

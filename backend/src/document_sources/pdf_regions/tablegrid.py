@@ -1,4 +1,4 @@
-"""文字層に戻した表の組み立て（2026-11-09 の手直し 3）。
+"""文字層に戻した表の組み立て。
 
 Nemotron Parse の表を捨てて文字層に戻した表（assemble._table の字数・読み誤り・行の欠け・行ごとの整合の規則）は、
 文字層の見た目の行のままだと、行の中の並びが崩れ（書き順のかけらが入り組む）、値と列名の結び付きが分からなくなる
@@ -22,14 +22,13 @@ from __future__ import annotations
 from typing import Optional
 
 from .frame import Cells
-from .textlayer import TextLayer
+from .textlayer import TextLayer, split_by_gap
 
 TOL = 3.0           # 表の領域に掛かる線を選ぶときの余白（pt）
 MERGE = 2.5         # 同じ境とみなす位置の差（pt。細い矩形で描いた線の両辺、二重線）
 MIN_SEGMENT = 3.0   # 表の領域に掛かる長さがこれ以下の線は使わない（pt）
 MAX_SEGMENTS = 1500 # 表の領域に掛かる線分がこれより多ければ格子にしない（方眼の用紙など。まとめる処理は線分の数の 2 乗）
 MIN_FILLED = 0.25   # 2 字以上の中身のある欄がこの割合に満たない格子（空の様式）は表にしない
-PIECE_GAP = 2.0     # 横に結合した欄の 1 行を列に分けるかけらの字間（字の大きさに対する倍率。assemble.PIECE_GAP と同じ）
 
 
 def _cluster(values, tol: float = MERGE) -> list:
@@ -207,18 +206,12 @@ def _band_of(ln, centers: list, tol: float) -> Optional[int]:
 
 
 def _spread(layer: TextLayer, lines: list, cols_at: list, c0: int, c1: int) -> Optional[dict]:
-    """横に結合した欄の文字が 1 行で、大きな字間（字の大きさの PIECE_GAP 倍）で切ったかけらが格子の 2 つ以上の列に分かれるなら、
+    """横に結合した欄の文字が 1 行で、大きな字間（textlayer.split_by_gap）で切ったかけらが格子の 2 つ以上の列に分かれるなら、
     {列: その列のかけらの文字列} を返す（線の無い見出しの欄「許容欠陥大きさ(mm)   許容欠陥数」を下の列に分ける）。違えば None"""
     if c1 - c0 < 2 or len(lines) != 1:
         return None
     chars = sorted((layer.reading_char(k) for k in lines[0].indices), key=lambda c: c.x0)
-    pieces, cur = [], [chars[0]]
-    for a, b in zip(chars, chars[1:]):
-        if b.x0 - a.x1 > PIECE_GAP * max(min(a.size, b.size), 1.0):
-            pieces.append(cur)
-            cur = []
-        cur.append(b)
-    pieces.append(cur)
+    pieces = split_by_gap(chars)
     if len(pieces) < 2 or any(c.rot for c in chars):
         return None
     out = {}

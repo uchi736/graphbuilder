@@ -30,12 +30,12 @@ from neo4j import GraphDatabase
 from src import main as main_module
 from src.edc_extraction import _triplets_to_graph_document
 from src.entities.user_credential import Neo4jCredentials
+from src.graph_edit import lease as lease_module
 from src.graph_edit import ops
+from src.graph_edit.lease import acquire_lease, release_lease
 from src.graph_edit.ledger import Ledger, alias_uid, mrel_uid, tnode_uid, trel_uid, type_uid
 from src.graph_edit.normalize import norm_key
-from src.graph_edit.replay import (
-    acquire_lease, alias_targets, apply_ledger_before_save, release_lease,
-)
+from src.graph_edit.replay import alias_targets, apply_ledger_before_save
 from src.graph_edit.validate import EditError
 from src.shared.common_fn import create_graph_database_connection, handle_backticks_nodes_relationship_id_type
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
@@ -421,12 +421,19 @@ def test_edit_is_busy_while_saving(graph, credentials, run, monkeypatch):
     ops.rename(graph, elements["pump"], "Zzge Pump", "Zzge Pump X", USER)  # 保存の後は通る
 
 
-def test_lease_waits_and_is_exclusive(graph, run):
+def _lease_wait(monkeypatch, attempts, interval):
+    """acquire_lease の待ち方を、interval 秒おきに attempts 回までにする（interval が 0 なら 1 回）。"""
+    monkeypatch.setattr(lease_module, "LEASE_INTERVAL_SECONDS", interval)
+    monkeypatch.setattr(lease_module, "LEASE_MAX_WAIT_SECONDS", attempts * interval)
+
+
+def test_lease_waits_and_is_exclusive(graph, run, monkeypatch):
     from src.graph_edit.ledger import ensure_schema
     ensure_schema(graph)
     run("MATCH (l:__GraphLock__ {name: 'graph'}) SET l.lease_until = timestamp() + 1500, l.lease_owner = 'extract:other#1'")
     start = time.time()
-    token = acquire_lease(graph, "extract:zzge", attempts=10, interval=0.5)
+    _lease_wait(monkeypatch, 10, 0.5)
+    token = acquire_lease(graph, "extract:zzge")
     waited = time.time() - start
     assert 0.9 <= waited < 5, f"他の取り込みの貸し出しを待っていない（{waited:.2f} 秒）"
     assert run("MATCH (l:__GraphLock__ {name: 'graph'}) RETURN l.lease_owner AS o")[0]["o"] == token
@@ -434,16 +441,18 @@ def test_lease_waits_and_is_exclusive(graph, run):
     lock = run("MATCH (l:__GraphLock__ {name: 'graph'}) RETURN l.lease_until AS u, l.lease_owner AS o")[0]
     assert lock == {"u": 0, "o": None}
     run("MATCH (l:__GraphLock__ {name: 'graph'}) SET l.lease_until = timestamp() + 60000, l.lease_owner = 'extract:other#2'")
+    _lease_wait(monkeypatch, 2, 0.1)
     with pytest.raises(LLMGraphBuilderException):
-        acquire_lease(graph, "extract:zzge", attempts=2, interval=0.1)
+        acquire_lease(graph, "extract:zzge")
     run("MATCH (l:__GraphLock__ {name: 'graph'}) SET l.lease_until = 0, l.lease_owner = null")
     # 同時に取りに来ても 1 つだけ取れる
     results, barrier = [], threading.Barrier(8)
+    _lease_wait(monkeypatch, 1, 0)
 
     def take():
         barrier.wait()
         try:
-            results.append(acquire_lease(graph, "extract:race", attempts=1, interval=0))
+            results.append(acquire_lease(graph, "extract:race"))
         except LLMGraphBuilderException:
             results.append(None)
 
@@ -457,17 +466,3 @@ def test_lease_waits_and_is_exclusive(graph, run):
     release_lease(graph, winners[0])
 
 
-def test_lease_is_renewed_at_each_stage(graph, credentials, run, monkeypatch):
-    """[点検 low a] 保存・HAS_ENTITY・保存の後の処理の各段で貸し出しを延長する。"""
-    build_ledger_with_ops(graph, run)
-    calls = []
-    real_renew = main_module.renew_lease
-
-    def counting_renew(graph_, token):
-        calls.append(token)
-        return real_renew(graph_, token)
-    monkeypatch.setattr(main_module, "renew_lease", counting_renew)
-    documents = [standard_doc([("Zzge Pump", "Equipment", {})], [("Zzge Pump", "Equipment", "RELATED_TO", "Zzge Gear", "Concept")],
-                              CHUNKS[:1])]
-    run_processing_chunks(monkeypatch, graph, credentials, documents, "gemma4")
-    assert len(calls) >= 3 and len(set(calls)) == 1, calls

@@ -32,9 +32,6 @@
   "external_min_digits": 3,
   "catalog_file_pattern": "目録",
   "catalog_heading_pattern": "発行目録",
-  "history_heading_pattern": "来歴|改訂記録|改訂履歴|改正履歴",
-  "notice_heading_pattern": "通知票",
-  "scope_heading_pattern": "適用",
   "control_headings": [
     "来歴",
     "通知票",

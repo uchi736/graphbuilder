@@ -15,11 +15,8 @@
        r.provenance_method 'rule'
      チャンクの選び方: same_sentence → window → chunk_only の順に優先し、同じ順位の中では本文の文をパンくずの行より、
        文書名・位置の早いチャンクを先に採る。chunk_only の evidence は、どちらかの端の名前を含む文（無ければ null）とする。
-     ※ 既定の検索（graph_vector・graph_vector_fulltext・entity_vector と参照追跡）は、エンティティ間のリレーションのプロパティを
-       embedding 以外すべて文脈の「Relationships:」の行に書き出す（shared/constants.py の VECTOR_GRAPH_SEARCH_QUERY_SUFFIX と
-       LOCAL_COMMUNITY_SEARCH_QUERY_SUFFIX）。ここで付ける 4 つのプロパティが文脈に出ると既定の検索の結果が変わるため、
-       書き出しの側がこの 4 つを除外している場合に限って書く（relation_write_decision。環境変数 PROVENANCE_RELATION_PROPERTIES）。
-       書かない場合も、集計（evidence_kind の内訳）は返す。
+     ※ ここで付ける 4 つのプロパティは、既定の検索の文脈の「Relationships:」の行には出ない（shared/constants.py の
+       VECTOR_GRAPH_SEARCH_QUERY_SUFFIX と LOCAL_COMMUNITY_SEARCH_QUERY_SUFFIX が除外している）。
   P3 (Chunk)
        c.stable_key   文書名#節#節の中での順位（primary の節ごとに position の順、1 始まり）。節の無いチャンクは 文書名#-#文書内の順位
        c.doc_ordinal  文書内の順位（position の順、1 始まり）
@@ -43,21 +40,17 @@
 import collections
 import json
 import logging
-import os
 import re
 import unicodedata
 
-from src.shared.common_fn import execute_graph_query
+from src.graph_edit.validate import RESERVED_RELATIONSHIP_TYPES, RULE_METHOD as METHOD
+from src.shared.common_fn import batches, execute_graph_query
 
-METHOD = "rule"
 MAX_TEXT = 200
 SECTION_TITLE_LIMIT = 40
 STABLE_KEY_INDEX = "chunk_stable_key"
 NO_SECTION = "-"
 EVIDENCE_KINDS = ("same_sentence", "window", "chunk_only", "none")
-RELATION_PROPERTY_KEYS = ("source_chunk_id", "evidence", "evidence_kind", "provenance_method")
-# 既定の検索の書き出し（エンティティ間のリレーションのプロパティを文脈に出す問い合わせ）。constants の変数名
-RETRIEVAL_RENDER_QUERIES = ("VECTOR_GRAPH_SEARCH_QUERY_SUFFIX", "LOCAL_COMMUNITY_SEARCH_QUERY_SUFFIX")
 
 # 由来を付けないリレーションの種類。グラフの手動修正の予約の種類（graph_edit/validate.py の RESERVED_RELATIONSHIP_TYPES:
 # HAS_ENTITY・PART_OF・NEXT_CHUNK・FIRST_CHUNK・SIMILAR・IN_COMMUNITY・PARENT_COMMUNITY・NEXT・LAST_MESSAGE・REFERS_TO・ALIAS_OF・
@@ -65,20 +58,7 @@ RETRIEVAL_RENDER_QUERIES = ("VECTOR_GRAPH_SEARCH_QUERY_SUFFIX", "LOCAL_COMMUNITY
 # APPLIES_TO は種類では除かない: 文書層の APPLIES_TO は Document から張られ method='rule' を持つので下の条件で外れ、
 # エンティティ間の APPLIES_TO は抽出したもの（11 月 9 日の本番で 50 本、すべて method なし）だからである。
 LAYER_RELATIONSHIP_TYPES = ["IS_VERSION_OF", "REFERS_TO", "LISTS", "ABOLISHES", "REPLACES", "HAS_SECTION", "IN_SECTION"]
-_FALLBACK_RESERVED = ["HAS_ENTITY", "PART_OF", "NEXT_CHUNK", "FIRST_CHUNK", "SIMILAR", "IN_COMMUNITY", "PARENT_COMMUNITY",
-                      "NEXT", "LAST_MESSAGE", "REFERS_TO", "ALIAS_OF", "WHEN", "MENTIONS", "HAS_SECTION", "IN_SECTION"]
-
-
-def excluded_relationship_types():
-    try:
-        from src.graph_edit.validate import RESERVED_RELATIONSHIP_TYPES
-        reserved = list(RESERVED_RELATIONSHIP_TYPES)
-    except Exception:   # 読み込めない環境（単体の試験など）では同じ一覧の写しを使う
-        reserved = _FALLBACK_RESERVED
-    return sorted(set(reserved) | set(LAYER_RELATIONSHIP_TYPES))
-
-
-EXCLUDED_RELATIONSHIP_TYPES = excluded_relationship_types()
+EXCLUDED_RELATIONSHIP_TYPES = sorted(set(RESERVED_RELATIONSHIP_TYPES) | set(LAYER_RELATIONSHIP_TYPES))
 
 
 # ---------------------------------------------------------------- 照合の正規化
@@ -318,35 +298,6 @@ def relation_evidence(chunks, names_a, names_b):
     return best[1]
 
 
-def relation_write_decision(mode=None):
-    """エンティティ間のリレーションに由来のプロパティ（RELATION_PROPERTY_KEYS）を書くか。(書くか, 理由) を返す。
-    mode（省略時は環境変数 PROVENANCE_RELATION_PROPERTIES、既定 auto）:
-      auto  既定の検索の書き出し（constants の RETRIEVAL_RENDER_QUERIES）が 4 つのプロパティ名をすべて除外の対象として
-            書いている場合だけ書く（書き出しを直す前に流しても、既定の検索の文脈は変わらない）
-      true  常に書く（書き出しを直していなければ、既定の検索の文脈に根拠の文が出て結果が変わる）
-      false 書かない"""
-    mode = str(mode if mode is not None else os.environ.get("PROVENANCE_RELATION_PROPERTIES", "auto")).strip().lower()
-    if mode in ("true", "1", "yes", "on"):
-        return True, "PROVENANCE_RELATION_PROPERTIES=true"
-    if mode in ("false", "0", "no", "off"):
-        return False, "PROVENANCE_RELATION_PROPERTIES=false"
-    try:
-        from src.shared import constants as C
-    except Exception as e:
-        return False, f"既定の検索の書き出しを確かめられない（{type(e).__name__}）"
-    missing = []
-    for name in RETRIEVAL_RENDER_QUERIES:
-        query = getattr(C, name, "") or ""
-        if "keys(r)" not in query:
-            continue
-        lacking = [k for k in RELATION_PROPERTY_KEYS if f"'{k}'" not in query]
-        if lacking:
-            missing.append(f"{name}: {', '.join(lacking)}")
-    if missing:
-        return False, "既定の検索の書き出しが由来のプロパティを除外していない（" + "; ".join(missing) + "）"
-    return True, "既定の検索の書き出しが由来のプロパティを除外している"
-
-
 # ---------------------------------------------------------------- 安定キー
 
 def _key_part(text, limit=None):
@@ -417,15 +368,10 @@ def parse_stable_key(key):
 
 # ---------------------------------------------------------------- グラフの読み書き
 
-def _batches(rows, size=500):
-    for i in range(0, len(rows), size):
-        yield rows[i:i + size]
-
-
 def _chunk_texts(graph, ids):
     out = {}
     ids = sorted(ids)
-    for batch in _batches(ids, 1000):
+    for batch in batches(ids, 1000):
         for r in execute_graph_query(graph, """
                 UNWIND $ids AS id
                 MATCH (c:Chunk {id: id})
@@ -437,9 +383,8 @@ def _chunk_texts(graph, ids):
     return out
 
 
-def attach_provenance(graph, dry_run=False, file_names=None, relation_mode=None, details=False):
+def attach_provenance(graph, dry_run=False, file_names=None):
     files = sorted(set(file_names)) if file_names else None
-    write_relations, relation_reason = relation_write_decision(relation_mode)
 
     # チャンク（対象の文書）と primary の節。2 つの文書に PART_OF を持つチャンク（試験用の写しに 2 件ある）と、
     # primary の節が 2 つあるチャンクは、名前の小さい方に決めて 1 行にする
@@ -456,7 +401,7 @@ def attach_provenance(graph, dry_run=False, file_names=None, relation_mode=None,
         RETURN s.id AS id, s.fileName AS fileName, s.number AS number, s.path AS path, s.title AS title,
                s.first_position AS first_position, s.offset AS offset""", params={"files": files})
 
-    # HAS_ENTITY（根拠のチャンクの候補のため、全部読む）
+    # HAS_ENTITY（根拠のチャンクの候補のため、全部読む）。names_of は HAS_ENTITY を持つエンティティをすべて持つ
     has_entity = execute_graph_query(graph, """
         MATCH (c:Chunk)-[r:HAS_ENTITY]->(e)
         RETURN elementId(r) AS rid, c.id AS chunk, elementId(e) AS entity, e.id AS name, e.aliases AS aliases""")
@@ -467,20 +412,20 @@ def attach_provenance(graph, dry_run=False, file_names=None, relation_mode=None,
         names_of.setdefault(h["entity"], entity_names(h["name"], h["aliases"]))
     in_scope_entities = {h["entity"] for h in has_entity if h["chunk"] in in_scope}
 
-    # エンティティ間のリレーション（抽出したもの）
+    # エンティティ間のリレーション（抽出したもの）。両端に HAS_ENTITY を持つチャンクを 1 回だけ求めて持ち回る
     relations = execute_graph_query(graph, """
         MATCH (a:__Entity__)-[r]->(b:__Entity__)
         WHERE NOT type(r) IN $excluded AND coalesce(r.method, '') <> $m
-        RETURN elementId(r) AS rid, type(r) AS type, elementId(a) AS a, elementId(b) AS b,
-               a.id AS a_name, b.id AS b_name, a.aliases AS a_aliases, b.aliases AS b_aliases""",
+        RETURN elementId(r) AS rid, elementId(a) AS a, elementId(b) AS b""",
         params={"excluded": EXCLUDED_RELATIONSHIP_TYPES, "m": METHOD})
     if files is not None:
         relations = [r for r in relations if r["a"] in in_scope_entities or r["b"] in in_scope_entities]
+    shared = [chunks_of.get(r["a"], set()) & chunks_of.get(r["b"], set()) for r in relations]
 
     # 本文は使うチャンクの分だけ読む
     needed = {h["chunk"] for h in has_entity if h["chunk"] in in_scope}
-    for r in relations:
-        needed |= chunks_of.get(r["a"], set()) & chunks_of.get(r["b"], set())
+    for common in shared:
+        needed |= common
     rows = _chunk_texts(graph, needed)
     texts = {cid: ChunkText(cid, row["text"]) for cid, row in rows.items()}
     order = {cid: (str(row["fileName"] or ""), row["position"] if row["position"] is not None else 10 ** 9, cid)
@@ -491,19 +436,15 @@ def attach_provenance(graph, dry_run=False, file_names=None, relation_mode=None,
     for h in has_entity:
         if h["chunk"] not in in_scope or h["chunk"] not in texts:
             continue
-        mention, source = texts[h["chunk"]].mention(names_of.get(h["entity"]) or entity_names(h["name"], h["aliases"]))
-        mention_rows.append({"rid": h["rid"], "chunk": h["chunk"], "name": h["name"], "mention": mention,
-                             "found": mention is not None, "source": source})
+        mention, source = texts[h["chunk"]].mention(names_of[h["entity"]])
+        mention_rows.append({"rid": h["rid"], "mention": mention, "found": mention is not None, "source": source})
 
-    # P2 リレーションの根拠
+    # P2 リレーションの根拠（両端に HAS_ENTITY を持つチャンクが無い端は名前を使わないので、空の一覧で足りる）
     relation_rows = []
-    for r in relations:
-        candidates = sorted((chunks_of.get(r["a"], set()) & chunks_of.get(r["b"], set())) & set(texts), key=lambda c: order[c])
-        names_a = names_of.get(r["a"]) or entity_names(r["a_name"], r["a_aliases"])
-        names_b = names_of.get(r["b"]) or entity_names(r["b_name"], r["b_aliases"])
-        ev = relation_evidence([texts[c] for c in candidates], names_a, names_b)
-        relation_rows.append({"rid": r["rid"], "type": r["type"], "start": r["a_name"], "end": r["b_name"],
-                              "chunk": ev["chunk_id"], "evidence": ev["evidence"], "kind": ev["kind"]})
+    for r, common in zip(relations, shared):
+        candidates = sorted((c for c in common if c in texts), key=lambda c: order[c])
+        ev = relation_evidence([texts[c] for c in candidates], names_of.get(r["a"], []), names_of.get(r["b"], []))
+        relation_rows.append({"rid": r["rid"], "chunk": ev["chunk_id"], "evidence": ev["evidence"], "kind": ev["kind"]})
 
     # P3 安定キー
     labels = section_labels(section_rows)
@@ -522,37 +463,29 @@ def attach_provenance(graph, dry_run=False, file_names=None, relation_mode=None,
         "relations": len(relation_rows),
         "evidence_kind": {k: kinds.get(k, 0) for k in EVIDENCE_KINDS},
         "relation_evidence_rate": round((kinds["same_sentence"] + kinds["window"]) / len(relation_rows), 3) if relation_rows else None,
-        "relation_properties_enabled": bool(write_relations),
-        "relation_properties_written": bool(write_relations and not dry_run),
-        "relation_properties_reason": relation_reason,
         "chunks": len(chunk_rows),
         "chunks_with_section_key": sum(1 for k, _ in keys.values() if parse_stable_key(k)[1] != NO_SECTION),
         "stable_key_duplicates": sum(n - 1 for n in key_counts.values() if n > 1),
     }
 
     if not dry_run:
-        for batch in _batches(mention_rows):
+        for batch in batches(mention_rows):
             execute_graph_query(graph, """
                 UNWIND $rows AS row
                 MATCH ()-[r:HAS_ENTITY]->() WHERE elementId(r) = row.rid
                 SET r.mention = row.mention, r.mention_found = row.found, r.mention_source = row.source""",
-                params={"rows": [{k: m[k] for k in ("rid", "mention", "found", "source")} for m in batch]})
-        if write_relations:
-            for batch in _batches(relation_rows):
-                execute_graph_query(graph, """
-                    UNWIND $rows AS row
-                    MATCH ()-[r]->() WHERE elementId(r) = row.rid
-                    SET r.source_chunk_id = row.chunk, r.evidence = row.evidence, r.evidence_kind = row.kind, r.provenance_method = $m""",
-                    params={"m": METHOD, "rows": [{k: x[k] for k in ("rid", "chunk", "evidence", "kind")} for x in batch]})
+                params={"rows": batch})
+        for batch in batches(relation_rows):
+            execute_graph_query(graph, """
+                UNWIND $rows AS row
+                MATCH ()-[r]->() WHERE elementId(r) = row.rid
+                SET r.source_chunk_id = row.chunk, r.evidence = row.evidence, r.evidence_kind = row.kind, r.provenance_method = $m""",
+                params={"m": METHOD, "rows": batch})
         execute_graph_query(graph, f"CREATE INDEX {STABLE_KEY_INDEX} IF NOT EXISTS FOR (c:Chunk) ON (c.stable_key)")
-        for batch in _batches([{"id": cid, "key": k, "ordinal": o} for cid, (k, o) in keys.items()]):
+        for batch in batches([{"id": cid, "key": k, "ordinal": o} for cid, (k, o) in keys.items()]):
             execute_graph_query(graph, """
                 UNWIND $rows AS row
                 MATCH (c:Chunk {id: row.id})
                 SET c.stable_key = row.key, c.doc_ordinal = row.ordinal""", params={"rows": batch})
     logging.info("provenance: %s", json.dumps(summary, ensure_ascii=False))
-    result = {"summary": summary}
-    if details:
-        result["details"] = {"mentions": mention_rows, "relations": relation_rows,
-                             "stable_keys": {cid: {"stable_key": k, "doc_ordinal": o} for cid, (k, o) in keys.items()}}
-    return result
+    return {"summary": summary}

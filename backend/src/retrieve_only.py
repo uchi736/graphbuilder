@@ -19,11 +19,11 @@ from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnableLambda
 
 from src.QA_integration import (
-    create_document_retriever_chain, format_documents, get_chat_mode_settings, get_neo4j_retriever, get_sources_and_chunks,
+    chat_mode_settings_with_retrieval, create_document_retriever_chain, format_documents, get_neo4j_retriever, get_sources_and_chunks,
 )
-from src.rerank_retriever import collect_reference_trace, resolve_retrieval_settings
+from src.rerank_retriever import collect_reference_trace
 from src.shared.constants import (
-    CHAT_DEFAULT_MODE, CHAT_ENTITY_VECTOR_MODE, CHAT_GLOBAL_VECTOR_FULLTEXT_MODE, CHAT_GRAPH_MODE,
+    CHAT_DEFAULT_MODE, CHAT_ENTITY_VECTOR_MODE, CHAT_GLOBAL_VECTOR_FULLTEXT_MODE, CHAT_GRAPH_MODE, DOCUMENT_SOURCE_EXPR,
 )
 
 # 選ばれたチャンクの詳細。source は取り出しの照会（metadata.source）と同じ式で、文書行との突き合わせに使う。
@@ -32,10 +32,10 @@ UNWIND $ids AS id
 MATCH (c:Chunk {id: id})
 OPTIONAL MATCH (c)-[:PART_OF]->(d:Document)
 WITH c, collect({fileName: d.fileName,
-                 source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName)}) AS docs
+                 source: __SOURCE__}) AS docs
 RETURN c.id AS id, c.text AS text, c.fileName AS fileName, c.position AS position,
        c.page_number AS page_number, c.section AS section, docs
-"""
+""".replace("__SOURCE__", DOCUMENT_SOURCE_EXPR)
 
 # format_documents は、モデル名を「文脈に入れる文書行の上限（CHAT_TOKEN_CUT_OFF）」を決めるためだけに使う。
 # 省略時は、どの表にも当たらない名前を渡して既定の上限にする（None は表の照合で例外になり、空文字は誤って当たる）。
@@ -49,18 +49,6 @@ def _llm_must_not_run(_):
 # create_document_retriever_chain は、履歴があるときに質問を書き直す枝のために LLM を受け取る。
 # 検索だけの口は常にメッセージ 1 件で呼ぶのでその枝は通らない。通ったら誤りなので例外にする。
 _NO_LLM = RunnableLambda(_llm_must_not_run)
-
-
-def _parse_retrieval_settings(retrieval_settings):
-    """QA_RAG と同じ扱い: JSON の文字列か辞書を受け、読めなければ既定値にする。"""
-    overrides = retrieval_settings
-    if isinstance(overrides, str):
-        try:
-            overrides = json.loads(overrides) if overrides.strip() else None
-        except json.JSONDecodeError:
-            logging.warning(f"retrieval_settings is not valid JSON; using defaults: {overrides[:200]}")
-            overrides = None
-    return overrides if isinstance(overrides, dict) else None
 
 
 def _parse_document_names(document_names):
@@ -127,10 +115,8 @@ def retrieve_context(graph, question, document_names=None, mode=None, embedding_
     if mode == CHAT_GRAPH_MODE:
         raise ValueError(f"mode '{CHAT_GRAPH_MODE}' builds a Cypher query with the LLM and has no retrieval-only form")
 
-    # 共有の設定辞書を書き換えないよう写しを作り、検索設定を載せる（QA_RAG と同じ）
-    chat_mode_settings = dict(get_chat_mode_settings(mode=mode))
-    chat_mode_settings["retrieval_settings"] = resolve_retrieval_settings(_parse_retrieval_settings(retrieval_settings),
-                                                                         mode_defaults=chat_mode_settings.get("retrieval_defaults"))
+    # 検索設定の解決は QA_RAG と同じ
+    chat_mode_settings = chat_mode_settings_with_retrieval(mode, retrieval_settings)
     document_names = _parse_document_names(document_names)
     if document_names and not chat_mode_settings["document_filter"]:
         # /chat_bot は同じ条件で検索せずに案内文を返す。検索だけの口では失敗として返す

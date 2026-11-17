@@ -63,5 +63,14 @@ def test_three_layer_resolution(monkeypatch):
 def test_retrieve_only_and_chat_use_mode_defaults():
     import inspect
     from src import QA_integration, retrieve_only
-    assert "mode_defaults=chat_mode_settings.get(\"retrieval_defaults\")" in inspect.getsource(QA_integration.QA_RAG)
-    assert "mode_defaults=chat_mode_settings.get(\"retrieval_defaults\")" in inspect.getsource(retrieve_only.retrieve_context)
+    # チャットと検索だけの口は、同じ関数で検索設定を解決する（方式の既定値を重ねる）
+    assert "mode_defaults=chat_mode_settings.get(\"retrieval_defaults\")" in inspect.getsource(QA_integration.chat_mode_settings_with_retrieval)
+    assert "chat_mode_settings_with_retrieval(mode, retrieval_settings)" in inspect.getsource(QA_integration.QA_RAG)
+    assert "chat_mode_settings_with_retrieval(mode, retrieval_settings)" in inspect.getsource(retrieve_only.retrieve_context)
+
+
+def test_parse_retrieval_settings():
+    assert rr.parse_retrieval_settings('{"reference_max": 1}') == {"reference_max": 1}
+    assert rr.parse_retrieval_settings({"reference_max": 1}) == {"reference_max": 1}
+    assert rr.parse_retrieval_settings("not json") is None and rr.parse_retrieval_settings("  ") is None
+    assert rr.parse_retrieval_settings("[1]") is None and rr.parse_retrieval_settings(None) is None

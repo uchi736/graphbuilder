@@ -4,7 +4,6 @@ from src.shared.common_fn import load_embedding_model,execute_graph_query,get_va
 import logging
 from typing import List
 import hashlib
-import os
 import json
 import time
 from langchain_neo4j import Neo4jVector
@@ -62,13 +61,8 @@ def create_chunk_embeddings(graph, chunkId_chunkDoc_list, file_name, embedding_p
     execute_graph_query(graph,query_to_create_embedding, params={"fileName":file_name, "data":data_for_query})
     
 def chunk_id_for(file_name: str, position: int, text: str) -> str:
-    """チャンクの ID。既定（CHUNK_ID_MODE=document）は 文書名＋文書内の位置＋本文 のハッシュ。
-    本文だけのハッシュ（CHUNK_ID_MODE=content、元の作り）だと、同じ本文の節（共通の判定基準、枠の定型文、
-    版をまたいで変わらなかった節）が別の文書どうしで 1 つのノードに統合され、PART_OF と NEXT_CHUNK が文書をまたぐ。
-    content は過去の実験の記録（本文のハッシュを ID にしている）を再現するためだけに残す。"""
-    mode = os.environ.get("CHUNK_ID_MODE", "document").strip().lower()
-    if mode == "content":
-        return hashlib.sha1(text.encode()).hexdigest()
+    """チャンクの ID。文書名＋文書内の位置＋本文 のハッシュ（本文だけのハッシュだと、同じ本文の節が別の文書どうしで
+    1 つのノードに統合され、PART_OF と NEXT_CHUNK が文書をまたぐ）。"""
     return hashlib.sha1(f"{file_name}\x1f{position}\x1f{text}".encode()).hexdigest()
 
 

@@ -141,15 +141,13 @@ def test_normalize():
 
 
 def test_resolve_edc_llm():
+    # 名前は EDC_LLM_MODEL で決め、LLM_MODEL_CONFIG_<名前> と同じモデルなら画面の呼び名にそろえる
     with Env(**GEMMA):
-        # /health の llm は到達の結果で、名前としては使わない
-        assert X.resolve_edc_llm({"status": "ok", "llm": "ok"}) == ("gemma4", "google/gemma-4-26B-A4B-it")
-        assert X.resolve_edc_llm({"status": "degraded", "llm": "down: refused"}) == ("gemma4", "google/gemma-4-26B-A4B-it")
-        assert X.resolve_edc_llm(None) == ("gemma4", "google/gemma-4-26B-A4B-it")
-        # EDC が名前を返すようになったらそちらを優先する
-        assert X.resolve_edc_llm({"llm_model": "other/model"}) == ("other/model", "other/model")
+        assert X.resolve_edc_llm() == ("gemma4", "google/gemma-4-26B-A4B-it")
+    with Env(EDC_LLM_MODEL="other/model"):
+        assert X.resolve_edc_llm() == ("other/model", "other/model")
     with Env(EDC_LLM_MODEL=None):
-        assert X.resolve_edc_llm({"llm": "ok"}) == (None, None)
+        assert X.resolve_edc_llm() == (None, None)
 
 
 def test_fetch_parses_edc_responses():
@@ -422,7 +420,8 @@ def test_edc_extraction_applies_per_request_options(monkeypatch):
 
     monkeypatch.setattr(E, "_get_edc_config", lambda: ("http://edc.invalid", "auto", "recursive", 2))
     monkeypatch.setattr(E.httpx, "AsyncClient", FakeClient)
-    monkeypatch.setattr(E, "_flag_enabled", lambda name, default=False: False)
+    monkeypatch.delenv("EDC_FOLD_UNKNOWN_RELATIONS", raising=False)
+    monkeypatch.delenv("EDC_DROP_SENTENCE_NAMES", raising=False)
     monkeypatch.setenv("EDC_ENRICH_SCHEMA", "true")
     from langchain_core.documents import Document
     docs = [Document(page_content="本文", metadata={"combined_chunk_ids": ["c1"]})]
@@ -453,10 +452,19 @@ def test_effective_edc_options_records_request_or_backend_default(monkeypatch):
     from types import SimpleNamespace
     from src import extraction_methods as M
 
+    def effective(p):
+        return M.effective_edc_options(p, M.edc_options_of(p))
+
     p = SimpleNamespace(extraction_method="edc", edc_doctype="試運転_検査基準", edc_schema_mode="fixed")
-    assert M.effective_edc_options(p) == ("試運転_検査基準", "fixed")
+    assert effective(p) == ("試運転_検査基準", "fixed")
     monkeypatch.setenv("LLM_MODEL_CONFIG_EDC", "http://edc:8080,auto,recursive,2")
     monkeypatch.setenv("EDC_ENRICH_SCHEMA", "true")
     p = SimpleNamespace(extraction_method="edc", edc_doctype=None, edc_schema_mode=None)
-    assert M.effective_edc_options(p) == ("auto", "fixed_extended")
-    assert M.effective_edc_options(SimpleNamespace(extraction_method="standard", edc_doctype="x", edc_schema_mode="fixed")) == (None, None)
+    assert effective(p) == ("auto", "fixed_extended")
+    # 片方だけの指定は、残りを backend の設定で補う。none は判定なしとして記録する
+    p = SimpleNamespace(extraction_method="edc", edc_doctype=None, edc_schema_mode="fixed")
+    assert effective(p) == ("auto", "fixed")
+    monkeypatch.setenv("LLM_MODEL_CONFIG_EDC", "http://edc:8080,NONE")
+    p = SimpleNamespace(extraction_method="edc", edc_doctype=None, edc_schema_mode=None)
+    assert effective(p) == ("none", "fixed_extended")
+    assert effective(SimpleNamespace(extraction_method="standard", edc_doctype="x", edc_schema_mode="fixed")) == (None, None)

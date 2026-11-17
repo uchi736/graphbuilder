@@ -18,7 +18,6 @@ extra（時計回りの度、0/90/180/270）を渡すと、/Rotate にさらに�
 from __future__ import annotations
 
 import ctypes
-import io
 import logging
 import math
 import threading
@@ -91,10 +90,10 @@ class _Geometry:
         return u + self.left, self.top - v
 
 
-def page_size(page, extra: int = 0) -> tuple:
+def page_size(page) -> tuple:
     """表示の大きさ（CropBox の幅・高さに回転を掛けたもの。page.render の画像と同じ向き）"""
     with PDFIUM_LOCK:
-        g = _Geometry(page, extra)
+        g = _Geometry(page)
         return g.width, g.height
 
 
@@ -121,14 +120,6 @@ def render_image(page, long_side: int = LONG_SIDE_PX, extra: int = 0) -> tuple:
         method = getattr(Image, "Transpose", Image)
         image = image.transpose(getattr(method, _TRANSPOSE[extra]))
     return image, scale
-
-
-def render_png(page, long_side: int = LONG_SIDE_PX, extra: int = 0) -> tuple:
-    """ページを画像にして (PNG のバイト列, 縮尺 px/pt) を返す"""
-    image, scale = render_image(page, long_side, extra)
-    buf = io.BytesIO()
-    image.save(buf, format="PNG")
-    return buf.getvalue(), scale
 
 
 def _char_rotation(tp, k: int, g: _Geometry) -> int:
@@ -340,7 +331,7 @@ def line_segments(page, extra: int = 0) -> tuple:
 
 
 def survey_page(page) -> dict:
-    """文字層の有無を見るための軽い集計（pdf_markdown._survey と同じ考え方）。
+    """文字層の有無を見るための軽い集計。
 
     chars: 字として数える文字の数。image_share: 画像の置かれた面積の合計 / ページの面積。
     text_share: 文字の行の矩形の面積の合計 / ページの面積（画像が 5 割以上のページだけ数える。他は None）。

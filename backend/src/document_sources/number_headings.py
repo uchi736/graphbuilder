@@ -1,13 +1,8 @@
-"""番号見出しの規則。PDF から変換した Markdown（見出しの印が付いていない）に、行頭の番号の形で見出しの印を付ける。
+"""番号見出しの規則（行頭の番号の形の正規表現と、題として成り立つかの判定）。
+見出しの段の決め方は pdf_regions/headings.py（promote_line）が、これらの規則を使って行う。
 
 社内規格に共通の形だけを見る。文書ごとの規則は持たない。
-    章   1.  2.  3.           → ##
-    節   2-1  3-5             → ###
-    別表・注  別表 1  注 1     → ###
-    項   (1)                  → ####
-    号   1)                   → #####（「(1)」の下に置かれる番号。番号の形は書き換えない）
-    目   a.  a)  b)           → ######
-項と目は題が短いので細切れになりやすいが、分割のあとで 80 トークン未満の節を同じ章の前の節に寄せるので、数は増えない。
+    章 1.  節 2-1  項 (1)  号 1)  目 a.  a)
 見出しとみなす条件: 題が 40 字以内で字を含み、数字や助詞で始まらず、句点で終わらず、助詞（を・は・が）や連用の形を含まないこと。
 文の形の項目（「(1) 羽根付け根 R 部はいかなる欠陥も許容しない。」）は見出しにしない。
 """
@@ -15,7 +10,6 @@ import re
 
 CHAPTER = re.compile(r"^\s*(\d{1,2})[.．]\s*(\S.{0,38})?$")
 SECTION = re.compile(r"^\s*(\d{1,2})[-－](\d{1,2})\s*(\S.{0,38})?$")
-TABLE_NOTE = re.compile(r"^\s*((別表|別紙|付表|表)\s*[-－]?\s*\d{1,2}|注\s*\d{0,2})(\s*\S.{0,38})?$")
 ITEM = re.compile(r"^\s*[（(](\d{1,2})[)）]\s*(\S.{0,38})?$")          # (1)
 NUMBERED = re.compile(r"^\s*(\d{1,2})[)）]\s*(\S.{0,38})?$")            # 1)
 SUBITEM = re.compile(r"^\s*([a-z])[.)）]\s*(\S.{0,38})?$")
@@ -40,54 +34,6 @@ def _is_heading_title(title: str, item: bool = False) -> bool:
     if item and len(title) > 30:
         return False
     return True
-
-
-def promote_number_headings(text: str) -> str:
-    """行頭の番号の形を Markdown の見出しに直す。既に見出しの印がある行、表の行、囲みの中は触らない。"""
-    out = []
-    lines = text.split("\n")
-    fence = False
-    for i, line in enumerate(lines):
-        stripped = line.strip()
-        if stripped.startswith("```") or stripped.startswith("~~~"):
-            fence = not fence
-            out.append(line)
-            continue
-        if fence or stripped.startswith("#") or stripped.startswith("|") or not stripped:
-            out.append(line)
-            continue
-        nxt = lines[i + 1].strip() if i + 1 < len(lines) else ""
-        m = CHAPTER.match(stripped)
-        if m and (m.group(2) or "").strip() and _is_heading_title(m.group(2)):
-            out.append(f"## {m.group(1)}. {m.group(2).strip()}")
-            continue
-        if m and not (m.group(2) or "").strip() and nxt and _is_heading_title(nxt) and not stripped.startswith("|"):
-            # 番号だけの行の次の行が題（「3.」の次の行に「試運転判定基準」）
-            out.append(f"## {m.group(1)}. {nxt}")
-            lines[i + 1] = ""
-            continue
-        m = SECTION.match(stripped)
-        if m and (m.group(3) or "").strip() and _is_heading_title(m.group(3)):
-            out.append(f"### {m.group(1)}-{m.group(2)} {(m.group(3) or '').strip()}".rstrip())
-            continue
-        m = TABLE_NOTE.match(stripped)
-        if m and _is_heading_title(m.group(3) or ""):
-            out.append(f"### {stripped}")
-            continue
-        m = ITEM.match(stripped)
-        if m and m.group(2) and _is_heading_title(m.group(2), item=True):
-            out.append(f"#### ({m.group(1)}) {m.group(2).strip()}")
-            continue
-        m = NUMBERED.match(stripped)
-        if m and m.group(2) and _is_heading_title(m.group(2), item=True):
-            out.append(f"##### {m.group(1)}) {m.group(2).strip()}")
-            continue
-        m = SUBITEM.match(stripped)
-        if m and m.group(2) and _is_heading_title(m.group(2), item=True):
-            out.append(f"###### {m.group(1)}) {m.group(2).strip()}")
-            continue
-        out.append(line)
-    return "\n".join(out)
 
 
 def is_control_heading(path) -> bool:

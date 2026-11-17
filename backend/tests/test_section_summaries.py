@@ -1,17 +1,15 @@
 # -*- coding: utf-8 -*-
-"""節の要点（後処理 build_section_summaries）と、参照追跡の一覧選択（reference_doc_select = summary_list）の試験。DB・LLM・ネットワークなし。
+"""節の要点（後処理 build_section_summaries）と、参照の一文で選ぶたどり方（文書のみを指す参照）の試験。DB・LLM・ネットワークなし。
 
   要点の作成: LLM と DB を差し替え、子 → 章の順、作り直しの省略、控えからの書き戻し、失敗の飛ばし、打ち切り、同時数の上限を確かめる
              打ち切りの後も浅い段は書き戻すこと、HTTP のエラーと設定の誤りの扱い、complete、控えの掃除と貸し出し、同時に 1 本の鍵、書き戻しだけの実行
-  一覧選択: 候補の作り方（リランカーの上位 20 件）、番号の解析、範囲外・空・失敗で rerank に戻る、上限、2 段（章 → 節）、文字数予算
-             本文の点数の下限、要点の無い文書、2 回目のたどりの数と LLM の呼び出し、1 つの質問の中での LLM の失敗の記憶、行の取り分
-  設定: 既定の検索（参照をたどらない 4 方式）が変わらないこと、参照追跡の方式の既定も rerank のままであること
+  参照の一文で選ぶたどり方: 文書のみを指す参照はリランクで 1 件、本文の点数の下限、2 回目はチャンクへの参照だけ、
+             both で章・節と文書層の照会と質問の埋め込みを 1 回の検索の中で使い回すこと、応答の控えの項目、行の取り分
   要点が既定の検索の文脈に出ないこと（文脈の照会の形で確かめる）
 実行: docker run --rm --memory=4g --network none -v $PWD/backend:/code -w /code llm-graph-builder-backend:latest \
         python -m pytest -q -p no:cacheprovider tests/test_section_summaries.py
 """
 import ast
-import collections
 import fcntl
 import logging
 import os
@@ -285,15 +283,8 @@ def test_build_concurrency_is_capped_at_three():
     g.sections.update({f"x{i}": {"id": f"x{i}", "file_name": "B.pdf", "path": [f"{i} 節"], "level": 1, "parent": None} for i in range(30)})
     g.bodies.update({f"x{i}": ["回転速度と圧力比を計測する本文。"] for i in range(30)})
     llm = FakeSummarize()
-    out = SS.build_section_summaries(run=g.run, summarize=llm, concurrency=10, backoff=0)["summary"]
-    assert out["concurrency"] == 3 and 1 < llm.peak <= 3
-
-
-def test_build_limited_to_files_does_not_prune():
-    g = world()
-    g.cache["old"] = {"summary": "古い", "model": "m", "at": "t", "fileName": "X.pdf"}
-    out = SS.build_section_summaries(run=g.run, summarize=FakeSummarize(), file_names=["HS-VTR-T001E.pdf"], backoff=0)["summary"]
-    assert out["made"] == 4 and out["pruned"] == 0 and "old" in g.cache
+    out = SS.build_section_summaries(run=g.run, summarize=llm, backoff=0)["summary"]
+    assert out["concurrency"] == 8 and 1 < llm.peak <= 8
 
 
 def test_chat_payload_and_template_fallback(monkeypatch):
@@ -330,118 +321,21 @@ def test_chat_payload_and_template_fallback(monkeypatch):
 
 
 # ============================================================
-# 一覧選択（部品）
-# ============================================================
-def items(n, doc="HS-VTR-T001E.pdf", parent_of=None, summary=True):
-    out = []
-    for i in range(1, n + 1):
-        out.append(SS.section_item({"id": f"s{i}", "file_name": doc, "path": [f"{i} 節{i}"], "level": 1 if not parent_of else 2,
-                                    "parent": (parent_of or {}).get(f"s{i}"), "summary": f"節{i}の要点" if summary else "",
-                                    "head": f"節{i}の本文の先頭"}))
-    return out
-
-
-def test_parse_picks():
-    assert SS.parse_picks("[3, 1, 3, 9]", 5, 4) == [2, 0]
-    assert SS.parse_picks("```json\n[2,1]\n```", 5, 4) == [1, 0]
-    assert SS.parse_picks("番号は 4 と 2 です", 5, 4) == [3, 1]          # JSON でなければ数字を拾う（X16 と同じ）
-    assert SS.parse_picks("[1, 2, 3, 4, 5]", 5, 2) == [0, 1]
-    assert SS.parse_picks("[]", 5, 4) == [] and SS.parse_picks("[0, 7]", 5, 4) == [] and SS.parse_picks("", 5, 4) == []
-
-
-def test_list_messages_show_question_source_already_and_numbered_candidates():
-    msgs = SS.list_messages("油の温度は", "3-5 項: 運転条件は HS-VTR-T001 による。", ["- HS-RU-003H 2 要領: 要点"], items(2), 4)
-    assert msgs[0]["content"] == SS.LIST_SYSTEM
-    user = msgs[1]["content"]
-    assert user.startswith("### 質問\n油の温度は\n\n### 参照元の節")
-    assert "HS-VTR-T001 による" in user and "- HS-RU-003H 2 要領: 要点" in user
-    assert "1. [HS-VTR-T001E 1 節1] 節1の要点\n2. [HS-VTR-T001E 2 節2] 節2の要点" in user
-    assert user.endswith("最大 4 件の番号を JSON の配列で返せ。")
-    # 要点の無い節は本文の先頭を出す
-    assert "1. [HS-VTR-T001E 1 節1] 節1の本文の先頭" in SS.list_messages("q", "", [], items(1, summary=False), 4)[1]["content"]
-
-
-def test_select_by_list_lists_reranker_top_20_and_keeps_llm_order():
-    secs = items(25)
-    seen = {}
-
-    def rerank(q, texts):
-        seen["query"], seen["texts"] = q, texts
-        return [float(int(re.search(r"節(\d+)の", t).group(1))) for t in texts]      # 番号の大きい節ほど高い
-
-    def ask(msgs):
-        seen["user"] = msgs[1]["content"]
-        return "[2, 1, 30]"
-
-    out = SS.select_by_list("質問", "質問 参照の一文", "源", [], secs, rerank=rerank, ask=ask, max_picks=4)
-    assert seen["query"] == "質問 参照の一文" and seen["texts"][0] == "1 節1 節1の要点"   # 見出しの経路＋要点
-    assert "1. [HS-VTR-T001E 25 節25]" in seen["user"] and "20. [HS-VTR-T001E 6 節6]" in seen["user"] and "節5]" not in seen["user"]
-    assert [s["id"] for s in out["picked"]] == ["s24", "s25"] and out["stage"] == 1 and out["candidates"] == 20
-    assert out["raw"] == ["[2, 1, 30]"]
-
-
-@pytest.mark.parametrize("answer,reason", [("[]", "empty"), ("候補にない", "empty"), ("[0, 99]", "out_of_range")])
-def test_select_by_list_fails_on_empty_or_out_of_range(answer, reason):
-    with pytest.raises(SS.SelectionFailed) as err:
-        SS.select_by_list("q", "q", "", [], items(3), rerank=lambda q, t: [0.0] * len(t), ask=lambda m: answer)
-    assert err.value.reason == reason and err.value.raw == answer
-
-
-def test_select_by_list_fails_when_llm_fails_and_survives_reranker_failure():
-    def boom(_msgs):
-        raise requests.Timeout("slow")
-
-    with pytest.raises(SS.SelectionFailed) as err:
-        SS.select_by_list("q", "q", "", [], items(3), rerank=lambda q, t: [0.0] * len(t), ask=boom)
-    assert err.value.reason == "llm_failed"
-    with pytest.raises(SS.SelectionFailed) as err:
-        SS.select_by_list("q", "q", "", [], [], rerank=lambda q, t: [], ask=lambda m: "[1]")
-    assert err.value.reason == "no_sections"
-
-    def bad_rerank(q, t):
-        raise RuntimeError("reranker down")
-
-    out = SS.select_by_list("q", "q", "", [], items(3), rerank=bad_rerank, ask=lambda m: "[3]")
-    assert [s["id"] for s in out["picked"]] == ["s3"]   # 文書の順のまま一覧にする
-
-
-def test_select_by_list_two_stage_chapters_then_sections():
-    # 章 4 つ × 節 10 = 44 節（閾値 30 を超える）
-    rows = []
-    for c in range(1, 5):
-        rows.append({"id": f"c{c}", "file_name": "D.pdf", "path": [f"{c} 章{c}"], "level": 1, "parent": None, "summary": f"章{c}の要点"})
-        for k in range(1, 11):
-            rows.append({"id": f"c{c}s{k}", "file_name": "D.pdf", "path": [f"{c} 章{c}", f"{c}-{k} 節"], "level": 2, "parent": f"c{c}",
-                         "summary": f"{c}-{k} の要点"})
-    secs = [SS.section_item(r) for r in rows]
-    prompts = []
-
-    def ask(msgs):
-        prompts.append(msgs[1]["content"])
-        return "[3]" if len(prompts) == 1 else "[2, 1]"
-
-    out = SS.select_by_list("q", "q", "", [], secs, rerank=lambda q, t: [0.0] * len(t), ask=ask, max_picks=4, two_stage_min=30)
-    assert out["stage"] == 2 and out["chapters"] == ["c3"]
-    assert "章を、役立つ順に" in prompts[0] and "4. [D 4 章4] 章4の要点" in prompts[0] and "-1 節" not in prompts[0]
-    assert "3 章3 > 3-1 節" in prompts[1] and "2 章2" not in prompts[1]          # 2 段目は選んだ章の節だけ
-    assert [s["id"] for s in out["picked"]] == ["c3s1", "c3"]
-    # 閾値以下なら 1 段
-    out = SS.select_by_list("q", "q", "", [], secs, rerank=lambda q, t: [0.0] * len(t), ask=lambda m: "[1]", two_stage_min=100)
-    assert out["stage"] == 1 and out["chapters"] == []
-
-
-# ============================================================
-# 一覧選択（検索の中）
+# 参照の一文で選ぶたどり方（検索の中）
 # ============================================================
 QUOTE = "運転条件は HS-VTR-T001 による。"
 SOURCE_TEXT = "3-5 初号機の性能計測。初号機の性能計測を行う。" + QUOTE + "計測の順序は別に定める。"
 
 
 class FakeNeo:
-    """検索が流す照会を真似る。文書のみを指す参照 1 つ（参照元 src → 文書 T001.pdf）と、チャンクへの参照 1 つ。"""
+    """検索が流す照会を真似る。文書のみを指す参照 1 つ（参照元 src → 文書 T001.pdf）。章・節と文書層の参照は無い。"""
 
     class _Emb:
+        def __init__(self):
+            self.texts = []
+
         def embed_query(self, text):
+            self.texts.append(text)
             return [0.0]
 
     def __init__(self, extra_links=()):
@@ -451,19 +345,6 @@ class FakeNeo:
             {"id": "d1", "text": "★ 文書の中でリランクが最も高いチャンク", "position": 1, "file_name": "T001.pdf", "doc_source": "T001.pdf"},
             {"id": "d2", "text": "別のチャンク", "position": 2, "file_name": "T001.pdf", "doc_source": "T001.pdf"},
         ]
-        self.sections = [
-            {"id": "S1", "file_name": "T001.pdf", "path": ["3 試験"], "title": "3 試験", "number": "3", "level": 1, "parent": None,
-             "summary": "試験の総則。", "head": "3. 試験"},
-            {"id": "S2", "file_name": "T001.pdf", "path": ["3 試験", "3-5 運転条件"], "title": "3-5 運転条件", "number": "3-5", "level": 2,
-             "parent": "S1", "summary": "油の供給圧力と温度を定める。", "head": "油の供給"},
-            {"id": "S3", "file_name": "T001.pdf", "path": ["3 試験", "3-6 計測"], "title": "3-6 計測", "number": "3-6", "level": 2,
-             "parent": "S1", "summary": "計測の順序を定める。", "head": "計測"},
-        ]
-        self.section_chunks = {  # 節 → 主所属のチャンク（own）
-            "S1": [{"id": "p1", "text": "3. 試験の総則", "position": 10}],
-            "S2": [{"id": "p2a", "text": "油の供給圧力は 0.25 MPa ☆", "position": 11}, {"id": "p2b", "text": "★ 温度は 45 ℃", "position": 12}],
-            "S3": [{"id": "p3", "text": "計測の順序", "position": 13}],
-        }
         self.links = [
             {"source": "src", "source_text": SOURCE_TEXT, "source_heading": "3-5 初号機", "quote": QUOTE, "locator": "", "form": "文書",
              "method": "rule", "source_section": "body", "kind": "document", "id": None, "text": None, "position": None,
@@ -477,18 +358,9 @@ class FakeNeo:
             return [dict(l) for l in self.links if l["source"] in params["ids"]]
         if q == rr.REFERENCE_DOCUMENT_CHUNKS_QUERY:
             return [dict(c) for c in self.doc_chunks if c["id"] not in params["skip"]]
-        if q == rr.REFERENCE_DOC_SECTIONS_QUERY:
-            return [dict(s) for s in self.sections if s["file_name"] in params["docs"]]
-        if q == rr.SECTION_PICK_CHUNKS_QUERY:
-            out = []
-            for sid in params["sections"]:
-                for c in self.section_chunks.get(sid, []):
-                    if c["id"] not in params["skip"]:
-                        out.append({"section_id": sid, "file_name": "T001.pdf", "doc_source": "T001.pdf", "tier": c.get("tier", 3), **c})
-            return out
-        if q == rr.ALREADY_SECTIONS_QUERY:
-            return [{"id": i, "file_name": "HS-RU-003H.pdf", "section_id": "A" + i, "path": ["2 要領"], "title": "2 要領", "number": None,
-                     "summary": "初号機の要領。", "chunk_section": None} for i in params["ids"]]
+        if q in (rr.SECTION_REFERENCE_QUERY, rr.DOCUMENT_LAYER_REFERENCE_QUERY) or q.startswith(
+                "UNWIND $ids AS id MATCH (c:Chunk {id: id})-[:REFERS_TO]->(t:Chunk)"):
+            return []
         raise AssertionError("unexpected query: " + q[:80])
 
 
@@ -505,188 +377,80 @@ def chosen(text="選んだチャンクの本文"):
     return [(Document(page_content=text, metadata={"chunk_id": "src", "source": "RU.pdf", "position": 1}), 0.9)]
 
 
-def follow(neo, monkeypatch, answer="[2, 1]", **settings):
+def follow(neo, monkeypatch, **settings):
     monkeypatch.setattr(rr, "_rerank", fake_rerank)
-    asked = []
-
-    def list_chat(msgs):
-        asked.append(msgs)
-        if isinstance(answer, Exception):
-            raise answer
-        return answer
-
-    monkeypatch.setattr(SS, "list_chat", list_chat)
     r = retriever(neo, **settings)
     picks = []
-    r._link_picks("油の温度は", chosen(), int(r.settings["reference_max"]), {"src"}, picks)
-    return picks, asked
+    r._link_picks("油の温度は", chosen(), int(r.settings["reference_max"]), {"src"}, picks, {})
+    return picks
 
 
-def test_rerank_mode_is_unchanged_and_does_not_call_llm(monkeypatch):
+def test_document_reference_picks_one_chunk_by_rerank(monkeypatch):
     neo = FakeNeo()
-    picks, asked = follow(neo, monkeypatch)
-    assert [p["chunk_id"] for p in picks] == ["d1"] and asked == []
-    assert not any(k in picks[0] for k in ("selection", "selected_section", "llm_raw"))
-    assert rr.REFERENCE_DOC_SECTIONS_QUERY not in neo.calls
+    picks = follow(neo, monkeypatch)
+    assert [p["chunk_id"] for p in picks] == ["d1"]                 # 文書のチャンクのうちリランクの最も高いもの
+    assert picks[0]["select"] == "link" and picks[0]["target_kind"] == "document" and picks[0]["hop"] == 1
 
 
-def test_summary_list_picks_sections_and_one_chunk_each(monkeypatch):
+def test_document_reference_needs_the_min_score_of_the_chunk(monkeypatch):
+    # 参照の一文は高く（0.95）、文書のチャンクはすべて下限（0.3）未満: 足さない
     neo = FakeNeo()
-    picks, asked = follow(neo, monkeypatch, reference_doc_select="summary_list", reference_max=1)
-    # 一覧は「質問＋参照の一文」のリランカーの順（同点は文書の順）。[2, 1] = 3-5 運転条件、3 試験
-    assert [p["chunk_id"] for p in picks] == ["p2b", "p1"], "節ごとにリランカーで 1 件（★ の p2b）"
-    assert picks[0]["selection"] == "summary_list" and picks[0]["llm_raw"] == "[2, 1]" and picks[0]["selection_stage"] == 1
-    assert picks[0]["selected_section"] == {"id": "S2", "label": "3 試験 > 3-5 運転条件", "file_name": "T001.pdf"}
-    assert [s["id"] for s in picks[0]["selected_sections"]] == ["S2", "S1"]
-    assert picks[0]["extra"] is False and picks[1]["extra"] is True
-    user = asked[0][1]["content"]
-    assert "### 参照元の節（この節が参照している文書の中から選ぶ）\n3-5 初号機: 3-5 初号機の性能計測。初号機の性能計測を行う。" + QUOTE in user
-    assert "- HS-RU-003H 2 要領: 初号機の要領。" in user          # 既に手元にある節
-    assert "1. [T001 3 試験] 試験の総則。" in user and "2. [T001 3 試験 > 3-5 運転条件] 油の供給圧力と温度を定める。" in user
-
-
-def test_summary_list_respects_max_and_char_budget(monkeypatch):
-    neo = FakeNeo()
-    picks, _ = follow(neo, monkeypatch, answer="[1, 2, 3]", reference_doc_select="summary_list", reference_doc_max=2)
-    assert len(picks) == 2
-    # 文字数予算: 1 件目は従来と同じく必ず足し、2 件目以降は本文の合計が予算に収まる分だけ
-    neo = FakeNeo()
-    picks, _ = follow(neo, monkeypatch, answer="[1, 2, 3]", reference_doc_select="summary_list", char_budget=1000)
-    assert len(picks) == 3
-    neo = FakeNeo()
-    monkeypatch.setattr(rr, "_rerank", fake_rerank)
-    monkeypatch.setattr(SS, "list_chat", lambda m: "[1, 2, 3]")
-    r = retriever(neo, reference_doc_select="summary_list", char_budget=1000)
+    for c in neo.doc_chunks:
+        c["text"] = c["text"].replace("★", "")
+    monkeypatch.setattr(rr, "_rerank", lambda q, texts: [0.95 if "初号機" in t else 0.1 for t in texts])
     picks = []
-    r._link_picks("油の温度は", chosen("x" * 995), 2, {"src"}, picks)
-    assert [p["chunk_id"] for p in picks] == ["p1"]
+    retriever(neo)._link_picks("油の温度は", chosen(), 2, {"src"}, picks, {})
+    assert picks == []
 
 
-@pytest.mark.parametrize("answer,reason", [("[]", "empty"), ("[7, 9]", "out_of_range"), (requests.Timeout("slow"), "llm_failed")])
-def test_summary_list_falls_back_to_rerank(monkeypatch, answer, reason):
-    neo = FakeNeo()
-    picks, asked = follow(neo, monkeypatch, answer=answer, reference_doc_select="summary_list")
-    assert [p["chunk_id"] for p in picks] == ["d1"] and len(asked) == 1     # 従来の選び方と同じチャンク
-    assert picks[0]["selection"] == "rerank" and picks[0]["selection_fallback"] == reason
-
-
-def test_summary_list_falls_back_without_sections_or_when_all_taken(monkeypatch):
-    neo = FakeNeo()
-    neo.sections = []
-    picks, asked = follow(neo, monkeypatch, reference_doc_select="summary_list")
-    assert [p["chunk_id"] for p in picks] == ["d1"] and asked == [] and picks[0]["selection_fallback"] == "no_sections"
-    neo = FakeNeo()
-    neo.section_chunks = {}
-    picks, _ = follow(neo, monkeypatch, reference_doc_select="summary_list")
-    assert [p["chunk_id"] for p in picks] == ["d1"] and picks[0]["selection_fallback"] == "all_taken"
-
-
-def test_summary_list_prefers_primary_chunks_and_falls_back_to_secondary(monkeypatch):
-    neo = FakeNeo()
-    # S2: 主所属（段 3）と副所属（段 1、★ でリランクは高い）。主所属の段だけから選ぶ
-    neo.section_chunks["S2"] = [{"id": "p2a", "text": "油の供給圧力 ☆", "position": 11, "tier": 3},
-                                {"id": "x2", "text": "★ 前の節のチャンク", "position": 9, "tier": 1}]
-    # S3: 主所属のチャンクが無く、副所属だけ（目録で切り出した小さな節）
-    neo.section_chunks["S3"] = [{"id": "x3", "text": "計測の順序を含むチャンク", "position": 9, "tier": 1}]
-    picks, _ = follow(neo, monkeypatch, answer="[2, 3]", reference_doc_select="summary_list")
-    assert [p["chunk_id"] for p in picks] == ["p2a", "x3"]
-
-
-def test_summary_list_skips_chunks_already_in_context(monkeypatch):
-    neo = FakeNeo()
-    monkeypatch.setattr(rr, "_rerank", fake_rerank)
-    monkeypatch.setattr(SS, "list_chat", lambda m: "[2]")
-    r = retriever(neo, reference_doc_select="summary_list")
-    picks = []
-    r._link_picks("油の温度は", chosen(), 2, {"src", "p2b"}, picks)
-    assert [p["chunk_id"] for p in picks] == ["p2a"]
-
-
-def test_summary_list_leaves_chunk_links_alone(monkeypatch):
-    link = {"source": "src", "source_text": SOURCE_TEXT, "source_heading": "3-5", "quote": "詳細は 3-6 項による。", "locator": "3-6",
-            "form": "項", "method": "rule", "source_section": "body", "kind": "chunk", "id": "k1", "text": "チャンクへの参照先",
-            "position": 3, "file_name": "T001.pdf", "doc_source": "T001.pdf"}
-    neo = FakeNeo(extra_links=[link])
-    neo.links = neo.links[1:]
-    picks, asked = follow(neo, monkeypatch, reference_doc_select="summary_list")
-    assert [p["chunk_id"] for p in picks] == ["k1"] and asked == [] and "selection" not in picks[0]
-
-
-def test_summary_list_second_hop_follows_document_references(monkeypatch):
-    # 1 回目: チャンクへの参照 → k1。2 回目: k1 の中の文書のみを指す参照を一覧選択でたどる（従来の 2 回目はたどらない）
+def test_second_hop_follows_chunk_links_only(monkeypatch):
+    # 1 回目: チャンクへの参照 → k1。2 回目: k1 の中の文書のみを指す参照はたどらない
     hop1 = {"source": "src", "source_text": SOURCE_TEXT, "source_heading": "3-5", "quote": "詳細は 3-6 項による。", "locator": "3-6",
             "form": "項", "method": "rule", "source_section": "body", "kind": "chunk", "id": "k1", "text": "チャンクへの参照先",
             "position": 3, "file_name": "T001.pdf", "doc_source": "T001.pdf"}
     neo = FakeNeo(extra_links=[hop1])
     neo.links[0]["source"] = "k1"
-    picks, asked = follow(neo, monkeypatch, answer="[2]", reference_doc_select="summary_list", reference_depth=2, reference_min_score=0.1)
-    assert [(p["chunk_id"], p["hop"]) for p in picks] == [("k1", 1), ("p2b", 2)] and picks[1]["selection"] == "summary_list"
-    neo = FakeNeo(extra_links=[hop1])
-    neo.links[0]["source"] = "k1"
-    picks, asked = follow(neo, monkeypatch, reference_depth=2, reference_min_score=0.1)
-    assert [p["chunk_id"] for p in picks] == ["k1"] and asked == []
+    picks = follow(neo, monkeypatch, reference_depth=2, reference_min_score=0.1)
+    assert [(p["chunk_id"], p["hop"]) for p in picks] == [("k1", 1)]
 
 
-def test_trace_carries_selection_only_for_summary_list():
+def test_both_reads_layer_references_and_the_question_vector_once(monkeypatch):
+    # 参照先の本文による選択と参照の一文による選択が、章・節と文書層の照会を同じ引数で読む。1 回の検索の中では 1 回だけ流す
+    neo = FakeNeo()
+    neo.links = []
+    monkeypatch.setattr(rr, "_rerank", fake_rerank)
+    r = retriever(neo, reference_select="both", reference_sections=True, reference_document_layer=True)
+    assert r._follow_links("油の温度は", chosen(), 2, {}, with_target=True) == []
+    assert neo.calls.count(rr.SECTION_REFERENCE_QUERY) == 1 and neo.calls.count(rr.DOCUMENT_LAYER_REFERENCE_QUERY) == 1
+    assert neo.embedding.texts == ["油の温度は"]
+
+
+def test_trace_carries_only_the_public_keys():
     class Doc:
         def __init__(self, source, ids):
             self.page_content = "Text Content:\n" + "\n----\n".join(ids)
             self.metadata = {"source": source, "chunkdetails": [{"id": i} for i in ids]}
 
     r = rr.RerankGraphRetriever(neo_db=None, candidate_db=None, retrieval_query="", settings=rr.resolve_retrieval_settings({}))
-    base = {"text": "t", "doc_source": "T001.pdf", "position": 1, "score": 0.5, "chunk_score": 0.4, "hop": 1, "select": "link"}
-    trace = [dict(base, chunk_id="a"), dict(base, chunk_id="b", selection="summary_list", llm_raw="[1]", selected_section={"id": "S2"},
-                                           selected_sections=[{"id": "S2"}], selection_stage=1, extra=True)]
+    base = {"text": "t", "doc_source": "T001.pdf", "position": 1, "score": 0.5, "chunk_score": 0.4, "hop": 1, "select": "link",
+            "passage": "見出し: 参照の一文", "root_score": 0.9}
+    trace = [dict(base, chunk_id="a"), dict(base, chunk_id="b")]
     docs = [Doc("T001.pdf", ["a", "b"])]
     r._present_references(docs, [], trace)
     a, b = docs[0].metadata["references"]
-    assert set(a) == set(rr.REFERENCE_TRACE_KEYS)
-    assert b["selection"] == "summary_list" and b["llm_raw"] == "[1]" and b["selected_section"] == {"id": "S2"} and "extra" not in b
-
-
-def test_reference_context_shows_text_around_the_quote():
-    text = "あ" * 300 + "前の文。" + QUOTE + "後ろの文。" + "い" * 300
-    out = rr.reference_context(text, "3-5 項", QUOTE, chars=10)
-    assert out == "3-5 項: …" + "あ" * 6 + "前の文。" + QUOTE + "後ろの文。" + "い" * 5 + "…"
-    spaced = "前の文。運転条件は\nHS-VTR-T001 による。後ろ"
-    assert rr.reference_context(spaced, "", QUOTE, chars=4) == "前の文。運転条件は HS-VTR-T001 による。後ろ"
-    assert rr.reference_context("無関係", "見出し", QUOTE) == "見出し: " + QUOTE
-
-
-# ============================================================
-# 設定の既定値
-# ============================================================
-def test_default_settings_keep_rerank(monkeypatch):
-    for env in ("CHAT_REFERENCE_DOC_SELECT", "CHAT_REFERENCE_DOC_MAX", "CHAT_REFERENCE_DOC_TWO_STAGE_SECTIONS"):
-        monkeypatch.delenv(env, raising=False)
-    s = rr.default_retrieval_settings()
-    assert (s["reference_doc_select"], s["reference_doc_max"], s["reference_doc_two_stage_sections"]) == ("rerank", 4, 30)
-    # 参照追跡の方式の既定値もこの段では rerank のまま（評価で合格したら切り替える）
-    ref = C.CHAT_MODE_CONFIG_MAP[C.CHAT_VECTOR_GRAPH_FULLTEXT_REF_MODE]["retrieval_defaults"]
-    assert "reference_doc_select" not in ref
-    assert rr.resolve_retrieval_settings(None, mode_defaults=ref)["reference_doc_select"] == "rerank"
-    # 既定の検索（参照をたどらない 4 方式）: 参照をたどらない（reference_max = 0）まま
-    for mode in (C.CHAT_VECTOR_MODE, C.CHAT_FULLTEXT_MODE, C.CHAT_VECTOR_GRAPH_MODE, C.CHAT_VECTOR_GRAPH_FULLTEXT_MODE):
-        d = C.CHAT_MODE_CONFIG_MAP[mode]["retrieval_defaults"]
-        assert d == {"reference_max": 0}, mode
-        resolved = rr.resolve_retrieval_settings(None, mode_defaults=d)
-        assert resolved["reference_max"] == 0 and resolved["reference_doc_select"] == "rerank"
-    # 画面の上書きで切り替えられる。選択肢に無い値・範囲外は無視する。環境変数の不正な値は既定値に戻す
-    s = rr.resolve_retrieval_settings({"reference_doc_select": "summary_list", "reference_doc_max": 2}, mode_defaults=ref)
-    assert s["reference_doc_select"] == "summary_list" and s["reference_doc_max"] == 2 and s["reference_max"] == 2
-    s = rr.resolve_retrieval_settings({"reference_doc_select": "llm", "reference_doc_max": 99}, mode_defaults=ref)
-    assert s["reference_doc_select"] == "rerank" and s["reference_doc_max"] == 4
-    monkeypatch.setenv("CHAT_REFERENCE_DOC_SELECT", "nonsense")
-    assert rr.default_retrieval_settings()["reference_doc_select"] == "rerank"
+    assert set(a) == set(b) == set(rr.REFERENCE_TRACE_KEYS)
+    assert [a["order"], b["order"]] == [1, 2] and a["shown_in"] == "T001.pdf"
 
 
 def test_new_settings_are_appended_after_existing_ones():
     keys = [spec[0] for spec in rr.RETRIEVAL_SETTING_SPECS]
-    assert keys[-3:] == ["reference_doc_select", "reference_doc_max", "reference_doc_two_stage_sections"]
-    assert keys.index("reference_document_layer") == len(keys) - 4
+    # 章・節と文書層の参照の 2 項目と、エンティティ起点の収集の 4 項目は末尾にある（既存の項目の並びは変えていない）
+    collect = ["entity_collect", "collect_per_doc", "collect_max_docs", "collect_prompt"]
+    assert keys[-4:] == collect
+    assert keys[-6:-4] == ["reference_sections", "reference_document_layer"]
     spec = {item["key"]: item for item in rr.retrieval_settings_spec()}
-    assert [c["value"] for c in spec["reference_doc_select"]["choices"]] == ["rerank", "summary_list"]
-    assert spec["reference_doc_select"]["group"] == "参照の追跡"
+    assert [c["value"] for c in spec["reference_select"]["choices"]] == ["target", "link", "both"]
+    assert spec["reference_sections"]["group"] == "参照の追跡"
 
 
 # ============================================================
@@ -707,7 +471,7 @@ def test_summary_does_not_reach_the_default_context():
 
 
 # ============================================================
-# 反証役の指摘（11/9）への手直し: 要点の作成
+# 要点の作成: 失敗・打ち切り・控えの掃除・同時実行
 # ============================================================
 def flat_world(n, file_name="B.pdf"):
     sections = [{"id": f"x{i}", "file_name": file_name, "path": [f"{i} 節"], "level": 1, "parent": None} for i in range(n)]
@@ -721,7 +485,8 @@ def http_error(code):
     return requests.HTTPError(f"{code} Client Error for url: {r.url}", response=r)
 
 
-def test_abort_still_restores_shallower_levels_from_the_cache():
+def test_abort_still_restores_shallower_levels_from_the_cache(monkeypatch):
+    monkeypatch.setattr(SS, "MAX_CONCURRENCY", 1)          # 打ち切りまでの回数を決まった値にするため、同時 1 本で流す
     g = world()
     SS.build_section_summaries(run=g.run, summarize=FakeSummarize(), backoff=0)
     before = {sid: s.get("summary") for sid, s in g.sections.items()}
@@ -733,7 +498,7 @@ def test_abort_still_restores_shallower_levels_from_the_cache():
         g.bodies[f"n{i}"] = [f"新しい節 {i} の本文。十分な長さの本文である。"]
     llm = FakeSummarize(error=requests.ConnectionError("down"))
     g.queries.clear()
-    out = SS.build_section_summaries(run=g.run, summarize=llm, backoff=0, concurrency=1)["summary"]
+    out = SS.build_section_summaries(run=g.run, summarize=llm, backoff=0)["summary"]
     assert out["aborted"] is True and out["complete"] is False and f"{SS.ABORT_AFTER} times in a row" in out["abort_reason"]
     assert out["restored"] == 4 and all(g.sections[sid].get("summary") == before[sid] for sid in ("c1", "s11", "s12", "c2"))
     assert len(llm.calls) == SS.ABORT_AFTER and out["failed"] == 2 and out["pending"] == 7    # 2 節で 6 回、3 節目の 2 回目で打ち切り
@@ -741,10 +506,11 @@ def test_abort_still_restores_shallower_levels_from_the_cache():
 
 
 @pytest.mark.parametrize("code,retried", [(404, False), (401, False), (403, False), (503, True), (429, True)])
-def test_http_errors_of_the_endpoint_count_toward_abort(code, retried):
+def test_http_errors_of_the_endpoint_count_toward_abort(code, retried, monkeypatch):
+    monkeypatch.setattr(SS, "MAX_CONCURRENCY", 1)
     g = flat_world(30)
     llm = FakeSummarize(error=http_error(code))
-    out = SS.build_section_summaries(run=g.run, summarize=llm, backoff=0, concurrency=1)["summary"]
+    out = SS.build_section_summaries(run=g.run, summarize=llm, backoff=0)["summary"]
     assert out["aborted"] is True and out["complete"] is False and str(code) in out["abort_reason"]
     assert len(llm.calls) == SS.ABORT_AFTER                       # 30 節 × 3 回 = 90 回の空回りをしない
     assert out["failed"] == (2 if retried else SS.ABORT_AFTER) and out["failed"] + out["pending"] == 30
@@ -888,15 +654,17 @@ def test_score_restores_summaries_after_the_section_layer_without_the_summary_ta
     assert calls and all(k.value.value is True for c in calls for k in c.keywords if k.arg == "restore_only")
 
 
-def test_list_chat_gives_up_when_no_slot_is_free_and_chat_releases_slots(monkeypatch):
+def test_ask_terms_gives_up_when_no_slot_is_free_and_chat_releases_slots(monkeypatch):
+    from src import entity_collect as ec
     monkeypatch.setenv("LLM_MODEL_CONFIG_GEMMA4", "google/gemma-4-26B-A4B-it,http://llm:8000/v1,k")
-    monkeypatch.setattr(SS, "LIST_SLOT_WAIT", 0.05)
+    monkeypatch.delenv("CHAT_REFERENCE_DOC_SELECT_MODEL", raising=False)
+    monkeypatch.setattr(ec, "TERM_SLOT_WAIT", 0.05)
     monkeypatch.setattr(SS, "_SLOTS", threading.BoundedSemaphore(1))
     SS._SLOTS.acquire()                                          # 同じプロセスの要点の作成が枠を使っている
     monkeypatch.setattr(SS.requests, "post", lambda *a, **k: pytest.fail("no request while the slots are busy"))
     t0 = time.time()
     with pytest.raises(SS.SlotBusy):
-        SS.list_chat([{"role": "user", "content": "q"}])
+        ec.ask_terms([{"role": "user", "content": "q"}])
     assert time.time() - t0 < 1
     SS._SLOTS.release()
 
@@ -905,122 +673,15 @@ def test_list_chat_gives_up_when_no_slot_is_free_and_chat_releases_slots(monkeyp
 
     monkeypatch.setattr(SS.requests, "post", down)
     with pytest.raises(requests.ConnectionError):
-        SS.list_chat([{"role": "user", "content": "q"}])
+        ec.ask_terms([{"role": "user", "content": "q"}])
     assert SS._SLOTS.acquire(blocking=False)                     # 失敗しても枠は返している
     SS._SLOTS.release()
-
-
-# ============================================================
-# 反証役の指摘（11/9）への手直し: 一覧選択
-# ============================================================
-def test_summary_list_applies_the_same_min_score_as_rerank(monkeypatch, caplog):
-    # 参照の一文は高く（0.95）、本文はすべて下限（0.3）未満: rerank は足さない。summary_list も足さない（下限は同じ）
-    neo = FakeNeo()
-    for c in neo.doc_chunks:
-        c["text"] = c["text"].replace("★", "")
-    for v in neo.section_chunks.values():
-        for c in v:
-            c["text"] = c["text"].replace("★", "").replace("☆", "")
-    monkeypatch.setattr(rr, "_rerank", lambda q, texts: [0.95 if "初号機" in t else 0.1 for t in texts])
-    asked = []
-    monkeypatch.setattr(SS, "list_chat", lambda m: (asked.append(m), "[1, 2, 3]")[1])
-    picks = []
-    retriever(neo)._link_picks("油の温度は", chosen(), 2, {"src"}, picks)
-    assert picks == []
-    caplog.set_level(logging.INFO)
-    retriever(neo, reference_doc_select="summary_list")._link_picks("油の温度は", chosen(), 2, {"src"}, picks)
-    assert picks == [] and len(asked) == 1 and "(below_min_score)" in caplog.text
-    # 一部の節だけ下限以上: その節だけ足す
-    neo = FakeNeo()
-    monkeypatch.setattr(rr, "_rerank", lambda q, texts: [0.95 if ("初号機" in t or "★" in t) else 0.1 for t in texts])
-    picks = []
-    retriever(neo, reference_doc_select="summary_list")._link_picks("油の温度は", chosen(), 2, {"src"}, picks)
-    assert [p["chunk_id"] for p in picks] == ["p2b"] and picks[0]["selection"] == "summary_list"
-    assert [s["id"] for s in picks[0]["selected_sections"]] == ["S1", "S2", "S3"] and picks[0]["extra"] is False
-
-
-def test_summary_list_needs_summaries_and_records_coverage(monkeypatch):
-    neo = FakeNeo()
-    for sec in neo.sections:
-        sec["summary"] = None
-    picks, asked = follow(neo, monkeypatch, reference_doc_select="summary_list")
-    assert [p["chunk_id"] for p in picks] == ["d1"] and asked == [] and picks[0]["selection_fallback"] == "no_summaries"
-    neo = FakeNeo()
-    neo.sections[2]["summary"] = None
-    picks, asked = follow(neo, monkeypatch, reference_doc_select="summary_list")
-    assert picks[0]["selection"] == "summary_list" and picks[0]["summary_coverage"] == "2/3" and len(asked) == 1
-    assert "summary_coverage" in rr.REFERENCE_SELECTION_KEYS
-
-
-def second_hop_world():
-    """1 回目に足すチャンク（p1・p2b・p3）の中に、別の文書 T002.pdf だけを指す参照がある。"""
-    neo = FakeNeo()
-    for cid in ("p2b", "p1", "p3"):
-        neo.links.append(dict(neo.links[0], source=cid, file_name="T002.pdf"))
-    neo.sections += [dict(sec, id="Z" + sec["id"], file_name="T002.pdf", parent=("Z" + sec["parent"]) if sec["parent"] else None)
-                     for sec in list(neo.sections)]
-    for k, v in list(neo.section_chunks.items()):
-        neo.section_chunks["Z" + k] = [dict(c, id="z" + c["id"]) for c in v]
-    return neo
-
-
-def test_second_hop_adds_one_per_parent(monkeypatch):
-    neo = second_hop_world()
-    monkeypatch.setattr(rr, "_rerank", fake_rerank)
-    monkeypatch.setattr(SS, "list_chat", lambda m: "[1, 2, 3]")
-    picks = []
-    retriever(neo, reference_doc_select="summary_list", reference_depth=2, reference_min_score=0.1)._link_picks(
-        "油の温度は", chosen(), 2, {"src"}, picks)
-    assert [p["chunk_id"] for p in picks if p["hop"] == 1] == ["p1", "p2b", "p3"]
-    hop2 = [p for p in picks if p["hop"] == 2]
-    assert hop2 and set(collections.Counter(p["from_chunk_id"] for p in hop2).values()) == {1}   # 親 1 つにつき 1 件
-
-
-def test_second_hop_does_not_call_the_llm_for_parents_over_the_budget(monkeypatch):
-    neo = second_hop_world()
-    asked = []
-    monkeypatch.setattr(rr, "_rerank", fake_rerank)
-    monkeypatch.setattr(SS, "list_chat", lambda m: (asked.append(m), "[1, 2, 3]")[1])
-    hop1 = sum(len(neo.section_chunks[k][-1 if k == "S2" else 0]["text"]) for k in ("S1", "S2", "S3"))   # p1・p2b・p3
-    extra_limit = 1000 - int(1000 * rr.REFERENCE_EXTRA_LINE_SHARE)
-    r = retriever(neo, reference_doc_select="summary_list", reference_depth=2, reference_min_score=0.1, char_budget=1000)
-    picks = []
-    r._link_picks("油の温度は", chosen("x" * (extra_limit - hop1)), 2, {"src"}, picks)   # 1 回目の 3 件で行の取り分の手前まで埋まる
-    assert [(p["chunk_id"], p["hop"], p["extra"]) for p in picks] == [("p1", 1, False), ("p2b", 1, True), ("p3", 1, True), ("zp1", 2, False)]
-    assert len(asked) == 2        # 1 回目と、extra でない親 p1 の 2 回目だけ。予算の尽きた extra の親 p2b・p3 では LLM を呼ばない
-
-
-def test_llm_failure_is_remembered_within_one_question(monkeypatch):
-    # 文書のみを指す参照が 2 つ（T001.pdf と T002.pdf）。1 つ目で LLM が時間切れなら、2 つ目は LLM を呼ばずに rerank
-    neo = FakeNeo()
-    neo.links.append(dict(neo.links[0], file_name="T002.pdf", quote="計測の順序は HS-VTR-T002 による。"))
-    neo.sections += [dict(sec, id="Z" + sec["id"], file_name="T002.pdf") for sec in list(neo.sections)]
-    picks, asked = follow(neo, monkeypatch, answer=requests.Timeout("slow"), reference_doc_select="summary_list")
-    assert len(asked) == 1 and [p["chunk_id"] for p in picks] == ["d1", "d2"]
-    assert [p["selection_fallback"] for p in picks] == ["llm_failed", "llm_failed_earlier"]
-
-
-def test_extras_leave_room_for_lines_and_the_target_picks(monkeypatch):
-    neo = FakeNeo()
-    neo.section_chunks = {"S1": [{"id": "p1", "text": "あ" * 200, "position": 10}],
-                          "S2": [{"id": "p2b", "text": "★" + "い" * 199, "position": 12}],
-                          "S3": [{"id": "p3", "text": "う" * 200, "position": 13}]}
-    target = Document(page_content="従" * 300, metadata={"chunk_id": "tgt", "source": "T009.pdf", "position": 1, "via_reference": True})
-    monkeypatch.setattr(rr.RerankGraphRetriever, "_referenced", lambda self, q, ch, limit: [(target, 0.5)])
-    monkeypatch.setattr(rr, "_rerank", fake_rerank)
-    monkeypatch.setattr(SS, "list_chat", lambda m: "[1, 2, 3]")
-    r = retriever(neo, reference_doc_select="summary_list", char_budget=1000)
-    # 本文 100 + 従来の選び方の分 300 + p1 200 + p2b 200 = 800 ≤ 850（上限の 85%）。p3 を足すと 1000 になり、行の分が残らない
-    trace = r._follow_links("油の温度は", chosen("x" * 100), 2, with_target=True)
-    assert [e["chunk_id"] for e in trace] == ["p1", "p2b", "tgt"]        # 並びは従来どおり、一文で選んだ分 → 従来の選び方の分
-    trace = r._follow_links("油の温度は", chosen("x" * 100), 2, with_target=False)
-    assert [e["chunk_id"] for e in trace] == ["p1", "p2b", "p3"]
 
 
 def test_line_budget_warns_when_chunk_texts_fill_the_budget(monkeypatch, caplog):
     monkeypatch.setattr(rr, "_rerank", lambda q, texts: [0.5] * len(texts))
     doc = Document(page_content="本" * 1200 + "\n----\nEntities:\nA\n----\nRelationships:\nA-B", metadata={"source": "a"})
     caplog.set_level(logging.WARNING)
-    out = rr._apply_budget_reranked("q", [doc], 1000)
+    out = rr._apply_budget_reranked("q", [doc], 1000, 120)
     assert "Entities" not in out[0].page_content and "no entity/relationship lines are kept" in caplog.text
 

@@ -19,7 +19,8 @@ from langchain_neo4j import Neo4jGraph
 
 from src.create_chunks import CreateChunksofDocument
 from src.document_replace import clear_previous_chunks  # C8: 取り込み直しで前の版を消す（件数を返す）
-from src.graph_edit.lease import run_with_lease  # C6: 取り込み直しの削除を貸し出しの中で行う
+from src.graph_edit.lease import acquire_lease, hold_lease, release_lease, run_with_lease, start_heartbeat
+from src.graph_edit.ledger import load_ledger
 from src.document_sources.gcs_bucket import (
     copy_failed_file, delete_file_from_gcs, get_documents_from_gcs,
     get_gcs_bucket_files_info, merge_file_gcs, upload_file_to_gcs
@@ -31,8 +32,7 @@ from src.document_sources.wikipedia import get_documents_from_wikipedia
 from src.document_sources.youtube import get_documents_from_youtube, get_youtube_combined_transcript
 from src.entities.source_node import sourceNode
 from src.graph_edit.replay import (
-    acquire_lease, alias_targets, apply_ledger_before_save, hold_lease, load_ledger, log_stats, lookup_canonical_labels,
-    post_save_ledger, release_lease, renew_lease, start_heartbeat
+    alias_targets, apply_ledger_before_save, log_stats, lookup_canonical_labels, post_save_ledger,
 )
 from src.graph_query import get_graphDB_driver
 from src.graphDB_dataAccess import graphDBdataAccess
@@ -48,8 +48,7 @@ from src.shared.common_fn import (
 )
 from src.shared.constants import (
     DELETE_ENTITIES_AND_START_FROM_BEGINNING, QUERY_TO_DELETE_EXISTING_ENTITIES,
-    QUERY_TO_GET_CHUNKS, QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION,
-    QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY, QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT,
+    QUERY_TO_GET_CHUNKS, QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT,
     START_FROM_BEGINNING, START_FROM_LAST_PROCESSED_POSITION
 )
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
@@ -542,7 +541,8 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
       obj_source_node.total_chunks = total_chunks
       obj_source_node.model = params.model
       obj_source_node.extraction_method = params.extraction_method  # standard / edc（score.py の apply_extraction_method が決める）
-      obj_source_node.edc_doctype, obj_source_node.edc_schema_mode = effective_edc_options(params)  # EDC の初期スキーマの指定（11/9）
+      edc_options = edc_options_of(params)  # 取り込みごとの EDC の初期スキーマの指定（EDC 以外の方式と指定なしは None）
+      obj_source_node.edc_doctype, obj_source_node.edc_schema_mode = effective_edc_options(params, edc_options)  # 文書ノードに記録する値
       obj_source_node.embedding_model = params.embedding_model
       if params.retry_condition == START_FROM_LAST_PROCESSED_POSITION:
           check_resume_method(result[0], params.extraction_method)  # 続きからは前回と同じ抽出方式に限る
@@ -593,7 +593,7 @@ async def processing_source(credentials, params, pages, merged_file_path=None, i
           # 処理し直すバッチの分を記録から外す。抽出がまた失敗すれば入り直す（T16）
           retried = skipped_chunks.forget([c['chunk_id'] for c in selected_chunks])
           try:
-            node_count,rel_count,latency_processed_chunk,token_usage = await processing_chunks(selected_chunks,graph,credentials,params.file_name,params.model,params.allowedNodes,params.allowedRelationship,params.chunks_to_combine,node_count, rel_count, params.additional_instructions, params.embedding_provider, params.embedding_model, extraction_method=params.extraction_method, edc_options=edc_options_of(params))
+            node_count,rel_count,latency_processed_chunk,token_usage = await processing_chunks(selected_chunks,graph,credentials,params.file_name,params.model,params.allowedNodes,params.allowedRelationship,params.chunks_to_combine,node_count, rel_count, params.additional_instructions, params.embedding_provider, params.embedding_model, extraction_method=params.extraction_method, edc_options=edc_options)
           except Exception:
             # 全部のチャンクを処理し終えていた文書の続きからで、記録したチャンクだけのバッチの抽出がまた全部失敗した（抽出が全部を記録し直した）ときは、
             # 文書を失敗にせず、記録を残して先へ進む。失敗した文書の続きから（LLM が止まったままなど）はこれに当てはめず、これまでどおり例外にする。
@@ -743,14 +743,13 @@ async def processing_chunks(chunkId_chunkDoc_list,graph,credentials,file_name,mo
   cleaned_graph_documents = handle_backticks_nodes_relationship_id_type(graph_documents)
 
   # 修正台帳の再適用（A2）。保存と HAS_ENTITY と保存の後の処理の間は貸し出し（lease）を取り、編集の API を BUSY で待たせる。
-  # 取れないときは待ち続ける（上限は lease.LEASE_MAX_WAIT_SECONDS）。持っている間は別のスレッドで延長し続け、各段の区切りでも延長する
+  # 取れないときは待ち続ける（上限は lease.LEASE_MAX_WAIT_SECONDS）。持っている間は別のスレッドで延長し続ける
   lease = await asyncio.to_thread(acquire_lease, graph, f"extract:{file_name}")
   heartbeat = start_heartbeat(graph, lease)
   try:
     ledger = load_ledger(graph)
     canon = lookup_canonical_labels(graph, alias_targets(cleaned_graph_documents, ledger))
     cleaned_graph_documents, ledger_stats = apply_ledger_before_save(cleaned_graph_documents, ledger, canon)
-    renew_lease(graph, lease)
 
     start_save_graphDocuments = time.time()
     save_graphDocuments_in_neo4j(graph, cleaned_graph_documents)
@@ -758,7 +757,6 @@ async def processing_chunks(chunkId_chunkDoc_list,graph,credentials,file_name,mo
     elapsed_save_graphDocuments = end_save_graphDocuments - start_save_graphDocuments
     logging.info(f'Time taken to save graph document in neo4j: {elapsed_save_graphDocuments:.2f} seconds')
     latency_processing_chunk["save_graphDocuments"] = f'{elapsed_save_graphDocuments:.2f}'
-    renew_lease(graph, lease)
 
     chunks_and_graphDocuments_list = get_chunk_and_graphDocument(cleaned_graph_documents, chunkId_chunkDoc_list)
 
@@ -768,7 +766,6 @@ async def processing_chunks(chunkId_chunkDoc_list,graph,credentials,file_name,mo
     elapsed_relationship = end_relationship - start_relationship
     logging.info(f'Time taken to create relationship between chunk and entities: {elapsed_relationship:.2f} seconds')
     latency_processing_chunk["relationship_between_chunk_entity"] = f'{elapsed_relationship:.2f}'
-    renew_lease(graph, lease)
 
     post_save_ledger(graph, cleaned_graph_documents, ledger, ledger_stats)
     log_stats(file_name, ledger_stats)

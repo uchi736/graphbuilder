@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""LLM の参照リンクの結び先の選び方（11/10、chunk_references の CHUNK_REFERENCE_LINK_STYLE = outline）の単体試験。DB も LLM も使わない。
+"""LLM の参照リンクの結び先の選び方（chunk_references）の単体試験。DB も LLM も使わない。
 
 確かめること:
 - (b) 参照でない文: 参照の言い回しも位置の語も文書の名前も無い一文（「…吸入温度により変化する。」）と見出しの行は参照としない。
@@ -10,9 +10,9 @@
   手元の題名に無ければ社外。手元の題名に合う名前・付属の語は LLM に任せる
 - (a) 節の一覧: 一覧は「番号 節の経路 ｜ 要点か本文」で、管理の節（来歴）と記述と同じ文言の見出しの節を外し、参照元の節に ★ を付ける。
   位置の語の番号で節が引ければ LLM を呼ばない。選んだ節に主所属するチャンクへ結び、参照元が主所属の節で他に主所属のチャンクが無ければ結ばない
-- 後処理の全体（偽のグラフ）: リレーションに選んだ節（target_sections）を書く・参照でない文は書かない・設定を変えた回は抽出を呼ばずに特定だけやり直す・
-  legacy で従来の一覧（チャンクの本文の先頭）に戻る
-- 章・節の層: LLM が選んだ節をそのまま節への参照の結び先にする（id が変われば経路で引く）。SECTION_LAYER_USE_LLM_SECTIONS=false で従来
+- 後処理の全体（偽のグラフ）: リレーションに選んだ節（target_sections）を書く・参照でない文は書かない・
+  結び先の選び方の印が保存と違う回は抽出を呼ばずに判定と特定だけやり直す
+- 章・節の層: LLM が選んだ節をそのまま節への参照の結び先にする（id が変われば経路で引く）。節を選んでいないリンクはチャンクの主所属の節
 実行: docker run --rm --memory=2g --cpus=2 --network none -e PYTHONDONTWRITEBYTECODE=1 -v "$PWD/backend:/code:ro" -w /code \\
         llm-graph-builder-backend:latest python -m pytest -q -p no:cacheprovider tests/test_chunk_reference_linkfix.py
 """
@@ -33,8 +33,7 @@ cfg = R.load_config()
 
 @pytest.fixture(autouse=True)
 def _clean_env(monkeypatch):
-    for name in ("CHUNK_REFERENCE_LINK_STYLE", "CHUNK_REFERENCE_TARGET_LISTING", "CHUNK_REFERENCE_DROP_NON_REFERENCES",
-                 "CHUNK_REFERENCE_LEDGER_EXTERNAL", "CHUNK_REFERENCE_SKIP_IN_CHUNK", "CHUNK_REFERENCE_MODE", "SECTION_LAYER_USE_LLM_SECTIONS"):
+    for name in ("CHUNK_REFERENCE_MODE",):
         monkeypatch.delenv(name, raising=False)
 
 
@@ -97,18 +96,6 @@ def test_ledger_document():
     assert led("下記要領にて運転を行ない") is None                                       # 「下記要領」は文書の名前ではない
     # 自分の文書の位置の語がある一文は、文書の名前があっても社外と決めない
     assert led("形式別単独運転要領の規定による。詳細は別表2による。") is None
-
-
-# ───────────────────────── 設定 ─────────────────────────
-def test_options(monkeypatch):
-    assert C.options_key(C.link_options()) == "v%s-Lo-n1-e1-i1" % C.LINK_VERSION
-    monkeypatch.setenv("CHUNK_REFERENCE_LINK_STYLE", "legacy")
-    opts = C.link_options()
-    assert opts["listing"] == "chunks" and C.options_key(opts) is None                 # 従来の保存と同じ印（無し）
-    monkeypatch.setenv("CHUNK_REFERENCE_SKIP_IN_CHUNK", "true")                         # 個別の設定は LINK_STYLE より優先
-    assert C.options_key(C.link_options()) == "v%s-Lc-n0-e0-i1" % C.LINK_VERSION
-    monkeypatch.setenv("CHUNK_REFERENCE_LINK_STYLE", "unknown")
-    assert C.link_options()["style"] == "outline"
 
 
 # ───────────────────────── (a) 節の一覧 ─────────────────────────
@@ -246,10 +233,8 @@ def fake_ask(log):
             return "2"   # 別表2
         if "文書片" in prompt:
             return "2"
-        if "この記述の中の「HS-VTR-T902」" in prompt:
-            return "1"   # 従来（legacy）は文書番号も LLM が選ぶ。候補は HS-VTR-T902B.pdf だけ
         if "この記述の中の「" in prompt:
-            return "0"   # 「JIS」だけの表記は文書番号の規則でも題名でも決まらず、従来どおり LLM が手元に無いと答える
+            return "0"   # 「JIS」だけの表記は文書番号の規則でも題名でも決まらず、LLM が手元に無いと答える
         raise AssertionError("想定外の指示: " + prompt[:40])
     return ask
 
@@ -266,23 +251,25 @@ def test_link_chunk_references_outline():
     assert summary["not_reference"] == 1 and summary["external_by_ledger"] == 1 and summary["document_by_ledger"] == 1 and summary["outline"] == 1
     final = graph.rows_written("c.external_references = CASE")
     stored = json.loads([r for r in final if r["id"] == "a1"][0]["stored"])
-    assert stored["opts"] == C.options_key(C.link_options())
+    assert stored["opts"] == C.LINK_KEY == "v%s-Lo-n1-e1-i1" % C.LINK_VERSION
     assert {r["scope"] for r in stored["refs"]} == {"external", "other_document", "not_reference"}
     assert "形式別単独運転要領" in [r for r in final if r["id"] == "a1"][0]["external"]
 
-    # 設定を変えた回（legacy）: 保存した抽出を使い、抽出は呼ばずに特定だけやり直す。一覧はチャンクの本文の先頭（従来）
-    os.environ["CHUNK_REFERENCE_LINK_STYLE"] = "legacy"
-    try:
-        saved = {r["id"]: r["stored"] for r in final}
-        rows2 = [dict(r, stored=saved[r["id"]]) for r in ROWS]
-        graph2, log2 = FakeGraph(rows2), []
-        C.link_chunk_references(graph2, ask=fake_ask(log2), rerank=lambda q, t: [0.0] * len(t))
-        assert not any(p.startswith("次の本文は") for p in log2)
-        assert any("文書片" in p for p in log2) and not any("節の内容の説明" in p for p in log2)
-        rows_legacy = graph2.rows_written("(t:Chunk {id: row.target})")
-        assert rows_legacy and all(r["sections"] == [] for r in rows_legacy)
-    finally:
-        del os.environ["CHUNK_REFERENCE_LINK_STYLE"]
+    # 保存と同じ印で、結び先も残っている回: LLM を呼ばず、何も書き直さない
+    saved = {r["id"]: r["stored"] for r in final}
+    links = {"a1": 1}
+    rows2 = [dict(r, stored=saved[r["id"]], links=links.get(r["id"], 0)) for r in ROWS]
+    graph2, log2 = FakeGraph(rows2), []
+    res2 = C.link_chunk_references(graph2, ask=fake_ask(log2), rerank=lambda q, t: [0.0] * len(t))
+    assert not log2 and res2["chunks"] == 0 and res2["skipped"] == len(ROWS)
+
+    # 印が保存と違う回: 保存した抽出を使い、抽出は呼ばずに判定と特定だけやり直す
+    old = {k: json.dumps(dict(json.loads(v), opts="v4-Lo-n1-e1-i1"), ensure_ascii=False) for k, v in saved.items()}
+    rows3 = [dict(r, stored=old[r["id"]]) for r in ROWS]
+    graph3, log3 = FakeGraph(rows3), []
+    C.link_chunk_references(graph3, ask=fake_ask(log3), rerank=lambda q, t: [0.0] * len(t))
+    assert not any(p.startswith("次の本文は") for p in log3) and any("節の内容の説明" in p for p in log3)
+    assert [(r["source"], r["target"], r["sections"]) for r in graph3.rows_written("(t:Chunk {id: row.target})")] == [("a1", "b5", ["t2"])]
 
 
 def test_outline_without_section_layer_uses_heading_paths():
@@ -328,7 +315,7 @@ def sl_layer(links):
     return sections, refs, summary
 
 
-def test_section_layer_uses_llm_sections(monkeypatch):
+def test_section_layer_uses_llm_sections():
     sections, _r, _s = sl_layer([])
     sid3 = next(s for s, v in sections.items() if v["fileName"] == SB and v["number"] == "3")
     sid32 = next(s for s, v in sections.items() if v["fileName"] == SB and v["number"] == "3-2")
@@ -341,7 +328,7 @@ def test_section_layer_uses_llm_sections(monkeypatch):
     # id が変わった（目録が変わった）ときは経路で引き直す
     _s, refs, _ = sl_layer([dict(base, tgt="b1", target_sections=["old-id"], target_section_paths=[" > ".join(sections[sid3]["path"])])])
     assert list(refs) == [("a1", sid3)]
-    # 従来（設定で無効）: チャンクごとの主所属の節
-    monkeypatch.setenv("SECTION_LAYER_USE_LLM_SECTIONS", "false")
-    _s, refs, summary = sl_layer(links)
+    # 節を選んでいないリンク: チャンクごとの主所属の節
+    plain = [dict(base, tgt="b1"), dict(base, tgt="b2")]
+    _s, refs, summary = sl_layer(plain)
     assert sorted(k[1] for k in refs) == sorted({sid3, sid32}) and summary["llm_section_targets"] == 0

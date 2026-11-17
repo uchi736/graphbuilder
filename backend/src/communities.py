@@ -14,7 +14,7 @@ COMMUNITY_PROJECTION_NAME = "communities"
 # 保護ラベル（チャット履歴・外部管理ノード）はLeiden投影から除外する
 NODE_PROJECTION = "!Chunk&!Document&!__Community__" + PROTECTED_LABELS_CYPHER
 NODE_PROJECTION_ENTITY = "__Entity__"
-MAX_WORKERS = 10
+MAX_WORKERS = 8   # gemma4 への同時要求の上限（文章だけの要求は 8 本まで）
 MAX_COMMUNITY_LEVELS = 3 
 MIN_COMMUNITY_SIZE = 1 
 COMMUNITY_CREATION_DEFAULT_MODEL = "openai_gpt_5.4_mini"
@@ -329,7 +329,7 @@ def create_community_summaries(gds, model, email, uri):
         community_chain = get_community_chain(llm)
         
         summaries = []
-        with ThreadPoolExecutor() as executor:
+        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             futures = [executor.submit(process_community_info, community, community_chain) for community in community_info_list.to_dict(orient="records")]
    
             for future in as_completed(futures):
@@ -345,7 +345,7 @@ def create_community_summaries(gds, model, email, uri):
         parent_community_chain = get_community_chain(llm, is_parent=True)
 
         parent_summaries = []
-        with ThreadPoolExecutor() as executor:
+        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             futures = [executor.submit(process_community_info, community, parent_community_chain, is_parent=True) for community in parent_community_info.to_dict(orient="records")]
             
             for future in as_completed(futures):

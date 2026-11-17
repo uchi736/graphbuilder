@@ -200,7 +200,7 @@ def type_labels_of(labels):
     return [label for label in (labels or []) if label != ENTITY_LABEL]
 
 
-def validate_type_labels(labels, current_labels=(), allow_empty=False):
+def validate_type_labels(labels, current_labels=()):
     """新しい種類のラベルの一覧を検査して返す（__Entity__ は外す。重複は除く）。
 
     今のノード（統合では統合するノードのどれか）が持っているラベルは、名前の形の検査を通らなくても残してよい。
@@ -212,7 +212,7 @@ def validate_type_labels(labels, current_labels=(), allow_empty=False):
     cleaned = _unique([label.strip() for label in labels if label.strip() != ENTITY_LABEL])
     if any(label == "" for label in cleaned):
         raise EditError(INVALID, "empty label")
-    if not cleaned and not allow_empty:
+    if not cleaned:
         raise EditError(INVALID, "at least one label is required")
     for label in cleaned:
         if label in RESERVED_LABELS:
@@ -241,11 +241,20 @@ def is_reserved_relationship_type(rel_type):
     return rel_type in RESERVED_RELATIONSHIP_TYPES
 
 
-def _check_value(key, value, allow_null):
+def usable_label(label):
+    """語彙に出してよいラベル（予約ラベル・__Entity__・Document を除き、名前の形に合うもの）。"""
+    return label not in RESERVED_LABELS and label not in (ENTITY_LABEL, DOCUMENT_LABEL) and bool(LABEL_PATTERN.match(label))
+
+
+def usable_type(rel_type):
+    """語彙に出してよいリレーション種類（予約の種類を除き、名前の形に合うもの）。"""
+    return rel_type not in RESERVED_RELATIONSHIP_TYPES and bool(RELATIONSHIP_TYPE_PATTERN.match(rel_type))
+
+
+def _check_value(key, value):
+    """値は null（削除）・文字列・有限の数値・真偽のどれか。"""
     if value is None:
-        if allow_null:
-            return
-        raise EditError(INVALID, f"property {key!r} must not be null")
+        return
     if isinstance(value, bool) or isinstance(value, str) or isinstance(value, int):
         return
     if isinstance(value, float):
@@ -266,11 +275,11 @@ def validate_entity_props(props):
             raise EditError(INVALID, f"invalid property name {key!r} (letters, digits and _ only; it must not start with a digit)")
         if key in FORBIDDEN_PROPERTY_KEYS or key in HIDDEN_PROPERTY_KEYS or key.startswith("_"):
             raise EditError(INVALID, f"property {key!r} cannot be edited")
-        _check_value(key, value, allow_null=True)
+        _check_value(key, value)
     return props
 
 
-def validate_relationship_props(props, allow_null):
+def validate_relationship_props(props):
     """リレーションの props。記録用の値（先頭 _）は付けない。"""
     if props is None:
         return {}
@@ -279,5 +288,5 @@ def validate_relationship_props(props, allow_null):
     for key, value in props.items():
         if not isinstance(key, str) or key.strip() == "" or key != key.strip() or key.startswith("_"):
             raise EditError(INVALID, f"invalid property name {key!r}")
-        _check_value(key, value, allow_null=allow_null)
+        _check_value(key, value)
     return props

@@ -18,7 +18,7 @@ LLM もグラフも呼ばない。標準ライブラリだけで動く。入力�
   段 7 具体化         文書と場所を組み合わせ、相対的な参照を具体的な番号に置き換える（⑦）
   段 8 展開           範囲（A から B まで）と並列（A 及び B）を目録にある場所の一覧に直し、チャンクを引く（⑧）
 
-決められない参照は、先頭のものを採らずに残す（reason に理由を書く。呼び出し側が LLM に回す）。同じ番号の条が複数ある文書
+決められない参照は、先頭のものを採らずに残す（reason に理由を書く）。同じ番号の条が複数ある文書
 （例の並記、附則の振り直し）、同じ番号の箇条が 2 か所にある項、目録に無い語に続く場所が、これに当たる。
 
 当てる順序に結果が依存しないよう、次の 3 つを守る。
@@ -34,21 +34,14 @@ LLM もグラフも呼ばない。標準ライブラリだけで動く。入力�
 """
 import bisect
 import collections
+import hashlib
+import json
 import pathlib
 import re
 import unicodedata
 
 # 規則や出力の形を変えたら上げる（呼び出し側が、保存した結果を使い回してよいかの判断に使う）
 RULE_VERSION = "2"
-
-# 切り替えられる規則。find_references(chunks, disable=[...]) で外せる（感度の確認用）
-#   heading_name   文書の識別子や名称＋「の」＋見出しの名称＋参照の語（「X の○○による」「「○○規定」の、廃棄の定めによる」）を、
-#                  題名の一致する見出しへ結ぶ
-#   sub_fallback   別表などの題名が目録に無いとき、下位の指定（符号 A など）の見出しが文書に 1 か所だけなら、そこへ結ぶ
-#   alias_table    文書をまたいで使う別名（旧番号・通称）を、表紙の欄・旧番号との対照表・「X は「Y」と呼ぶ」から拾い、別名での参照を結ぶ
-# どこで確かめた規則か: heading_name は実物 6 文書と架空の 38 文書、sub_fallback は実物 6 文書だけ、alias_table は架空の 38 文書だけである
-# （見ていない実物 29 文書では、3 つとも 1 回も発火しなかった）。
-OPTIONAL_RULES = ("heading_name", "sub_fallback", "alias_table")
 
 # ───────────────────────── 文字の正規化（元の位置を保つ） ─────────────────────────
 DASHES = "‐‑‒–—―−－﹣"
@@ -110,7 +103,6 @@ STD_PREFIX = r"(?:JIS|ISO|IEC|JEM|JEC|JASO|ASME|ASTM|ANSI|DIN|EN|BS|IEEE)"
 # 参照の語。見に行く先を示す言い方
 CUE = (r"(?:によること|による|により|に依る|に依り|に拠る|に拠り|に基づ|に基き|にもとづ|に従|に準|に示す|に定め|に規定|に掲げ|に記載"
        r"|を参照|参照|のとおり|の通り|の要領|を適用|を準用|の値を|で定め)")
-CUE_RX = re.compile(CUE)
 SEP = r"(?:、|,|及び|並びに|又は|若しくは|および|または|と|・)"      # 並列
 RANGE = r"(?:~|〜|から|乃至|ないし)"                              # 範囲
 RANGE_RX = re.compile(RANGE)
@@ -161,7 +153,6 @@ NOTE_AFTER_RX = re.compile(r"\(?[ ]?注[ ]?(?P<n>\d{1,2})[ ]?\)?")
 NOTE_DEF_RX = re.compile(r"(?m)^[ >*\-]*[(\[]?[ ]?(?:注|※)[ ]?(?P<n>\d{1,2})(?![ ]?[)\]:.]?[ ]?(?:" + CUE + r"|に|を|の|は|、|及び|又は))[ ]?[)\]:.]?(?=\S)")
 QUOTE_RX = re.compile(r"[「『](?P<name>[^」』\n]{1,60})[」』]")
 PAGE_RX = re.compile(r"(?:(?<![A-Za-z])[Pp]\.?[ ]?(?P<p1>\d{1,3})(?:/\d{1,3})?|(?P<p2>\d{1,3})[ ]?(?:ページ|頁))[ ]?(?:を)?(?:参照|に示す|による)")
-VAGUE_RX = re.compile(r"(?<![一-龥])(?:上記|前記|上述|前述|下記|後記|後述|次|以下)(?:の|に示す|のとおり|の通り|により|による|表|図|要領|方法|例)")
 NAME_LOC_RX = re.compile(r"(?P<name>[^\s、。,()「」『』|]{2,20}?)(?=" + CUE + ")")
 # 識別子や名称の直後。閉じ括弧、短い括弧書き（最新版、制定の日付、略称の定義 など）、題名のカギ括弧、「の」を読み飛ばす。
 # 表の行では、識別子の欄の次の欄に場所の名前が来る（| 文書番号 | 条 | の並び）ので、欄の区切りも 1 つだけ読み飛ばす
@@ -232,58 +223,12 @@ REVISION_LINE_RX = re.compile(r"(?<![\d.])" + _DATE + r"(?![\d.]).{0,200}?(?:制
 PRIORITY = {"label": 0, "article": 1, "chapter": 2, "para": 3, "section": 4, "item": 4, "note": 5, "page": 6}
 
 
-VAGUE_BEFORE_RX = re.compile(r"(?:上記|前記|上述|前述|下記|後記|後述|次|以下|下図|上図|下表|上表|左記|右記)(?:の)?[ ]?$")
-
-
-def _has_cue(norm):
-    """参照の語（による、参照、に定める、に示す、準ずる など）があるか。
-
-    「下図に示す」「次により」のように、番号も名前も無い隣の記述を指す言い方は数えない（結ぶ先が無く、LLM の抽出でも参照に含めない）。
-    """
-    return any(not VAGUE_BEFORE_RX.search(norm[max(0, m.start() - 4):m.start()]) for m in CUE_RX.finditer(norm))
-
-
-# 規則が何も検出しなかった文のうち、LLM の抽出に回す価値のあるもの。参照の語の直前が、文書らしい語（○○基準、○○指示書、
-# ○○図、○○法 など）、カギ括弧の名称、規則が読めなかった番号のいずれかである文と、「参照」と書かれた文である。
-# 「検知液により」「温度により変化する」のような手段・原因の「により」は、直前が文書らしい語でないので回さない
-DOCLIKE_BEFORE_RX = re.compile(
-    r"(?<!この)(?<!本)(?<!当)(?<!同)(?:" + DOC_SUFFIX + r"|法律|(?<![方寸手工製用技療作文解算])法|条例|告示|通達|書|図|図面|資料|カタログ|ガイドライン|ポリシー|協定|契約|約款|定款|規約|[」』]|[0-9][ ]?号|[0-9][.)]?)"
-    r"[ ]?(?:\([^()\n]{0,24}\))?[ ]?(?:の(?:定め|規定|とおり|通り))?[ ]?$")
 # 文書の種類の語で終わる名詞＋参照の語（「機種ごとの組付指示書による」「別途発行の防錆要領図によること」）。目録の識別子も名称も無い、
 # 一般の名称での参照である。結ぶ先は無いので、手元に無い文書への参照として表記だけを記録する（架空の文書と、見ていない実物の規格で見つかった型）
 GENERIC_DOC_RX = re.compile(
     r"(?P<name>[一-龥ァ-ヶーA-Za-z0-9・]{1,24}?(?:" + DOC_SUFFIX + r"|説明書|図面|承認図|要領図|図書|協定書|契約書|約款|ガイドライン|法令))"
     r"(?=[ ]?(?:によること|による|により|に依る|に依り|に基づ|に基き|に従|に準|に定め|に規定|を参照|参照|に示す))")
 GENERIC_SKIP_RX = re.compile(r"^(?:この|本|当|同|所定|次|下記|上記|前記|後記|当該|各|その|別|以下|関係|関連|該当|一般|社内|諸|他)")
-SENTENCE_END_RX = re.compile(r"[。\n]")
-
-
-def llm_worthy(c, spans, in_history, listed):
-    """チャンク c に、規則の参照が 1 つも掛かっていない「LLM の抽出に回す価値のある文」があるか。
-
-    spans は規則の参照の区間、in_history(off) は改正履歴の中か、listed(off) は目次の中か。
-    """
-    norm = c.norm
-    for m in CUE_RX.finditer(norm):
-        if VAGUE_BEFORE_RX.search(norm[max(0, m.start() - 4):m.start()]) or in_history(m.start()) or listed(m.start()):
-            continue
-        a = max(norm.rfind("\n", 0, m.start()), norm.rfind("。", 0, m.start())) + 1
-        end = SENTENCE_END_RX.search(norm, m.end())
-        b = end.start() if end else len(norm)
-        if any(s < b and a < e for s, e in spans):
-            continue  # この文には規則の参照がある
-        if m.group() == "に記載" and not re.match(r"の|され|した|がある|ある", norm[m.end():]):
-            continue  # 「○○表に記載すること」は書き込む先であり、見に行く先ではない
-        if m.group().endswith("参照") or DOCLIKE_BEFORE_RX.search(norm[a:m.start()]):
-            return True
-    return False
-
-
-def has_reference_cue(text):
-    """本文に参照の語があるか。パンくずの行は見ない。"""
-    first, _, rest = (text or "").partition("\n")
-    body = rest if (first.startswith("[") and first.rstrip().endswith("]")) else (text or "")
-    return _has_cue(normalize(body)[0])
 
 
 # ───────────────────────── 入力 ─────────────────────────
@@ -391,7 +336,7 @@ def code_tokens(text):
 class Catalogue:
     """段 0。入力のチャンクだけから作る目録。文書の識別子・名称と、文書ごとの場所の名前（DocIndex）。"""
 
-    def __init__(self, rows, disable=()):
+    def __init__(self, rows):
         docs = collections.defaultdict(list)
         for n, row in enumerate(rows):
             docs[row["fileName"]].append((row.get("position") if row.get("position") is not None else 0, n, Chunk(row)))
@@ -432,7 +377,7 @@ class Catalogue:
             self.names[name] = self._names(name, chunks)
         self._share_partial_names()
         self._index_names()
-        self.aliases = {} if "alias_table" in set(disable or ()) else self._aliases()
+        self.aliases = self._aliases()
         self._alias_rx = re.compile("|".join(_spaced(a) for a in sorted(self.aliases, key=len, reverse=True))) if self.aliases else None
         for name, chunks in self.docs.items():
             self.doc[name] = DocIndex(name, chunks, self)
@@ -620,6 +565,7 @@ class DocIndex:
         self.item_marks = []  # (pos, off, n, 範囲, 属する項, 種類)
         self._items_by = collections.defaultdict(list)  # (種類, n) → [(pos, off, 強さ, 範囲, 属する項)]。強さ: 2 = 見出しの行、1 = 行頭、0 = 文中
         self.notes = collections.defaultdict(list)      # n → [pos]
+        self.note_defs = collections.defaultdict(set)   # pos → {注の定義の印（注 N）の始まりの位置}
         # 条。同じ番号の条が 1 つの文書に 2 か所以上あることがある（附則の振り直し、例 1・例 2 の並記、チャンクの重なり）ので、
         # 出現ごとに「条の実体」を作る。重なりで繰り返された見出しは 1 つの実体にまとめ、番号が戻ったところで「まとまり」を分ける
         self.art_inst = []    # 条の実体（順）: {"key": (条, 枝), "marks": [(pos, off)], "block": まとまりの番号}
@@ -630,7 +576,6 @@ class DocIndex:
         self.paras = collections.defaultdict(list)      # (実体の番号, n) → [(pos, off)]
         self.para_marks = []  # (pos, off, 実体の番号, n)
         self.md_heads = []    # 見出し記号（#）の行: (pos, off, 深さ, 題名)。図・表の題名の行は除く
-        self.rejected = []    # 捨てた見出し候補（点検用）
         self.codes = {}       # pos → [(s, e, 表記, 解決先)]
         self.history = []     # 改正履歴の範囲: ((pos, off), (pos, off) か None)
         self._toc = {}        # pos → [(s, e)] 目次の範囲
@@ -675,13 +620,13 @@ class DocIndex:
                     events.append((c.pos, m.start(), "md", len(m.group(1))))
                     self.md_heads.append((c.pos, m.start(), len(m.group(1)), m.group(2)))
             for m in re.finditer(r"(?<![^\s])(?:(?P<a>\d{1,2})[ ]?\)|\((?P<b>\d{1,2})\)|(?P<c>[a-z])[.)])[ ]?(?=[^\s\d).])", c.flat):
-                kind = ")" if m.group("a") else ("()" if m.group("b") else "a")
-                n = int(m.group("a") or m.group("b")) if kind != "a" else ord(m.group("c")) - 96
+                kind, n = Extractor._item_of(m)
                 before = c.flat[c.line(m.start())[0]:m.start()]
                 rank = 2 if (before.lstrip().startswith("#") and not before.strip(" #")) else (1 if not before.strip(" >*-") else 0)
                 events.append((c.pos, m.start(), "item", (kind, n, rank)))
             for m in NOTE_DEF_RX.finditer(c.flat):
                 self.notes[int(m.group("n"))].append(c.pos)
+                self.note_defs[c.pos].add(m.start() + len(m.group()) - len(m.group().lstrip(" >*-")))
             for m in re.finditer(r"(?m)^(?P<pre>[ #>*\-]*)" + ART_RX.pattern + r"(?:(?P<strong>" + ART_HEAD_AFTER + r")|" + ART_HEAD_WEAK + r")", c.flat):
                 a = kanji_int(m.group("a"))
                 if a and not m.group("p") and not m.group("g") and not listed(m.start()):
@@ -761,7 +706,6 @@ class DocIndex:
                 elif data["md"] and (data["dot"] or len(t) >= 2 or data["sp"]):
                     verdict = "new"  # 見出し記号つきの見出しは、番号が飛んでいても前後していても採る（本文の数字を先に見出しと取り違えていても落とさない）
                 if verdict is None:
-                    self.rejected.append((pos, off, t, data["title"][:20]))
                     continue
                 if verdict == "restart":
                     # 番号が 1 に戻り題名も違う。別の部（別表や添付の中の番号）が始まったとみなして範囲を分ける
@@ -910,8 +854,7 @@ class DocIndex:
                 # 次の項番号の見出しか、範囲の切り替え（別表・添付資料などの題名）まで。どちらも無ければ文書の末尾まで続くとみなす。
                 # 見出し記号の無い見出しの後ろに出る見出し記号つきの行では終わらせない（ページの柱が見出しに変換されることがあり、
                 # 改正の記録は複数のページにわたる）
-                ends = [x for x in (self._section_end(scope, t, (pos, off)),) if x]
-                self.history.append(((pos, off), min(ends) if ends else None))
+                self.history.append(((pos, off), self._section_end(scope, t, (pos, off)) or None))
         for pos, off, level, title in self.md_heads:
             if HISTORY_RX.match(squeeze(title)):
                 ends = [x for x in (self._md_end((pos, off)), self._next_scope((pos, off))) if x]
@@ -921,12 +864,11 @@ class DocIndex:
                 ls, le = c.line(off)
                 if HISTORY_LINE_RX.match(squeeze(c.flat[ls:le].strip(" #>*-"))) and not c.norm[ls:le].lstrip().startswith("#"):
                     start = (c.pos, off)
-                    ends = [x for x in (next(((p, o) for p, o, _, _ in self.md_heads if (p, o) > start), None), self._next_scope(start),
-                                        next(((h[0], h[1]) for h in self.heads if (h[0], h[1]) > start), None)) if x]
+                    ends = [x for x in (self._next_in(self._md_keys, start), self._next_scope(start), self._next_in(self._keys["heads"], start)) if x]
                     self.history.append((start, min(ends) if ends else None))
             for m in HISTORY_CELL_RX.finditer(c.norm):
                 start = (c.pos, m.start("w"))
-                ends = [x for x in (self._next_scope(start), next(((h[0], h[1]) for h in self.heads if (h[0], h[1]) > start), None)) if x]
+                ends = [x for x in (self._next_scope(start), self._next_in(self._keys["heads"], start)) if x]
                 self.history.append((start, min(ends) if ends else None))
 
     def in_toc(self, c, off):
@@ -1264,13 +1206,10 @@ class _Pass:
 
 
 class Extractor:
-    def __init__(self, cat, disable=()):
+    def __init__(self, cat):
         self.cat = cat
-        self.disable = set(disable or ())
         self.refs = []
-        self.vague = []
         self.dropped = collections.Counter()
-        self.detected = collections.Counter()  # チャンクの id → 参照の件数
 
     def run(self):
         for name, chunks in self.cat.docs.items():
@@ -1285,7 +1224,6 @@ class Extractor:
                 self.stage5_following(D, P)
                 self.stage6_standalone(D, P)
                 self.stage7_concretize(D, P)
-                self._count_vague(D, P)
         return self.refs
 
     # ───── 段 1: 文書の識別子と名称を探す ─────
@@ -1471,7 +1409,7 @@ class Extractor:
         m = SINGLE_AT_RX.match(text, p)
         if m and (after_no or relaxed):
             return self._with_sub(text, {"kind": "section", "elems": [((int(m.group("n")),), None, "", None)], "text": m.group(), "start": p, "end": m.end()})
-        if name_in is not None and "heading_name" not in self.disable:
+        if name_in is not None:
             return self._read_heading_name(text, p, after_no, name_in)
         return None
 
@@ -1675,9 +1613,8 @@ class Extractor:
             if (c.pos, m.start()) not in D.head_at:
                 cands.append(self._with_sub(text, {"kind": "section", "elems": [((int(m.group("n")),), None, "", None)], "text": m.group().strip(),
                                                    "start": m.start(), "end": m.end(), "weak": True, "dot": True}))
-        note_defs = {d.start() + len(d.group()) - len(d.group().lstrip(" >*-")) for d in NOTE_DEF_RX.finditer(c.flat)}
         for m in NOTE_RX.finditer(text):
-            if m.start() in note_defs:
+            if m.start() in D.note_defs[c.pos]:
                 P.claim(m.start(), m.end())  # 注の定義そのもの
             else:
                 cands.append({"kind": "note", "n": int(m.group("n")), "text": m.group(), "start": m.start(), "end": m.end()})
@@ -1700,7 +1637,7 @@ class Extractor:
                         P.claim(s, e)
                         P.found.append({"loc": loc, "owner": owner})
                     continue
-                positions, note, missing = self._lookup(D, D, c, s, loc)
+                positions, note, missing = loc["hit"] = self._lookup(D, D, c, s, loc)  # 段 7 の _emit_located が使い回す
                 if (not positions or missing) and "決められない" not in note:
                     self.dropped["番号＋参照の語（目録で引けず捨てた）"] += 1
                     continue
@@ -1927,11 +1864,11 @@ class Extractor:
 
     def _concretize_standalone(self, D, P, f):
         if "generic" in f:
-            titled = sorted(set(D.titles.get(squeeze(f["generic"]), []))) if "heading_name" not in self.disable else []
+            titled = sorted(set(D.titles.get(squeeze(f["generic"]), [])))
             if titled:
                 # 自分の文書の見出しの題名と完全に一致する（「試験片の採取は、試験片採取要領による」）。その見出しを名指ししている
                 self._emit(D, P, f["s"], f["e"], "名称のみ", f["generic"], D.name, titled[:3], stage=6)
-            # 一般の名称での参照。目録の名称の一部や略称でありうる語は、規則では決めずに残す（LLM に回る）
+            # 一般の名称での参照。目録の名称の一部や略称でありうる語は、規則では決めずに残す
             elif self.cat.maybe_known(f["generic"]):
                 self._emit(D, P, f["s"], f["e"], "名称のみ", "", None, written=f["generic"], scope=None,
                            reason="名称が目録の文書と一致しない（略称・通称・旧番号の可能性）", stage=6)
@@ -1950,7 +1887,10 @@ class Extractor:
 
     def _emit_located(self, D, P, s, T, loc, written, stage, text=None):
         """文書 T の中の場所 loc を引いて、参照を 1 件作る。"""
-        positions, note, missing = ([], loc["unsure"], True) if loc.get("unsure") else self._lookup(D, T, P.c, loc["start"], loc)
+        if loc.get("unsure"):
+            positions, note, missing = [], loc["unsure"], True
+        else:
+            positions, note, missing = (loc.get("hit") if T is D else None) or self._lookup(D, T, P.c, loc["start"], loc)
         same = T is D
         form = (FORM_SAME if same else FORM_OTHER)[loc["kind"]]
         reason = ""
@@ -2147,13 +2087,12 @@ class Extractor:
                 return hits[:3], "", False
             if span:
                 return span, "下位の指定は範囲の中に見つからず、場所全体へ結んだ", False
-            if "sub_fallback" not in self.disable:
-                # 題名（別表 1 など）が目録に無い。題名が変換で落ちることは、図や枠の中に題名がある文書で一般に起こる。
-                # 下位の指定（符号 A など）の見出しが、文書の中で 1 か所（隣り合うチャンクのまとまり 1 つ）にだけあるなら、
-                # 「別表 1 符号 A」が指しているのはそこだと決められるので結ぶ。2 か所以上にあれば決められないので結ばない。
-                hits = T.find_sub(word, value)
-                if hits and len(hits) <= 3 and all(T._where[b] - T._where[a] == 1 for a, b in zip(hits, hits[1:])):
-                    return hits, "題名は目録に無く、下位の指定の見出しへ結んだ", False
+            # 題名（別表 1 など）が目録に無い。題名が変換で落ちることは、図や枠の中に題名がある文書で一般に起こる。
+            # 下位の指定（符号 A など）の見出しが、文書の中で 1 か所（隣り合うチャンクのまとまり 1 つ）にだけあるなら、
+            # 「別表 1 符号 A」が指しているのはそこだと決められるので結ぶ。2 か所以上にあれば決められないので結ばない。
+            hits = T.find_sub(word, value)
+            if hits and len(hits) <= 3 and all(T._where[b] - T._where[a] == 1 for a, b in zip(hits, hits[1:])):
+                return hits, "題名は目録に無く、下位の指定の見出しへ結んだ", False
             return [], "題名が目録に無い", True
         if loc.get("nums"):
             if not span:
@@ -2270,21 +2209,10 @@ class Extractor:
             "targets": [{"id": T.by_pos[p].id, "position": T.by_pos[p].position} for p in links] if T else [],
             "target_ids": [T.by_pos[p].id for p in links] if T else [],
             "reason": reason if level in ("none", "document") else "", "note": note, "history": D.in_history(c, s), "stage": stage,
-            # 文書だけを指す参照のうち、文書の中の読むべき場所を探す意味があるもの（同じ文に参照の語がある）。
-            # 発行目録の行や関連する文書の一覧の識別子は、文書へ結ぶだけで足りる
-            "places": level == "document" and bool(re.match(r"[^。\n]{0,60}?" + CUE, P.text[e:])),
             "span": (s, e), "_loc": loc, "_positions": positions,
         }
         P.refs.append(ref)
         self.refs.append(ref)
-        self.detected[c.id] += 1
-
-    def _count_vague(self, D, P):
-        """番号の無い「上記・下記・次の・以下の」。隣り合う記述を指すので結ばず、件数だけ数える。"""
-        for m in VAGUE_RX.finditer(P.text):
-            if not any(a["s"] <= m.start() < a["e"] and a.get("loc") for a in P.anchors) and not P.quoted_at(m.start(), m.end()) \
-                    and not re.match(r"[ ]?(?:第[ ]?)?\d", P.text[m.end():]):
-                self.vague.append({"source": P.c.id, "source_doc": D.name, "source_position": P.c.position, "quote": P.c.quote(m.start(), m.end())[:80]})
 
 
 FORM_SAME = {"section": "同じ文書の項", "article": "同じ文書の項", "para": "同じ文書の項", "chapter": "同じ文書の項", "item": "同じ文書の項", "label": "別表・図・添付資料",
@@ -2294,39 +2222,31 @@ FORM_OTHER = {"section": "文書番号＋項", "article": "文書番号＋項", 
 
 
 # ───────────────────────── 入口 ─────────────────────────
-def find_references(chunks, disable=()):
+def catalogue_of(rows, memo=None):
+    """rows から目録を作る。memo（辞書）を渡すと、同じ行の一覧から作った目録を使い回す（1 回の後処理の中で文書層と章・節の層が共有する）。"""
+    if memo is None:
+        return Catalogue(rows)
+    key = hashlib.sha1(json.dumps(rows, ensure_ascii=False, sort_keys=True, default=str).encode("utf-8")).hexdigest()
+    if memo.get("catalogue_key") != key:
+        memo["catalogue_key"], memo["catalogue"] = key, Catalogue(rows)
+    return memo["catalogue"]
+
+
+def find_references(chunks, memo=None):
     """チャンクの一覧から、規則で参照を抽出して解決する。
 
     chunks: [{"id", "fileName", "position", "text", "page_number"（任意）, "section"（任意）}]。目録は、渡したチャンクだけから作る。
+    memo: catalogue_of に渡す辞書（省略可）。
     戻り値:
       references  参照の一覧（Extractor._emit の説明のとおり）
-      chunks      チャンクの id → {"references": 規則が検出した参照の数, "cue": 本文に参照の語があるか,
-                                    "llm": 規則の参照が掛かっていない文で、LLM の抽出に回す価値のあるものがあるか（llm_worthy）}
-      vague       番号の無い「上記・下記」など（結ばない。件数の確認用）
       dropped     参照としなかった語の件数（理由ごと）
       catalogue   目録の要約（文書ごとの識別子、名称、見出しの数 など。点検用）
     """
-    unknown = set(disable or ()) - set(OPTIONAL_RULES)
-    if unknown:
-        raise ValueError("unknown rule: %s" % ", ".join(sorted(unknown)))
-    cat = Catalogue([c for c in chunks if c.get("fileName") is not None and c.get("id") is not None], disable)
-    ex = Extractor(cat, disable)
-    refs = ex.run()
-    out = []
-    for r in refs:
-        out.append({k: v for k, v in r.items() if k not in ("span", "_loc", "_positions")})
-    spans = collections.defaultdict(list)
-    for r in refs:
-        spans[r["source"]].append(r["span"])
-    info = {}
-    for name, cs in cat.docs.items():
-        D = cat.doc[name]
-        for c in cs:
-            toc = D._toc.get(c.pos, ())
-            info[c.id] = {"references": ex.detected.get(c.id, 0), "cue": _has_cue(c.norm),
-                          "llm": llm_worthy(c, spans.get(c.id, ()), lambda off, c=c, D=D: D.in_history(c, off), lambda off, toc=toc: any(a <= off < b for a, b in toc))}
+    cat = catalogue_of([c for c in chunks if c.get("fileName") is not None and c.get("id") is not None], memo)
+    ex = Extractor(cat)
+    out = [{k: v for k, v in r.items() if k not in ("span", "_loc", "_positions")} for r in ex.run()]
     catalogue = {name: {"identifiers": sorted("-".join(f) for f in cat.codes[name]), "names": sorted(cat.names[name]),
                         "sections": {sc: len(tb) for sc, tb in D.sections.items()}, "labels": sorted(k[0] + (k[1] or "") for k in D.labels),
-                        "articles": len(D.articles), "notes": len(D.notes), "history_ranges": len(D.history), "rejected_heading_candidates": len(D.rejected)}
+                        "articles": len(D.articles), "notes": len(D.notes), "history_ranges": len(D.history)}
                  for name, D in cat.doc.items()}
-    return {"version": RULE_VERSION, "references": out, "chunks": info, "vague": ex.vague, "dropped": dict(ex.dropped), "catalogue": catalogue}
+    return {"version": RULE_VERSION, "references": out, "dropped": dict(ex.dropped), "catalogue": catalogue}

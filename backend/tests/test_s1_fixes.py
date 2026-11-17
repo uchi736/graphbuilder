@@ -39,7 +39,6 @@ from src.rerank_retriever import build_candidate_db, CHUNK_CANDIDATE_QUERY
 from src.shared.common_fn import create_graph_database_connection, load_embedding_model
 from src.shared.constants import (
     CHAT_MODE_CONFIG_MAP, CHAT_VECTOR_GRAPH_FULLTEXT_MODE, QUERY_TO_DELETE_EXISTING_ENTITIES, QUERY_TO_GET_CHUNKS,
-    QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION, QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY,
     START_FROM_LAST_PROCESSED_POSITION,
 )
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
@@ -72,6 +71,23 @@ OLD_QUERY_TO_GET_CHUNKS = """
     WITH d
     OPTIONAL MATCH (d)<-[:PART_OF|FIRST_CHUNK]-(c:Chunk)
     RETURN c.id as id, c.text as text, c.position as position
+    """
+# 直す前の「最後の位置から再開」が一覧を切った位置（埋め込みの無い最初のチャンク・エンティティの無い最初のチャンク）
+QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION = """
+    MATCH (d:Document)
+    WHERE d.fileName = $filename
+    WITH d
+    MATCH (d)<-[:PART_OF]-(c:Chunk) WHERE c.embedding is null
+    RETURN c.id as id,c.position as position
+    ORDER BY c.position LIMIT 1
+    """
+QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY = """
+    MATCH (d:Document)
+    WHERE d.fileName = $filename
+    WITH d
+    MATCH (d)<-[:PART_OF]-(c:Chunk) WHERE NOT exists {(c)-[:HAS_ENTITY]->()}
+    RETURN c.id as id,c.position as position
+    ORDER BY c.position LIMIT 1
     """
 OLD_HAS_ENTITY_QUERY = """
     UNWIND $batch_data AS data

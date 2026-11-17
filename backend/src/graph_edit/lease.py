@@ -6,7 +6,7 @@
 その間だけ貸し出しを取り、編集の API を BUSY で待たせる。
 
 - acquire_lease: 取れるまで待つ（既定で最大 LEASE_MAX_WAIT_SECONDS 秒。60 回で諦めない）
-- renew_lease: 期限を延ばす（各段の区切りで呼ぶ）
+- renew_lease: 期限を延ばす（延長のスレッドが呼ぶ）
 - hold_lease / LeaseHeartbeat: 持っている間、別のスレッドで LEASE_HEARTBEAT_SECONDS 秒おきに延長し続ける
   （1 つの問い合わせが LEASE_MS を超えても切れない。プロセスが落ちれば延長が止まり、LEASE_MS で切れる）
 - run_with_lease: 関数を貸し出しを持ったまま動かす（文書層・章節の層の作成、取り込み直しの削除。asyncio.to_thread で呼ぶ）
@@ -46,12 +46,12 @@ RELEASE_QUERY = (f"MATCH (l:{GRAPH_LOCK_LABEL} {{name: 'graph'}}) WHERE l.lease_
                  "SET l.lease_until = 0, l.lease_owner = null")
 
 
-def acquire_lease(graph, owner, attempts=None, interval=LEASE_INTERVAL_SECONDS):
-    """貸し出しを取る。取れるまで interval 秒おきに待つ（attempts を省くと LEASE_MAX_WAIT_SECONDS 秒まで）。
+def acquire_lease(graph, owner):
+    """貸し出しを取る。取れるまで LEASE_INTERVAL_SECONDS 秒おきに、LEASE_MAX_WAIT_SECONDS 秒まで待つ。
     返す値（token）を renew_lease・release_lease に渡す。"""
     ensure_schema(graph)
-    if attempts is None:
-        attempts = max(1, int(LEASE_MAX_WAIT_SECONDS / interval)) if interval > 0 else 1
+    interval = LEASE_INTERVAL_SECONDS
+    attempts = max(1, int(LEASE_MAX_WAIT_SECONDS / interval)) if interval > 0 else 1
     token = f"{owner}#{uuid4().hex[:12]}"
     holder = None
     for attempt in range(attempts):
@@ -91,11 +91,11 @@ def release_lease(graph, token):
 class LeaseHeartbeat:
     """持っている間、別のスレッドで貸し出しを延長し続ける。stop() で止める（release の前に呼ぶ）。"""
 
-    def __init__(self, graph, token, interval=LEASE_HEARTBEAT_SECONDS, max_hold=LEASE_MAX_HOLD_SECONDS):
+    def __init__(self, graph, token):
         self.graph = graph
         self.token = token
-        self.interval = interval
-        self.max_hold = max_hold
+        self.interval = LEASE_HEARTBEAT_SECONDS
+        self.max_hold = LEASE_MAX_HOLD_SECONDS
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._run, name=f"lease-heartbeat-{token}", daemon=True)
 
@@ -122,15 +122,15 @@ class LeaseHeartbeat:
             self._thread.join(timeout=5)
 
 
-def start_heartbeat(graph, token, interval=LEASE_HEARTBEAT_SECONDS):
-    return LeaseHeartbeat(graph, token, interval).start()
+def start_heartbeat(graph, token):
+    return LeaseHeartbeat(graph, token).start()
 
 
 @contextmanager
-def hold_lease(graph, owner, heartbeat=LEASE_HEARTBEAT_SECONDS, attempts=None, interval=LEASE_INTERVAL_SECONDS):
+def hold_lease(graph, owner):
     """with hold_lease(graph, "delete:a.pdf") as token: ... の間、貸し出しを持ち、延長し続ける。"""
-    token = acquire_lease(graph, owner, attempts=attempts, interval=interval)
-    beat = start_heartbeat(graph, token, heartbeat)
+    token = acquire_lease(graph, owner)
+    beat = start_heartbeat(graph, token)
     try:
         yield token
     finally:

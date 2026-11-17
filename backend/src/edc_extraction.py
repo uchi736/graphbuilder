@@ -9,8 +9,8 @@ EDC の LLM は EDC 側の設定で固定。Document.model に残す名前の決
 環境変数 LLM_MODEL_CONFIG_EDC (カンマ区切り、URL 以外は省略可):
     <base_url>[,<doctype>[,<chunk_method>[,<concurrency>]]]
     例: http://host.docker.internal:8080,auto,recursive,2
-      - doctype: "auto"(既定) はファイル先頭サンプルで1回だけ /classify し、
-                 結果の文書タイプを全チャンクに適用する（チャンクごとの判定ブレ防止）。
+      - doctype: "auto"(既定) は抽出のバッチ（UPDATE_GRAPH_CHUNKS_PROCESSED 件のチャンク）ごとに、先頭のチャンクを標本に
+                 /classify で判定し、結果の文書タイプをバッチの全チャンクに適用する（チャンクごとの判定ブレ防止）。
                  "none" で文書タイプ判定なし（スキーマフリー発見）。タイプ名の直接指定も可。
       - chunk_method: EDC 側の再分割方式 (既定 recursive)。
       - concurrency: EDC への同時リクエスト数 (既定 2)。
@@ -37,6 +37,7 @@ EDC の LLM は EDC 側の設定で固定。Document.model に残す名前の決
 """
 
 import asyncio
+import csv
 import json
 import logging
 import os
@@ -46,9 +47,8 @@ import time
 import httpx
 from langchain_community.graphs.graph_document import GraphDocument, Node, Relationship
 
-from src.shared.common_fn import get_value_from_env
+from src.shared.common_fn import collect_chunk_results, get_value_from_env
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
-from src import skipped_chunks  # T16: 抽出に失敗したチャンクを文書に記録する
 
 DEFAULT_DOCTYPE = "auto"
 DEFAULT_CHUNK_METHOD = "recursive"
@@ -57,26 +57,38 @@ DEFAULT_TIMEOUT_SECONDS = 900
 CLASSIFY_SAMPLE_CHARS = 3000
 DEFAULT_NODE_TYPE = "Entity"
 DEFAULT_PROPOSALS_DIR = "/code/edc_proposals"
+# スキーマ運用モード（取り込みごとの指定 schema_mode と EDC_ENRICH_SCHEMA）。fixed は固定スキーマ、fixed_extended は固定＋拡張
+SCHEMA_MODE_FIXED = "fixed"
+SCHEMA_MODE_FIXED_EXTENDED = "fixed_extended"
+SCHEMA_MODES = (SCHEMA_MODE_FIXED, SCHEMA_MODE_FIXED_EXTENDED)
 
 
-def _get_edc_config():
-    env_value = get_value_from_env("LLM_MODEL_CONFIG_EDC")
-    if not env_value:
-        raise LLMGraphBuilderException(
-            "Environment variable 'LLM_MODEL_CONFIG_EDC' is not defined "
-            "(expected: <edc_api_base_url>[,<doctype>[,<chunk_method>[,<concurrency>]]])"
-        )
-    parts = [p.strip() for p in env_value.split(",")]
+def parse_edc_config():
+    """LLM_MODEL_CONFIG_EDC を (URL, 文書種別の設定値, 再分割方式, 同時数) に分ける。URL が空なら None。
+    文書種別の設定値は書かれたまま（空は auto）で、none（大文字小文字を問わない）の解釈は呼び出し側が行う。"""
+    parts = [p.strip() for p in (os.getenv("LLM_MODEL_CONFIG_EDC") or "").split(",")]
     base_url = parts[0].rstrip("/")
+    if not base_url:
+        return None
     doctype = parts[1] if len(parts) > 1 and parts[1] else DEFAULT_DOCTYPE
     chunk_method = parts[2] if len(parts) > 2 and parts[2] else DEFAULT_CHUNK_METHOD
     try:
         concurrency = int(parts[3]) if len(parts) > 3 and parts[3] else DEFAULT_CONCURRENCY
     except ValueError:
         concurrency = DEFAULT_CONCURRENCY
-    if doctype.lower() == "none":
-        doctype = None
     return base_url, doctype, chunk_method, max(1, concurrency)
+
+
+def _get_edc_config():
+    """抽出に使う EDC の設定。文書種別の none は None（判定なし）にする。未設定なら例外。"""
+    config = parse_edc_config()
+    if config is None:
+        raise LLMGraphBuilderException(
+            "Environment variable 'LLM_MODEL_CONFIG_EDC' is not defined "
+            "(expected: <edc_api_base_url>[,<doctype>[,<chunk_method>[,<concurrency>]]])"
+        )
+    base_url, doctype, chunk_method, concurrency = config
+    return base_url, (None if doctype.lower() == "none" else doctype), chunk_method, concurrency
 
 
 def _normalize_rel_type(relation: str) -> str:
@@ -88,10 +100,21 @@ DEFAULT_SCHEMAS_DIR = "/edc_schemas"
 _vocabulary_cache = {}
 
 
-def _read_csv_names(path):
-    import csv
-    with open(path, encoding="utf-8") as f:
-        return {row[0].strip() for row in csv.reader(f) if row and row[0].strip()}
+def schemas_dir():
+    """EDC の registry.json と語彙 CSV の置き場所（EDC_SCHEMAS_DIR、既定 /edc_schemas）。"""
+    return get_value_from_env("EDC_SCHEMAS_DIR", DEFAULT_SCHEMAS_DIR)
+
+
+def read_registry(directory):
+    with open(os.path.join(directory, "registry.json"), encoding="utf-8") as f:
+        return json.load(f)
+
+
+def read_csv_names(directory, path, min_columns=1):
+    """語彙 CSV の 1 列目の名称の集合。registry.json に書かれたパスはファイル名だけを使い、directory の直下から読む。
+    列の数が min_columns に満たない行と、1 列目が空の行は数えない。"""
+    with open(os.path.join(directory, os.path.basename(str(path))), encoding="utf-8") as f:
+        return {row[0].strip() for row in csv.reader(f) if len(row) >= min_columns and row[0].strip()}
 
 
 def _load_vocabulary(doctype):
@@ -101,27 +124,27 @@ def _load_vocabulary(doctype):
     if doctype in _vocabulary_cache:
         return _vocabulary_cache[doctype]
     vocabulary = None
-    schemas_dir = get_value_from_env("EDC_SCHEMAS_DIR", DEFAULT_SCHEMAS_DIR)
+    directory = schemas_dir()
     try:
-        with open(os.path.join(schemas_dir, "registry.json"), encoding="utf-8") as f:
-            registry = json.load(f)
-        names = set(_read_csv_names(os.path.join(schemas_dir, os.path.basename(registry["backbone"]["schema"]))))
+        registry = read_registry(directory)
+        names = read_csv_names(directory, registry["backbone"]["schema"])
         entry = next((d for d in registry.get("doctypes", []) if d.get("name") == doctype), None)
         if entry is not None:
-            names |= _read_csv_names(os.path.join(schemas_dir, os.path.basename(entry["schema"])))
+            names |= read_csv_names(directory, entry["schema"])
             vocabulary = names
         else:
             logging.warning(f"EDC adapter: doctype '{doctype}' not in registry; folding every lowercase relation")
     except (OSError, KeyError, ValueError, StopIteration) as e:
-        logging.warning(f"EDC adapter: could not read the vocabulary from {schemas_dir} ({e}); folding every lowercase relation")
+        logging.warning(f"EDC adapter: could not read the vocabulary from {directory} ({e}); folding every lowercase relation")
     _vocabulary_cache[doctype] = vocabulary
     return vocabulary
 SENTENCE_NAME_MIN_CHARS = 15
 _SENTENCE_PUNCT = re.compile(r"[、。]")
 
 
-def _flag_enabled(name: str, default: bool = False) -> bool:
-    return str(get_value_from_env(name, "true" if default else "false")).strip().lower() in ("1", "true", "yes", "on")
+def _flag_enabled(name: str) -> bool:
+    """真偽値の環境変数。1・true・yes・on（大文字小文字を問わない）は true、未設定と空は false。"""
+    return str(get_value_from_env(name, "false")).strip().lower() in ("1", "true", "yes", "on")
 
 
 def _is_vocabulary_relation(relation: str) -> bool:
@@ -188,7 +211,7 @@ def _triplets_to_graph_document(triplets, source_document, vocabulary=None) -> G
 
 
 async def _classify_doctype(client, base_url, combined_chunk_document_list):
-    """ファイル先頭サンプルで文書タイプを1回だけ判定し、全チャンクで使い回す。"""
+    """渡されたチャンク（抽出のバッチ）の先頭 3 つを標本に文書タイプを判定する。結果はバッチの全チャンクで使う。"""
     sample = "\n".join(doc.page_content for doc in combined_chunk_document_list[:3])[:CLASSIFY_SAMPLE_CHARS]
     try:
         response = await client.post(f"{base_url}/classify", json={"text": sample})
@@ -201,12 +224,13 @@ async def _classify_doctype(client, base_url, combined_chunk_document_list):
         return "auto"
 
 
-def _enrich_schema_enabled(options=None) -> bool:
-    """運用モード。取り込みごとの指定（options["schema_mode"]: fixed / fixed_extended）があればそれを、無ければ EDC_ENRICH_SCHEMA に従う。"""
+def schema_mode_of(options=None) -> str:
+    """運用モード。取り込みごとの指定（options["schema_mode"]: fixed / fixed_extended）があればそれを、無ければ EDC_ENRICH_SCHEMA
+    （true は fixed_extended、false は fixed）に従う。"""
     mode = (options or {}).get("schema_mode")
-    if mode in ("fixed", "fixed_extended"):
-        return mode == "fixed_extended"
-    return str(get_value_from_env("EDC_ENRICH_SCHEMA", "false")).strip().lower() in ("1", "true", "yes", "on")
+    if mode in SCHEMA_MODES:
+        return mode
+    return SCHEMA_MODE_FIXED_EXTENDED if _flag_enabled("EDC_ENRICH_SCHEMA") else SCHEMA_MODE_FIXED
 
 
 def _write_proposals(dropped, doc, doctype):
@@ -246,9 +270,7 @@ def _self_reference_name(text):
 
 def _resolve_self_reference(text):
     """本文の「本基準」「この基準」などを文書番号に置き換える。EDC はこれらを雑音の語として 3 つ組ごと捨てるため。
-    チャンク先頭の見出しの経路の行は置き換えない。環境変数 EDC_RESOLVE_SELF_REFERENCE=false で止める。"""
-    if not _flag_enabled("EDC_RESOLVE_SELF_REFERENCE", default=True):
-        return text
+    チャンク先頭の見出しの経路の行は置き換えない。"""
     name = _self_reference_name(text)
     if not name:
         return text
@@ -260,7 +282,7 @@ def _resolve_self_reference(text):
 
 async def _extract_chunk(client, semaphore, base_url, doc, doctype, chunk_method, options=None):
     payload = {"text": _resolve_self_reference(doc.page_content), "doctype": doctype, "chunk_method": chunk_method,
-               "enrich_schema": _enrich_schema_enabled(options)}
+               "enrich_schema": schema_mode_of(options) == SCHEMA_MODE_FIXED_EXTENDED}
     async with semaphore:
         response = await client.post(f"{base_url}/extract", json=payload)
         response.raise_for_status()
@@ -288,12 +310,12 @@ async def get_graph_from_edc(combined_chunk_document_list, options=None):
     base_url, doctype, chunk_method, concurrency = _get_edc_config()
     requested = (options or {}).get("doctype")
     if requested:
-        # 取り込みごとの指定。none は文書種別なし（語彙を限定せず発見）、auto は文書ごとに判定、それ以外は文書種別の名前で固定
+        # 取り込みごとの指定。none は文書種別なし（語彙を限定せず発見）、auto はバッチごとに判定、それ以外は文書種別の名前で固定
         doctype = None if str(requested).strip().lower() == "none" else str(requested).strip()
     timeout_seconds = get_value_from_env("EDC_EXTRACTION_TIMEOUT", DEFAULT_TIMEOUT_SECONDS, int)
     logging.info(
         f"EDC extraction: url={base_url}, doctype={doctype}, chunk_method={chunk_method}, "
-        f"concurrency={concurrency}, timeout={timeout_seconds}s, schema_mode={'fixed_extended' if _enrich_schema_enabled(options) else 'fixed'}"
+        f"concurrency={concurrency}, timeout={timeout_seconds}s, schema_mode={schema_mode_of(options)}"
         + (" (per-request override)" if options and any((options or {}).values()) else "")
     )
 
@@ -319,18 +341,11 @@ async def get_graph_from_edc(combined_chunk_document_list, options=None):
         )
 
     graph_document_list = []
-    failed_chunks = 0
     totals = {"truncated": 0, "noise": 0, "dropped": 0}
-    for doc, result in zip(combined_chunk_document_list, results):
-        if isinstance(result, BaseException):
-            failed_chunks += 1
-            skipped_chunks.note(doc.metadata.get("combined_chunk_ids"))
-            logging.warning(f"Skipping chunk due to EDC extraction error: {result}")
-        else:
-            graph_document, stats = result
-            graph_document_list.append(graph_document)
-            for k in totals:
-                totals[k] += stats.get(k, 0)
+    for graph_document, stats in collect_chunk_results(combined_chunk_document_list, results, "EDC extraction"):
+        graph_document_list.append(graph_document)
+        for k in totals:
+            totals[k] += stats.get(k, 0)
     if totals["truncated"]:
         logging.warning(f"EDC: {totals['truncated']} LLM calls hit the output limit; some triples were lost")
     logging.info(
@@ -338,10 +353,6 @@ async def get_graph_from_edc(combined_chunk_document_list, options=None):
         + (f" (written to {get_value_from_env('EDC_PROPOSALS_DIR', DEFAULT_PROPOSALS_DIR)}/proposals.jsonl)"
            if totals["dropped"] else "")
     )
-    if failed_chunks:
-        logging.warning(f"EDC extraction skipped {failed_chunks}/{len(combined_chunk_document_list)} combined chunks")
-    if combined_chunk_document_list and failed_chunks == len(combined_chunk_document_list):
-        raise LLMGraphBuilderException(f"EDC extraction failed for all chunks: {results[0]}")
 
     total_relationships = sum(len(gd.relationships) for gd in graph_document_list)
     logging.info(

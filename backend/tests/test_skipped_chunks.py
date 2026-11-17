@@ -276,5 +276,7 @@ def test_save_does_not_raise_when_db_fails(caplog):
 
 
 @pytest.mark.parametrize("module", [llm_module, edc_module])
-def test_modules_import_the_recorder(module):
-    assert module.skipped_chunks is skipped_chunks
+def test_modules_use_the_shared_recorder(module):
+    """抽出の 2 つのモジュールは、失敗したチャンクの記録を共通の collect_chunk_results（skipped_chunks に記録する）に任せる"""
+    from src.shared import common_fn
+    assert module.collect_chunk_results is common_fn.collect_chunk_results

@@ -1,4 +1,4 @@
-"""P1-a: チャンク単位リランク付きの 2 段リトリーバ。
+"""チャンク単位リランク付きの 2 段リトリーバ。
 
 既定の流れ（hybrid で k 件 → 文書ごとに束ねて展開 → 3000 トークン断片の上位 4 片）を、
   1. hybrid で候補チャンクを CHAT_CANDIDATE_K 件取る（チャンク単位・軽いクエリ）
@@ -14,17 +14,8 @@
   both   … target で足す分（上限 reference_max）はそのまま足し、それに加えて link でも選ぶ（上限は同じ数）。
            従来の設定で文脈に入っていた参照先を失わない。一文で選ぶ参照が無い質問では、target と同じ結果になる
 足した参照先の見せ方（reference_presentation）と、回答の指示への追加（reference_prompt）は、別々に切り替えられる。
-文書だけを指す参照（項・別表の指定の無いもの）の中の選び方は、設定 reference_doc_select で切り替える（11/9）。
-  rerank       … 従来。文書のチャンクから「質問 + 参照の一文」のリランカーで 1 件
-  summary_list … 文書の節の要点（後処理 build_section_summaries）の一覧を LLM に見せて最大 reference_doc_max 節を選ばせ、
-                 節ごとにチャンクを 1 件。節の数が reference_doc_two_stage_sections を超える文書は章を先に選ぶ。
-                 足すかどうかの判定は rerank と同じ: 選んだ節のチャンクの点数（質問 + 参照の一文とのリランク）が
-                 reference_min_score に満たない節は足さない。全部満たなければ rerank に戻す（rerank も同じ下限で判定する）。
-                 2 件目以降は、本文（選んだチャンク + 参照で足すチャンク。both の従来の選び方の分を含む）が文脈の文字数の上限の
-                 (1 - REFERENCE_EXTRA_LINE_SHARE) に収まる分だけ足す（エンティティ・リレーションの行の分を残す）。
-                 2 回目のたどりでは、参照先 1 つにつき 1 件（rerank と同じ数）。
-                 失敗したら rerank に戻す（要点のある節が 1 つも無い文書も戻す）。1 つの質問の中で LLM が一度失敗したら、
-                 残りの参照は LLM を呼ばずに rerank で選ぶ。部品は src/section_summaries.py
+文書だけを指す参照（項・別表の指定の無いもの）は、文書のチャンクから「質問 + 参照の一文」のリランカーで 1 件を選ぶ。
+文書層の参照のうち、一文の節番号で節まで決まったものは、その節のチャンクだけから選ぶ（文書全体には戻らない）。
 
 点数の扱い:
   - 参照をたどるかどうかは、参照の一文の点数（控えの score・link_score）で決める。
@@ -33,6 +24,7 @@
   - 参照元の直後に示した参照先は、文書行の並びと上限（CHAT_PROMPT_TOKEN_CUTOFF）の判定に使わない。
     直接選ばれた本文の行は、一文で選んだ参照先に押し出されない（従来の選び方で足した分は、従来どおり自分の文書行の点数で並ぶ）。
 """
+import json
 import logging
 import os
 import re
@@ -46,18 +38,16 @@ from pydantic import Field
 from langchain_neo4j import Neo4jVector
 
 from src.shared.common_fn import get_value_from_env
+from src.shared.constants import DOCUMENT_SOURCE_EXPR as _SOURCE_OF_D
 
 # 候補チャンクを取るだけの軽い retrieval_query（文書で束ねない）
 CHUNK_CANDIDATE_QUERY = """
 WITH node AS chunk, score
 MATCH (chunk)-[:PART_OF]->(d:Document)
 RETURN chunk.text AS text, score,
-       {chunk_id: chunk.id, source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName),
+       {chunk_id: chunk.id, source: __SOURCE__,
         position: chunk.position} AS metadata
-"""
-
-# 文書の出典の式。取り出しの照会（metadata.source）と同じにして、文書行との突き合わせに使う
-_SOURCE_OF_D = 'COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName)'
+""".replace("__SOURCE__", _SOURCE_OF_D)
 
 # 参照リンクを 1 本ずつ読む（reference_select = link）。参照先はチャンクか文書。参照元の本文は、参照の一文の前後を取るのに使う
 REFERENCE_LINK_QUERY = """
@@ -88,7 +78,7 @@ UNWIND rows AS row
 RETURN row.id AS id, row.text AS text, row.position AS position, d.fileName AS file_name, __SOURCE__ AS doc_source
 """.replace("__SOURCE__", _SOURCE_OF_D)
 
-# 経由点の表示名（M6）。規則の目録から作った節（source = 'catalogue'）は題名に番号を含まないので「番号 題名」（「3-5 潤滑油供給条件」）にする。
+# 経由点の表示名。規則の目録から作った節（source = 'catalogue'）は題名に番号を含まないので「番号 題名」（「3-5 潤滑油供給条件」）にする。
 # Markdown の見出しから作った節は、題名が見出しの文字列そのもの（「(2) 計測」「3-1 .サージ誤差計算」）で番号を含むので、題名のまま。
 # 題名の先頭の字で判定しない（章 3 の題名が「3台…」のように数字で始まると番号が消え、「(2) 計測」は「2 (2) 計測」になるため）
 _SECTION_LABEL = ("CASE WHEN s.number IS NULL OR s.number = '' OR coalesce(s.source, '') <> 'catalogue' "
@@ -96,7 +86,7 @@ _SECTION_LABEL = ("CASE WHEN s.number IS NULL OR s.number = '' OR coalesce(s.sou
                   "ELSE s.number + ' ' + s.title END")
 
 # 章・節を指す参照（Chunk -REFERS_TO-> Section。章・節の層の後処理が規則で生成）。節と下位の節（3 段まで）に属するチャンクを参照先の候補にする。
-# 候補は、その節（か下位の節）を主所属（IN_SECTION.primary）とするチャンクを先に、足りなければ副所属のチャンクも採る（M5）。
+# 候補は、その節（か下位の節）を主所属（IN_SECTION.primary）とするチャンクを先に、足りなければ副所属のチャンクも採る。
 # 同じ所属の中は、質問との埋め込みの近さの順（$query_vector が無い場合は位置の順）。上限は $per_section 件
 SECTION_REFERENCE_QUERY = """
 UNWIND $ids AS id
@@ -118,7 +108,7 @@ LIMIT 2000
 
 # 文書番号を経由する文書間の参照（文書層: Document -REFERS_TO-> Standard <-IS_VERSION_OF- Document）。
 # 文書層の参照はチャンクの ID を持たないため、引用文（quotes）を本文に含むチャンクを参照元とする（空白・改行の違いは無視する）。
-# sections: 参照元のチャンクから参照先の文書の節への、文書番号と番号で決めた線（章・節の層の後処理が作る via = standard の REFERS_TO、M3）。
+# sections: 参照元のチャンクから参照先の文書の節への、文書番号と番号で決めた線（章・節の層の後処理が作る via = standard の REFERS_TO）。
 #           あれば、参照先の文書の中はその節のチャンクだけから選ぶ（節のチャンクが全部文脈にあれば何も足さない。文書全体には戻らない）。
 #           章・節の参照の追跡（reference_sections）も有効なら、同じ線を章・節の照会がたどるので、文書層の側ではたどらない。
 #           無ければ従来どおり文書全体から近さで選ぶ
@@ -155,60 +145,6 @@ ORDER BY prim DESC, sim DESC, t.position
 RETURN t.id AS id, t.text AS text, t.position AS position, d.fileName AS file_name, __SOURCE__ AS doc_source
 LIMIT $limit
 """.replace("__SOURCE__", _SOURCE_OF_D)
-
-# 文書のみを指す参照の一覧選択（reference_doc_select = summary_list）の候補の節。節ごとに、親の節・要点・主所属のチャンクの本文の先頭
-REFERENCE_DOC_SECTIONS_QUERY = """
-UNWIND $docs AS name
-MATCH (s:Section {fileName: name})
-WHERE s.method = 'rule'
-OPTIONAL MATCH (p:Section)-[:HAS_SECTION]->(s)
-OPTIONAL MATCH (s)<-[m:IN_SECTION]-(c:Chunk)
-WHERE m.primary = true AND c.text IS NOT NULL
-WITH s, p, c ORDER BY c.position
-WITH s, p, collect(c.text)[0] AS head
-RETURN s.id AS id, s.fileName AS file_name, s.path AS path, s.title AS title, s.number AS number, s.level AS level,
-       p.id AS parent, s.summary AS summary, left(coalesce(head, s.text, ''), $head_chars) AS head
-"""
-
-# 一覧選択で選んだ節から足すチャンクの候補。段（tier）は 3 = その節を主所属とするチャンク、2 = 下位の節（3 段まで）を主所属とするチャンク、
-# 1 = その節に副所属で属するチャンク（目録で切り出した小さな節は、前の節を主所属とするチャンクの中にあることがある）。呼び出し側は最も高い段だけを使う。
-# 同じ段の中は「質問 + 参照の一文」との埋め込みの近さの順に、節ごとに $per_section 件まで
-SECTION_PICK_CHUNKS_QUERY = """
-UNWIND $sections AS sid
-MATCH (s:Section {id: sid})-[:HAS_SECTION*0..3]->(sub:Section)<-[m:IN_SECTION]-(t:Chunk)
-WHERE t.text IS NOT NULL AND NOT t.id IN $skip AND (m.primary = true OR sub.id = sid)
-MATCH (t)-[:PART_OF]->(d:Document)
-WITH sid, t, d, max(CASE WHEN sub.id = sid AND m.primary = true THEN 3 WHEN m.primary = true THEN 2 ELSE 1 END) AS tier
-WITH sid, t, d, tier,
-     CASE WHEN $query_vector IS NULL OR t.embedding IS NULL THEN 0.0 ELSE vector.similarity.cosine(t.embedding, $query_vector) END AS sim
-ORDER BY tier DESC, sim DESC, t.position
-WITH sid, collect({id: t.id, text: t.text, position: t.position, file_name: d.fileName, doc_source: __SOURCE__, tier: tier})[0..$per_section] AS rows
-UNWIND rows AS row
-RETURN sid AS section_id, row.id AS id, row.text AS text, row.position AS position, row.file_name AS file_name,
-       row.doc_source AS doc_source, row.tier AS tier
-""".replace("__SOURCE__", _SOURCE_OF_D)
-
-# 一覧選択で LLM に見せる「既に手元にある節」（文脈にあるチャンクの主所属の節と要点）
-ALREADY_SECTIONS_QUERY = """
-UNWIND $ids AS id
-MATCH (c:Chunk {id: id})-[:PART_OF]->(d:Document)
-OPTIONAL MATCH (c)-[m:IN_SECTION]->(s:Section)
-WHERE m.primary = true
-RETURN c.id AS id, d.fileName AS file_name, s.id AS section_id, s.path AS path, s.title AS title, s.number AS number,
-       s.summary AS summary, c.section AS chunk_section
-"""
-# 一覧選択で、選んだ節 1 つから候補にするチャンクの上限
-REFERENCE_DOC_PICK_CANDIDATES = 8
-# 一覧選択の候補の節に付ける本文の先頭の字数（要点の無い節の代わりの文）
-REFERENCE_DOC_HEAD_CHARS = 300
-# 参照元の節として LLM に見せる、参照の一文の前後の字数
-REFERENCE_CONTEXT_CHARS = 150
-# 応答の参照の控えに、一覧選択のときだけ載せる項目（従来の選び方では載せない。応答の形を変えないため）
-REFERENCE_SELECTION_KEYS = ("selection", "selection_fallback", "selection_stage", "selected_section", "selected_sections",
-                            "selection_chapters", "summary_coverage", "llm_raw")
-# 一覧選択で 2 件目以降を足すとき、文脈の文字数の上限のうちエンティティ・リレーションの行のために残す割合
-# （_apply_budget_reranked は本文を削らず、残りに行を詰めるので、本文で上限を使い切ると行が 0 本になる）
-REFERENCE_EXTRA_LINE_SHARE = 0.15
 
 # 章・節 1 つから候補にするチャンクの上限
 REFERENCE_SECTION_CANDIDATES = 8
@@ -287,35 +223,30 @@ RETRIEVAL_SETTING_SPECS = [
      "2 の場合は、追加した参照先の中にある参照を、さらに 1 回追跡する（参照先がさらに別表や別の項を指している場合のため）。2 回目に追加するのは、1 回目の参照先 1 つにつき 1 件までである。"),
     ("reference_documents", "bool", "CHAT_REFERENCE_DOCUMENTS", True, None, None, "参照の追跡", "文書のみを指す参照も追跡",
      "番号のみ・名称のみで文書を指す参照（項や別表の指定がないもの）について、その文書の中から、質問と参照の一文に合致するチャンクを 1 つ選択して追加する。"),
-    ("reference_history_weight", "float", "CHAT_REFERENCE_HISTORY_WEIGHT", 1.0, 0.0, 1.0, "参照の追跡", "改正履歴の中の参照の重み",
-     "改正履歴の記述の中にある参照のスコアに乗じる値。1 は本文の参照と同じ扱い（既定値）。値を下げると改正履歴からは追跡されにくくなり、0 の場合は追跡しない。"),
     ("reference_presentation", "choice:separate=文書ごとに集約して配置,inline=参照元の直後に見出しを付与して配置", "CHAT_REFERENCE_PRESENTATION", "separate", None, None,
      "参照先の提示方法", "追加した参照先の配置",
      "「参照元の直後」を選択すると、追加した参照先を、参照している本文の直後に「参照先（上の本文の『…による』が指す箇所）」という見出しを付与して LLM に渡す。"
      "エンティティとリレーションの行の扱いは変更されない。"),
     ("reference_prompt", "bool", "CHAT_REFERENCE_PROMPT", False, None, None, "参照先の提示方法", "回答の指示に参照の扱いを追加",
      "オンの場合は、回答の指示に「本文が他の箇所を指し、その参照先が文脈にある場合は、参照先の内容で具体的に回答する。ない場合は、参照すべき箇所を回答し、内容を推測しない」を追加する。"),
-    # ---- 章・節と文書層の参照（11/8 追加。従来の設定の並びを変えないよう末尾に置く。画面では区分名で「参照の追跡」にまとまる）----
+    # ---- 章・節と文書層の参照（画面では区分名で「参照の追跡」にまとまる）----
     ("reference_sections", "bool", "CHAT_REFERENCE_SECTIONS", False, None, None, "参照の追跡", "章・節を指す参照も追跡",
      "本文中の「2-1 項による」などの参照が章・節を指す場合に、その章・節（下位の節を含む）に属するチャンクを参照先の候補にする。"
      "参照先の本文による選択では 1 つの章・節から 2 件まで、参照の一文による選択では 1 件を追加する。追加する数の合計は「参照先として追加するチャンク数」の範囲内である。"),
     ("reference_document_layer", "bool", "CHAT_REFERENCE_DOCUMENT_LAYER", False, None, None, "参照の追跡", "文書番号を経由する参照も追跡",
      "選択したチャンクが他の文書の文書番号を参照している場合（文書層の参照）に、その文書番号の取り込み済みの文書から、質問と参照の一文に合致するチャンクを参照先の候補にする。"
      "参照先の本文による選択では 1 つの文書から 2 件まで、参照の一文による選択では 1 件を追加する。未取り込みの文書への参照は対象外である。"),
-    # ---- 文書のみを指す参照の選び方（11/9 追加。末尾に置く）----
-    ("reference_doc_select", "choice:rerank=文書のチャンクをリランクで 1 件選択,summary_list=節の要点の一覧から LLM で選択",
-     "CHAT_REFERENCE_DOC_SELECT", "rerank", None, None, "参照の追跡", "文書のみを指す参照の参照先の選択方法",
-     "参照の一文で選択した参照のうち、項や別表の指定がなく文書のみを指すものについて、文書の中から追加する箇所の選び方。"
-     "「リランク」は、文書のチャンクから質問と参照の一文に合致するものを 1 件選択する（従来）。"
-     "「節の要点の一覧」は、文書の章・節の要点（後処理「節の要点」で作成）の一覧を LLM に示して、読むべき節を最大「一覧から選択する節の上限」件選ばせ、"
-     "選んだ節ごとにチャンクを 1 件追加する。LLM が失敗した場合や番号を返さない場合、要点のある節が 1 つも無い文書は、リランクで選択する。"
-     "選んだ節のチャンクのスコアが「追跡する参照のスコアの下限」未満の場合は追加しない（リランクと同じ下限）。"
-     "2 件目以降は、本文の合計が文脈の文字数の上限の 85% 以内に収まる場合のみ追加する（エンティティとリレーションの行の分を残すため）。"
-     "2 回目の追跡では、参照先 1 つにつき 1 件を追加する。"),
-    ("reference_doc_max", "int", "CHAT_REFERENCE_DOC_MAX", 4, 1, 10, "参照の追跡", "一覧から選択する節の上限",
-     "選択方法が「節の要点の一覧」の場合に、1 つの参照について LLM に選ばせる節の数の上限（1 回目の追跡。2 回目は 1 件）。"),
-    ("reference_doc_two_stage_sections", "int", "CHAT_REFERENCE_DOC_TWO_STAGE_SECTIONS", 30, 1, 100000, "参照の追跡", "章から選択する文書の節の数",
-     "選択方法が「節の要点の一覧」の場合に、節の数がこの値を超える文書は、先に章の要点の一覧から章を選び、その章の中の節から選ぶ。"),
+    # ---- エンティティ起点の収集（方式 entity_collect の既定値でオンになる）----
+    ("entity_collect", "bool", "CHAT_ENTITY_COLLECT", False, None, None, "エンティティ起点の収集", "エンティティを起点にチャンクを収集",
+     "オンの場合は、質問から対象を特定する語を LLM で抜き出し、その語を名前に含むエンティティが出てくるチャンクをすべて集める。"
+     "該当した文書は文書の単位で残す（選択するチャンク数では打ち切らない）。該当するものをすべて挙げる質問に向けた検索である。"
+     "何も拾えなかった場合は、通常の検索に戻る。"),
+    ("collect_per_doc", "int", "CHAT_COLLECT_PER_DOC", 2, 1, 10, "エンティティ起点の収集", "文書あたりのチャンク数",
+     "集めたチャンクを文書ごとにリランクし、文書 1 つにつき残す数。文脈の文字数の上限を超える場合は 1 まで減らし、それでも超える場合は語の前後だけに切り詰める。"),
+    ("collect_max_docs", "int", "CHAT_COLLECT_MAX_DOCS", 30, 1, 200, "エンティティ起点の収集", "文書数の上限",
+     "該当した文書がこの数を超える場合は、リランクのスコアの高い順にこの数まで残す。"),
+    ("collect_prompt", "bool", "CHAT_COLLECT_PROMPT", False, None, None, "エンティティ起点の収集", "回答の指示に網羅の扱いを追加",
+     "オンの場合は、回答の指示に「文脈の全ての文書を確かめ、条件に合うものを漏れなく挙げる。条件に合わないものは挙げない」を追加する。"),
 ]
 
 
@@ -329,8 +260,13 @@ def _cast(kind, value):
     return str(value)
 
 
+def _choice_pairs(kind):
+    """選択肢の型（choice:値=表示名,…）の (値, 表示名) の一覧。"""
+    return [tuple(c.split("=", 1)) for c in kind.split(":", 1)[1].split(",")]
+
+
 def _choices(kind):
-    return [c.split("=")[0] for c in kind.split(":", 1)[1].split(",")]
+    return [value for value, _label in _choice_pairs(kind)]
 
 
 def default_retrieval_settings() -> dict:
@@ -342,7 +278,7 @@ def default_retrieval_settings() -> dict:
         except (TypeError, ValueError):
             out[key] = default
         if kind.startswith("choice") and key.startswith("reference_") and out[key] not in _choices(kind):
-            # 環境変数の値が選択肢に無い場合は、既定値にする。参照の設定だけに掛ける（従来の項目の動きは変えない）
+            # 環境変数の値が選択肢に無い場合は、既定値にする。参照の設定だけに掛ける（ほかの項目の動きは変えない）
             logging.warning(f"{env}={raw!r} is not one of {_choices(kind)}; using {default!r}")
             out[key] = default
     return out
@@ -366,14 +302,25 @@ def resolve_retrieval_settings(overrides=None, mode_defaults=None) -> dict:
             logging.warning(f"retrieval setting {key}={overrides[key]!r} is invalid; keeping {settings[key]!r}")
             continue
         if kind.startswith("choice"):
-            allowed = [c.split("=")[0] for c in kind.split(":", 1)[1].split(",")]
-            if value not in allowed:
+            if value not in _choices(kind):
                 continue
         elif lo is not None and hi is not None and not (lo <= value <= hi):
             logging.warning(f"retrieval setting {key}={value!r} is out of range [{lo}, {hi}]")
             continue
         settings[key] = value
     return settings
+
+
+def parse_retrieval_settings(retrieval_settings):
+    """画面・他のサービスから来た検索設定（JSON の文字列か辞書）を読む。読めなければ None（既定値）にする。"""
+    overrides = retrieval_settings
+    if isinstance(overrides, str):
+        try:
+            overrides = json.loads(overrides) if overrides.strip() else None
+        except json.JSONDecodeError:
+            logging.warning(f"retrieval_settings is not valid JSON; using defaults: {overrides[:200]}")
+            overrides = None
+    return overrides if isinstance(overrides, dict) else None
 
 
 def retrieval_settings_spec() -> list:
@@ -384,7 +331,7 @@ def retrieval_settings_spec() -> list:
         item = {"key": key, "type": kind.split(":")[0], "group": group, "label": label, "help": help_text,
                 "default": defaults[key], "min": lo, "max": hi}
         if kind.startswith("choice"):
-            item["choices"] = [{"value": c.split("=")[0], "label": c.split("=")[1]} for c in kind.split(":", 1)[1].split(",")]
+            item["choices"] = [{"value": value, "label": label} for value, label in _choice_pairs(kind)]
         spec.append(item)
     return spec
 
@@ -444,15 +391,6 @@ def rerank_enabled() -> bool:
     return get_value_from_env("CHAT_RERANK_ENABLED", "false", "bool")
 
 
-_RERANK_STATE = {"truncate": True}
-
-
-def _post_rerank(url: str, body: dict) -> dict:
-    r = requests.post(url, json=body, timeout=120)
-    r.raise_for_status()
-    return r.json()
-
-
 def _rerank(query: str, texts: List[str]) -> List[float]:
     url = get_value_from_env("CHAT_RERANK_URL", "http://host.docker.internal:8006/v1/rerank")
     model = get_value_from_env("CHAT_RERANK_MODEL", "cl-nagoya/ruri-v3-reranker-310m")
@@ -464,16 +402,11 @@ def _rerank(query: str, texts: List[str]) -> List[float]:
         # 空の文書はサーバーが 400 を返すので、1 字の代わりを渡す
         chunk = [(t or "")[:max_chars] or "-" for t in texts[i:i + batch]]
         # 字数で切っても、数値の表などは 1 組がモデルの入力長を超えることがある。サーバー側でも入力長まで切り詰めさせる
-        body = {"model": model, "query": query, "documents": chunk}
+        body = {"model": model, "query": query, "documents": chunk, "truncate_prompt_tokens": -1}
         try:
-            try:
-                data = _post_rerank(url, dict(body, truncate_prompt_tokens=-1) if _RERANK_STATE["truncate"] else body)
-            except requests.HTTPError as exc:
-                if not (_RERANK_STATE["truncate"] and exc.response is not None and exc.response.status_code in (400, 422)):
-                    raise
-                # 切り詰めの引数を受け付けないサーバーの場合は、引数なしでやり直し、以後は付けない
-                data = _post_rerank(url, body)
-                _RERANK_STATE["truncate"] = False
+            r = requests.post(url, json=body, timeout=120)
+            r.raise_for_status()
+            data = r.json()
         except (requests.Timeout, requests.ConnectionError):
             # サーバーが応答しない。束ごとに待っても同じなので、ここで打ち切る（呼び出し側が検索の順に切り替える）
             raise
@@ -503,43 +436,8 @@ def _split_sections(text: str):
     return head, ent_lines, rel_lines
 
 
-def _apply_budget(docs: List[Document], budget: int) -> List[Document]:
-    """本文は全部残し、残りの予算で Relationships → Entities の行を各文書に順番に配る。"""
-    parts = []
-    used = 0
-    for d in docs:
-        head, ents, rels = _split_sections(d.page_content)
-        parts.append({"doc": d, "head": head, "ents": ents, "rels": rels, "keep_rels": [], "keep_ents": []})
-        used += len(head)
-    # リレーション行を round-robin で詰める（先頭＝リランク上位の文書から）
-    for kind in ("rels", "ents"):
-        progress = True
-        idx = [0] * len(parts)
-        while progress and used < budget:
-            progress = False
-            for i, p in enumerate(parts):
-                lines = p[kind]
-                if idx[i] < len(lines):
-                    line = lines[idx[i]]
-                    if used + len(line) + 1 > budget:
-                        idx[i] = len(lines)
-                        continue
-                    p["keep_" + kind].append(line)
-                    used += len(line) + 1
-                    idx[i] += 1
-                    progress = True
-    out = []
-    for p in parts:
-        text = p["head"]
-        if p["keep_ents"] or p["keep_rels"]:
-            text += "\n----\nEntities:\n" + "\n".join(p["keep_ents"]) + "\n----\nRelationships:\n" + "\n".join(p["keep_rels"])
-        d = p["doc"]
-        out.append(DocWithState(page_content=text, metadata=d.metadata, state=getattr(d, "state", {}) or {}))
-    return out
-
-
-def _apply_budget_reranked(query: str, docs: List[Document], budget: int, line_max: int = None, min_score: float = 0.0) -> List[Document]:
-    """P1-b: 本文は全部残し、Entities／Relationships の全行を質問でリランクして上位から予算に詰める。
+def _apply_budget_reranked(query: str, docs: List[Document], budget: int, line_max: int, min_score: float = 0.0) -> List[Document]:
+    """本文は全部残し、Entities／Relationships の全行を質問でリランクして上位から予算に詰める（line_max は行の上限。0 は制限なし）。
     行の種類や Neo4j の返却順には依らない。同じ行が複数の文書行に出るときは最初の文書行に付ける。"""
     parts = []
     used = 0
@@ -565,7 +463,7 @@ def _apply_budget_reranked(query: str, docs: List[Document], budget: int, line_m
             logging.warning(f"line rerank failed ({e}); falling back to original order")
             scores = [float(len(pool) - k) for k in range(len(pool))]
         order = sorted(range(len(pool)), key=lambda k: -scores[k])
-        max_lines = get_value_from_env("CHAT_LINE_MAX", 120, "int") if line_max is None else int(line_max)
+        max_lines = int(line_max)
         kept = 0
         stop = "all lines"
         for k in order:
@@ -587,17 +485,6 @@ def _apply_budget_reranked(query: str, docs: List[Document], budget: int, line_m
         logging.info(f"line rerank: {len(pool)} lines -> kept {kept} (stopped by {stop}); score p10={q(0.1)} p50={q(0.5)}, "
                      f">=0.1: {sum(s >= 0.1 for s in scores)}, >=0.3: {sum(s >= 0.3 for s in scores)}; top: "
                      + " | ".join(pool[k][2][:60] for k in order[:3]))
-        dump_dir = os.environ.get("CHAT_LINE_DUMP_DIR")
-        if dump_dir:
-            try:
-                os.makedirs(dump_dir, exist_ok=True)
-                import json, hashlib, time
-                name = time.strftime("%Y%m%d-%H%M%S") + "-" + hashlib.sha1(query.encode()).hexdigest()[:8] + ".json"
-                with open(os.path.join(dump_dir, name), "w", encoding="utf-8") as f:
-                    json.dump({"query": query, "lines": [{"score": round(scores[k], 4), "kind": pool[k][1], "line": pool[k][2],
-                               "kept": rank < kept} for rank, k in enumerate(order)]}, f, ensure_ascii=False)
-            except OSError as e:
-                logging.warning(f"line dump failed: {e}")
     out = []
     for p in parts:
         text = p["head"]
@@ -660,32 +547,7 @@ def reference_passage(source_text: str, heading: str, quote: str, other_quotes=(
     return f"{heading}: {body}" if heading and body else (body or heading)
 
 
-def reference_context(source_text: str, heading: str, quote: str, chars: int = REFERENCE_CONTEXT_CHARS) -> str:
-    """一覧選択で LLM に見せる参照元の節: 「見出し: …前の文 参照の一文 後ろの文…」（参照の一文の前後 chars 字）。
-    一文が本文に見つからなければ、見出しと一文だけにする。"""
-    quote = (quote or "").strip()
-    text = source_text or ""
-    at = _locate_quote(text, quote)
-    if at >= 0 and quote:
-        end = at + len(quote)
-        if text[at:end] != quote:
-            # 空白の違いを無視して見つけた。一文の終わりは、空白を除いた字数で数えて決める
-            count, end = 0, at
-            target = len(_squeeze(quote))
-            while end < len(text) and count < target:
-                count += 0 if text[end].isspace() else 1
-                end += 1
-        before = text[max(0, at - chars):at]
-        after = text[end:end + chars]
-        body = ("…" if at > chars else "") + before + text[at:end] + after + ("…" if end + chars < len(text) else "")
-    else:
-        body = quote
-    body = " ".join(body.split())
-    heading = (heading or "").strip()
-    return f"{heading}: {body}" if heading and body else (body or heading)
-
-
-def _group_links(rows: List[dict], quotes_of: Optional[dict] = None, history_weight: float = 1.0) -> List[dict]:
+def _group_links(rows: List[dict], quotes_of: dict) -> List[dict]:
     """リンクの行を「参照」ごとにまとめる。同じ参照元・同じ一文・同じ場所の語のリンクが 1 つの参照である。
 
     規則のリンクは、項が複数のチャンクに続くとき、先頭と続きの両方へ張られる。それらは 1 つの参照の候補として束ね、
@@ -694,11 +556,6 @@ def _group_links(rows: List[dict], quotes_of: Optional[dict] = None, history_wei
     quotes_of は、参照元ごとの参照の一文の集まり（たどらないリンクの分も含む）。直前の文が別の参照の一文かどうかを見るのに使う。
     """
     groups, index = [], {}
-    if quotes_of is None:
-        quotes_of = {}
-        for row in rows:
-            if row.get("quote"):
-                quotes_of.setdefault(row["source"], set()).add(row["quote"].strip())
     for row in rows:
         quote = (row.get("quote") or "").strip()
         # 一文が無いリンクは、参照先ごとに別の参照として扱う
@@ -712,21 +569,17 @@ def _group_links(rows: List[dict], quotes_of: Optional[dict] = None, history_wei
                                                   quotes_of.get(row["source"], set()) - {quote}) if quote else "",
                      "targets": [], "documents": [], "sections": [], "link_score": 0.0, "score": 0.0, "layer": row.get("layer"),
                      "via_id": row.get("section_id") or row.get("standard"), "via_label": row.get("section_title") or row.get("standard"),
-                     "via_file": row.get("section_file") or (row.get("file_name") if row.get("standard") else None),
-                     # 一覧選択（reference_doc_select = summary_list）で、参照元の節（参照の一文の前後）を LLM に見せるのに使う
-                     "source_text": row.get("source_text"), "source_heading": row.get("source_heading")}
-            group["weight"] = history_weight if group["source_section"] == "revision_history" else 1.0
+                     "via_file": row.get("section_file") or (row.get("file_name") if row.get("standard") else None)}
             index[key] = group
             groups.append(group)
         if row["kind"] == "document":
             if row.get("file_name") and row["file_name"] not in group["documents"]:
                 group["documents"].append(row["file_name"])
-            for sid in row.get("sections") or []:     # 文書層の参照で、一文の節番号から決まった節（M3）
+            for sid in row.get("sections") or []:     # 文書層の参照で、一文の節番号から決まった節
                 if sid not in group["sections"]:
                     group["sections"].append(sid)
         elif row.get("id") and row.get("text") and all(t["id"] != row["id"] for t in group["targets"]):
-            group["targets"].append({"id": row["id"], "text": row["text"], "position": row.get("position"),
-                                     "file_name": row.get("file_name"), "doc_source": row.get("doc_source") or row.get("file_name")})
+            group["targets"].append(_candidate(row))
     return groups
 
 
@@ -787,14 +640,32 @@ def reference_sources(references) -> set:
     return {entry["source"] for entry in references or [] if entry.get("select") == "link" and entry.get("source")}
 
 
-def _target_entry(doc, score) -> dict:
-    """従来の選び方（参照先の本文と質問の近さ）で足したチャンクの控え。どのリンクで届いたかは持たない。"""
-    return {"chunk_id": doc.metadata["chunk_id"], "text": doc.page_content, "doc_source": doc.metadata.get("source"), "file_name": doc.metadata.get("source"),
-            "position": doc.metadata.get("position"), "score": float(score), "chunk_score": score, "link_score": None, "hop": 1,
-            "from_chunk_id": doc.metadata.get("reference_from"), "quote": doc.metadata.get("reference_quote"), "locator": None, "form": None,
-            "method": None, "source_section": None, "target_kind": doc.metadata.get("reference_kind") or "chunk", "select": "target", "passage": "",
-            "via_id": doc.metadata.get("reference_via_id"), "via_label": doc.metadata.get("reference_via_label"),
-            "via_file": doc.metadata.get("reference_via_file")}
+def _target_entry(row: dict, score) -> dict:
+    """従来の選び方（参照先の本文と質問の近さ）で足したチャンクの控え。row は _referenced の候補の行。
+    チャンク間の参照リンクで届いたものは、どのリンクで届いたかを持たない（_fill_target_provenance が後で引き直す）。"""
+    return {"chunk_id": row["id"], "text": row["text"], "doc_source": row.get("source"), "file_name": row.get("source"),
+            "position": row.get("position"), "score": float(score), "chunk_score": score, "link_score": None, "hop": 1,
+            "from_chunk_id": row.get("from_id"), "quote": row.get("quote"), "locator": None, "form": None,
+            "method": None, "source_section": None, "target_kind": row.get("layer") or "chunk", "select": "target", "passage": "",
+            "via_id": row.get("via_id"), "via_label": row.get("via_label"), "via_file": row.get("via_file")}
+
+
+def _candidate(row: dict) -> dict:
+    """参照先の候補のチャンク（足すときに控えへ写す項目）。"""
+    return {"id": row["id"], "text": row["text"], "position": row.get("position"), "file_name": row.get("file_name"),
+            "doc_source": row.get("doc_source") or row.get("file_name")}
+
+
+def _best_candidate(query: str, candidates: List[dict], min_score: Optional[float] = None):
+    """候補から 1 件を選ぶ。候補が無ければ None、1 件ならそれ、複数ならリランクの点数が最も高いもの。
+    min_score を渡すと、1 件でもリランクし、最も高い点数が下限に満たなければ None。"""
+    if not candidates:
+        return None
+    if len(candidates) == 1 and min_score is None:
+        return candidates[0]
+    scores = _rerank(query, [c["text"] for c in candidates])
+    best = max(range(len(candidates)), key=lambda i: scores[i])
+    return candidates[best] if min_score is None or scores[best] >= min_score else None
 
 
 def _is_note_only(doc) -> bool:
@@ -804,35 +675,51 @@ def _is_note_only(doc) -> bool:
 
 
 class RerankGraphRetriever(BaseRetriever):
-    """hybrid 候補 → リランク → 選んだチャンクだけ展開 → 文字数予算。"""
+    """hybrid 候補 → リランク → 選んだチャンクだけ展開 → 文字数予算。検索の制限値は settings（resolve_retrieval_settings の結果）から読む。
+
+    1 回の検索の中では、質問の埋め込みと、参照先の本文による選択・参照の一文による選択が共に読む照会の結果を、
+    引数 cache（検索ごとの辞書）で使い回す。
+    """
 
     neo_db: Any                    # モード本来の retrieval_query を持つ Neo4jVector（展開に使う）
     candidate_db: Any              # CHUNK_CANDIDATE_QUERY を持つ Neo4jVector（候補取得に使う）
     retrieval_query: str
     document_names: Optional[List[str]] = None
-    candidate_k: int = 20
-    top_n: int = 6
-    char_budget: int = 14000
     ef_ratio: int = 5
-    score_threshold: float = 0.0
-    line_max: int = 120
-    line_min_score: float = 0.0
     settings: dict = Field(default_factory=dict)
 
     class Config:
         arbitrary_types_allowed = True
 
     def _candidates(self, query: str):
-        kwargs = {"k": self.candidate_k, "effective_search_ratio": self.ef_ratio}
+        kwargs = {"k": self.settings["candidate_k"], "effective_search_ratio": self.ef_ratio}
         if self.document_names:
             kwargs["filter"] = {"fileName": {"$in": self.document_names}}
         rows = self.candidate_db.similarity_search_with_score(query, **kwargs)
-        return [(d, s) for d, s in rows if s is None or s >= self.score_threshold]
+        threshold = self.settings["candidate_min_score"]
+        return [(d, s) for d, s in rows if s is None or s >= threshold]
 
-    def _referenced(self, query: str, chosen, limit: int):
-        """選んだチャンクから参照リンクを 1 つたどり、参照先のチャンクを質問でリランクして上位 limit 件を返す。
+    def _cached_rows(self, cache: dict, key: tuple, query: str, params: dict) -> list:
+        """照会の結果を、同じ検索の中で同じ引数のまま読み直さない。失敗した照会は控えない。"""
+        if key not in cache:
+            cache[key] = list(self.neo_db.query(query, params=params))
+        return cache[key]
+
+    def _section_reference_rows(self, ids: List[str], cache: dict, query_text: Optional[str]) -> list:
+        """章・節を指す参照の行（SECTION_REFERENCE_QUERY）。query_text が None なら候補は位置の順。"""
+        query_vector = self._query_vector(query_text, cache) if query_text is not None else None
+        return self._cached_rows(cache, ("section_refs", tuple(ids), query_text), SECTION_REFERENCE_QUERY,
+                                 {"ids": ids, "query_vector": query_vector, "per_section": REFERENCE_SECTION_CANDIDATES})
+
+    def _document_layer_rows(self, ids: List[str], cache: dict) -> list:
+        """文書番号を経由する参照の行（DOCUMENT_LAYER_REFERENCE_QUERY）。"""
+        return self._cached_rows(cache, ("document_layer_refs", tuple(ids)), DOCUMENT_LAYER_REFERENCE_QUERY, {"ids": ids})
+
+    def _referenced(self, query: str, chosen, limit: int, cache: dict) -> List[dict]:
+        """選んだチャンクから参照リンクを 1 つたどり、参照先のチャンクを質問でリランクして上位 limit 件の控え（_target_entry）を返す。
 
         参照先は選んだチャンクと同じ扱い（本文を文脈に入れ、グラフ展開の起点にする）になる。
+        章・節と文書層の参照先は、章・節または文書 1 つから REFERENCE_LAYER_TARGET_CAP 件までにする。
         """
         ids = [d.metadata["chunk_id"] for d, _ in chosen]
         rows = self.neo_db.query(
@@ -843,16 +730,9 @@ class RerankGraphRetriever(BaseRetriever):
         if self.document_names:
             rows = [r for r in rows if r.get("source") in self.document_names]
         rows = [r for r in rows if r.get("text")]
-        extra = self._layer_target_rows(query, ids, {r["id"] for r in rows})
-        if not extra:
-            # 章・節と文書層の追跡が無効（既定）か候補が無い場合は、従来と同じ処理
-            if not rows:
-                return []
-            scores = _rerank(query, [r["text"] for r in rows])
-            ranked = sorted(zip(rows, scores), key=lambda x: -x[1])[:limit]
-            return [(Document(page_content=r["text"], metadata={"chunk_id": r["id"], "source": r.get("source"), "position": r.get("position"),
-                                                                "via_reference": True}), sc) for r, sc in ranked]
-        rows = rows + extra
+        rows = rows + self._layer_target_rows(query, ids, {r["id"] for r in rows}, cache)
+        if not rows:
+            return []
         scores = _rerank(query, [r["text"] for r in rows])
         picked, per_group = [], {}
         for r, sc in sorted(zip(rows, scores), key=lambda x: -x[1]):
@@ -861,15 +741,10 @@ class RerankGraphRetriever(BaseRetriever):
                 if per_group.get(group, 0) >= REFERENCE_LAYER_TARGET_CAP:
                     continue
                 per_group[group] = per_group.get(group, 0) + 1
-            picked.append((r, sc))
+            picked.append(_target_entry(r, sc))
             if len(picked) >= limit:
                 break
-        return [(Document(page_content=r["text"], metadata={"chunk_id": r["id"], "source": r.get("source"), "position": r.get("position"),
-                                                            "via_reference": True, "reference_kind": r.get("layer") or "chunk",
-                                                            "reference_from": r.get("from_id"), "reference_quote": r.get("quote"),
-                                                            "reference_via_id": r.get("via_id"), "reference_via_label": r.get("via_label"),
-                                                            "reference_via_file": r.get("via_file")}), sc)
-                for r, sc in picked]
+        return picked
 
     def _fill_target_provenance(self, chosen, trace: List[dict]) -> None:
         """参照先の本文による選択で、チャンク間の参照リンクで足したものに、参照元と参照の一文を控えとして付ける。
@@ -894,16 +769,14 @@ class RerankGraphRetriever(BaseRetriever):
         except Exception as exc:
             logging.warning(f"recording where the references came from failed ({exc}); continuing without it")
 
-    def _layer_target_rows(self, query: str, ids: List[str], known: set) -> List[dict]:
+    def _layer_target_rows(self, query: str, ids: List[str], known: set, cache: dict) -> List[dict]:
         """参照先の本文による選択で使う、章・節と文書層の参照先の候補。設定が無効なら空。
         1 行 = {id, text, position, source, layer, group}。group は章・節または文書ごとの上限の数え方に使う。失敗しても検索は続ける。"""
         out, seen = [], set(known) | set(ids)
-        cache: dict = {}
         sections_followed = False   # 章・節の照会が通った（文書層の参照のうち節まで決まったものは、章・節の側でたどった）
         if self.settings.get("reference_sections"):
             try:
-                for r in self.neo_db.query(SECTION_REFERENCE_QUERY, params={"ids": ids, "query_vector": self._query_vector(query, cache),
-                                                                            "per_section": REFERENCE_SECTION_CANDIDATES}):
+                for r in self._section_reference_rows(ids, cache, query):
                     if not r.get("text") or r["id"] in seen or (self.document_names and r.get("file_name") not in self.document_names):
                         continue
                     seen.add(r["id"])
@@ -915,7 +788,7 @@ class RerankGraphRetriever(BaseRetriever):
                 logging.warning(f"following section references failed ({exc}); continuing without them")
         if self.settings.get("reference_document_layer"):
             try:
-                for ref in self.neo_db.query(DOCUMENT_LAYER_REFERENCE_QUERY, params={"ids": ids}):
+                for ref in self._document_layer_rows(ids, cache):
                     name = ref.get("file_name")
                     if not name or (self.document_names and name not in self.document_names):
                         continue
@@ -923,7 +796,7 @@ class RerankGraphRetriever(BaseRetriever):
                         continue   # 節まで決まった参照（via = standard の線）は、章・節の照会が同じ線をたどった。同じ参照から重ねて足さない
                     query_vector = self._query_vector(f"{query} {ref.get('quote') or ''}".strip(), cache)
                     if ref.get("sections"):
-                        # 一文の節番号で節まで決まっている（M3）: その節のチャンクだけを候補にする。全部文脈にあれば足さない（文書全体には戻らない）
+                        # 一文の節番号で節まで決まっている: その節のチャンクだけを候補にする。全部文脈にあれば足さない（文書全体には戻らない）
                         rows = self._standard_section_rows(ref.get("sections"), seen, query_vector)
                     else:
                         rows = self.neo_db.query(REFERENCE_DOCUMENT_CHUNKS_QUERY, params={
@@ -941,7 +814,7 @@ class RerankGraphRetriever(BaseRetriever):
         return out
 
     def _standard_section_rows(self, sections, skip, query_vector) -> List[dict]:
-        """文書層の参照が節まで決まっているとき（M3）の候補のチャンク（skip に無いもの）。節が無いか、節のチャンクが全部 skip にあれば空。
+        """文書層の参照が節まで決まっているときの候補のチャンク（skip に無いもの）。節が無いか、節のチャンクが全部 skip にあれば空。
         呼び出し側は、節があるのに空なら何も足さない（文書全体からの選び方には戻らない）。"""
         if not sections:
             return []
@@ -956,15 +829,16 @@ class RerankGraphRetriever(BaseRetriever):
             cache[key] = self.neo_db.embedding.embed_query(query)
         return cache[key]
 
-    def _reference_links(self, ids: List[str], taken: set, query_vector=None):
+    def _reference_links(self, ids: List[str], taken: set, cache: dict, query_text: Optional[str] = None):
         """ids のチャンクから出る参照リンクを読む。既に文脈にあるチャンク（taken）へのリンクと、絞り込みの外の文書へのリンクは除く。
+        query_text は章・節の参照の候補を並べる問い（None なら位置の順）。
 
         返り値: (たどる候補のリンクの行, 参照元ごとの参照の一文の集まり)。後者は、除いたリンクの分も含む。
         """
         if not ids:
             return [], {}
         rows = list(self.neo_db.query(REFERENCE_LINK_QUERY, params={"ids": list(ids)}))
-        rows += self._layer_link_rows(list(ids), query_vector)
+        rows += self._layer_link_rows(list(ids), cache, query_text)
         out, quotes_of = [], {}
         for row in rows:
             if row.get("quote"):
@@ -976,7 +850,7 @@ class RerankGraphRetriever(BaseRetriever):
             out.append(row)
         return out, quotes_of
 
-    def _layer_link_rows(self, ids: List[str], query_vector=None) -> List[dict]:
+    def _layer_link_rows(self, ids: List[str], cache: dict, query_text: Optional[str] = None) -> List[dict]:
         """参照の一文による選択で使う、章・節と文書層のリンクの行（REFERENCE_LINK_QUERY と同じ形）。設定が無効なら空。失敗しても検索は続ける。
         章・節: 1 つの参照（参照元と一文）の候補として、節のチャンクを束ねる（足すのは質問と一文に合う 1 件）。文書層: 文書を指す参照として扱う。
         文書層の参照のうち節まで決まったもの（sections）は、章・節の照会が通っていれば章・節の側でたどったので、ここでは行にしない。"""
@@ -984,15 +858,14 @@ class RerankGraphRetriever(BaseRetriever):
         sections_followed = False
         if self.settings.get("reference_sections"):
             try:
-                for r in self.neo_db.query(SECTION_REFERENCE_QUERY, params={"ids": ids, "query_vector": query_vector,
-                                                                            "per_section": REFERENCE_SECTION_CANDIDATES}):
+                for r in self._section_reference_rows(ids, cache, query_text):
                     out.append({**r, "locator": r.get("section_title") or "", "form": "章・節", "source_section": "body", "layer": "section"})
                 sections_followed = True
             except Exception as exc:
                 logging.warning(f"reading section references failed ({exc}); continuing without them")
         if self.settings.get("reference_document_layer"):
             try:
-                for r in self.neo_db.query(DOCUMENT_LAYER_REFERENCE_QUERY, params={"ids": ids}):
+                for r in self._document_layer_rows(ids, cache):
                     if r.get("sections") and sections_followed:
                         continue   # 同じ via = standard の線を、章・節の参照として既に読んだ。1 つの参照で 2 件を足さない
                     out.append({**r, "id": None, "text": None, "position": None, "doc_source": None, "locator": r.get("standard") or "",
@@ -1025,317 +898,138 @@ class RerankGraphRetriever(BaseRetriever):
                 group["link_score"] = max(group["link_score"], float(score))
 
     def _resolve_target(self, question: str, group: dict, taken: set, min_score: float, cache: dict):
-        """参照 1 つにつき、足すチャンクを 1 つ決める。
+        """参照 1 つにつき、足すチャンクを 1 つ決める（無ければ None）。選ぶ問いは「質問 + 参照の一文」。
 
-        チャンクへのリンク: 候補が 1 つならそれ。複数（項が複数のチャンクに続く場合）は、質問と参照の一文に合う本文のものにする。
-        文書へのリンク: その文書のチャンクを候補にし、質問と参照の一文に合うものにする。合うものが無ければ足さない（下限は同じ値）。
+        チャンクへのリンク: 候補が 1 つならそれ。複数（項が複数のチャンクに続く場合）は、問いに合う本文のものにする。
+        文書へのリンク: その文書のチャンクを候補にし、問いに合うものにする。合うものが無ければ足さない（下限は同じ値）。
         """
-        if group["kind"] == "document":
-            if not group["documents"]:
-                return None
-            if group.get("sections"):
-                # 文書層の参照が一文の節番号で節まで決まっている（M3）: その節のチャンクから、質問と参照の一文に合うものを選ぶ。
-                # 節のチャンクが全部文脈にあれば足さない（文書全体からの選び方には戻らない。節と関係の無いチャンクを足さないため）。
-                # 本文の点数の下限は掛けない。チャンクへのリンクで候補が複数ある場合と同じく、候補の範囲は規則で決まっており、
-                # たどるかどうかは参照の一文の点数（下限は呼び出し側で判定済み）で決めているため
-                rows = self._standard_section_rows(group["sections"], taken, self._query_vector(f"{question} {group['quote']}".strip(), cache))
-                candidates = [{"id": r["id"], "text": r["text"], "position": r.get("position"), "file_name": r.get("file_name"),
-                               "doc_source": r.get("doc_source") or r.get("file_name")} for r in rows if r["id"] not in taken]
-                if len(candidates) <= 1:
-                    return candidates[0] if candidates else None
-                scores = _rerank(f"{question} {group['quote']}".strip(), [c["text"] for c in candidates])
-                return candidates[max(range(len(candidates)), key=lambda i: scores[i])]
-            # 候補の絞り込み（大きい文書だけに効く）も、選ぶときと同じ「質問 + 参照の一文」で行う。
-            # 質問だけで絞ると、質問と似ていない答えの箇所（参照をたどる理由そのもの）が候補から外れる
-            rows = self.neo_db.query(REFERENCE_DOCUMENT_CHUNKS_QUERY, params={
-                "docs": group["documents"], "skip": list(taken),
-                "query_vector": self._query_vector(f"{question} {group['quote']}".strip(), cache),
-                "per_document": REFERENCE_DOCUMENT_CANDIDATES})
-            candidates = [{"id": r["id"], "text": r["text"], "position": r.get("position"), "file_name": r.get("file_name"),
-                           "doc_source": r.get("doc_source") or r.get("file_name")} for r in rows if r.get("text") and r["id"] not in taken]
-            if not candidates:
-                return None
-            scores = _rerank(f"{question} {group['quote']}".strip(), [c["text"] for c in candidates])
-            best = max(range(len(candidates)), key=lambda i: scores[i])
-            return candidates[best] if scores[best] >= min_score else None
-        candidates = [t for t in group["targets"] if t["id"] not in taken]
-        if len(candidates) <= 1:
-            return candidates[0] if candidates else None
-        scores = _rerank(f"{question} {group['quote']}".strip(), [c["text"] for c in candidates])
-        return candidates[max(range(len(candidates)), key=lambda i: scores[i])]
+        rerank_query = f"{question} {group['quote']}".strip()
+        if group["kind"] != "document":
+            return _best_candidate(rerank_query, [t for t in group["targets"] if t["id"] not in taken])
+        if not group["documents"]:
+            return None
+        if group.get("sections"):
+            # 文書層の参照が一文の節番号で節まで決まっている: その節のチャンクから、問いに合うものを選ぶ。
+            # 節のチャンクが全部文脈にあれば足さない（文書全体からの選び方には戻らない。節と関係の無いチャンクを足さないため）。
+            # 本文の点数の下限は掛けない。チャンクへのリンクで候補が複数ある場合と同じく、候補の範囲は規則で決まっており、
+            # たどるかどうかは参照の一文の点数（下限は呼び出し側で判定済み）で決めているため
+            rows = self._standard_section_rows(group["sections"], taken, self._query_vector(rerank_query, cache))
+            return _best_candidate(rerank_query, [_candidate(r) for r in rows if r["id"] not in taken])
+        # 候補の絞り込み（大きい文書だけに効く）も、選ぶときと同じ問いで行う。
+        # 質問だけで絞ると、質問と似ていない答えの箇所（参照をたどる理由そのもの）が候補から外れる
+        rows = self.neo_db.query(REFERENCE_DOCUMENT_CHUNKS_QUERY, params={
+            "docs": group["documents"], "skip": list(taken),
+            "query_vector": self._query_vector(rerank_query, cache),
+            "per_document": REFERENCE_DOCUMENT_CANDIDATES})
+        return _best_candidate(rerank_query, [_candidate(r) for r in rows if r.get("text") and r["id"] not in taken], min_score)
 
-    def _follow_links(self, query: str, chosen, limit: int, with_target: bool = False) -> List[dict]:
-        """参照リンクを、参照の一文と質問の近さで選んでたどる。足すチャンクの一覧（1 回目 → 2 回目 → 従来の選び方の分）を返す。
+    def _follow_links(self, query: str, chosen, limit: int, cache: dict, with_target: bool = False) -> List[dict]:
+        """参照リンクを、参照の一文と質問の近さで選んでたどる（_link_picks）。足すチャンクの控えの一覧を返す。
 
-        1 回目: 選んだチャンクから出る参照ごとに、点数 = リランク(質問, 見出し + 直前の一文 + 参照の一文) × 改正履歴の重み
-                （直前の一文が別の参照の一文なら付けない）。
-                点数が下限以上の参照を、高い順に limit 件までたどる。同じチャンクへ行く参照は、点数の高い 1 つにまとめる。
-        2 回目: 1 回目で足したチャンクの中にある参照を、問いを「質問 + 1 回目の参照の一文」に替えて同じように測る。
-                点数 = 親の点数 × その近さ。親 1 つにつき、点数の最も高い 1 件だけを足す（下限は同じ値）。
-                2 回目の点数は、親の中の参照のほとんどで高くなり、どれが要るかを見分けられないので、数で抑える。
-                2 回目は、チャンクへのリンクだけをたどる（一覧選択 reference_doc_select = summary_list では、文書のみを指す参照も
-                同じ選び方でたどり、親 1 つにつき 1 件にする）。2 回目が失敗しても、1 回目に足した分は残す。
-        従来の選び方の分（with_target = True。設定 reference_select = both）: 従来の選び方（参照先の本文と質問の近さ。_referenced）の
-                上位 limit 件を、そのまま足す（一文で選んだものと重なる分は 1 回だけ）。従来の設定で文脈に入っていた参照先は、必ず残る。
-                一文で選ぶ参照が無い質問では、従来と同じ結果になる。
-                この分は一文で選ぶ分より先に求め、その本文の長さを、一覧選択で 2 件目以降を足すときの文字数の判定に入れる
-                （足す順と控えの並びは従来どおり、一文で選んだ分 → 従来の選び方の分）。
-        参照元のチャンクの順位は、同点のときの並び順に使う。参照先の本文と質問の近さは、一文で選ぶ分の基準にはしない。
+        with_target = True（reference_select = both）のときは、従来の選び方（_referenced）の上位 limit 件も、
+        一文で選んだ分の後にそのまま足す（重なる分は 1 回だけ）。片方が失敗しても、もう片方で選んだ分は残す。
         """
         taken = {d.metadata["chunk_id"] for d, _ in chosen}
         picks: List[dict] = []
         target_rows, target_error = [], None
         if with_target:
-            # 従来の選び方の分は選んだチャンクだけで決まる（一文で選ぶ分に依らない）ので先に求め、本文の長さを文字数の判定に入れる
             try:
-                target_rows = self._referenced(query, chosen, limit)
+                target_rows = self._referenced(query, chosen, limit, cache)
             except Exception as exc:
                 target_error = exc
-        reserved = sum(len(doc.page_content or "") for doc, _ in target_rows if doc.metadata["chunk_id"] not in taken)
         try:
-            self._link_picks(query, chosen, limit, taken, picks, reserved_chars=reserved)
+            self._link_picks(query, chosen, limit, taken, picks, cache)
         except Exception as exc:
             if not with_target and not picks:
                 raise
-            # 途中で失敗しても、そこまでに選んだ分は残す。both では、従来の選び方の分も足す（both は従来を含む、という約束を守る）
+            # 途中で失敗しても、そこまでに選んだ分は残す。both では、従来の選び方の分も足す
             logging.warning(f"selecting references by their sentences failed ({exc}); keeping {len(picks)} selected so far")
         if with_target:
             if target_error is not None:
                 if not picks:
                     raise target_error
                 logging.warning(f"selecting references by the target text failed ({target_error}); keeping the ones selected by their sentences")
-            for doc, score in target_rows:
-                if doc.metadata["chunk_id"] not in taken:
-                    taken.add(doc.metadata["chunk_id"])
-                    picks.append(_target_entry(doc, score))
+            for entry in target_rows:
+                if entry["chunk_id"] not in taken:
+                    taken.add(entry["chunk_id"])
+                    picks.append(entry)
         return picks
 
-    def _link_picks(self, query: str, chosen, limit: int, taken: set, picks: List[dict], reserved_chars: int = 0) -> None:
+    def _link_picks(self, query: str, chosen, limit: int, taken: set, picks: List[dict], cache: dict) -> None:
         """参照の一文で選ぶ分（1 回目と 2 回目）を picks に足す。途中で失敗したら、そこまでに足した分を残して例外を上げる。
-        reserved_chars: この後で足す本文の長さ（both の従来の選び方の分）。一覧選択の 2 件目以降の文字数の判定に入れる。"""
+
+        1 回目: 選んだチャンクから出る参照ごとに、点数 = リランク(質問, 見出し + 直前の一文 + 参照の一文)
+                （直前の一文が別の参照の一文なら付けない）。点数が下限以上の参照を、高い順に limit 件までたどる。
+                同じチャンクへ行く参照は、点数の高い 1 つにまとめる。
+        2 回目: 1 回目で足したチャンクの中にある、チャンクへの参照を、問いを「質問 + 1 回目の参照の一文」に替えて同じように測る。
+                点数 = 親の点数 × その近さ。親 1 つにつき、点数の最も高い 1 件だけを足す（下限は同じ値）。
+                2 回目の点数は親の中の参照のほとんどで高くなり、どれが要るかを見分けられないので、数で抑える。
+        参照元のチャンクの順位は、同点のときの並び順に使う。参照先の本文と質問の近さは、一文で選ぶ分の基準にはしない。
+        """
         settings = self.settings
-        min_score = float(settings.get("reference_min_score", 0.3))
-        depth = int(settings.get("reference_depth", 1) or 1)
-        follow_documents = bool(settings.get("reference_documents", True))
-        history_weight = float(settings.get("reference_history_weight", 1.0))
-        cache: dict = {}
+        min_score = float(settings["reference_min_score"])
+        depth = int(settings["reference_depth"] or 1)
+        follow_documents = bool(settings["reference_documents"])
         rank = {d.metadata["chunk_id"]: i for i, (d, _) in enumerate(chosen)}
         chosen_score = {d.metadata["chunk_id"]: float(sc) for d, sc in chosen}
 
-        def entry(group, target, hop, score, root_score):
+        def add(group, target, hop, root_score):
+            """target を足し、足した控えを返す（無いか取ってあれば None）。"""
+            if target is None or target["id"] in taken:
+                return None
+            taken.add(target["id"])
+            score = group["score"]
             # chunk_score = 並べるための点数。参照元（選んだチャンク）の点数 × 参照の点数。参照先が参照元より前に並ばないようにする
-            return {"chunk_id": target["id"], "text": target["text"], "doc_source": target.get("doc_source"), "file_name": target.get("file_name"),
-                    "position": target.get("position"), "score": float(score), "link_score": float(group["link_score"]), "hop": hop,
-                    "from_chunk_id": group["source"], "quote": group["quote"], "locator": group["locator"], "form": group.get("form"),
-                    "method": group.get("method"), "source_section": group["source_section"], "target_kind": group.get("layer") or group["kind"], "select": "link",
-                    "passage": group["passage"], "root_score": float(root_score), "chunk_score": float(root_score) * float(score),
-                    "via_id": group.get("via_id"), "via_label": group.get("via_label"), "via_file": group.get("via_file")}
-
-        # 一覧選択（reference_doc_select = summary_list）では、1 回目は 1 つの参照から最大 reference_doc_max 件を足す（2 回目は 1 件）。
-        # 参照 1 つにつき 1 件目は従来の選び方と同じく必ず足し、2 件目以降（extra）は本文の合計が extra_limit に収まる分だけ足す。
-        # 本文は _apply_budget_reranked でも削られず、行（エンティティ・リレーション）は残りに詰めるので、ここで本文の合計
-        # （選んだチャンク + 一文で足すチャンク + この後で足す従来の選び方の分）を数え、行の分（REFERENCE_EXTRA_LINE_SHARE）を残す
-        summary_list = settings.get("reference_doc_select", "rerank") == "summary_list"
-        budget = int(settings.get("char_budget") or 14000)
-        extra_limit = budget - int(budget * REFERENCE_EXTRA_LINE_SHARE)
-        body_chars = [sum(len(d.page_content or "") for d, _ in chosen) + int(reserved_chars or 0)]
-
-        def admit(text, free):
-            if free or body_chars[0] + len(text or "") <= extra_limit:
-                body_chars[0] += len(text or "")
-                return True
-            return False
-
-        def add(group, targets, info, hop, root_score, free_first):
-            """targets（足す候補の列）を、取っていないもの・予算に収まるものだけ足す。足した控えの列を返す。"""
-            added = []
-            for i, target in enumerate(targets):
-                if target["id"] in taken or not admit(target["text"], free_first and i == 0):
-                    continue
-                taken.add(target["id"])
-                e = entry(group, target, hop, group["score"], root_score)
-                if info is not None:
-                    e.update({k: v for k, v in info.items() if v is not None})
-                    if target.get("selected_section"):
-                        e["selected_section"] = target["selected_section"]
-                e["extra"] = i > 0
-                added.append(e)
-                picks.append(e)
-            return added
+            e = {"chunk_id": target["id"], "text": target["text"], "doc_source": target.get("doc_source"), "file_name": target.get("file_name"),
+                 "position": target.get("position"), "score": float(score), "link_score": float(group["link_score"]), "hop": hop,
+                 "from_chunk_id": group["source"], "quote": group["quote"], "locator": group["locator"], "form": group.get("form"),
+                 "method": group.get("method"), "source_section": group["source_section"], "target_kind": group.get("layer") or group["kind"], "select": "link",
+                 "passage": group["passage"], "root_score": float(root_score), "chunk_score": float(root_score) * float(score),
+                 "via_id": group.get("via_id"), "via_label": group.get("via_label"), "via_file": group.get("via_file")}
+            picks.append(e)
+            return e
 
         # ---- 1 回目 ----
-        layer_on = self.settings.get("reference_sections") or self.settings.get("reference_document_layer")
-        groups = _group_links(*self._reference_links(list(rank), taken, self._query_vector(query, cache) if layer_on else None),
-                              history_weight=history_weight)
+        groups = _group_links(*self._reference_links(list(rank), taken, cache, query))
         if not follow_documents:
             groups = [g for g in groups if g["kind"] != "document"]
         self._score_groups(groups, lambda _source: query)
         for group in groups:
-            group["score"] = group["link_score"] * group["weight"]
+            group["score"] = group["link_score"]
         groups.sort(key=lambda g: (-g["score"], rank.get(g["source"], 10 ** 6)))
         first = []
-        followed = 0                                   # たどった参照の数（上限 limit。一覧選択で 1 つの参照から複数足しても 1 と数える）
         for group in groups:
-            if followed >= limit or group["score"] < min_score or group["score"] <= 0:
+            if len(first) >= limit or group["score"] < min_score or group["score"] <= 0:
                 break
-            targets, info = self._resolve_targets(query, group, taken, min_score, cache, summary_list)
-            added = add(group, targets, info, 1, chosen_score.get(group["source"], 0.0), True)
-            if not added:
-                continue
-            followed += 1
-            first.extend(added)
+            added = add(group, self._resolve_target(query, group, taken, min_score, cache), 1, chosen_score.get(group["source"], 0.0))
+            if added:
+                first.append(added)
         if depth < 2 or not first:
             return
 
-        # ---- 2 回目（失敗しても 1 回目の分は残す）----
-        # 従来はチャンクへのリンクだけをたどる。一覧選択では、文書のみを指す参照も同じ選び方でたどる
+        # ---- 2 回目（チャンクへのリンクだけをたどる。失敗しても 1 回目の分は残す）----
         try:
             parents = {e["chunk_id"]: e for e in first}
-            groups = [g for g in _group_links(*self._reference_links(list(parents), taken), history_weight=history_weight)
-                      if g["kind"] == "chunk" or (summary_list and follow_documents and g["kind"] == "document")]
+            groups = [g for g in _group_links(*self._reference_links(list(parents), taken, cache)) if g["kind"] == "chunk"]
             self._score_groups(groups, lambda source: f"{query} {parents[source]['passage'] or parents[source]['quote']}".strip())
             queues = {}
             for group in groups:
-                group["score"] = parents[group["source"]]["score"] * group["link_score"] * group["weight"]
+                group["score"] = parents[group["source"]]["score"] * group["link_score"]
                 if group["score"] >= min_score and group["score"] > 0:
                     queues.setdefault(group["source"], []).append(group)
             for parent in first:                       # 親の点数の高い順に、1 件ずつ
-                # 一覧選択で 2 件目以降として足した親（extra）から先は、1 件目も文字数の判定に掛ける。
-                # 判定で足せないと分かっている親では、参照先を決めない（LLM の一覧選択を呼ばない）
-                free = not parent.get("extra")
                 for group in sorted(queues.get(parent["chunk_id"]) or [], key=lambda g: -g["score"]):
-                    if not free and body_chars[0] >= extra_limit:
+                    if add(group, self._resolve_target(query, group, taken, min_score, cache), 2, parent["root_score"]):
                         break
-                    targets, info = self._resolve_targets(query, group, taken, min_score, cache, summary_list)
-                    targets = targets[:1]              # 2 回目は親 1 つにつき 1 件（一覧選択でも同じ）
-                    if add(group, targets, info, 2, parent["root_score"], free):
-                        break
-                    if targets and not free:
-                        break                          # 文字数の判定で足せなかった。同じ親の残りの参照も試さない
         except Exception as exc:
             logging.warning(f"following references a second time failed ({exc}); keeping the first-hop references")
 
-    # ---------- 文書のみを指す参照の一覧選択（reference_doc_select = summary_list） ----------
-    def _resolve_targets(self, question: str, group: dict, taken: set, min_score: float, cache: dict, summary_list: bool):
-        """参照 1 つにつき、足すチャンクの列と、控えに足す選び方の情報を返す: (targets, info)。
-
-        従来（summary_list = False）は _resolve_target の 1 件（または空）で、info は None（控えは従来のまま）。
-        一覧選択は、文書のみを指す参照（kind = document で、文書層の一文の節番号で節まで決まっていないもの）だけに使う。
-        失敗・空・範囲外の番号だけ・候補の節が無い・要点のある節が無い・選んだ節のチャンクが全部文脈にあるか下限に満たない場合は、
-        従来の選び方で 1 件にする（控えには selection = rerank と、戻した理由を残す）。
-        1 つの質問の中で LLM が一度失敗したら（時間切れ・接続の失敗・同時要求の枠の待ちの上限）、以後の参照は LLM を呼ばずに戻す
-        （gemma4 が止まっているときに、参照の数だけ時間切れを待たないため。理由は llm_failed_earlier）。
-        """
-        if not (summary_list and group["kind"] == "document" and group["documents"] and not group.get("sections")):
-            target = self._resolve_target(question, group, taken, min_score, cache)
-            return ([target] if target else []), None
-        from src import section_summaries as SS
-        if cache.get("summary_list_llm_failed"):
-            reason, raw = "llm_failed_earlier", ""
-        else:
-            try:
-                return self._summary_list_targets(question, group, taken, cache, min_score)
-            except SS.SelectionFailed as exc:
-                reason, raw = exc.reason, exc.raw
-                if reason == "llm_failed":
-                    cache["summary_list_llm_failed"] = True
-            except Exception as exc:
-                reason, raw = "error", str(exc)[:200]
-        logging.info(f"summary list selection fell back to rerank ({reason}): {group.get('documents')}")
-        target = self._resolve_target(question, group, taken, min_score, cache)
-        return ([target] if target else []), {"selection": "rerank", "selection_fallback": reason, "llm_raw": raw or None}
-
-    def _doc_sections(self, documents, cache: dict) -> List[dict]:
-        key = ("doc_sections", tuple(documents))
-        if key not in cache:
-            cache[key] = list(self.neo_db.query(REFERENCE_DOC_SECTIONS_QUERY, params={"docs": list(documents), "head_chars": REFERENCE_DOC_HEAD_CHARS}))
-        return cache[key]
-
-    def _already_sections(self, taken: set) -> List[str]:
-        """LLM に見せる「既に手元にある節」。文脈にあるチャンクの主所属の節（同じ節は 1 行）。"""
-        from src import section_summaries as SS
-        if not taken:
-            return []
-        lines, seen = [], set()
-        for r in self.neo_db.query(ALREADY_SECTIONS_QUERY, params={"ids": sorted(taken)}):
-            key = r.get("section_id") or r.get("chunk_section") or r.get("id")
-            if key in seen:
-                continue
-            seen.add(key)
-            label = SS.section_label(r) if r.get("section_id") else (r.get("chunk_section") or "")
-            line = f"- {SS._stem(r.get('file_name'))} {label}".rstrip()
-            if r.get("summary"):
-                line += f": {r['summary']}"
-            lines.append(line)
-            if len(lines) >= SS.ALREADY_MAX:
-                break
-        return lines
-
-    def _summary_list_targets(self, question: str, group: dict, taken: set, cache: dict, min_score: float = 0.0):
-        """要点の一覧から LLM に節を選ばせ、選んだ節ごとにチャンクを 1 件決める。返り値 (targets, info)。失敗は SelectionFailed。
-
-        要点のある節が 1 つも無い文書（後処理「節の要点」を流していない・章・節の層の作り直しで消えた）は、一覧選択をしない（no_summaries）。
-        選んだ節のチャンクの点数（質問 + 参照の一文とのリランク）が min_score に満たない節は足さない（従来の選び方と同じ下限）。
-        """
-        from src import section_summaries as SS
-        settings = self.settings
-        rerank_query = f"{question} {group['quote']}".strip()
-        sections = [SS.section_item(r) for r in self._doc_sections(group["documents"], cache)]
-        if not sections:
-            raise SS.SelectionFailed("no_sections")
-        covered = sum(1 for s in sections if s["summary"])
-        if not covered:
-            logging.warning(f"summary list: no section of {group['documents']} has a summary (run the post-processing "
-                            "'build_section_summaries'); selecting by rerank")
-            raise SS.SelectionFailed("no_summaries")
-        result = SS.select_by_list(
-            question, rerank_query,
-            reference_context(group.get("source_text"), group.get("source_heading"), group["quote"]),
-            self._already_sections(taken), sections, rerank=_rerank, ask=SS.list_chat,
-            max_picks=int(settings.get("reference_doc_max", 4) or 4),
-            two_stage_min=int(settings.get("reference_doc_two_stage_sections", 30) or 30))
-        picked = result["picked"]
-        rows = self.neo_db.query(SECTION_PICK_CHUNKS_QUERY, params={
-            "sections": [s["id"] for s in picked], "skip": list(taken),
-            "query_vector": self._query_vector(rerank_query, cache), "per_section": REFERENCE_DOC_PICK_CANDIDATES})
-        by_tier = {}
-        for r in rows:
-            if r.get("text"):
-                by_tier.setdefault(r["section_id"], {}).setdefault(int(r.get("tier") or 0), []).append(r)
-        # 節ごとに最も高い段（主所属 → 下位の節の主所属 → 副所属）の候補だけを使う
-        candidates = {s["id"]: (lambda tiers: tiers[max(tiers)] if tiers else [])(by_tier.get(s["id"], {})) for s in picked}
-        pool = [r for s in picked for r in candidates[s["id"]]]
-        scores = {}
-        if pool:
-            # 選んだ節の候補をまとめて 1 回でリランクする（点数は組ごとに決まる）
-            for r, sc in zip(pool, _rerank(rerank_query, [r["text"] for r in pool])):
-                scores[(r["section_id"], r["id"])] = sc
-        targets, used, below = [], set(taken), 0
-        selected = [{"id": s["id"], "label": s["label"], "file_name": s["file_name"]} for s in picked]
-        for s, info in zip(picked, selected):
-            options = [r for r in candidates[s["id"]] if r["id"] not in used]
-            if not options:
-                continue
-            best = max(options, key=lambda r: scores.get((s["id"], r["id"]), 0.0))
-            if scores.get((s["id"], best["id"]), 0.0) < min_score:
-                below += 1
-                continue
-            used.add(best["id"])
-            targets.append({"id": best["id"], "text": best["text"], "position": best.get("position"), "file_name": best.get("file_name"),
-                            "doc_source": best.get("doc_source") or best.get("file_name"), "selected_section": info})
-        if not targets:
-            raise SS.SelectionFailed("below_min_score" if below else "all_taken", " | ".join(result["raw"]))
-        info = {"selection": "summary_list", "selection_stage": result["stage"], "selected_sections": selected,
-                "selection_chapters": result["chapters"] or None, "summary_coverage": f"{covered}/{len(sections)}",
-                "llm_raw": " | ".join(result["raw"])}
-        return targets, info
-
-    def _expand(self, query: str, chosen):
+    def _expand(self, query: str, chosen, cache: dict):
         chunk_rows = [{"id": d.metadata["chunk_id"], "score": float(s)} for d, s in chosen]
         body = _INDEX_HEAD.sub(_CHUNK_HEAD, self.retrieval_query, count=1)
         params = {"chunk_rows": chunk_rows}
         if "$query_vector" in body:
-            params["query_vector"] = self.neo_db.embedding.embed_query(query)
+            params["query_vector"] = self._query_vector(query, cache)
         records = self.neo_db.query(body, params=params)
         docs = []
         for rec in records:
@@ -1357,7 +1051,7 @@ class RerankGraphRetriever(BaseRetriever):
                 row_of.setdefault(detail.get("id"), doc)
         shown_in = {e["chunk_id"]: (row_of[e["chunk_id"]].metadata.get("source") if e["chunk_id"] in row_of else None) for e in trace}
         moved = set()
-        if self.settings.get("reference_presentation", "separate") == "inline":
+        if self.settings["reference_presentation"] == "inline":
             try:
                 moved, placed = self._inline_references(docs, text_of, row_of, trace)
                 shown_in.update(placed)
@@ -1368,8 +1062,6 @@ class RerankGraphRetriever(BaseRetriever):
         by_source = {}
         for order, e in enumerate(trace, start=1):
             public = {key: e.get(key) for key in REFERENCE_TRACE_KEYS}
-            # 一覧選択の控え（選び方・選んだ節・LLM の生の答え）は、あるときだけ載せる（従来の選び方の応答の形は変えない）
-            public.update({key: e[key] for key in REFERENCE_SELECTION_KEYS if e.get(key) is not None})
             public["order"] = order
             public["source"] = e.get("doc_source")
             public["shown_in"] = shown_in.get(e["chunk_id"])
@@ -1444,27 +1136,37 @@ class RerankGraphRetriever(BaseRetriever):
         return moved, placed
 
     def _get_relevant_documents(self, query: str, *, run_manager: CallbackManagerForRetrieverRun) -> List[Document]:
+        if self.settings.get("entity_collect"):
+            # エンティティ起点の収集（方式 entity_collect）。拾えなかったとき・失敗したときは、下の通常の検索に戻る
+            try:
+                from src.entity_collect import collect
+                collected = collect(self, query)
+                if collected:
+                    return collected
+            except Exception as e:
+                logging.warning(f"entity collect failed ({e}); falling back to the usual search")
         cands = self._candidates(query)
         if not cands:
             return []
+        cache: dict = {}
         try:
             scores = _rerank(query, [d.page_content for d, _ in cands])
         except Exception as e:
             logging.warning(f"rerank failed ({e}); falling back to hybrid order")
             scores = [s or 0.0 for _, s in cands]
-        ranked = sorted(zip(cands, scores), key=lambda x: -x[1])[: self.top_n]
+        ranked = sorted(zip(cands, scores), key=lambda x: -x[1])[: self.settings["rerank_top_n"]]
         chosen = [(d, sc) for (d, _), sc in ranked]
         logging.info("rerank picked: " + ", ".join(f"{d.metadata.get('source','?')}#{d.metadata.get('position')}:{sc:.3f}" for d, sc in chosen))
         reference_max = int(self.settings.get("reference_max") or 0)
         trace = []
         if reference_max > 0:
             try:
-                select = self.settings.get("reference_select", "target")
+                select = self.settings["reference_select"]
                 if select in ("link", "both"):
-                    trace = self._follow_links(query, chosen, reference_max, with_target=(select == "both"))
+                    trace = self._follow_links(query, chosen, reference_max, cache, with_target=(select == "both"))
                 else:
                     # 従来の選び方は、どのリンクで届いたかを区別しない。控えには、足したチャンクと点数だけを残す
-                    trace = [_target_entry(d, sc) for d, sc in self._referenced(query, chosen, reference_max)]
+                    trace = self._referenced(query, chosen, reference_max, cache)
                     self._fill_target_provenance(chosen, trace)
             except Exception as e:
                 logging.warning(f"following references failed ({e}); continuing without them")
@@ -1474,7 +1176,7 @@ class RerankGraphRetriever(BaseRetriever):
             if followed:
                 logging.info("reference followed: " + ", ".join(f"{d.metadata.get('source','?')}#{d.metadata.get('position')}:{sc:.3f}" for d, sc in followed))
                 chosen = chosen + followed
-        docs = self._expand(query, chosen)
+        docs = self._expand(query, chosen, cache)
         moved = set()
         if trace:
             try:
@@ -1492,10 +1194,7 @@ class RerankGraphRetriever(BaseRetriever):
         docs.sort(key=lambda d: -best.get(d.metadata.get("source"), 0.0))
         for d in docs:
             d.state["query_similarity_score"] = best.get(d.metadata.get("source"), 0.0)
-        if get_value_from_env("CHAT_LINE_RERANK_ENABLED", "true", "bool"):
-            out = _apply_budget_reranked(query, docs, self.char_budget, self.line_max, self.line_min_score)
-        else:
-            out = _apply_budget(docs, self.char_budget)
+        out = _apply_budget_reranked(query, docs, self.settings["char_budget"], self.settings["line_max"], self.settings["line_min_score"])
         if moved:
             # 本文を参照元の直後へ移した結果、断り書きだけになり、行（エンティティ・リレーション）も残らなかった文書行は外す
             out = [d for d in out if not _is_note_only(d)]
@@ -1519,7 +1218,7 @@ def build_candidate_db(neo_db: Neo4jVector, chat_mode_settings, embedding_functi
     return Neo4jVector.from_existing_index(**common)
 
 
-def make_rerank_retriever(neo_db, graph, chat_mode_settings, document_names, embedding_function, score_threshold):
+def make_rerank_retriever(neo_db, graph, chat_mode_settings, document_names):
     from src.shared.constants import VECTOR_GRAPH_SEARCH_QUERY
     s = chat_mode_settings.get("retrieval_settings") or resolve_retrieval_settings()
     retrieval_query = chat_mode_settings["retrieval_query"]
@@ -1529,15 +1228,9 @@ def make_rerank_retriever(neo_db, graph, chat_mode_settings, document_names, emb
     logging.info(f"Retrieval settings: {s}")
     return RerankGraphRetriever(
         neo_db=neo_db,
-        candidate_db=build_candidate_db(neo_db, chat_mode_settings, embedding_function, graph),
+        candidate_db=build_candidate_db(neo_db, chat_mode_settings, neo_db.embedding, graph),
         retrieval_query=retrieval_query,
         document_names=document_names if (document_names and chat_mode_settings.get("document_filter")) else None,
-        candidate_k=s["candidate_k"],
-        top_n=s["rerank_top_n"],
-        char_budget=s["char_budget"],
         ef_ratio=get_value_from_env("EFFECTIVE_SEARCH_RATIO", 5, "int"),
-        score_threshold=s["candidate_min_score"],
-        line_max=s["line_max"],
-        line_min_score=s["line_min_score"],
         settings=s,
     )

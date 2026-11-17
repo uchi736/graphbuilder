@@ -15,11 +15,10 @@ import boto3
 import google.auth
 from src.shared.constants import ADDITIONAL_INSTRUCTIONS
 from src.shared.llm_graph_builder_exception import LLMGraphBuilderException
-from src import skipped_chunks  # T16: 抽出に失敗したチャンクを文書に記録する
 from src.edc_extraction import get_graph_from_edc
 import re
 from langchain_core.callbacks.manager import CallbackManager
-from src.shared.common_fn import UniversalTokenUsageHandler,get_value_from_env
+from src.shared.common_fn import UniversalTokenUsageHandler, collect_chunk_results, get_value_from_env
 
 def get_llm(model: str):
     """Retrieve the specified language model based on the model name."""
@@ -242,22 +241,19 @@ async def get_graph_document_list(
             graph_document_list = llm_transformer.convert_to_graph_documents(combined_chunk_document_list)
         else:
             # チャンクごとに個別変換し、一部のチャンクで生成が暴走・失敗してもファイル全体を失敗にしない
+            # gemma4 への同時要求を絞る（構造化出力・ツール呼び出しは 4 本まで。上限なしの一斉送信は固まる原因になる）
+            _slots = asyncio.Semaphore(get_value_from_env("STANDARD_EXTRACTION_CONCURRENCY", 4, int))
+
+            async def _convert_one(doc):
+                async with _slots:
+                    return await llm_transformer.aconvert_to_graph_documents([doc])
+
             results = await asyncio.gather(
-                *[llm_transformer.aconvert_to_graph_documents([doc]) for doc in combined_chunk_document_list],
+                *[_convert_one(doc) for doc in combined_chunk_document_list],
                 return_exceptions=True,
             )
-            failed_chunks = 0
-            for doc, result in zip(combined_chunk_document_list, results):
-                if isinstance(result, BaseException):
-                    failed_chunks += 1
-                    skipped_chunks.note(doc.metadata.get("combined_chunk_ids"))
-                    logging.warning(f"Skipping chunk due to graph transformation error: {result}")
-                else:
-                    graph_document_list.extend(result)
-            if failed_chunks:
-                logging.warning(f"Graph transformation skipped {failed_chunks}/{len(combined_chunk_document_list)} combined chunks")
-            if failed_chunks == len(combined_chunk_document_list):
-                raise LLMGraphBuilderException(f"Graph transformation failed for all chunks: {results[0]}")
+            for result in collect_chunk_results(combined_chunk_document_list, results, "graph transformation"):
+                graph_document_list.extend(result)
     except LLMGraphBuilderException:
        raise
     except Exception as e:
@@ -275,8 +271,9 @@ async def get_graph_document_list(
 
 async def get_graph_from_llm(model, chunkId_chunkDoc_list, allowedNodes, allowedRelationship, chunks_to_combine, additional_instructions=None, extraction_method=None, edc_options=None):
    try:
-       # 抽出方式が EDC なら EDC API へ送る（旧来の model=edc も同じ）。EDC の LLM は EDC 側の設定で固定
-       if str(extraction_method or "").strip().lower() == "edc" or model.strip().lower() == "edc":
+       # 抽出方式が EDC なら EDC API へ送る（旧来の model=edc は score.py の apply_extraction_method が extraction_method=edc に直す）。
+       # EDC の LLM は EDC 側の設定で固定
+       if str(extraction_method or "").strip().lower() == "edc":
            if allowedNodes or allowedRelationship:
                logging.info("EDC extraction manages schema via its doctype registry; ignoring allowedNodes/allowedRelationship")
            combined_chunk_document_list = get_combined_chunks(chunkId_chunkDoc_list, chunks_to_combine)

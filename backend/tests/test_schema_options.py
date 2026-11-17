@@ -79,6 +79,9 @@ class FakeDriver:
         self.read_database = None
         self.tx = None
 
+    def verify_connectivity(self):
+        pass
+
     def session(self, database=None, **kwargs):
         return FakeSession(self, database)
 
@@ -142,44 +145,47 @@ def test_name_rule_uses_fullmatch():
     assert not any("\\" in q for q in tx.queries)
 
 
-def test_collect_passes_credentials_and_closes_driver():
-    # 空の資格情報はそのまま Neo4jGraph に渡す（Neo4jGraph が NEO4J_URI などの環境変数で補う）。空文字に置き換えない
+def _fake_neo4j_driver(monkeypatch, driver):
+    """neo4j.GraphDatabase.driver を差し替え、渡された (uri, auth) を記録する。"""
+    import neo4j
     seen = {}
-    graph = FakeGraph(database="neo4j")
 
-    def fake_connect(credentials):
-        seen["credentials"] = credentials
-        return graph
-    orig = S.create_graph_database_connection
-    S.create_graph_database_connection = fake_connect
-    try:
-        credentials = Neo4jCredentials()
-        data = S.collect_schema_options(credentials)
-    finally:
-        S.create_graph_database_connection = orig
-    assert seen["credentials"] is credentials
+    def fake(uri, auth=None):
+        seen["uri"], seen["auth"] = uri, auth
+        return driver
+    monkeypatch.setattr(neo4j.GraphDatabase, "driver", fake)
+    return seen
+
+
+def test_collect_passes_credentials_and_closes_driver(monkeypatch):
+    # 空の資格情報は環境変数 NEO4J_* で補う（資格情報そのものは書き換えない）。読み取りのトランザクションで集計し、接続を閉じる
+    driver = FakeDriver()
+    seen = _fake_neo4j_driver(monkeypatch, driver)
+    monkeypatch.setenv("NEO4J_URI", "neo4j://env-host:7687")
+    monkeypatch.setenv("NEO4J_USERNAME", "env-user")
+    monkeypatch.setenv("NEO4J_PASSWORD", "env-pass")
+    monkeypatch.setenv("NEO4J_DATABASE", "neo4j")
+    credentials = Neo4jCredentials()
+    data = S.collect_schema_options(credentials)
+    assert seen == {"uri": "neo4j://env-host:7687", "auth": ("env-user", "env-pass")}
     assert (credentials.uri, credentials.userName, credentials.password, credentials.database) == (None, None, None, None)
-    assert graph._driver.read_database == "neo4j" and graph._driver.closed is True
+    assert driver.read_database == "neo4j" and driver.closed is True
     assert [d["name"] for d in data["labels"]] == ["Concept", "Equipment", "Standard"]
 
 
-def test_collect_closes_driver_on_error():
-    graph = FakeGraph()
+def test_collect_closes_driver_on_error(monkeypatch):
+    driver = FakeDriver()
 
     def failing_session(database=None, **kwargs):
         raise RuntimeError("session failed")
-    graph._driver.session = failing_session
-    orig = S.create_graph_database_connection
-    S.create_graph_database_connection = lambda credentials: graph
+    driver.session = failing_session
+    _fake_neo4j_driver(monkeypatch, driver)
     try:
-        try:
-            S.collect_schema_options(Neo4jCredentials())
-            raise AssertionError("例外にならなかった")
-        except RuntimeError:
-            pass
-    finally:
-        S.create_graph_database_connection = orig
-    assert graph._driver.closed is True
+        S.collect_schema_options(Neo4jCredentials(uri="neo4j://x:7687", userName="u", password="p"))
+        raise AssertionError("例外にならなかった")
+    except RuntimeError:
+        pass
+    assert driver.closed is True
 
 
 def test_route_returns_failed_instead_of_raising():

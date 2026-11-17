@@ -4,7 +4,7 @@
   N1 文書番号を表すエンティティ  (:__Entity__:Standard {id: 正規形, method: "rule", names, aliases, external, ...台帳の属性})
   E1 (Document)-[:IS_VERSION_OF {rev}]->(Standard)                 ファイル名と先頭の識別子から
   E7 (Standard)-[:HAS_CURRENT_VERSION {rev, up_to_date}]->(Document) 手元の版のうち現行版（版が 1 つでもその版）
-  名寄せ 正規形が一致する既存のエンティティ（LLM 抽出の VTR-T001・Hs-Vtr-T001・V-00862 など）を Standard に物理統合する
+  名寄せ 正規形が一致する既存のエンティティ（LLM 抽出の TS-A101・Ts-A101・X-00123 など）を Standard に物理統合する
   E2 (Document)-[:REFERS_TO {method:"rule", chunks, quotes, scope, via}]->(Standard)
        参照抽出の規則（chunk_reference_rules）の other_document / external の参照と、既存のチャンク間 REFERS_TO（文書をまたぐもの）を文書単位に束ねる。
        文書番号でも外部の識別子でも当たらない名称は、台帳の名称・略称・旧名称・旧番号・正本の表の別名で引く（via = "alias"）
@@ -13,7 +13,7 @@
   E5 (Document)-[:ABOLISHES {date}]->(Standard)                     廃止通知票
   E6 (Document)-[:APPLIES_TO {source}]->(:__Entity__:Model {id})     「1. 適用」の型式
 
-文書台帳の属性（Standard のプロパティ。11/10 追加）:
+文書台帳の属性（Standard のプロパティ）:
   official_name  正式名称（正本の表 > 発行目録の行 > 文書の題名 の順に採る）
   kind           種類（規程・規則・基準・要領・標準・方案 など。名称の語尾）
   abbreviations  略称・通称（「X（以下「Y」という。）」の X が文書のとき、「この基準は、通称を「Y」といい」、表紙の欄「| 通称 | Y |」など）
@@ -52,11 +52,12 @@ def execute_graph_query(graph, query, params=None):
     return _q(graph, query, params=params) if params is not None else _q(graph, query)
 
 
-def _rows(graph):
+def chunk_rows(graph):
+    """全チャンクの行（文書層と章・節の層が読む）。"""
     return execute_graph_query(graph, """
         MATCH (c:Chunk)-[:PART_OF]->(d:Document)
-        RETURN c.id AS id, d.fileName AS fileName, c.position AS position, c.text AS text,
-               c.page_number AS page_number, c.section AS section
+        RETURN c.id AS id, d.fileName AS fileName, c.position AS position, c.section AS section, c.section_path AS section_path,
+               c.text AS text, c.page_number AS page_number
         ORDER BY d.fileName, c.position""")
 
 
@@ -88,7 +89,7 @@ def pick_external_ids(forms, existing=()):
             out[key] = olds[0]
             continue
         cands = sorted(cnt.items(), key=lambda kv: (-kv[1], -len(kv[0]), kv[0]))
-        if olds:   # 既存が複数（11/10 以前の HZTL 20559 と HZTL20559）: 既存の中から同じ規則で選ぶ
+        if olds:   # 既存が複数（ABCD 20559 と ABCD20559）: 既存の中から同じ規則で選ぶ
             olds_cnt = {o: cnt.get(R.external_id(o), 0) for o in olds}
             out[key] = sorted(olds, key=lambda o: (-olds_cnt[o], -len(o), o))[0]
         else:
@@ -96,18 +97,14 @@ def pick_external_ids(forms, existing=()):
     return out
 
 
-def _load_registry():
-    from src.document_registry import load_registry
-    return load_registry()
-
-
-def plan_document_layer(rows, cfg, chunk_links=(), entities=(), rule_standards=(), registry=None):
+def plan_document_layer(rows, cfg, chunk_links=(), entities=(), rule_standards=(), registry=None, memo=None):
     """グラフを読まずに文書層の計画を作る。
     rows: チャンク [{"id", "fileName", "position", "text", "section"}]
     chunk_links: 文書をまたぐチャンク間 REFERS_TO [{"src", "src_doc", "tgt_doc", "quote"}]
     entities: 名寄せの候補（規則の Standard 以外のエンティティ）[{"id", "labels", "eid", "description"}]
     rule_standards: すでにある規則の Standard [{"id", "eid", "aliases", "external"}]（id を変えないため・表記ゆれの古い Standard を寄せるため）
-    registry: 正本の表の行の一覧（document_registry.load_registry の戻り値）または None"""
+    registry: 正本の表の行の一覧（document_registry.load_registry の戻り値）または None
+    memo: 目録を章・節の層と共有する辞書（chunk_reference_rules.catalogue_of）"""
     by_file = collections.defaultdict(list)
     for r in rows:
         by_file[r["fileName"]].append(r)
@@ -142,19 +139,26 @@ def plan_document_layer(rows, cfg, chunk_links=(), entities=(), rule_standards=(
 
     # ---- 参照抽出の規則（段 0 の目録と、文書をまたぐ参照）----
     from src.chunk_reference_rules import find_references
-    res = find_references(rows)
+    res = find_references(rows, memo)
     for f, cat in res["catalogue"].items():
         for name in cat.get("names", []):
             if f in version_of and name and not R.is_control_heading(name, cfg) and _DOC_NAME.search(name):
                 S(version_of[f][0])["names"].add(name)
                 S(version_of[f][0])["title_names"].add(name)
 
-    # 手元に無い文書の識別子の表記ゆれ: 鍵ごとに id を 1 つ選ぶ（V-00862 と V00862、HZTL 20559 と HZTL20559）
-    ext_forms = collections.Counter()
-    for ref in res["references"]:
+    # 手元に無い文書を指す参照（scope = external）の、表記ごとの判定: 参照の位置 -> (文書番号の正規形, 外部の識別子か)
+    ext_refs = {}
+    for i, ref in enumerate(res["references"]):
         w = ref.get("target_document")
-        if ref["scope"] == "external" and w and not R.normalize_number(w, cfg, strict=True)[0] and R.is_external_identifier(w, cfg):
-            ext_forms[w] += 1
+        if ref["scope"] == "external" and w:
+            num = R.normalize_number(w, cfg, strict=True)[0]
+            ext_refs[i] = (num, not num and R.is_external_identifier(w, cfg))
+
+    # 手元に無い文書の識別子の表記ゆれ: 鍵ごとに id を 1 つ選ぶ（X-00123 と X00123、ABCD 20559 と ABCD20559）
+    ext_forms = collections.Counter()
+    for i, (_num, is_ext) in ext_refs.items():
+        if is_ext:
+            ext_forms[res["references"][i]["target_document"]] += 1
     for e in entities:
         if not R.normalize_number(e["id"], cfg, strict=True)[0] and R.is_external_identifier(e["id"], cfg):
             ext_forms.setdefault(e["id"], 0)
@@ -191,9 +195,9 @@ def plan_document_layer(rows, cfg, chunk_links=(), entities=(), rule_standards=(
             if n:
                 notices.append((f, n))
                 S(n["number"])
-            if f in version_of and "来歴" in text and not standards[version_of[f][0]].get("enacted_hint"):
-                standards[version_of[f][0]]["enacted_hint"] = R.parse_enacted(text[text.find("来歴"):])
-            if f in version_of and ("来歴" in text):
+            if f in version_of and "来歴" in text:
+                if not standards[version_of[f][0]].get("enacted_hint"):
+                    standards[version_of[f][0]]["enacted_hint"] = R.parse_enacted(text[text.find("来歴"):])
                 h = R.parse_history(text, cfg)
                 if h:
                     histories.setdefault(f, [])
@@ -281,18 +285,19 @@ def plan_document_layer(rows, cfg, chunk_links=(), entities=(), rule_standards=(
             s["former_names"].update(made)
         stats["former_" + x["kind"]] += 1
 
-    # 一文が指す手元に無い文書の Standard を先に作る（正本の表だけにある文書かどうかを、下で数えるため）
-    for ref in res["references"]:
-        w = ref.get("target_document")
-        if ref["scope"] != "external" or not w:
-            continue
-        num, _ = R.normalize_number(w, cfg, strict=True)
+    # 一文が指す手元に無い文書の Standard を先に作る（正本の表だけにある文書かどうかを、下で数えるため）。参照の位置 -> (Standard の id, via)
+    ext_target = {}
+    for i, (num, is_ext) in ext_refs.items():
+        ref = res["references"][i]
+        w = ref["target_document"]
         if num:
             S(num, external=num not in standards or standards[num]["external"])
-        elif R.is_external_identifier(w, cfg):
+            ext_target[i] = (num, "number")
+        elif is_ext:
             sid = external_standard_id(w)
             S(sid, external=True)
-            nm = R.name_near_identifier(ref.get("quote"), w, cfg)   # 「QC-KAI-027初品管理規定」の名称（正式名称の候補・別名として引く）
+            ext_target[i] = (sid, "identifier")
+            nm = R.name_near_identifier(ref.get("quote"), w, cfg)   # 「QC-AB-027品質管理規定」の名称（正式名称の候補・別名として引く）
             if nm:
                 standards[sid]["quoted_names"][_clean_name(nm)] += 1
 
@@ -347,7 +352,7 @@ def plan_document_layer(rows, cfg, chunk_links=(), entities=(), rule_standards=(
         if q and q not in doc_refs[key]["quotes"] and len(doc_refs[key]["quotes"]) < 3:
             doc_refs[key]["quotes"].append(q[:120])
 
-    for ref in res["references"]:
+    for i, ref in enumerate(res["references"]):
         src = ref["source_doc"]
         if ref["scope"] == "same_document":
             continue
@@ -360,16 +365,9 @@ def plan_document_layer(rows, cfg, chunk_links=(), entities=(), rule_standards=(
                 add_ref((src, no), ref, "number" if R.document_numbers_in(w, cfg) else "name")
             continue
         no, via = None, "number"
-        if ref["scope"] == "external" and w:
-            num, _ = R.normalize_number(w, cfg, strict=True)
-            if num:
-                S(num, external=num not in standards or standards[num]["external"])
-                no = num
-                resolution["external_created" if standards[num]["external"] else "resolved_document"] += 1
-            elif R.is_external_identifier(w, cfg):
-                no, via = external_standard_id(w), "identifier"
-                S(no, external=True)
-                resolution["external_created"] += 1
+        if ref["scope"] == "external" and w and i in ext_target:
+            no, via = ext_target[i]   # Standard は上で作った
+            resolution["external_created" if via == "identifier" or standards[no]["external"] else "resolved_document"] += 1
         if no is None and w and ref["scope"] is None:
             # 規則（chunk_reference_rules）が文書を決められなかった一文でも、表記に台帳の文書番号があればそれへ結ぶ
             # （同じ文書番号の版が 2 つ取り込まれていると、目録の識別子が 2 つの文書に当たり「複数」で決められない）
@@ -403,11 +401,7 @@ def plan_document_layer(rows, cfg, chunk_links=(), entities=(), rule_standards=(
         if r["tgt_doc"] in version_of:
             key = (r["src_doc"], version_of[r["tgt_doc"]][0])
             doc_refs[key]["scope"] = doc_refs[key]["scope"] or "other_document"
-            doc_refs[key]["chunks"].add(r["src"])
-            doc_refs[key]["via"].add("chunk_link")
-            q = (r.get("quote") or "").strip()
-            if q and q not in doc_refs[key]["quotes"] and len(doc_refs[key]["quotes"]) < 3:
-                doc_refs[key]["quotes"].append(q[:120])
+            add_ref(key, {"source": r["src"], "quote": r.get("quote")}, "chunk_link")
     # 自分の文書番号への参照は除く
     doc_refs = {k: v for k, v in doc_refs.items() if version_of.get(k[0], (None,))[0] != k[1]}
     # 目録が一覧に載せた文書との関係は LISTS で表す。目録のチャンクから一覧の各行へ張られたチャンク間リンクがあっても、文書どうしの REFERS_TO にはしない
@@ -437,11 +431,11 @@ def plan_document_layer(rows, cfg, chunk_links=(), entities=(), rule_standards=(
     for e in entities:
         no, _ = R.normalize_number(e["id"], cfg, strict=True)
         if not no and R.is_external_identifier(e["id"], cfg):
-            no = ext_id.get(R.external_key(e["id"]))   # 外部の識別子（V-00862 → V00862）。11/10 まで名寄せが拾わなかった
+            no = ext_id.get(R.external_key(e["id"]))   # 外部の識別子（X-00123 → X00123）
         if no and no in standards:
             merge_plan[no].append(e)
             standards[no]["aliases"].add(e["id"])
-    # 規則の Standard の表記ゆれ（11/10 以前に別々に作られた HZTL 20559 と HZTL20559）: 選んだ id へ寄せる
+    # 規則の Standard の表記ゆれ（別々に作られた ABCD 20559 と ABCD20559）: 選んだ id へ寄せる
     for s in rule_standards:
         if s["id"] in standards:
             standards[s["id"]]["aliases"].update(a for a in (s.get("aliases") or []) if a)
@@ -520,9 +514,10 @@ def _standard_row(no, v):
             "registry": bool(v["registry"])}
 
 
-def build_document_layer(graph, write=True, config_path=None, registry=None):
-    cfg = R.load_config(config_path)
-    rows = _rows(graph)
+def build_document_layer(graph, memo=None):
+    from src.document_registry import load_registry
+    cfg = R.load_config()
+    rows = chunk_rows(graph)
     chunk_links = execute_graph_query(graph, """
         MATCH (a:Chunk)-[r:REFERS_TO]->(b:Chunk) WHERE a.fileName <> b.fileName
         RETURN a.id AS src, a.fileName AS src_doc, b.fileName AS tgt_doc, r.quote AS quote""")
@@ -532,18 +527,12 @@ def build_document_layer(graph, write=True, config_path=None, registry=None):
     rule_standards = execute_graph_query(graph, """
         MATCH (s:Standard) WHERE s.method = $m
         RETURN s.id AS id, elementId(s) AS eid, s.aliases AS aliases, s.external AS external""", params={"m": METHOD})
-    registry_status = "given" if registry is not None else None
-    if registry is None:
-        registry, registry_status = _load_registry()
-    plan = plan_document_layer(rows, cfg, chunk_links=chunk_links, entities=ents, rule_standards=rule_standards, registry=registry)
+    registry, registry_status = load_registry()
+    plan = plan_document_layer(rows, cfg, chunk_links=chunk_links, entities=ents, rule_standards=rule_standards, registry=registry, memo=memo)
     summary = plan["summary"]
     summary["registry"] = registry_status
     standards, version_of, doc_refs, lists, notices, applies, merge_plan, current = (
         plan[k] for k in ("standards", "version_of", "doc_refs", "lists", "notices", "applies", "merge_plan", "current"))
-    if not write:
-        return {"summary": summary, "standards": {k: _standard_row(k, v) for k, v in standards.items()},
-                "refers_to": [(k[0], k[1], len(v["chunks"]), v["scope"]) for k, v in doc_refs.items()], "lists": lists, "notices": notices,
-                "applies": applies, "merge_plan": merge_plan, "current": current, "resolution_detail": plan["resolution_detail"]}
 
     # ---- 台帳（統合前の状態と、参照の一文の解決の内訳）----
     os.makedirs(LEDGER_DIR, exist_ok=True)
@@ -557,7 +546,7 @@ def build_document_layer(graph, write=True, config_path=None, registry=None):
                 MATCH (e)-[r]-(x) RETURN type(r) AS type, startNode(r) = e AS outgoing, labels(x) AS labels, coalesce(x.id, x.fileName) AS other, properties(r) AS props""",
                 params={"eid": e["eid"]})
             ledger["merged"].append({"into": no, "id": e["id"], "labels": e["labels"], "description": e.get("description"), "relationships": [dict(r) for r in rels]})
-    # 同じ id で別の型のエンティティ（抽出が作ったもの。例: 型 DocumentRef の V00858）は、下の MERGE で Standard として引き取る。台帳に残す
+    # 同じ id で別の型のエンティティ（抽出が作ったもの。例: 型 DocumentRef の X00124）は、下の MERGE で Standard として引き取る。台帳に残す
     adopted = execute_graph_query(graph, """
         MATCH (e:__Entity__) WHERE e.id IN $ids AND NOT e:Standard
         RETURN e.id AS id, labels(e) AS labels, elementId(e) AS eid""", params={"ids": sorted(standards)})
@@ -596,9 +585,7 @@ def build_document_layer(graph, write=True, config_path=None, registry=None):
             CALL apoc.refactor.mergeNodes([s] + others, {properties: "discard", mergeRels: true}) YIELD node
             RETURN count(node)""", params={"no": no, "eids": [e["eid"] for e in es]})
         merged += len(es)
-        labels = {l for e in es for l in e["labels"]} - {"__Entity__", "Standard"}
-        if labels:
-            execute_graph_query(graph, "MATCH (s:Standard {id: $no}) REMOVE s:" + ":".join("`%s`" % l for l in labels), params={"no": no})
+        # 寄せたエンティティのラベルは、下で規則の Standard 全部から余分なラベルを外すときに一緒に外れる。
         # 寄せたエンティティの埋め込み（別の表記と説明から作ったもの）を引き継がないよう消す。後の「エンティティの埋め込み」で作り直す
         execute_graph_query(graph, "MATCH (s:Standard {id: $no}) SET s.method = $m, s._v = coalesce(s._v, 0) + 1 REMOVE s.embedding", params={"no": no, "m": METHOD})
     summary["merged"] = merged
@@ -651,12 +638,8 @@ def build_document_layer(graph, write=True, config_path=None, registry=None):
         SET mo:Model, mo._v = coalesce(mo._v, 0) + 1
         MERGE (d)-[r:APPLIES_TO]->(mo) SET r.source = "1. 適用", r.method = $m""",
         params={"m": METHOD, "rows": [{"f": f, "model": mo} for f, ms in applies.items() for mo in ms]})
-    # ---- 文書カード（検索の 1 段目で文書を絞るための要約）と埋め込み ----
-    try:
-        summary["document_cards"] = build_document_cards(graph, plan["by_file"], standards, version_of, applies, cfg)
-    except Exception as e:  # 埋め込みサービスが止まっていても文書層そのものは完成させる
-        logging.warning("document cards skipped: %s", e)
-        summary["document_cards"] = "skipped: %s" % e
+    # ---- 文書カード（文書の要約。画面が先頭の行を使う）----
+    summary["document_cards"] = build_document_cards(graph, plan["by_file"], standards, version_of, applies, cfg)
     summary["ledger"] = ledger_path
     ledger["summary"] = summary
     with open(ledger_path, "w", encoding="utf-8") as f:
@@ -666,7 +649,7 @@ def build_document_layer(graph, write=True, config_path=None, registry=None):
 
 
 def document_card_text(file_name, chunks, standards, version_of, applies, cfg):
-    """文書カード: 文書番号・版・名称・適用先の型式・「1. 適用」の本文・見出しの一覧。検索の 1 段目（文書を絞る）で、質問との近さを測る相手。"""
+    """文書カード: 文書番号・版・名称・適用先の型式・「1. 適用」の本文・見出しの一覧。"""
     parts = []
     no, rev = version_of.get(file_name, (None, None))
     if no:
@@ -695,14 +678,6 @@ def document_card_text(file_name, chunks, standards, version_of, applies, cfg):
 
 
 def build_document_cards(graph, by_file, standards, version_of, applies, cfg):
-    from src.shared.common_fn import load_embedding_model, get_value_from_env
-    rows = []
-    for f, cs in by_file.items():
-        rows.append({"f": f, "card": document_card_text(f, cs, standards, version_of, applies, cfg)})
-    embeddings, dimension = load_embedding_model(get_value_from_env("EMBEDDING_PROVIDER", "vllm"), get_value_from_env("EMBEDDING_MODEL", "cl-nagoya/ruri-v3-310m"))
-    vectors = embeddings.embed_documents([r["card"] for r in rows])
-    for r, v in zip(rows, vectors):
-        r["vec"] = v
-    execute_graph_query(graph, "UNWIND $rows AS row MATCH (d:Document {fileName: row.f}) SET d.card = row.card, d.card_embedding = row.vec", params={"rows": rows})
-    execute_graph_query(graph, "CREATE VECTOR INDEX document_card_vector IF NOT EXISTS FOR (d:Document) ON (d.card_embedding) OPTIONS {indexConfig: {`vector.dimensions`: %d, `vector.similarity_function`: 'cosine'}}" % int(dimension))
+    rows = [{"f": f, "card": document_card_text(f, cs, standards, version_of, applies, cfg)} for f, cs in by_file.items()]
+    execute_graph_query(graph, "UNWIND $rows AS row MATCH (d:Document {fileName: row.f}) SET d.card = row.card", params={"rows": rows})
     return len(rows)

@@ -12,7 +12,7 @@ import logging
 from src.shared.common_fn import get_value_from_env, load_embedding_model
 
 ENTITY_VECTOR_INDEX = "entity_vector"
-DEFAULT_TIMEOUT_SECONDS = 60
+EMBEDDING_TIMEOUT_SECONDS = 60
 _executor = concurrent.futures.ThreadPoolExecutor(max_workers=2, thread_name_prefix="graph-edit-embed")
 
 
@@ -33,26 +33,25 @@ def index_dimension(run):
 def _embed(texts):
     provider = get_value_from_env("EMBEDDING_PROVIDER", "sentence-transformer")
     model = get_value_from_env("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
-    embeddings, dimension = load_embedding_model(provider, model)
-    return [embeddings.embed_query(text) for text in texts], dimension
+    embeddings, _ = load_embedding_model(provider, model)
+    return [embeddings.embed_query(text) for text in texts]
 
 
 def embed_texts(texts):
-    """文の一覧を埋め込む。{文: ベクトル}（失敗した文は入れない）と、モデルの次元を返す。"""
+    """文の一覧を埋め込む。{文: ベクトル}（失敗した文は入れない）。次元の照合は vector_for が索引の次元で行う。"""
     unique = [t for t in dict.fromkeys(texts) if t is not None]
     if not unique:
-        return {}, None
-    timeout = get_value_from_env("GRAPH_EDIT_EMBEDDING_TIMEOUT", DEFAULT_TIMEOUT_SECONDS, "int")
+        return {}
     try:
-        vectors, dimension = _executor.submit(_embed, unique).result(timeout=timeout)
+        vectors = _executor.submit(_embed, unique).result(timeout=EMBEDDING_TIMEOUT_SECONDS)
     except Exception as e:
         logging.warning(f"graph_edit: could not create entity embeddings ({type(e).__name__}: {e}); they will be removed")
-        return {}, None
+        return {}
     out = {}
     for text, vector in zip(unique, vectors):
         if isinstance(vector, (list, tuple)) and vector:
             out[text] = [float(x) for x in vector]
-    return out, dimension
+    return out
 
 
 def vector_for(vectors, text, index_dim):

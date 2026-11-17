@@ -1,4 +1,4 @@
-# グラフ確認画面で 1 文書あたりに描くチャンクの上限。本家は 50 の固定値。環境変数 GRAPH_CHUNK_LIMIT で上書き、0 以下は上限なし（既定）
+# グラフ確認画面で 1 文書あたりに描くチャンクの上限。0 以下は上限なし
 GRAPH_CHUNK_LIMIT = 0
 
 # 共有グラフ運用時の保護対象ラベル。
@@ -6,13 +6,11 @@ GRAPH_CHUNK_LIMIT = 0
 # 後処理（エンティティ埋め込み・名寄せ・コミュニティ投影・未接続列挙・スキーマ統合）から除外する
 # グラフの手動修正の管理用ノード（修正台帳・操作の履歴・排他。backend/src/graph_edit）
 GRAPH_EDIT_MANAGEMENT_LABELS = ["__GraphEdit__", "__GraphEditOp__", "__GraphLock__"]
-PROTECTED_MANAGEMENT_LABELS = ["Session", "Message", "SchemaMeta", "ProcessedChunk", "GraphProvenance", "CondFact", "Cond"] + GRAPH_EDIT_MANAGEMENT_LABELS
-# 章・節の層（段 3 B4）の Section は規則で毎回作り直すので、後処理（埋め込み・コミュニティ投影・未接続列挙・スキーマ統合）の対象から外す
-PROTECTED_MANAGEMENT_LABELS = PROTECTED_MANAGEMENT_LABELS + ['Section']
-# graph-evidence が書く根拠の記録 Evidence（11/9）も、後処理・件数・スキーマの対象から外す
-PROTECTED_MANAGEMENT_LABELS = PROTECTED_MANAGEMENT_LABELS + ['Evidence']
-# 節の要点の控え SectionSummary（11/9。後処理 build_section_summaries が書く。関係を持たない管理用のノード）も、後処理・件数・スキーマの対象から外す
-PROTECTED_MANAGEMENT_LABELS = PROTECTED_MANAGEMENT_LABELS + ['SectionSummary']
+PROTECTED_MANAGEMENT_LABELS = (["Session", "Message", "SchemaMeta", "ProcessedChunk", "GraphProvenance", "CondFact", "Cond"]
+                               + GRAPH_EDIT_MANAGEMENT_LABELS
+                               + ["Section",          # 章・節の層の節。規則で毎回作り直すので、後処理の対象から外す
+                                  "Evidence",         # graph-evidence が書く根拠の記録。後処理・件数・スキーマの対象から外す
+                                  "SectionSummary"])  # 節の要点の控え（後処理 build_section_summaries が書く関係を持たない管理用のノード）
 # Cypherラベル式 (:!A&!B...) に連結する形式
 PROTECTED_LABELS_CYPHER = "".join(f"&!`{label}`" for label in PROTECTED_MANAGEMENT_LABELS)
 # WHERE NOT (e:A OR e:B ...) に連結する形式
@@ -23,10 +21,13 @@ PROTECTED_RELATIONSHIP_TYPES = ["NEXT", "LAST_MESSAGE", "REFERS_TO", "ALIAS_OF",
 # PROTECTED_RELATIONSHIP_TYPES には足さない（グラフの手動修正の予約のリレーション種類がそこから作られ、APPLIES_TO は EDC の述語でもあるため）
 LAYER_RELATIONSHIP_TYPES = ['IS_VERSION_OF', 'LISTS', 'ABOLISHES', 'APPLIES_TO', 'REPLACES', 'HAS_SECTION', 'IN_SECTION']
 
+# 文書の出典の式（d は Document）。チャットの取り出しの照会の metadata.source と同じ形で、文書行との突き合わせに使う
+DOCUMENT_SOURCE_EXPR = 'COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName)'
+
 #query
-# グラフ確認画面の問い合わせ（C4 で書き直し）。対象の文書・チャンク・チャンクのエンティティ（全文書表示では
+# グラフ確認画面の問い合わせ。対象の文書・チャンク・チャンクのエンティティ（全文書表示では
 # どのチャンクにも結ばれていないエンティティも）・コミュニティを集め、その間の関係をすべて 1 行で返す。
-# 本家の問い合わせ（GRAPH_QUERY_UPSTREAM）は行が掛け算で増え、7 本で 38 秒かかった。ノードの集合は同じで 0.5 秒。
+# 本家の問い合わせは行が掛け算で増え、7 本で 38 秒かかった。ノードの集合は同じで 0.5 秒。
 GRAPH_QUERY = """
 MATCH (d:Document)
 WHERE d.fileName IN $document_names
@@ -72,86 +73,6 @@ CALL {{
   RETURN collect(DISTINCT r) AS rels
 }}
 RETURN nodes, rels
-"""
-
-GRAPH_QUERY_UPSTREAM = """
-MATCH docs = (d:Document) 
-WHERE d.fileName IN $document_names
-WITH docs, d 
-ORDER BY d.createdAt DESC
-
-// Fetch chunks for documents, currently with limit
-CALL {{
-  WITH d
-  OPTIONAL MATCH chunks = (d)<-[:PART_OF|FIRST_CHUNK]-(c:Chunk)
-  RETURN c, chunks {chunk_limit_clause}
-}}
-
-WITH collect(distinct docs) AS docs, 
-     collect(distinct chunks) AS chunks, 
-     collect(distinct c) AS selectedChunks
-
-// Select relationships between selected chunks
-WITH *, 
-     [c IN selectedChunks | 
-       [p = (c)-[:NEXT_CHUNK|SIMILAR|REFERS_TO]-(other) 
-       WHERE other IN selectedChunks | p]] AS chunkRels
-
-// Fetch entities and relationships between entities
-CALL {{
-  WITH selectedChunks
-  UNWIND selectedChunks AS c
-  OPTIONAL MATCH entities = (c:Chunk)-[:HAS_ENTITY]->(e)
-  OPTIONAL MATCH entityRels = (e)--(e2:!Chunk) 
-  WHERE exists {{
-    (e2)<-[:HAS_ENTITY]-(other) WHERE other IN selectedChunks
-  }}
-  RETURN entities, entityRels, collect(DISTINCT e) AS entity
-}}
-
-WITH docs, chunks, chunkRels, 
-     collect(entities) AS entities, 
-     collect(entityRels) AS entityRels, 
-     entity
-
-// 全文書表示のときだけ、どのチャンクからも HAS_ENTITY で結ばれていないエンティティとその関係も描く
-CALL {{
-  OPTIONAL MATCH orphanRels = (o:__Entity__)-[]-(x:!Chunk&!Document)
-  WHERE $include_orphans AND NOT EXISTS {{ (o)<-[:HAS_ENTITY]-(:Chunk) }}
-  RETURN collect(orphanRels) AS orphanPaths
-}}
-
-WITH *
-
-CALL {{
-  WITH entity
-  UNWIND entity AS n
-  OPTIONAL MATCH community = (n:__Entity__)-[:IN_COMMUNITY]->(p:__Community__)
-  OPTIONAL MATCH parentcommunity = (p)-[:PARENT_COMMUNITY*]->(p2:__Community__) 
-  RETURN collect(community) AS communities, 
-         collect(parentcommunity) AS parentCommunities
-}}
-
-WITH apoc.coll.flatten(docs + chunks + chunkRels + entities + entityRels + orphanPaths + communities + parentCommunities, true) AS paths
-
-// Distinct nodes and relationships
-CALL {{
-  WITH paths 
-  UNWIND paths AS path 
-  UNWIND nodes(path) AS node 
-  WITH distinct node 
-  RETURN collect(node /* {{.*, labels:labels(node), elementId:elementId(node), embedding:null, text:null}} */) AS nodes 
-}}
-
-CALL {{
-  WITH paths 
-  UNWIND paths AS path 
-  UNWIND relationships(path) AS rel 
-  RETURN collect(distinct rel) AS rels 
-}}  
-
-RETURN nodes, rels
-
 """
 
 CHUNK_QUERY = """
@@ -387,15 +308,26 @@ CHAT_REFERENCE_GUIDELINE = (
 )
 
 
-def chat_system_template(reference_guideline: bool = False) -> str:
-    """回答のシステムプロンプト。reference_guideline が真なら、参照の扱いの 1 項を Response Guidelines の末尾に足す。"""
-    if not reference_guideline:
+# 網羅型の質問（該当するものをすべて挙げる質問）の扱い。検索設定 collect_prompt がオンのときだけ足す（方式 entity_collect の既定値）。
+# 文脈は該当しうる文書を文書ごとに並べたものなので、全部を確かめて挙げること、条件に合わないものを挙げないことを指示する。
+# 回答の長さの指示（6. の 4〜5 文）より優先させる。波括弧は使わない
+CHAT_COLLECT_GUIDELINE = (
+    "12. **Exhaustive listing**: The context lists, document by document, every document that may match the subject of the question. "
+    "Check every document in the context one by one. List all documents (and the parts or items they cover) that satisfy the condition in the question, "
+    "without omitting any, and give the source document name for each item. Do not list a document that does not satisfy the condition "
+    "(for example one that mentions a different grade, number or method). This overrides the response-length guideline: use a list as long as needed."
+)
+
+
+def chat_system_template(reference_guideline: bool = False, collect_guideline: bool = False) -> str:
+    """回答のシステムプロンプト。reference_guideline・collect_guideline が真なら、その項を Response Guidelines の末尾に足す。"""
+    extra = [g for on, g in ((reference_guideline, CHAT_REFERENCE_GUIDELINE), (collect_guideline, CHAT_COLLECT_GUIDELINE)) if on]
+    if not extra:
         return CHAT_SYSTEM_TEMPLATE
-    marker = "\n**IMPORTANT**"
-    head, found, tail = CHAT_SYSTEM_TEMPLATE.partition(marker)
-    if not found:
-        return CHAT_SYSTEM_TEMPLATE + "\n" + CHAT_REFERENCE_GUIDELINE + "\n"
-    return head.rstrip("\n") + "\n" + CHAT_REFERENCE_GUIDELINE + "\n\n" + marker + tail
+    added = "\n".join(extra)
+    marker = "\n**IMPORTANT**"   # CHAT_SYSTEM_TEMPLATE に必ずある見出し。追加の項はその直前に置く
+    head, _found, tail = CHAT_SYSTEM_TEMPLATE.partition(marker)
+    return head.rstrip("\n") + "\n" + added + "\n\n" + marker + tail
 
 
 QUESTION_TRANSFORM_TEMPLATE = "Given the below conversation, generate a search query to look up in order to get information relevant to the conversation. Only respond with the query, nothing else." 
@@ -472,65 +404,10 @@ VECTOR_GRAPH_SEARCH_ENTITY_QUERY = """
     END AS paths, e
 """
 
-# VECTOR_GRAPH_SEARCH_QUERY_SUFFIX = """
-#     WITH apoc.coll.toSet(apoc.coll.flatten(collect(DISTINCT paths))) AS paths, 
-#          collect(DISTINCT e) AS entities
+# 文脈の「Relationships:」の行に付けるリレーションのプロパティ（「 {キー: 値, …}」。値が空のものと、由来情報・埋め込みのキーは出さない）。
+# VECTOR_GRAPH_SEARCH_QUERY_SUFFIX と LOCAL_COMMUNITY_SEARCH_QUERY_SUFFIX の __RELATIONSHIP_PROPERTIES__ に入れる
+RELATIONSHIP_PROPERTIES_TEXT = """(CASE WHEN size([k IN keys(r) WHERE NOT k IN ['embedding', 'source_chunk_id', 'evidence', 'evidence_kind', 'provenance_method'] AND (CASE WHEN valueType(r[k]) STARTS WITH 'LIST' THEN apoc.text.join([x IN r[k] | toString(x)], ' / ') ELSE toString(r[k]) END) <> '']) > 0 THEN " {{" + apoc.text.join([k IN keys(r) WHERE NOT k IN ['embedding', 'source_chunk_id', 'evidence', 'evidence_kind', 'provenance_method'] AND (CASE WHEN valueType(r[k]) STARTS WITH 'LIST' THEN apoc.text.join([x IN r[k] | toString(x)], ' / ') ELSE toString(r[k]) END) <> '' | k + ": " + (CASE WHEN valueType(r[k]) STARTS WITH 'LIST' THEN apoc.text.join([x IN r[k] | toString(x)], ' / ') ELSE toString(r[k]) END)], ", ") + "}}" ELSE "" END)"""
 
-#     // De-duplicate nodes and relationships across chunks
-#     RETURN 
-#         collect {
-#             UNWIND paths AS p 
-#             UNWIND relationships(p) AS r 
-#             RETURN DISTINCT r
-#         } AS rels,
-#         collect {
-#             UNWIND paths AS p 
-#             UNWIND nodes(p) AS n 
-#             RETURN DISTINCT n
-#         } AS nodes, 
-#         entities
-# }
-
-# // Generate metadata and text components for chunks, nodes, and relationships
-# WITH d, avg_score,
-#      [c IN chunks | c.chunk.text] AS texts, 
-#      [c IN chunks | {id: c.chunk.id, score: c.score}] AS chunkdetails,
-#      [n IN nodes | elementId(n)] AS entityIds,
-#      [r IN rels | elementId(r)] AS relIds,
-#      apoc.coll.sort([
-#          n IN nodes | 
-#          coalesce(apoc.coll.removeAll(labels(n), ['__Entity__'])[0], "") + ":" + 
-#          n.id + 
-#          (CASE WHEN n.description IS NOT NULL THEN " (" + n.description + ")" ELSE "" END)
-#      ]) AS nodeTexts,
-#      apoc.coll.sort([
-#          r IN rels | 
-#          coalesce(apoc.coll.removeAll(labels(startNode(r)), ['__Entity__'])[0], "") + ":" + 
-#          startNode(r).id + " " + type(r) + " " + 
-#          coalesce(apoc.coll.removeAll(labels(endNode(r)), ['__Entity__'])[0], "") + ":" + endNode(r).id
-#      ]) AS relTexts,
-#      entities
-
-# // Combine texts into response text
-# WITH d, avg_score, chunkdetails, entityIds, relIds,
-#      "Text Content:\n" + apoc.text.join(texts, "\n----\n") +
-#      "\n----\nEntities:\n" + apoc.text.join(nodeTexts, "\n") +
-#      "\n----\nRelationships:\n" + apoc.text.join(relTexts, "\n") AS text, 
-#      entities
-
-# RETURN 
-#     text, 
-#     avg_score AS score, 
-#     {
-#         length: size(text), 
-#         source: COALESCE(CASE WHEN d.url CONTAINS "None" THEN d.fileName ELSE d.url END, d.fileName), 
-#         chunkdetails: chunkdetails, 
-#         entities : {
-#             entityids: entityIds, 
-#             relationshipids: relIds
-#         }
-#     } AS metadata
-# """
 VECTOR_GRAPH_SEARCH_QUERY_SUFFIX = """
    WITH apoc.coll.toSet(apoc.coll.flatten(collect(DISTINCT paths))) AS paths,
         collect(DISTINCT e) AS entities
@@ -571,7 +448,7 @@ WITH d, avg_score,
             startNode(r).id,
             startNode(r)[head([k IN keys(startNode(r)) WHERE k =~ "(?i)(name|title|id|description)$"])],
             ""
-        ) + " " + type(r) + (CASE WHEN size([k IN keys(r) WHERE NOT k IN ['embedding', 'source_chunk_id', 'evidence', 'evidence_kind', 'provenance_method'] AND (CASE WHEN valueType(r[k]) STARTS WITH 'LIST' THEN apoc.text.join([x IN r[k] | toString(x)], ' / ') ELSE toString(r[k]) END) <> '']) > 0 THEN " {{" + apoc.text.join([k IN keys(r) WHERE NOT k IN ['embedding', 'source_chunk_id', 'evidence', 'evidence_kind', 'provenance_method'] AND (CASE WHEN valueType(r[k]) STARTS WITH 'LIST' THEN apoc.text.join([x IN r[k] | toString(x)], ' / ') ELSE toString(r[k]) END) <> '' | k + ": " + (CASE WHEN valueType(r[k]) STARTS WITH 'LIST' THEN apoc.text.join([x IN r[k] | toString(x)], ' / ') ELSE toString(r[k]) END)], ", ") + "}}" ELSE "" END) + " " +
+        ) + " " + type(r) + __RELATIONSHIP_PROPERTIES__ + " " +
         coalesce(apoc.coll.removeAll(labels(endNode(r)), ['__Entity__'])[0], "") + ":" +
         coalesce(
             endNode(r).id,
@@ -598,7 +475,7 @@ RETURN
            relationshipids: relIds
        }
    } AS metadata
-"""
+""".replace("__RELATIONSHIP_PROPERTIES__", RELATIONSHIP_PROPERTIES_TEXT)
 
 VECTOR_GRAPH_SEARCH_QUERY = VECTOR_GRAPH_SEARCH_QUERY_PREFIX+ VECTOR_GRAPH_SEARCH_ENTITY_QUERY.format(
     no_of_entites=VECTOR_GRAPH_SEARCH_ENTITY_LIMIT,
@@ -674,7 +551,7 @@ RETURN {
   ],
   relationships: [
     r IN rels | 
-    startNode(r).id + " " + type(r) + (CASE WHEN size([k IN keys(r) WHERE NOT k IN ['embedding', 'source_chunk_id', 'evidence', 'evidence_kind', 'provenance_method'] AND (CASE WHEN valueType(r[k]) STARTS WITH 'LIST' THEN apoc.text.join([x IN r[k] | toString(x)], ' / ') ELSE toString(r[k]) END) <> '']) > 0 THEN " {{" + apoc.text.join([k IN keys(r) WHERE NOT k IN ['embedding', 'source_chunk_id', 'evidence', 'evidence_kind', 'provenance_method'] AND (CASE WHEN valueType(r[k]) STARTS WITH 'LIST' THEN apoc.text.join([x IN r[k] | toString(x)], ' / ') ELSE toString(r[k]) END) <> '' | k + ": " + (CASE WHEN valueType(r[k]) STARTS WITH 'LIST' THEN apoc.text.join([x IN r[k] | toString(x)], ' / ') ELSE toString(r[k]) END)], ", ") + "}}" ELSE "" END) + " " + endNode(r).id
+    startNode(r).id + " " + type(r) + __RELATIONSHIP_PROPERTIES__ + " " + endNode(r).id
   ],
   outside: {
     nodes: [
@@ -706,7 +583,7 @@ RETURN {
 } AS text,
 score,
 {entities: metadata} AS metadata
-"""
+""".replace("__RELATIONSHIP_PROPERTIES__", RELATIONSHIP_PROPERTIES_TEXT)
 
 LOCAL_COMMUNITY_DETAILS_QUERY_PREFIX = """
 UNWIND $entityIds as id
@@ -816,6 +693,9 @@ CHAT_VECTOR_GRAPH_FULLTEXT_MODE = "graph_vector_fulltext"
 # 参照追跡: graph+vector+fulltext と同じ検索に、本文中の参照（項・別表・他文書）の追跡を加えた方式（11/8）。
 # 普通の検索（既存の 6 方式）では参照をたどらず、参照の追跡はこの方式に集約する
 CHAT_VECTOR_GRAPH_FULLTEXT_REF_MODE = "graph_vector_fulltext_ref"
+# エンティティ起点の収集: 網羅型の質問（該当するものをすべて挙げる質問）に向けた方式（11/13、実験台帳 X25・X26）。
+# 質問の語を名前に含むエンティティを起点に、それらが出てくるチャンクをすべて集め、文書の単位で残す。既定の検索には混ぜない
+CHAT_ENTITY_COLLECT_MODE = "entity_collect"
 CHAT_GLOBAL_VECTOR_FULLTEXT_MODE = "global_vector"
 CHAT_GRAPH_MODE = "graph"
 CHAT_DEFAULT_MODE = "graph_vector_fulltext"
@@ -872,23 +752,6 @@ CHAT_MODE_CONFIG_MAP= {
             "embedding_node_property":"embedding",
             "text_node_properties":["text"],
         },
-        CHAT_VECTOR_GRAPH_FULLTEXT_REF_MODE : {
-            "retrieval_query": VECTOR_GRAPH_SEARCH_QUERY,
-            "top_k": VECTOR_SEARCH_TOP_K,
-            "index_name": "vector",
-            "keyword_index": "keyword",
-            "document_filter": False,
-            "node_label": "Chunk",
-            "embedding_node_property":"embedding",
-            "text_node_properties":["text"],
-            # 方式ごとの検索設定の既定値（backend の設定より優先し、画面の上書きより劣後する）。
-            # 参照の追跡を全部有効にする。選び方は X05 で効果が出た組み合わせ
-            "retrieval_defaults": {
-                "reference_max": 2, "reference_select": "both", "reference_depth": 2,
-                "reference_documents": True, "reference_sections": True, "reference_document_layer": True,
-                "reference_presentation": "inline", "reference_prompt": True,
-            },
-        },
         CHAT_GLOBAL_VECTOR_FULLTEXT_MODE : {
             "retrieval_query": GLOBAL_VECTOR_SEARCH_QUERY,
             "top_k": GLOBAL_SEARCH_TOP_K,
@@ -900,6 +763,18 @@ CHAT_MODE_CONFIG_MAP= {
             "text_node_properties":["summary"],
         },
     }
+# 方式ごとの検索設定の既定値 retrieval_defaults は、backend の設定より優先し、画面の上書きより劣後する。
+# 参照追跡: graph_vector_fulltext と同じ検索に、参照の追跡を全部有効にする既定値を足す。選び方は X05 で効果が出た組み合わせ
+CHAT_MODE_CONFIG_MAP[CHAT_VECTOR_GRAPH_FULLTEXT_REF_MODE] = dict(
+    CHAT_MODE_CONFIG_MAP[CHAT_VECTOR_GRAPH_FULLTEXT_MODE],
+    retrieval_defaults={
+        "reference_max": 2, "reference_select": "both", "reference_depth": 2,
+        "reference_documents": True, "reference_sections": True, "reference_document_layer": True,
+        "reference_presentation": "inline", "reference_prompt": True,
+    })
+# エンティティ起点の収集: fulltext と同じ検索に、収集を有効にする既定値を足す（拾えなかったときは fulltext と同じ検索に戻る）
+CHAT_MODE_CONFIG_MAP[CHAT_ENTITY_COLLECT_MODE] = dict(
+    CHAT_MODE_CONFIG_MAP[CHAT_FULLTEXT_MODE], retrieval_defaults={"entity_collect": True, "collect_prompt": True})
 # 普通の検索（参照追跡以外のチャンクを検索する方式）では参照をたどらない。方式ごとの既定値として reference_max=0 を置く。
 # 画面の検索設定で 1 以上にすれば、その質問だけはたどる
 for _mode in (CHAT_VECTOR_MODE, CHAT_FULLTEXT_MODE, CHAT_VECTOR_GRAPH_MODE, CHAT_VECTOR_GRAPH_FULLTEXT_MODE):
@@ -948,24 +823,6 @@ QUERY_TO_DELETE_EXISTING_ENTITIES = """
                                 RETURN size(entities) AS deleted, versioned
                                 """   
 
-# その文書のチャンクのうち、埋め込みの無い最初のもの。「最後の位置から再開」の一覧は、今は QUERY_TO_GET_CHUNKS の印で選ぶ
-# （この問い合わせと次の WITHOUT_ENTITY の位置で一覧を切ると、共有のチャンクの位置の値のために未処理のチャンクが落ちる）
-QUERY_TO_GET_LAST_PROCESSED_CHUNK_POSITION="""
-                              MATCH (d:Document)
-                              WHERE d.fileName = $filename
-                              WITH d
-                              MATCH (d)<-[:PART_OF]-(c:Chunk) WHERE c.embedding is null 
-                              RETURN c.id as id,c.position as position 
-                              ORDER BY c.position LIMIT 1
-                              """   
-QUERY_TO_GET_LAST_PROCESSED_CHUNK_WITHOUT_ENTITY = """
-                              MATCH (d:Document)
-                              WHERE d.fileName = $filename
-                              WITH d
-                              MATCH (d)<-[:PART_OF]-(c:Chunk) WHERE NOT exists {(c)-[:HAS_ENTITY]->()}
-                              RETURN c.id as id,c.position as position 
-                              ORDER BY c.position LIMIT 1
-                              """
 QUERY_TO_GET_NODES_AND_RELATIONS_OF_A_DOCUMENT = """
                               MATCH (d:Document)<-[:PART_OF]-(:Chunk)-[:HAS_ENTITY]->(e) where d.fileName=$filename
                               OPTIONAL MATCH (d)<-[:PART_OF]-(:Chunk)-[:HAS_ENTITY]->(e2:!Chunk)-[rel]-(e)

@@ -30,7 +30,7 @@ from langchain_ollama import ChatOllama
 # Local imports
 from src.llm import get_llm
 from src.shared.common_fn import load_embedding_model, get_value_from_env
-from src.rerank_retriever import rerank_enabled, make_rerank_retriever, RerankGraphRetriever, resolve_retrieval_settings, collect_reference_trace, reference_sources
+from src.rerank_retriever import rerank_enabled, make_rerank_retriever, RerankGraphRetriever, resolve_retrieval_settings, parse_retrieval_settings, collect_reference_trace, reference_sources
 from src.shared.constants import chat_system_template
 from src.shared.constants import (
     CHAT_SYSTEM_TEMPLATE, CHAT_TOKEN_CUT_OFF, CHAT_ENTITY_VECTOR_MODE,
@@ -186,6 +186,9 @@ def format_documents(documents, model,chat_mode_settings):
             prompt_token_cutoff = value
             break
     prompt_token_cutoff = get_value_from_env("CHAT_PROMPT_TOKEN_CUTOFF", prompt_token_cutoff, "int")
+    if (chat_mode_settings.get("retrieval_settings") or {}).get("entity_collect") and any("collect" in (d.metadata or {}) for d in documents):
+        # エンティティ起点の収集は、該当した文書を文書の単位で渡す。文書の数では打ち切らない（文字数の上限は検索の側で守る）
+        prompt_token_cutoff = max(prompt_token_cutoff, len(documents))
 
     sorted_documents = sorted(documents, key=lambda doc: (getattr(doc, "state", None) or {}).get("query_similarity_score", 0), reverse=True)
     sorted_documents = sorted_documents[:prompt_token_cutoff]
@@ -243,7 +246,8 @@ def process_documents(docs, question, messages, llm, model,chat_mode_settings):
         
         # 検索設定 reference_prompt がオンのときだけ、回答の指示に参照の扱いを足す（オフなら従来のプロンプトのまま）
         reference_prompt = bool((chat_mode_settings.get("retrieval_settings") or {}).get("reference_prompt"))
-        rag_chain = get_rag_chain(llm=llm, system_template=chat_system_template(reference_prompt))
+        collect_prompt = bool((chat_mode_settings.get("retrieval_settings") or {}).get("collect_prompt"))
+        rag_chain = get_rag_chain(llm=llm, system_template=chat_system_template(reference_prompt, collect_prompt))
         
         ai_response = rag_chain.invoke({
             "messages": messages[:-1],
@@ -321,21 +325,20 @@ def create_document_retriever_chain(llm, retriever, embedding_provider, embeddin
 
         output_parser = StrOutputParser()
 
-        splitter = TokenTextSplitter(chunk_size=CHAT_DOC_SPLIT_SIZE, chunk_overlap=0)
-        EMBEDDING_FUNCTION , _ = load_embedding_model(embedding_provider, embedding_model) 
-        embeddings_filter = EmbeddingsFilter(
-            embeddings=EMBEDDING_FUNCTION,
-            similarity_threshold=CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD
-        )
-
-        pipeline_compressor = DocumentCompressorPipeline(
-            transformers=[splitter, embeddings_filter]
-        )
-
         if isinstance(retriever, RerankGraphRetriever):
-            # P1-a: 断片選別を廃止。リランク済みチャンク＋文字数予算で切った文脈をそのまま渡す
+            # 断片選別はしない。リランク済みチャンク＋文字数予算で切った文脈をそのまま渡す
             compression_retriever = retriever
         else:
+            splitter = TokenTextSplitter(chunk_size=CHAT_DOC_SPLIT_SIZE, chunk_overlap=0)
+            EMBEDDING_FUNCTION , _ = load_embedding_model(embedding_provider, embedding_model) 
+            embeddings_filter = EmbeddingsFilter(
+                embeddings=EMBEDDING_FUNCTION,
+                similarity_threshold=CHAT_EMBEDDING_FILTER_SCORE_THRESHOLD
+            )
+
+            pipeline_compressor = DocumentCompressorPipeline(
+                transformers=[splitter, embeddings_filter]
+            )
             compression_retriever = ContextualCompressionRetriever(
                 base_compressor=pipeline_compressor, base_retriever=retriever
             )
@@ -443,10 +446,11 @@ def get_neo4j_retriever(graph, document_names,chat_mode_settings, score_threshol
         # document_names= list(map(str.strip, json.loads(document_names)))
         search_k = chat_mode_settings["top_k"]
         ef_ratio = get_value_from_env("EFFECTIVE_SEARCH_RATIO", 5, "int")
-        # P1-a: チャンク単位リランク（Chunk を索引にするモードのみ。entity_vector / community は従来どおり）
+        # チャンク単位リランク（Chunk を索引にするモードのみ。entity_vector / community は従来どおり）
         if rerank_enabled() and chat_mode_settings.get("node_label") == "Chunk":
-            retriever = make_rerank_retriever(neo_db, graph, chat_mode_settings, document_names, neo_db.embedding, score_threshold)
-            logging.info(f"Rerank retriever enabled: candidate_k={retriever.candidate_k}, top_n={retriever.top_n}, budget={retriever.char_budget}")
+            retriever = make_rerank_retriever(neo_db, graph, chat_mode_settings, document_names)
+            s = retriever.settings
+            logging.info(f"Rerank retriever enabled: candidate_k={s['candidate_k']}, top_n={s['rerank_top_n']}, budget={s['char_budget']}")
             return retriever
         retriever = create_retriever(neo_db, document_names,chat_mode_settings, search_k, score_threshold,ef_ratio)
         return retriever
@@ -712,6 +716,15 @@ def create_neo4j_chat_message_history(graph, session_id, write_access=True):
         logging.error(f"Error creating Neo4jChatMessageHistory: {e}")
         raise 
 
+def chat_mode_settings_with_retrieval(mode, retrieval_settings):
+    """方式の設定の写し（共有の設定辞書を書き換えない）に、検索設定を載せて返す。
+    検索設定は backend の設定 < 方式の既定値（retrieval_defaults） < 画面の上書き（retrieval_settings。JSON の文字列か辞書）の順に重ねる。"""
+    chat_mode_settings = dict(get_chat_mode_settings(mode=mode))
+    chat_mode_settings["retrieval_settings"] = resolve_retrieval_settings(parse_retrieval_settings(retrieval_settings),
+                                                                         mode_defaults=chat_mode_settings.get("retrieval_defaults"))
+    return chat_mode_settings
+
+
 def get_chat_mode_settings(mode,settings_map=CHAT_MODE_CONFIG_MAP):
     default_settings = settings_map[CHAT_DEFAULT_MODE]
     try:
@@ -743,17 +756,7 @@ def QA_RAG(graph, model, question, document_names, session_id, mode, write_acces
     if mode == CHAT_GRAPH_MODE:
         result = process_graph_response(model, graph, question, messages, history, session_id)
     else:
-        # 共有の設定辞書を書き換えないよう写しを作り、画面から来た検索設定を載せる
-        chat_mode_settings = dict(get_chat_mode_settings(mode=mode))
-        overrides = retrieval_settings
-        if isinstance(overrides, str):
-            try:
-                overrides = json.loads(overrides) if overrides.strip() else None
-            except json.JSONDecodeError:
-                logging.warning(f"retrieval_settings is not valid JSON; using defaults: {overrides[:200]}")
-                overrides = None
-        chat_mode_settings["retrieval_settings"] = resolve_retrieval_settings(overrides if isinstance(overrides, dict) else None,
-                                                                             mode_defaults=chat_mode_settings.get("retrieval_defaults"))
+        chat_mode_settings = chat_mode_settings_with_retrieval(mode, retrieval_settings)
         document_names= list(map(str.strip, json.loads(document_names)))
         if document_names and not chat_mode_settings["document_filter"]:
             result =  {

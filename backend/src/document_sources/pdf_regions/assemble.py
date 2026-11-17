@@ -1,22 +1,10 @@
 """1 ページの組み立て: Nemotron Parse の領域（構造と読み順）と、文字層（本文の文字）を合わせて、行の並びにする。
 
     本文・見出し系の領域  領域の中の文字層。文字層の無い領域だけ Nemotron Parse の文字
-    表                    Nemotron Parse の表の構造（行・列）で GFM のパイプ表に。セルの文字は文字層に寄せる
-                          （字の並びを文字層と突き合わせ、1 字ずつ対応する読み違い「室化→窒化」を文字層の字に直す）。ただし
-                          ・領域の面積が送った画像の 6 割を超える表は、枠などの取り違えとみなし、文字層の段落として読む
-                          ・Nemotron Parse の字数が領域の文字層の 7 割未満なら、取りこぼしとみなし、文字層の行に戻す
-                          ・Nemotron Parse の字の半分以上が文字層に無い表（グラフを表に直して値を作った例）は、図として扱う
-                          ・寄せた後も表の字の 2 割を超えて文字層に無い字が残る表は、読み誤りとみなし、文字層の行に戻す
-                          ・領域の文字層の行のかけらに、表のセルのどれにも突き合わないものがある表は、行の欠けとみなし、
-                            文字層の行に戻す（unmatched_pieces。字間の空いた 1 字の並び「部 品 名」は 1 語につなぐ）
-                          ・文字層の行を表の行に順を保って対応させ、対応した表の行のセルに無い語がある表は、列の落ちや値の
-                            移った読み違いとみなし、文字層に戻す（row_mismatches。行ごとの整合）
-                          文字層に戻した表は、罫線があれば線分から欄を求めた GFM の表、無ければかけらを「 | 」で区切った行に
-                          する（_layer_table、tablegrid.py）。来歴の記録の表は文書層の規則が読む本文の行のまま
-                          字数と字の照合は、結合セル（multicolumn・multirow・colspan・rowspan）の中身を 1 回だけ数える
-    図・グラフ            既定の PDF_REGIONS_FIGURES=text は VLM を呼ばず、図の範囲の文字層を「図中の文字: …」として残す。
-                          describe なら E4B で種類を判定し、図・グラフだけ 26B で説明する（「（図の説明・自動生成）」の印を付けた
-                          段落）。写真・印影・ロゴは題（Caption の領域）だけ。off なら何も出さない。
+    表                    Nemotron Parse の表の構造（行・列）で GFM のパイプ表に。セルの文字は文字層に寄せる（align_cells）。
+                          表として信用できないもの（取り違え・取りこぼし・作った値・読み誤り・行の欠け・行ごとの不整合）は
+                          文字層に戻すか図として扱う（規則の一覧は _table）
+    図・グラフ            図の範囲の文字層を「図中の文字: …」として残す（VLM は呼ばない）。題は Caption の領域として別に出る。
                           図の範囲の中か直下にある番号の見出し（3-1.サージ誤差計算）の下の、文・式・定義の行は、図中の文字に
                           入れず見出しの後ろの本文にする（_figure_zones）
     柱・ノンブル          捨てる。ただし番号の見出しの形の 1 行（本文の欄の上端の「5-13 コンプレッサケーシング…」を柱と判定した
@@ -33,22 +21,19 @@
 from __future__ import annotations
 
 import difflib
-import io
-from collections import Counter
-import logging
 import re
+from collections import Counter
 import unicodedata
 from dataclasses import dataclass, field
 from typing import Optional
 
 from .frame import Frame, grid_rows
-from .frame import COMPANY, STAMP_LINE, nfkc
+from .frame import COMPANY, STAMP_LINE, flat_nfkc, nfkc
 from .headings import (DOC_NUMBER, DOTTED, PAGE_NUMBER, FigureText, Line, escape_body_line, header_annex, header_notes,
                        heading_number_line, normalize_text)
 from .nemotron import place, plain_text, table_rows
 from .tablegrid import ruled_grid
-from .textlayer import TextLayer, paragraph_text
-from .vlm import FIGURE_MARK, FigureReader
+from .textlayer import TextLayer, paragraph_text, split_by_gap
 
 from ..number_headings import ITEM, NUMBERED, SECTION, SUBITEM, _is_heading_title
 
@@ -61,9 +46,9 @@ HEADER_BAND = 0.15          # 付属のラベルを探すページ上端の帯
 TL_MIN_CHARS = 10           # 表の字数を比べるのに要る文字層の字数
 TABLE_MISREAD_SHARE = 0.2   # 文字層に寄せた後も、表の字のうち文字層に無い字がこの割合を超えれば、表を文字層の行に戻す
 REGION_PAD = 1.5            # 領域に文字を割り当てるときの余白（TextLayer.assign と同じ）
-STAMP_GAP = 2.0             # 改正の印をかけらに切る字間（字の大きさに対する倍率。frame._pieces と同じ）
+BIG_TABLE_AREA = 0.6        # 送った画像に対する面積がこれを超える表は、枠などの取り違えとみなし文字層の段落として読む
+TABLE_MIN_COVERAGE = 0.7    # Nemotron Parse の表の字数が領域の文字層の字数のこの割合に満たなければ、取りこぼしとみなし文字層に戻す
 NUMBERED_CAPTION = re.compile(r"^\s*\d{1,2}(?:[-.．]\d{1,2})+\s*[.．]?\s*\D|^\s*\d{1,2}[.．]\s*[^\d\s]")
-PIECE_GAP = 2.0             # 見た目の行をかけら（表のセル・横に並んだ別の欄）に切る字間（字の大きさに対する倍率）
 MISSING_MIN_CHARS = 4       # 表に無いとみなすかけらの、セルと突き合わない字の最小の数（縦書きの 1 字・記号・1 字の読み違いでは数えない）
 MISSING_SHARE = 0.5         # かけらの字のうち、セルと突き合わない字がこの割合以上なら、表に無いかけらとみなす
 SPACED_GAP = 2.0            # 字間の空いた 1 字の語（「部 品 名」）を 1 語につなぐ字間の上限（字の大きさに対する倍率）
@@ -105,7 +90,6 @@ def _chars(text: str) -> str:
 
 def _bag_precision(nem: str, tl: str) -> float:
     """Nemotron Parse の字のうち、文字層にもある字の割合（字の多重集合で数える）"""
-    from collections import Counter
     a, b = Counter(nem), Counter(tl)
     if not a:
         return 1.0
@@ -125,26 +109,17 @@ def to_gfm(grid) -> list:
     return out
 
 
-def _crop_png(png: bytes, bbox, pad: float = 0.005) -> bytes:
-    from PIL import Image
-    with Image.open(io.BytesIO(png)) as img:
-        img = img.convert("RGB")
-        w, h = img.size
-        x0, y0, x1, y1 = bbox
-        box = (max(0, int((x0 - pad) * w)), max(0, int((y0 - pad) * h)), min(w, int((x1 + pad) * w) + 1),
-               min(h, int((y1 + pad) * h) + 1))
-        crop = img.crop(box)
-        buf = io.BytesIO()
-        crop.save(buf, format="PNG")
-        return buf.getvalue()
+# 点線（リーダー）だけの行
+_DOTS_LINE = re.compile(r"^[\s・･.．…‥\-‐－—―_]+$")
 
 
-# 本文に入れない行: 点線（リーダー）だけの行、「改正番号 2」などの改正の印（frame_pages.STAMP_LINE と同じ）
-_NOISE_LINE = re.compile(r"^[\s・･.．…‥\-‐－—―_]+$|^\s*(改正番号\s*\d*|改\s*正)\s*$")
+def _noise_line(text: str) -> bool:
+    """本文に入れない行: 点線だけの行と、「改正番号 2」などの改正の印（frame.STAMP_LINE）"""
+    return bool(_DOTS_LINE.match(text) or STAMP_LINE.match(text))
 
 
 def _text_lines(text: str, hint: bool = False) -> list:
-    return [Line(t, hint=hint) for t in normalize_text(text).split("\n") if t.strip() and not _NOISE_LINE.match(t)]
+    return [Line(t, hint=hint) for t in normalize_text(text).split("\n") if t.strip() and not _noise_line(t)]
 
 
 def _final(text: str, annex: bool = False, heading: bool = False, root: bool = False) -> Line:
@@ -177,19 +152,12 @@ def _pool(page: PageInput) -> list:
 
 def _drop_stamps(layer: TextLayer, indices) -> list:
     """改正の印（「改正番号 6」「改 正」）の字を外す。書き順で続く同じ高さの字を、大きな字間で切ったかけらごとに見る
-    （frame_pages.STAMP_LINE と同じ。印は本文の欄の右端に置かれ、見た目の行では本文の行の末尾に並ぶ）"""
+    （印は本文の欄の右端に置かれ、見た目の行では本文の行の末尾に並ぶ）"""
     drop = set()
     for seg in layer.segments(indices):
-        groups, cur = [], [seg[0]]
-        for a, b in zip(seg, seg[1:]):
-            ca, cb = layer.reading_char(a), layer.reading_char(b)
-            if cb.x0 - ca.x1 > STAMP_GAP * max(ca.size, 1.0):
-                groups.append(cur)
-                cur = []
-            cur.append(b)
-        groups.append(cur)
-        for g in groups:
-            flat = re.sub(r"\s+", "", nfkc("".join(layer.chars[k].c for k in g)))
+        for group in split_by_gap([layer.reading_char(k) for k in seg], pair_size=False):
+            g = [c.i for c in group]
+            flat = flat_nfkc("".join(layer.chars[k].c for k in g))
             if flat and STAMP_LINE.match(flat):
                 drop.update(g)
     return [k for k in indices if k not in drop] if drop else list(indices)
@@ -240,8 +208,7 @@ def fallback_page(page: PageInput, reason: str = "") -> PageOutput:
                       stats={"kind": page.frame.kind, "fallback": True, "reason": reason})
 
 
-def assemble_page(page: PageInput, blocks, reader: Optional[FigureReader], figures: str = "text",
-                  own_keys=frozenset(), big_table_area: float = 0.6, table_min_coverage: float = 0.7) -> PageOutput:
+def assemble_page(page: PageInput, blocks, own_keys=frozenset()) -> PageOutput:
     if page.frame.kind == "grid" and page.label:
         return grid_page(page)
     if blocks is None:
@@ -253,7 +220,7 @@ def assemble_page(page: PageInput, blocks, reader: Optional[FigureReader], figur
     vw, vh = vx1 - vx0, vy1 - vy0
     stats = {"kind": page.frame.kind, "regions": len(blocks), "tables": 0, "tables_gfm": 0, "tables_to_text": 0,
              "tables_grid": 0, "tables_pieces": 0,
-             "figures": 0, "triaged": 0, "described": 0, "vlm_errors": 0, "orphan_chars": 0, "fallback": False}
+             "figures": 0, "orphan_chars": 0, "fallback": False}
 
     def to_page(b):
         return (vx0 + b[0] * vw, vy0 + b[1] * vh, vx0 + b[2] * vw, vy0 + b[3] * vh)
@@ -291,16 +258,15 @@ def assemble_page(page: PageInput, blocks, reader: Optional[FigureReader], figur
                 continue
         if cls == "Table":
             stats["tables"] += 1
-            part = _table(page, b, rect, idx, big_table_area, table_min_coverage, stats)
+            part = _table(page, b, rect, idx, stats)
             if part == "figure":
-                part = _figure(page, blocks, i, b, rect, idx, reader, figures, stats)
+                part = _figure(page, idx, stats)
             if part:
                 parts.append({"y": rect[1], "lines": part, "cls": cls, "i": i})
             continue
         if cls in FIGURE_CLASSES:
             zone = zones.get(i)
-            part = _figure(page, blocks, i, b, rect, idx, reader, figures, stats,
-                           zone if zone is not None and zone.internal else None)
+            part = _figure(page, idx, stats, zone if zone is not None and zone.internal else None)
             if part:
                 parts.append({"y": rect[1], "lines": part, "cls": cls, "i": i})
             if zone is not None and not zone.internal:
@@ -310,7 +276,7 @@ def assemble_page(page: PageInput, blocks, reader: Optional[FigureReader], figur
             continue
         # 本文・見出し系（未知の区分も本文として扱う）。Nemotron Parse の文字は、範囲に文字層の字が無い領域だけ
         if idx:
-            text = layer.text(idx, reflow=True, right=rect[2])
+            text = layer.text(idx, reflow=True)
         elif _layer_count(layer, rect) == 0:
             text = plain_text(b.text)
         else:
@@ -445,18 +411,31 @@ def _settle_line_pieces(layer, blocks, pool, assigned, orphans):
         (orphans if o == -1 else assigned[o]).append(k)
 
 
-def _table(page, b, rect, idx, big_table_area, table_min_coverage, stats):
-    """表の領域を行の並びにする。図として扱うべき表なら "figure" を返す"""
+def _table(page, b, rect, idx, stats):
+    """表の領域を行の並びにする。図として扱うべき表なら "figure" を返す。
+
+    セルの文字は文字層に寄せる（align_cells。1 字ずつ対応する読み違い「室化→窒化」を文字層の字に直す）。ただし
+        ・領域の面積が送った画像の BIG_TABLE_AREA を超える表は、枠などの取り違えとみなし、文字層の段落として読む
+        ・Nemotron Parse の字の半分以上が文字層に無い表（グラフを表に直して値を作った例）は、図として扱う
+        ・Nemotron Parse の字数が領域の文字層の TABLE_MIN_COVERAGE 未満なら、取りこぼしとみなし、文字層に戻す
+        ・寄せた後も表の字の TABLE_MISREAD_SHARE を超えて文字層に無い字が残る表は、読み誤りとみなし、文字層に戻す
+        ・領域の文字層の行のかけらに、表のセルのどれにも突き合わないものがある表は、行の欠けとみなし、文字層に戻す
+          （unmatched_pieces）
+        ・文字層の行を表の行に順を保って対応させ、対応した表の行のセルに無い語がある表は、列の落ちや値の移った読み違いと
+          みなし、文字層に戻す（row_mismatches）
+    文字層に戻した表は _layer_table で組み立てる。字数と字の照合は、結合セルの中身を 1 回だけ数える。
+    """
     layer = page.layer
     bx0, by0, bx1, by1 = b.bbox
     img_share = max(0.0, bx1 - bx0) * max(0.0, by1 - by0)
-    tl_text = layer.text(idx, reflow=False) if idx else ""
+    lines = layer.lines(idx) if idx else []
+    tl_text = paragraph_text(lines, reflow=False)
     in_rect = _layer_count(layer, rect)
-    if img_share > big_table_area:
+    if img_share > BIG_TABLE_AREA:
         # 枠やページ全体を 1 つの表にした取り違え。文字層の段落として読む
         stats["tables_to_text"] += 1
         if idx:
-            return _text_lines(layer.text(idx, reflow=True, right=rect[2]))
+            return _text_lines(paragraph_text(lines, reflow=True))
         return _text_lines(plain_text(b.text)) if in_rect == 0 else []
     rows = table_rows(b.text)
     cells = [c for row in (rows or []) for c, _colspan, _rowspan in row]
@@ -465,26 +444,27 @@ def _table(page, b, rect, idx, big_table_area, table_min_coverage, stats):
     if len(tl) >= TL_MIN_CHARS:
         if nem and _bag_precision(nem, tl) < 0.5:
             return "figure"
-        if not rows or len(nem) < table_min_coverage * len(tl):
+        if not rows or len(nem) < TABLE_MIN_COVERAGE * len(tl):
             stats["tables_to_text"] += 1
-            return _layer_table(page, rect, idx, stats)
+            return _layer_table(page, rect, idx, lines, tl_text, stats)
         rows, absent = align_cells(rows, tl)
         if absent > TABLE_MISREAD_SHARE:
             stats["tables_to_text"] += 1
             stats["tables_misread"] = stats.get("tables_misread", 0) + 1
-            return _layer_table(page, rect, idx, stats)
-        if unmatched_pieces(layer, idx, rows):
+            return _layer_table(page, rect, idx, lines, tl_text, stats)
+        cut = cut_lines(layer, lines)
+        if unmatched_pieces(layer, cut, rows):
             # 表の行の欠け（来歴の表で「・2-3項の確認用を判定用に変更」の行が無い。字数は 7 割を超えるので上の規則では
             # 見つからない）。欠けた行を補うには行と列の位置を推し量る必要があるので、表を文字層に戻す
             stats["tables_to_text"] += 1
             stats["tables_missing_rows"] = stats.get("tables_missing_rows", 0) + 1
-            return _layer_table(page, rect, idx, stats)
-        if row_mismatches(layer, idx, rows):
+            return _layer_table(page, rect, idx, lines, tl_text, stats)
+        if row_mismatches(lines, cut, rows):
             # 行ごとの整合が取れない（文字層の行の語が、その行に対応する表の行のセルに無い）。列を落として値が別の列に
             # 結び付いた表（材料試験成績表）や、別の行に同じ字の並びがある行の欠け（HS-RU-004E の部位①）。表を文字層に戻す
             stats["tables_to_text"] += 1
             stats["tables_row_mismatch"] = stats.get("tables_row_mismatch", 0) + 1
-            return _layer_table(page, rect, idx, stats)
+            return _layer_table(page, rect, idx, lines, tl_text, stats)
         if absent:
             # 寄せきれなかった字（縦書きの欄など、文字層の並びが表と違う所の読み違い）。評価で見られるように数える
             stats["table_cells_unverified"] = stats.get("table_cells_unverified", 0) + 1
@@ -502,8 +482,8 @@ HISTORY_RECORD = re.compile(r"(?m)^\s*[0-9A-Z]\s*改\s*[正訂]\s*[:：]?\s*(?:'
                             r"|[HSR]\s*\d{1,2}\s*[./．]\s*\d{1,2}\s*[./．]\s*\d{1,2})")
 
 
-def _layer_table(page, rect, idx, stats) -> list:
-    """Nemotron Parse の表を捨てた表を、文字層から組み立てる（2026-11-09 の手直し 3）。
+def _layer_table(page, rect, idx, lines, plain, stats) -> list:
+    """Nemotron Parse の表を捨てた表を、文字層から組み立てる。lines は領域の文字層の見た目の行、plain はその文字列。
 
     表の領域に罫線があれば、線分から欄を求めて文字を欄に割り当てた GFM の表にする（tablegrid.ruled_grid。罫線の範囲の外の行は
     表の前後に置く）。罫線が無ければ、見た目の行ごとに、大きな字間で切ったかけらの間を「 | 」で区切る（かけらが 1 つの行は
@@ -511,7 +491,6 @@ def _layer_table(page, rect, idx, stats) -> list:
     来歴の記録の表（HISTORY_RECORD）は、文書層の規則が読む形のまま本文の行にする。
     """
     layer = page.layer
-    plain = layer.text(idx, reflow=False) if idx else ""
     if HISTORY_RECORD.search(nfkc(plain)):
         # 来歴の記録の表（「C改正 02.08.19 一部見直し 担当 …」）は今までどおりの本文の行にする。文書層の規則（parse_history）が
         # 「版の記号＋改正＋日付」の続いた行から版と日付を読むので、「 | 」や表の欄で区切ると読めなくなる（VTR-T003D の 4. 基準来歴）
@@ -526,31 +505,26 @@ def _layer_table(page, rect, idx, stats) -> list:
         return out + [ln for t in after for ln in _text_lines(t)]
     stats["tables_pieces"] = stats.get("tables_pieces", 0) + 1
     out = []
-    for ln in layer.lines(idx):
+    for ln in lines:
         pieces = [t for t in (layer.text(p, reflow=False).strip() for p in line_pieces(layer, ln)) if t]
         if len(pieces) > 1:
             text = normalize_text(" | ".join(pieces))
-            if text.strip() and not _NOISE_LINE.match(text):
+            if text.strip() and not _noise_line(text):
                 out.append(_final(text))
         else:
             out += _text_lines(" ".join(pieces))
     return out
 
 
-def line_pieces(layer: TextLayer, ln, gap: float = PIECE_GAP) -> list:
-    """見た目の行を、大きな字間（字の大きさの gap 倍）で切ったかけら（文字の通し番号の並び、左から右）にする"""
-    ks = sorted(ln.indices, key=lambda k: layer.reading_char(k).x0)
-    if not ks:
-        return []
-    out, cur = [], [ks[0]]
-    for a, b in zip(ks, ks[1:]):
-        ca, cb = layer.reading_char(a), layer.reading_char(b)
-        if cb.x0 - ca.x1 > gap * max(min(ca.size, cb.size), 1.0):
-            out.append(cur)
-            cur = []
-        cur.append(b)
-    out.append(cur)
-    return out
+def line_pieces(layer: TextLayer, ln) -> list:
+    """見た目の行を、大きな字間（textlayer.split_by_gap）で切ったかけら（文字の通し番号の並び、左から右）にする"""
+    chars = sorted((layer.reading_char(k) for k in ln.indices), key=lambda c: c.x0)
+    return [[c.i for c in piece] for piece in split_by_gap(chars)]
+
+
+def cut_lines(layer: TextLayer, lines) -> list:
+    """見た目の行ごとに、かけら（line_pieces）とその語（piece_words）の組の並びにする。unmatched_pieces と row_mismatches が使う"""
+    return [[(piece, piece_words(layer, piece)) for piece in line_pieces(layer, ln)] for ln in lines]
 
 
 def _word_chars(text: str) -> str:
@@ -587,8 +561,9 @@ def piece_words(layer: TextLayer, piece) -> list:
     return [t for t, _single, _last in out]
 
 
-def unmatched_pieces(layer: TextLayer, idx, rows) -> list:
-    """表の領域の文字層の行を大きな字間でかけら（セル）に切り、表のセルのどれにも突き合わないかけらの文字列を返す。
+def unmatched_pieces(layer: TextLayer, cut, rows) -> list:
+    """表の領域の文字層の行を大きな字間でかけら（セル）に切ったもの（cut_lines）のうち、表のセルのどれにも突き合わない
+    かけらの文字列を返す。
 
     突き合わせは、かけらを語（piece_words。字間の空いた 1 字の並びは 1 語）ごとに、2 字の並び（文字と数字だけ。_word_chars）で見る。
     語の字のうち、セルをつないだ字の並びにある 2 字の並びに掛からない字を数え、かけら全体で MISSING_MIN_CHARS 字以上、かつかけらの字の
@@ -598,11 +573,10 @@ def unmatched_pieces(layer: TextLayer, idx, rows) -> list:
     cells = "".join(_word_chars(cell) for row in rows for cell, _cs, _rs in row)
     pairs = {cells[k:k + 2] for k in range(len(cells) - 1)}
     out = []
-    for ln in layer.lines(idx):
-        for piece in line_pieces(layer, ln):
-            text = layer.text(piece, reflow=False)
+    for line_cut in cut:
+        for piece, piece_word_list in line_cut:
             total = missing = 0
-            for word in piece_words(layer, piece):
+            for word in piece_word_list:
                 flat = _word_chars(word)
                 total += len(flat)
                 if len(flat) < MISSING_MIN_CHARS:
@@ -613,7 +587,7 @@ def unmatched_pieces(layer: TextLayer, idx, rows) -> list:
                         covered[k] = covered[k + 1] = True
                 missing += covered.count(False)
             if missing >= MISSING_MIN_CHARS and missing >= MISSING_SHARE * total:
-                out.append(text)
+                out.append(layer.text(piece, reflow=False))
     return out
 
 
@@ -640,7 +614,7 @@ def _covered(word: str, pairs: set, singles: set) -> int:
     return sum(_hits(word, pairs, singles))
 
 
-def row_mismatches(layer: TextLayer, idx, rows, trace: Optional[list] = None) -> list:
+def row_mismatches(lines, cut, rows) -> list:
     """表の行ごとの整合: 文字層の見た目の行が、表のどの行から来たかを決め、その行のセルに無い語を返す。
 
     表の行（展開前のセルの行。multirow のセルは下の行にも数える）ごとに、セルの字（_word_chars。O と 0、I・l と 1 はそろえる）の
@@ -651,8 +625,8 @@ def row_mismatches(layer: TextLayer, idx, rows, trace: Optional[list] = None) ->
     ものとみなして数えない）の字が、文字層の 1 行で MISSING_MIN_CHARS 字以上あれば、その行を返す。
     表全体の字の並びで見る unmatched_pieces では、別の行に同じ字の並びがある欠け（HS-RU-004E の部位①の「≦１（合計３以下）」は
     部位④の行にもある）や、値が隣の行に移った読み違い（材料試験成績表の「161 Pass」）が見つからない。
-    返り値は [(文字層の行の文字列, 対応させた表の行の番号, セルに無い語の並び)]。trace に並びを渡すと、対応させたすべての行の
-    (文字列, 表の行の番号, セルに無い字の数) を足す（調べるとき用）。
+    lines は文字層の見た目の行、cut はその行のかけらと語（cut_lines）。
+    返り値は [(文字層の行の文字列, 対応させた表の行の番号, セルに無い語の並び)]。
     """
     n = len(rows or [])
     if not n:
@@ -683,10 +657,9 @@ def row_mismatches(layer: TextLayer, idx, rows, trace: Optional[list] = None) ->
                     texts[rr].append(w)
     pairs = [{t[k:k + 2] for t in ts for k in range(len(t) - 1)} for ts in texts]
     singles = [set("".join(ts)) for ts in texts]
-    lines = layer.lines(idx)
     words, score = [], []
-    for ln in lines:
-        ws = [w for piece in line_pieces(layer, ln) for w in (_row_words(t) for t in piece_words(layer, piece)) if w]
+    for line_cut in cut:
+        ws = [w for _piece, piece_word_list in line_cut for w in (_row_words(t) for t in piece_word_list) if w]
         words.append(ws)
         score.append([sum(_covered(w, pairs[r], singles[r]) for w in ws) for r in range(n)])
     # best[i][r]: 文字層の行 0..i-1 を、表の行 r 以下に順を保って対応させたときの合計の最大
@@ -764,8 +737,6 @@ def row_mismatches(layer: TextLayer, idx, rows, trace: Optional[list] = None) ->
             missing, lost, used = missing_in(li, r, left[r])
             assigned[li] = r
         left[r] -= used
-        if trace is not None:
-            trace.append((lines[li].text, r, missing))
         if missing >= MISSING_MIN_CHARS:
             out.append((lines[li].text, r, lost))
     return out
@@ -809,10 +780,6 @@ def _char_class(ch: str) -> str:
 def _plain_segment(text: str) -> bool:
     """かな・漢字・数字を含まない部分（°C と ℃、IIS と ⅡS のような書き分け）"""
     return all(_char_class(c) in ("latin", "other") for c in text)
-
-
-def _has_digit(text: str) -> bool:
-    return any(c.isdigit() for c in text)
 
 
 def _repair_from_context(chars: list, tl: str, present: set) -> None:
@@ -993,14 +960,15 @@ def _figure_zones(page, blocks, rects, assigned, orphans) -> dict:
         return (min(c.x0 for c in cs), min(c.y0 for c in cs), max(c.x1 for c in cs), max(c.y1 for c in cs),
                 sorted(c.size for c in cs)[len(cs) // 2])
 
+    shared = None   # どの領域にも入らない字の行と、本文系の領域の最初の行（字を移したときだけ作り直す）
     for fi in figures:
         fx0, fy0, fx1, fy1 = rects[fi]
         cands = []      # (上端, 見出しのかけら, 行の全体, 出どころ, 領域の番号, 文字列, 字の大きさ, (左端, 右端))
-        sources = [("internal", fi, layer.lines(assigned[fi]))]
-        sources.append(("orphan", -1, layer.lines([k for k in orphans if k in margin_ok])))
-        for bj, bb in enumerate(blocks):
-            if bb.cls in TEXT_CLASSES and assigned[bj]:
-                sources.append(("block", bj, layer.lines(assigned[bj])[:1]))
+        if shared is None:
+            shared = [("orphan", -1, layer.lines([k for k in orphans if k in margin_ok]))]
+            shared += [("block", bj, layer.lines(assigned[bj])[:1]) for bj, bb in enumerate(blocks)
+                       if bb.cls in TEXT_CLASSES and assigned[bj]]
+        sources = [("internal", fi, layer.lines(assigned[fi]))] + shared
         for kind, owner, lines in sources:
             for ln in lines:
                 piece = first_piece(ln)
@@ -1048,83 +1016,27 @@ def _figure_zones(page, blocks, rects, assigned, orphans) -> dict:
             idx[:] = [k for k in idx if k not in taken]
         orphans[:] = [k for k in orphans if k not in taken]
         used |= taken
+        shared = None
         hint = kind == "block" and blocks[owner].cls in HEADING_CLASSES | {"Caption"}
         zones[fi] = Zone(head=htext, y=hy, body=body, internal=(kind == "internal"), hint=hint)
     return zones
 
 
-def _caption_for(page, blocks, i) -> str:
-    """図の直後（無ければ直前）の題の領域の文字"""
-    layer = page.layer
-    order = list(range(i + 1, min(i + 3, len(blocks)))) + list(range(i - 1, max(i - 3, -1), -1))
-    for j in order:
-        if blocks[j].cls == "Caption":
-            vx0, vy0, vx1, vy1 = page.view or (0, 0, layer.width, layer.height)
-            bb = blocks[j].bbox
-            rect = (vx0 + bb[0] * (vx1 - vx0), vy0 + bb[1] * (vy1 - vy0), vx0 + bb[2] * (vx1 - vx0), vy0 + bb[3] * (vy1 - vy0))
-            text = layer.text(layer.ink_indices(rect, pad=1.0)) or plain_text(blocks[j].text)
-            return normalize_text(text).replace("\n", " ").strip()[:80]
-    return ""
+def _figure(page, idx, stats, zone: Optional[Zone] = None):
+    """図・グラフの領域。範囲の文字層を図中の文字の行にする。見出しの番号で始まる行（グラフの範囲に呑まれた「3-1.サージ誤差計算」）は
+    見出しの候補として先に出す。
 
-
-def _figure(page, blocks, i, b, rect, idx, reader, figures, stats, zone: Optional[Zone] = None):
-    """図・グラフの領域。見出しの番号で始まる行（グラフの範囲に呑まれた「3-1.サージ誤差計算」）は見出しの候補として先に出す。
-
-    候補は strict の行にする（render_lines で、その章が文書にあるときだけ見出しになる）。見出しにならなかった候補は、
-    図中の文字を出す扱いなら図中の文字の頭に戻し、出さない扱い（off・写真・ロゴ）なら捨てる。
-    zone（図の範囲の文字から取った見出しと、その下の文・式・定義の行。_figure_zones）があれば、その見出しの候補と本文の行を
-    いちばん先に出す（本文の行は図の扱いによらず残す）。
+    候補は strict の行にする（render_lines で、その章が文書にあるときだけ見出しになる）。見出しにならなかった候補は
+    図中の文字の頭に戻す。zone（図の範囲の文字から取った見出しと、その下の文・式・定義の行。_figure_zones）があれば、
+    その見出しの候補と本文の行をいちばん先に出す。
     """
     stats["figures"] += 1
-    layer = page.layer
-    lines = layer.lines(idx)
     head, rest = [], []
-    for ln in lines:
+    for ln in page.layer.lines(idx):
         (head if _is_heading_number_line(ln.text) else rest).append(ln)
     fig_text = FigureText(" ".join(normalize_text(ln.text) for ln in rest).strip())
-    fig_line = Line("", kind="figure", figure=fig_text)
-    zone_body = _text_lines("\n".join(zone.body)) if zone is not None else []
-
-    def candidates(target):
-        out = []
-        if zone is not None:
-            out = [Line(normalize_text(zone.head), hint=True, strict=True, figure=target)] + zone_body
-        return out + [Line(normalize_text(ln.text), hint=True, strict=True, figure=target) for ln in head]
-
-    if figures == "off":
-        return candidates(None)
-    if figures != "describe" or reader is None or not page.png:
-        return candidates(fig_text) + [fig_line]
-    try:
-        crop = _crop_png(page.png, b.bbox)
-        kind, action = reader.triage(crop, b.cls)
-        stats["triaged"] += 1
-    except Exception as error:
-        logging.warning("pdf_regions: figure triage failed on page %d (%s); keeping the text inside the figure", page.number, error)
-        stats["vlm_errors"] += 1
-        return candidates(fig_text) + [fig_line]
-    if action == "図として説明する":
-        out = candidates(fig_text)
-        try:
-            desc = reader.describe(crop, kind, _caption_for(page, blocks, i))
-            stats["described"] += 1
-        except Exception as error:
-            logging.warning("pdf_regions: figure description failed on page %d (%s)", page.number, error)
-            stats["vlm_errors"] += 1
-            desc = ""
-        if desc:
-            # 印は全角の括弧のまま（正規化で半角にしない）
-            out.append(Line(FIGURE_MARK + normalize_text(desc), kind="final"))
-        return out + [fig_line]
-    zone_plain = ([Line(normalize_text(zone.head), hint=True)] + zone_body) if zone is not None else []
-    if action == "本文として読む":
-        # 図ではなかった領域。範囲の文字層を本文として読む（見出しの番号の行も本文の行として番号の規則に掛ける）
-        if idx:
-            return zone_plain + _text_lines(layer.text(idx, reflow=True, right=rect[2]))
-        if _layer_count(layer, rect) == 0 and zone is None:
-            return _text_lines(plain_text(b.text))
-        return zone_plain   # 範囲の字は他の領域に入って出力済み
-    if action == "表として書き起こす":
-        return zone_plain + [Line(normalize_text(ln.text)) for ln in head] + [_final(normalize_text(ln.text)) for ln in rest]
-    # キャプションだけ残す・捨てる（写真・印影・ロゴ）。題は Caption の領域として別に出る
-    return candidates(None)
+    out = []
+    if zone is not None:
+        out = [Line(normalize_text(zone.head), hint=True, strict=True, figure=fig_text)] + _text_lines("\n".join(zone.body))
+    out += [Line(normalize_text(ln.text), hint=True, strict=True, figure=fig_text) for ln in head]
+    return out + [Line("", kind="figure", figure=fig_text)]

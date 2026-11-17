@@ -783,7 +783,8 @@ def test_m10_merge_duplicate_rows_replaces_old_merge(graph, run):
     first = w.entity("Zzge M10 Pump", ["Part"], chunks=(0,), description="p")
     second = w.entity("Zzge M10 Pump 1", ["Part"], chunks=(1,))
     third = w.entity("Zzge M10 Pump 2", ["Part"], chunks=(2,))
-    data = ops.merge_duplicate_rows(graph, json.dumps([{"firstElementId": first, "similarElementIds": [second, third]}]), USER)
+    data, _ = ops.merge_duplicate_rows_report(graph, json.dumps([{"firstElementId": first, "similarElementIds": [second, third]}]),
+                                              USER)
     assert data == [{"totalMerged": 3}]
     node = w.node("Zzge M10 Pump")
     assert sorted(node["chunks"]) == sorted(w.chunks) and node["props"]["description"] == "p"
@@ -1017,7 +1018,7 @@ def test_review_merge_duplicate_rows_skips_overlapping_rows(graph, run):
     def rows(*pairs):
         return json.dumps([{"firstElementId": eids[a], "similarElementIds": [eids[b] for b in bs]} for a, bs in pairs])
 
-    assert ops.merge_duplicate_rows(graph, rows(("A", "B"), ("B", "C"), ("D", "E")), USER) == [{"totalMerged": 4}]
+    assert ops.merge_duplicate_rows_report(graph, rows(("A", "B"), ("B", "C"), ("D", "E")), USER)[0] == [{"totalMerged": 4}]
     alive = {name for name in "ABCDE" if w.eid(f"Zzge MD {name}")}
     assert alive == {"A", "C", "D"}
     data, skipped = ops.merge_duplicate_rows_report(graph, rows(("F", "G"), ("G", "H"), ("I", "GJ")), USER)
@@ -1191,11 +1192,12 @@ def test_review_maintenance_jobs_hold_the_lease(graph, run, monkeypatch, tmp_pat
 
 def test_review_lease_heartbeat_and_long_wait(graph, run, monkeypatch):
     """[low a] 貸し出しは持っている間延長し続け、取れないときは 60 回で諦めずに待ち続ける。"""
-    from src.graph_edit import replay
+    from src.graph_edit import lease
     from src.graph_edit.ledger import ensure_schema
     ensure_schema(graph)
-    assert replay.LEASE_MAX_WAIT_SECONDS >= 600
-    with replay.hold_lease(graph, "zzge:heartbeat", heartbeat=0.2) as token:
+    assert lease.LEASE_MAX_WAIT_SECONDS >= 600
+    monkeypatch.setattr(lease, "LEASE_HEARTBEAT_SECONDS", 0.2)
+    with lease.hold_lease(graph, "zzge:heartbeat") as token:
         run("MATCH (l:__GraphLock__ {name: 'graph'}) SET l.lease_until = timestamp() + 1000")
         time.sleep(0.8)
         state = lock_state(run)
@@ -1214,13 +1216,13 @@ def test_review_lease_heartbeat_and_long_wait(graph, run, monkeypatch):
         sleeps.append(seconds)
         if len(sleeps) == 100:
             run("MATCH (l:__GraphLock__ {name: 'graph'}) SET l.lease_until = 0, l.lease_owner = null")
-    monkeypatch.setattr(replay.time, "sleep", fake_sleep)
+    monkeypatch.setattr(lease.time, "sleep", fake_sleep)
     try:
-        token = replay.acquire_lease(graph, "extract:zzge-wait")
+        token = lease.acquire_lease(graph, "extract:zzge-wait")
     finally:
         monkeypatch.undo()
     assert len(sleeps) == 100 and lease_holder(run) == token
-    replay.release_lease(graph, token)
+    lease.release_lease(graph, token)
 
 
 def test_default_user_falls_back_to_env_connection_user(monkeypatch):

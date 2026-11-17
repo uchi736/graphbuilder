@@ -8,7 +8,7 @@ pdfium を触るのは pdfpage.py だけで、このモジュールのデータ�
 行: 割り当てた文字を、文字の並び（PDF の書き順）で連続する部分ごとに切り、縦の位置が重なるものを 1 行にまとめ、
 行の中は左から右、行は上から下に並べる。書き順が見た目の順と違う PDF でも、行の単位では見た目の順になる。
 行の中のかけら（書き順で続く字）が横に入り組むとき（表の行で「Z-2 428 19」と「340」が別々に書かれ、340 が 428 より左にある）は、
-かけらを大きな字間で切り直して左から並べる（2026-11-09 の手直し 3。入り組まない行は今までどおり）。
+かけらを大きな字間で切り直して左から並べる（入り組まない行はかけらのまま）。
 字の向き: 字ごとに表示の向きでの字の並ぶ向き rot（0 右・90 下・180 左・270 上。pdfpage が字の行列から読む）を持つ。
 向きの違う字（横向きの付表の上に正立した柱、グラフの縦の軸の名前）は、その字の向きの座標（reading_char）で行にまとめる。
 段落: 行の右端が領域の右端近くまで達していれば折り返しとみなし、次の行をつなぐ（見た目の折り返しを改行にしない）。
@@ -86,7 +86,23 @@ _CONTINUES = re.compile(r"[ぁ-ゖ、，,（(［\[「・･.．]\s*$")
 
 
 _ASCII_ALNUM = re.compile(r"[0-9A-Za-z]")
-ROW_PIECE_GAP = 2.0     # 入り組んだ行のかけらを切り直す字間（字の大きさに対する倍率。assemble.PIECE_GAP と同じ）
+PIECE_GAP = 2.0         # 字の並びをかけら（表のセル・横に並んだ別の欄・改正の印）に切る字間（字の大きさに対する倍率）
+
+
+def split_by_gap(chars: Sequence["Char"], gap: float = PIECE_GAP, pair_size: bool = True) -> list:
+    """字の並び（並べた順）を、字間が字の大きさの gap 倍を超える所で切った、字の並びの並びにする。
+    字の大きさは、pair_size が真なら隣り合う 2 字の小さい方、偽なら左の字（1.0 pt を下限とする）"""
+    if not chars:
+        return []
+    out, cur = [], [chars[0]]
+    for a, b in zip(chars, chars[1:]):
+        size = min(a.size, b.size) if pair_size else a.size
+        if b.x0 - a.x1 > gap * max(size, 1.0):
+            out.append(cur)
+            cur = []
+        cur.append(b)
+    out.append(cur)
+    return out
 
 
 def _open_bracket(text: str) -> bool:
@@ -155,22 +171,6 @@ class TextLayer:
             return (360 - rot) % 360
         return 0
 
-    # ---- 作り方 ----
-    @classmethod
-    def from_lines(cls, width: float, height: float, lines: Iterable[tuple]) -> "TextLayer":
-        """試験用。(文字列, x0, y0, 文字の大きさ) の並びから、等幅の文字を並べた文字層を作る。行の終わりに補った改行を入れる。"""
-        chars, i = [], 0
-        for text, x0, y0, size in lines:
-            x = float(x0)
-            for c in text:
-                w = size if ord(c) > 0x2E7F else size * 0.55
-                chars.append(Char(i, c, x, y0, x + w, y0 + size, False, size))
-                x += w
-                i += 1
-            chars.append(Char(i, "\n", x, y0, x, y0 + size, True, 1.0))
-            i += 1
-        return cls(width, height, chars)
-
     # ---- 文字の選び出し ----
     def ink_indices(self, rect: Optional[Rect] = None, pad: float = 0.0) -> list:
         return [ch.i for ch in self.chars if ch.ink and (rect is None or inside(rect, ch.cx, ch.cy, pad))]
@@ -199,11 +199,8 @@ class TextLayer:
 
     # ---- 行と段落 ----
     def segments(self, indices: Sequence[int]) -> list:
-        """書き順で連続し、同じ高さにある文字の通し番号の並び（行のかけら）の並び"""
-        return self._segments(indices)
-
-    def _segments(self, indices: Sequence[int]) -> list:
-        """書き順で連続し、同じ高さにある文字の並び（行のかけら）。向きの違う字は別のかけらにし、高さはその字の向きの座標で比べる"""
+        """書き順で連続し、同じ高さにある文字の通し番号の並び（行のかけら）の並び。向きの違う字は別のかけらにし、
+        高さはその字の向きの座標で比べる"""
         segs, cur = [], []
         prev = None
         for k in sorted(indices):
@@ -240,18 +237,10 @@ class TextLayer:
                 "y0": min(c.y0 for c in cs), "y1": max(c.y1 for c in cs),
                 "size": sizes[len(sizes) // 2], "text": self._segment_text(seg)}
 
-    def _split_wide(self, s: dict, gap: float = ROW_PIECE_GAP) -> list:
-        """かけらを大きな字間（字の大きさの gap 倍）で切り直す"""
-        ks = s["idx"]
-        out, cur = [], [ks[0]]
-        for a, b in zip(ks, ks[1:]):
-            ca, cb = self.reading_char(a), self.reading_char(b)
-            if cb.x0 - ca.x1 > gap * max(min(ca.size, cb.size), 1.0):
-                out.append(cur)
-                cur = []
-            cur.append(b)
-        out.append(cur)
-        return [self._seg_info(part) for part in out] if len(out) > 1 else [s]
+    def _split_wide(self, s: dict) -> list:
+        """かけらを大きな字間（split_by_gap）で切り直す"""
+        out = split_by_gap([self.reading_char(k) for k in s["idx"]])
+        return [self._seg_info([c.i for c in part]) for part in out] if len(out) > 1 else [s]
 
     def lines(self, indices: Sequence[int]) -> list:
         """文字の通し番号の並びを、見た目の行（上から下、行の中は左から右）にする。
@@ -262,7 +251,7 @@ class TextLayer:
         if not indices:
             return []
         by_rot = {}
-        for seg in self._segments(indices):
+        for seg in self.segments(indices):
             by_rot.setdefault(self.chars[seg[0]].rot, []).append(self._seg_info(seg))
         out = []
         for rot, segs in by_rot.items():
@@ -315,17 +304,17 @@ class TextLayer:
                             size=sizes[len(sizes) // 2], indices=indices, rot=rot))
         return out
 
-    def text(self, indices: Sequence[int], reflow: bool = True, right: Optional[float] = None) -> str:
-        """文字の通し番号の並びを本文にする。reflow が真なら見た目の折り返しをつなぐ。right は領域の右端（無ければ行の右端の最大）"""
-        return paragraph_text(self.lines(indices), reflow=reflow, right=right)
+    def text(self, indices: Sequence[int], reflow: bool = True) -> str:
+        """文字の通し番号の並びを本文にする。reflow が真なら見た目の折り返しをつなぐ"""
+        return paragraph_text(self.lines(indices), reflow=reflow)
 
 
 _LEADER = re.compile(r"[・･.．…‥]{3,}")
 WRAP_MIN_CHARS = 16     # これより短い行は折り返しとみなさない（凡例・箇条の短い行をつながない）
 
 
-def paragraph_text(lines: Sequence[Line], reflow: bool = True, right: Optional[float] = None) -> str:
-    """行を段落にする。right は使わない（領域の枠は文字より広いことがあるので、行の右端の最大を領域の右端とする）"""
+def paragraph_text(lines: Sequence[Line], reflow: bool = True) -> str:
+    """行を段落にする。行の右端の最大を領域の右端とする（領域の枠は文字より広いことがあるので、枠の右端は使わない）"""
     if not lines:
         return ""
     edge = max(ln.x1 for ln in lines)

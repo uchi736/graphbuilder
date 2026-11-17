@@ -14,12 +14,10 @@
             参照先の文書は、一文か locator に文書番号があれば文書層の先（M2、via = standard。LLM が選んだ文書は使わない）、
             無ければ LLM が選んだチャンクの文書（via = number）。ただし locator が自分の文書を指す語で始まるとき
             （「上記2項」「前記3-1」「本基準の…」）は、一文に他の文書の番号があっても参照元の文書で解く（1 は使わない）
-         3. 番号が無いか解けない: LLM が選んだチャンクの主所属の節（via = chunk）。locator に番号があったのに解けなければ
-            unresolved_locator に locator を残す。一文の文書番号の文書と LLM が選んだ文書が違えば（同じ文書番号の別の版は同じとみなす）、
-            線を作らない。MERGE_LLM_TARGETS を有効にすると、1 つの参照（参照元・一文・位置の語）が同じ文書の複数のチャンクを指すとき、
-            それらを全部含む最も深い節 1 つにまとめる（承認済みの M1〜M6 の外の追加なので、既定は無効）。
-            11/10: LLM のリンクが参照先の節の一覧から節を選んで張られていれば（リレーションの target_sections）、
-            チャンクの主所属の節ではなく、その節を結び先にする（USE_LLM_SECTIONS、SECTION_LAYER_USE_LLM_SECTIONS=false で従来に戻る）
+         3. 番号が無いか解けない: LLM が選んだチャンクの主所属の節（via = chunk）。LLM のリンクが参照先の節の一覧から節を選んで
+            張られていれば（リレーションの target_sections）、チャンクの主所属の節ではなく、その節を結び先にする。
+            locator に番号があったのに解けなければ unresolved_locator に locator を残す。一文の文書番号の文書と LLM が選んだ文書が
+            違えば（同じ文書番号の別の版は同じとみなす）、線を作らない
   E10 (Chunk)-[:REFERS_TO {level: "section", via: "standard", method: "rule"}]->(Section)                            M3
        文書層の Document -REFERS_TO-> Standard の quotes に、文書番号の直後の番号（「HS-VTR-T001の3-5項」）があれば、
        その一文を本文に含むチャンクから、参照先の文書のその番号の節へ。E9 と同じ節なら 1 本にまとめる
@@ -33,11 +31,11 @@ import collections
 import hashlib
 import json
 import logging
-import os
 import re
 
-from src.shared.common_fn import execute_graph_query
+from src.shared.common_fn import batches, execute_graph_query
 from src import document_layer_rules as R
+from src.document_layer import chunk_rows
 
 METHOD = "rule"
 _HEADING_LINE = re.compile(r"^[ ]*#{1,6}[ ]*\S")
@@ -125,7 +123,6 @@ def _section_id(file_name, path):
 
 def _trim_title(text, limit=40):
     """目録の見出しの文字列（行の残り）から題名だけを取る。2 つ以上の空白・句点・「1)」などの箇条の始まりで切る。"""
-    import re
     t = R.nfkc(text or "").strip()
     # 2 つ以上の空白・句点・読点・次の項番号（「3-1 」）・箇条の始まり（「1) 」「a) 」）・ページの印（「 1 」）で切る
     t = re.split(r"\s{2,}|。|、|(?<=\S)\s(?=\d{1,2}-\d{1,2}\s)|(?<=\S)\s(?=\d{1,2}[.)）]\s*\S)|(?<=\S)\s(?=[a-z][.)）])|(?<=\S)\s(?=\d{1,3}\s)", t)[0].strip()
@@ -136,12 +133,13 @@ def _trim_title(text, limit=40):
     return t[:limit].strip(" -")
 
 
-def sections_from_catalogue(rows, cfg):
+def sections_from_catalogue(rows, cfg, memo=None):
     """参照抽出の規則（北野・天笠の 8 段の段 0 目録）が見つけた項番号の見出しから、文書ごとの節の表を作る。
     字数分割の文書（Markdown の見出しが無い）でも使える。
+    memo: 目録を文書層と共有する辞書（chunk_reference_rules.catalogue_of）
     返り値: sections {id: {...}}, chunk_sections {chunk_id: [(section_id, primary)]}"""
-    from src.chunk_reference_rules import Catalogue
-    cat = Catalogue([r for r in rows if r.get("text") is not None], ())
+    from src.chunk_reference_rules import catalogue_of
+    cat = catalogue_of([r for r in rows if r.get("text") is not None], memo)
     sections, chunk_sections = {}, {}
     forms = {1: "章", 2: "節", 3: "項", 4: "号"}
     # Markdown の経路にだけある「番号の無い最上位の見出し」（付属の用紙: 計測要領・合否判定方法・協議・通知票 など）を、
@@ -158,8 +156,8 @@ def sections_from_catalogue(rows, cfg):
             seen.add((r["fileName"], top))
             md_roots[r["fileName"]].append((r["position"], top))
     for name, D in cat.doc.items():
-        heads = sorted(D.heads, key=lambda h: (h[0], h[1]))   # (pos, off, scope, key, title)
-        heads = sorted(heads + [(pos, 0, "__md__:" + title, (), title) for pos, title in md_roots.get(name, [])], key=lambda h: (h[0], h[1]))
+        # (pos, off, scope, key, title) を位置の順に
+        heads = sorted(list(D.heads) + [(pos, 0, "__md__:" + title, (), title) for pos, title in md_roots.get(name, [])], key=lambda h: (h[0], h[1]))
         if not heads:
             continue
         # 範囲（scope）ごとの親ノード（main 以外: 添付資料・別表 2 など）
@@ -180,18 +178,21 @@ def sections_from_catalogue(rows, cfg):
             scope_root[scope] = sid
             return sid
         by_key = {}
+        head_sids = []   # 見出しごとの節の id（下でチャンクの所属の範囲を作るのに使う）
         for pos, off, scope, key, title in heads:
             if scope.startswith("__md__:"):
                 sid = _section_id(name, [title])
                 sections[sid] = {"id": sid, "fileName": name, "title": _trim_title(title), "path": [title], "level": 1, "form": "付属", "number": None,
                                  "control": R.is_control_heading(title, cfg), "parent": None, "first_position": pos, "offset": 0, "source": "markdown"}
                 current_md = {"sid": sid, "title": title}
+                head_sids.append(sid)
                 continue
             if scope == "main" and len(key) == 1:
                 current_md = {"sid": None, "title": None}   # 本文の章が始まったら付属の範囲は終わり
             root = root_of(scope)
             scope_tag = [current_md["title"]] if current_md["sid"] else ([scope] if scope != "main" else [])
             sid = _section_id(name, scope_tag + ["-".join(map(str, key))])
+            head_sids.append(sid)
             if sid in sections:
                 continue   # 同じ番号が 2 回出る（例の並記）: 先のものを採る
             parent = by_key.get((scope, key[:-1])) if len(key) > 1 else root
@@ -205,17 +206,9 @@ def sections_from_catalogue(rows, cfg):
                 sections[root]["first_position"] = pos
         # チャンクの所属: 見出しの位置で区切った範囲に重なる節すべて（primary は、チャンクの先頭を含む最も深い節）
         spans = []
-        current_md = {"sid": None, "title": None}
-        for i, (pos, off, scope, key, title) in enumerate(heads):
-            if scope.startswith("__md__:"):
-                sid = _section_id(name, [title]); current_md = {"sid": sid, "title": title}
-            else:
-                if scope == "main" and len(key) == 1:
-                    current_md = {"sid": None, "title": None}
-                scope_tag = [current_md["title"]] if current_md["sid"] else ([scope] if scope != "main" else [])
-                sid = _section_id(name, scope_tag + ["-".join(map(str, key))])
+        for i, (h, sid) in enumerate(zip(heads, head_sids)):
             end = heads[i + 1][:2] if i + 1 < len(heads) else (10 ** 9, 0)
-            spans.append(((pos, off), end, sid))
+            spans.append((h[:2], end, sid))
         for c in D.chunks:
             start, stop = (c.pos, 0), (c.pos, len(c.flat))
             hits = []
@@ -231,8 +224,6 @@ def sections_from_catalogue(rows, cfg):
         flat_of = {c.pos: c.flat for c in D.chunks}
         order = sorted(flat_of)
         for (s0, e0, sid) in spans:
-            if sid not in sections:
-                continue
             buf = []
             for pos in order:
                 if pos < s0[0] or pos > e0[0]:
@@ -257,13 +248,6 @@ def sections_from_catalogue(rows, cfg):
             sections[sid]["text_len"] = len(text)
     for sec in sections.values():
         sec.pop("title_raw", None)
-    # 同じ番号の見出しが 2 回出て id が重なった場合、span の sid が sections に無いことがある → 無いものは落とす
-    for cid, lst in list(chunk_sections.items()):
-        lst2 = [(sid, p) for sid, p in lst if sid in sections]
-        if lst2:
-            chunk_sections[cid] = lst2
-        else:
-            del chunk_sections[cid]
     return sections, chunk_sections
 
 
@@ -272,20 +256,10 @@ def sections_from_catalogue(rows, cfg):
 _VIA_RANK = {"chunk": 0, "number": 1, "standard": 2}
 # 参照の言い回し（「…による」「…を参照」「…に準ずる」など）。文書番号だけを挙げた一覧の行と、参照の文を分けるのに使う
 _REFERENCE_VERB = re.compile(r"(によ[るりっ]|に依[るりっ]|に従|参照|準ず|準拠|基づ|基く|に定め|の通り|のとおり|を適用|適用する)")
-# LLM の結び先を節に読み替えるとき、1 つの参照（参照元・一文・位置の語・参照先の文書）が複数のチャンクを指していれば、
-# それらを全部含む最も深い節を 1 つ採る（False なら従来どおりチャンクごとの主所属の節を別々に採る）。
-# 項が複数のチャンクに続くとき、チャンクごとに採ると 1 つの参照が「節の取り違えを含む複数の線」に割れるため。
-# 承認済みの方針（M1〜M6）の外の追加なので、既定は無効にしている。有効にしたときの効果は
-# tools/kg/retrieval_tests/t_section_refs_real.py が「まとめを有効にした場合」として示す（点検表 14・25 が正しい節に移る）
-MERGE_LLM_TARGETS = False
-# LLM の参照リンクが、参照先の節の一覧から節を選んで張られたもの（chunk_references の結び先の選び方 outline。リレーションの
-# target_sections・target_section_paths）なら、その節をそのまま節への参照の結び先にする（11/10）。False なら従来どおり、
-# 結び先のチャンクの主所属の節を使う。環境変数 SECTION_LAYER_USE_LLM_SECTIONS=false でも従来に戻せる
-USE_LLM_SECTIONS = True
 # locator が参照元自身の文書を指す語で始まるか（「上記2項」「前記3-1」「本基準」「本規格」）。「上記規格」のように
 # 他の文書を指す使い方を拾わないよう、「上記」「前記」は直後に番号が続くときだけとする
 _SELF_LOCATOR = re.compile(r"^\s*(?:(?:上記|前記)\s*(?:第\s*)?\d|本基準|本規格|本書|本要領|本標準)")
-# 節の照会（検索側 SECTION_REFERENCE_QUERY）がたどる下位の節の深さ。共通の節もこの深さの中で探す
+# 節の照会（検索側 SECTION_REFERENCE_QUERY）がたどる下位の節の深さ
 _SUBSECTION_DEPTH = 3
 
 
@@ -342,35 +316,6 @@ class SectionIndex:
         return cands[0]
 
 
-def common_section(tgts, chunk_sections, chunk_section, sections):
-    """複数のチャンクを全部含む節のうち最も深いものの id（無ければ None）。
-    「含む」= チャンクがその節か、その節から _SUBSECTION_DEPTH 段までの下位の節に属する（検索側の照会がたどる範囲と同じ）。
-    同じ深さに複数あれば、文書の中で先に始まるもの（参照された箇所の始まりを含む節）、次に主所属がその節の中にあるチャンクの多いもの。"""
-    def ancestors(sid):
-        out, cur = [], sid
-        for _ in range(_SUBSECTION_DEPTH + 1):
-            if not cur or cur in out:
-                break
-            out.append(cur)
-            cur = (sections.get(cur) or {}).get("parent")
-        return out
-    containing, primary_in = None, collections.Counter()
-    for t in tgts:
-        sets = set()
-        for sid, _p in chunk_sections.get(t) or []:
-            sets.update(ancestors(sid))
-        containing = sets if containing is None else (containing & sets)
-        for a in ancestors(chunk_section.get(t)):
-            primary_in[a] += 1
-    if not containing:
-        return None
-    def order(sid):
-        sec = sections.get(sid) or {}
-        return (-(sec.get("level") or 0), sec.get("first_position") if sec.get("first_position") is not None else 10 ** 9,
-                sec.get("offset") or 0, -primary_in[sid], sid)
-    return sorted(containing, key=order)[0]
-
-
 def _external_locator(text, cfg):
     """locator が手元に無い文書の識別子（JIS B 8340、QC-KAI-027 など）を含むか。含むなら、その中の番号は手元の文書の節ではない。"""
     s = R.squeeze(text)
@@ -418,7 +363,7 @@ def resolve_section_refs(graph, rows, sections, chunk_sections, chunk_section, c
     pending = {}   # LLM の結び先で節を決める参照: (参照元, 一文, 位置の語, 参照先の文書) -> {"tgts": [チャンク], ...}
     stats = collections.Counter()
 
-    # 節のチャンク（下位 _SUBSECTION_DEPTH 段まで、副所属を含む。検索側の SECTION_REFERENCE_QUERY と同じ範囲）。11/9:
+    # 節のチャンク（下位 _SUBSECTION_DEPTH 段まで、副所属を含む。検索側の SECTION_REFERENCE_QUERY と同じ範囲）。
     # 参照先の節のチャンクが参照元のチャンクだけなら、検索は何も足さないので線を張らない（「上記2-1と同一の…」のように同じチャンク内を指す参照）
     children = collections.defaultdict(list)
     for sid0, sec0 in sections.items():
@@ -466,15 +411,12 @@ def resolve_section_refs(graph, rows, sections, chunk_sections, chunk_section, c
                r.target_sections AS target_sections, r.target_section_paths AS target_section_paths""")
     # 何度流しても同じ結果になるよう、読んだ順に頼らず並べ直す（同じ節へのリンクが複数あるとき、一文はこの順の先のものを採る）
     refs = sorted(refs, key=lambda r: (r["src"] or "", r.get("tgt") or "", r.get("tgt_file") or "", r.get("locator") or "", r.get("quote") or ""))
-    use_llm_sections = USE_LLM_SECTIONS and os.environ.get("SECTION_LAYER_USE_LLM_SECTIONS", "true").strip().lower() not in ("0", "false", "no", "off")
     path_index = {}
     for sid0, sec0 in sections.items():
         path_index.setdefault((sec0["fileName"], " > ".join(sec0.get("path") or [sec0.get("title") or ""])), sid0)
 
     def llm_sections(ref, tgt_file):
         """LLM が一覧から選んだ節のうち、今の節の表にあるもの。id が変わっていれば（目録が変わった）経路で引き直す。"""
-        if not use_llm_sections:
-            return []
         out = []
         ids = list(ref.get("target_sections") or [])
         paths = list(ref.get("target_section_paths") or [])
@@ -552,7 +494,7 @@ def resolve_section_refs(graph, rows, sections, chunk_sections, chunk_section, c
             continue
         if doc_files and not targets and not _REFERENCE_VERB.search(R.nfkc(quote)):
             # 一文が他の文書の番号（と名称）を挙げているだけで、位置の語も参照の言い回しも無い（関連基準の一覧の行など）。
-            # 文書の中の箇所を指していないので節には結ばない。文書へのたどりは文書層が受け持つ（11/9、パーサー置き換えの評価で追加）
+            # 文書の中の箇所を指していないので節には結ばない。文書へのたどりは文書層が受け持つ
             stats["document_list_skipped"] += 1
             continue
         if doc_files and tgt_file not in doc_files and tgt_std not in doc_files.values():
@@ -563,7 +505,7 @@ def resolve_section_refs(graph, rows, sections, chunk_sections, chunk_section, c
                                                                  "unresolved": loc if targets else None})
         chosen = llm_sections(ref, tgt_file)
         if chosen:
-            # 11/10: LLM が節の一覧から選んだ節。チャンクの主所属の節（下位の節に割れる）ではなく、選んだ節をそのまま使う
+            # LLM が節の一覧から選んだ節。チャンクの主所属の節（下位の節に割れる）ではなく、選んだ節をそのまま使う
             for sid0 in chosen:
                 if sid0 not in group["sids"]:
                     group["sids"].append(sid0)
@@ -571,13 +513,9 @@ def resolve_section_refs(graph, rows, sections, chunk_sections, chunk_section, c
             group["tgts"].append(tgt)
     for (src, quote, _loc, _tf), group in pending.items():
         tgts = [t for t in group["tgts"] if chunk_section.get(t)]
-        common = common_section(tgts, chunk_sections, chunk_section, sections) if MERGE_LLM_TARGETS and len(tgts) > 1 else None
-        if common:
-            stats["merged_llm_targets"] += 1
         if group["sids"]:
             stats["llm_section_targets"] += 1
-        sids = list(group["sids"]) + [sid for sid in ([common] if common else list(dict.fromkeys(chunk_section[t] for t in tgts)))
-                                      if sid not in group["sids"]]
+        sids = list(group["sids"]) + [sid for sid in dict.fromkeys(chunk_section[t] for t in tgts) if sid not in group["sids"]]
         for sid in sids:
             put(src, sid, quote, "chunk", group["method"], group["standard"], unresolved=group["unresolved"])
 
@@ -607,24 +545,18 @@ def resolve_section_refs(graph, rows, sections, chunk_sections, chunk_section, c
                "resolved_by_number": stats["resolved_by_number"], "resolved_by_standard": stats["resolved_by_standard"],
                "unresolved_locator": stats["unresolved_locator"], "dropped_by_standard": stats["dropped_by_standard"],
                "standard_section_refs": stats["standard_section_refs"], "standard_unresolved": stats["standard_unresolved"],
-               "merged_llm_targets": stats["merged_llm_targets"], "self_only_skipped": stats["self_only_skipped"],
+               "self_only_skipped": stats["self_only_skipped"],
                "document_list_skipped": stats["document_list_skipped"], "llm_section_targets": stats["llm_section_targets"],
                "section_refs_by_via": dict(collections.Counter(v["via"] for v in section_refs.values()))}
     return section_refs, summary
 
 
-def build_section_layer(graph, write=True, config_path=None):
-    cfg = R.load_config(config_path)
-    rows = execute_graph_query(graph, """
-        MATCH (c:Chunk)-[:PART_OF]->(d:Document)
-        RETURN c.id AS id, d.fileName AS fileName, c.position AS position, c.section AS section, c.section_path AS section_path,
-               c.text AS text, c.page_number AS page_number
-        ORDER BY d.fileName, c.position""")
+def build_section_layer(graph, write=True, memo=None):
+    cfg = R.load_config()
+    rows = chunk_rows(graph)
     # 第 1 の源: 規則の目録（全文書）。第 2 の源: Markdown の見出しの経路（目録に見出しの無い文書だけ）
-    sections, chunk_sections = sections_from_catalogue(rows, cfg)
+    sections, chunk_sections = sections_from_catalogue(rows, cfg, memo)
     files_from_catalogue = {s["fileName"] for s in sections.values()}
-    chunk_section = {}     # chunk id -> primary section id（Markdown 経路の分）
-    per_file = collections.Counter()
     for r in rows:
         if r["fileName"] in files_from_catalogue:
             continue
@@ -640,12 +572,8 @@ def build_section_layer(graph, write=True, config_path=None):
                                  "form": form, "number": number, "control": R.is_control_heading(title, cfg), "parent": parent,
                                  "first_position": r["position"]}
             parent = sid
-        chunk_section[r["id"]] = parent
-        per_file[r["fileName"]] += 1
-    for cid, sid in chunk_section.items():
-        chunk_sections[cid] = [(sid, True)]
-    per_file.update({s["fileName"]: 0 for s in sections.values()})
-    summary = {"chunks": len(rows), "chunks_with_section": len(chunk_sections), "sections": len(sections),
+        chunk_sections[r["id"]] = [(parent, True)]
+    summary ={"chunks": len(rows), "chunks_with_section": len(chunk_sections), "sections": len(sections),
                "sections_from_catalogue": sum(1 for s in sections.values() if s.get("source") == "catalogue"),
                "files_with_sections": len({s["fileName"] for s in sections.values()}), "control_sections": sum(1 for s in sections.values() if s["control"])}
     chunk_section = {cid: next((sid for sid, p in lst if p), lst[0][0]) for cid, lst in chunk_sections.items()}
@@ -656,12 +584,12 @@ def build_section_layer(graph, write=True, config_path=None):
     if not write:
         return {"summary": summary, "sections": sections, "chunk_section": chunk_section, "section_refs": section_refs}
 
-    # 抽出された型「Section」のエンティティは予約ラベルの付け替え（A2）で SectionRef にする（11 月 7 日に 6 個を消した反省。規則のノードと混ぜない）
+    # 抽出された型「Section」のエンティティは予約ラベルの付け替え（A2）で SectionRef にする（規則のノードと混ぜない）
     execute_graph_query(graph, "MATCH (e:__Entity__:Section) WHERE e.method IS NULL OR e.method <> $m REMOVE e:Section SET e:SectionRef", params={"m": METHOD})
     # 冪等: 規則が作った節の層だけを毎回作り直す
     execute_graph_query(graph, "MATCH (c:Chunk)-[r:REFERS_TO]->(s:Section) WHERE s.method = $m DELETE r", params={"m": METHOD})
     execute_graph_query(graph, "MATCH (s:Section) WHERE s.method = $m DETACH DELETE s", params={"m": METHOD})
-    for batch in _batches(list(sections.values())):
+    for batch in batches(list(sections.values())):
         execute_graph_query(graph, """
             UNWIND $rows AS row
             CREATE (s:Section {id: row.id})
@@ -677,12 +605,12 @@ def build_section_layer(graph, write=True, config_path=None):
         UNWIND $rows AS row
         MATCH (s:Section {id: row.id}) MATCH (p:Section {id: row.parent})
         MERGE (p)-[:HAS_SECTION]->(s)""", params={"rows": [{"id": s["id"], "parent": s["parent"]} for s in sections.values() if s["parent"]]})
-    for batch in _batches([{"c": c, "s": sid, "p": primary} for c, lst in chunk_sections.items() for sid, primary in lst]):
+    for batch in batches([{"c": c, "s": sid, "p": primary} for c, lst in chunk_sections.items() for sid, primary in lst]):
         execute_graph_query(graph, """
             UNWIND $rows AS row
             MATCH (c:Chunk {id: row.c}) MATCH (s:Section {id: row.s})
             MERGE (c)-[r:IN_SECTION]->(s) SET r.primary = row.p""", params={"rows": batch})
-    for batch in _batches([{"c": k[0], "s": k[1], "quote": v["quote"], "via": v["via"], "src_method": v["method"],
+    for batch in batches([{"c": k[0], "s": k[1], "quote": v["quote"], "via": v["via"], "src_method": v["method"],
                             "standard": v.get("standard"), "unresolved": v.get("unresolved_locator")} for k, v in section_refs.items()]):
         execute_graph_query(graph, """
             UNWIND $rows AS row
@@ -693,8 +621,3 @@ def build_section_layer(graph, write=True, config_path=None):
             params={"m": METHOD, "rows": batch})
     logging.info("section layer: %s", json.dumps(summary, ensure_ascii=False))
     return {"summary": summary}
-
-
-def _batches(rows, size=500):
-    for i in range(0, len(rows), size):
-        yield rows[i:i + size]

@@ -160,12 +160,6 @@ def later_ops(run, ops):
     return out
 
 
-def ids_to_check(op):
-    ids = {s["id"] for s in op["snapshot"]}
-    ids |= {v[0] for v in op["ids_after"].values() if v}
-    return ids
-
-
 def undo_block_reason(op, entity_state, ledger_state, later_seq):
     """取り消せないときの日本語の理由。取り消せるなら None。"""
     if op["undone"]:
@@ -203,12 +197,11 @@ def load_op(run, op_id):
 
 
 def check_undoable(run, op):
-    entity_state, ledger_state = lookup_states(run, ids_to_check(op), list(op["ledger_after"]))
+    entity_state, ledger_state = lookup_states(run, op["touched"], list(op["ledger_after"]))
     later = later_ops(run, [op])[op["op_id"]]
     reason = undo_block_reason(op, entity_state, ledger_state, later)
     if reason is not None:
         raise EditError(NOT_UNDOABLE, f"operation {op['op_id']} cannot be undone", data={"reason": reason})
-    return entity_state
 
 
 def list_history(tx, limit, before_seq):
@@ -218,7 +211,7 @@ def list_history(tx, limit, before_seq):
         RETURN properties(o) AS p ORDER BY o.seq DESC LIMIT $limit""", limit=limit, before=before_seq)]
     entity_ids, uids = set(), set()
     for op in ops:
-        entity_ids |= ids_to_check(op)
+        entity_ids |= set(op["touched"])
         uids |= set(op["ledger_after"])
     entity_state, ledger_state = lookup_states(tx.run, entity_ids, uids)
     later = later_ops(tx.run, ops)
@@ -232,6 +225,18 @@ def list_history(tx, limit, before_seq):
 
 
 # ---- 取り消し（写しに戻す）----
+
+def apply_labels(tx, element_id, current_labels, labels):
+    """ノードのラベルを labels にそろえる（current_labels にあって labels に無いものを外し、無いものを付ける）。"""
+    remove = [label for label in current_labels if label not in labels]
+    add = [label for label in labels if label not in current_labels]
+    if remove:
+        tx.run("MATCH (n) WHERE elementId(n) = $eid CALL apoc.create.removeLabels(n, $labels) YIELD node RETURN count(node)",
+               eid=element_id, labels=remove)
+    if add:
+        tx.run("MATCH (n) WHERE elementId(n) = $eid CALL apoc.create.addLabels(n, $labels) YIELD node RETURN count(node)",
+               eid=element_id, labels=add)
+
 
 def _other_kind(rel):
     labels = rel.get("other_labels") or []
@@ -287,7 +292,7 @@ def _resolve(tx, kind, ids):
 
 
 def restore(tx, op, vectors, index_dim, lt):
-    """操作 op の写しと台帳の前の行に戻す。戻したエンティティの id、件数の更新の対象の文書、戻せなかった数を返す。"""
+    """操作 op の写しと台帳の前の行に戻す。{写しの id: 戻した要素 ID}、件数の更新の対象の文書、戻せなかった数を返す。"""
     versions = op["versions_after"]
     snapshots = op["snapshot"]
     restored = {}  # 写しの id -> 要素 ID
@@ -308,14 +313,7 @@ def restore(tx, op, vectors, index_dim, lt):
             if current is None:
                 raise EditError(NOT_UNDOABLE, f"node {eid} disappeared", data={"reason": "対象のエンティティが見つかりません。"})
             tx.run("MATCH (e) WHERE elementId(e) = $eid SET e = $props", eid=eid, props=props)
-            remove = [label for label in current["labels"] if label not in labels]
-            add = [label for label in labels if label not in current["labels"]]
-            if remove:
-                tx.run("MATCH (e) WHERE elementId(e) = $eid CALL apoc.create.removeLabels(e, $labels) YIELD node RETURN count(node)",
-                       eid=eid, labels=remove)
-            if add:
-                tx.run("MATCH (e) WHERE elementId(e) = $eid CALL apoc.create.addLabels(e, $labels) YIELD node RETURN count(node)",
-                       eid=eid, labels=add)
+            apply_labels(tx, eid, current["labels"], labels)
         else:
             record = tx.run("CREATE (e) SET e = $props WITH e CALL apoc.create.addLabels(e, $labels) YIELD node "
                             "RETURN elementId(node) AS eid", props=props, labels=labels).single()
@@ -403,4 +401,4 @@ def restore(tx, op, vectors, index_dim, lt):
     for uid, row in op["ledger_before"].items():
         lt.restore(uid, row)
     docs |= entity_documents(tx, list(restored.values()))
-    return list(restored), restored, docs, skipped
+    return restored, docs, skipped

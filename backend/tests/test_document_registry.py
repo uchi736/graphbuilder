@@ -154,8 +154,6 @@ def test_retrieval_queries_prefer_current_version():
         src = f.read()
     q = src.split("DOCUMENT_LAYER_REFERENCE_QUERY = \"\"\"", 1)[1].split("\"\"\"", 1)[0]
     assert "HAS_CURRENT_VERSION]->(d2)" in q and "NOT EXISTS { MATCH (st)-[:HAS_CURRENT_VERSION]->(:Document) }" in q
-    with open(os.path.join(os.path.dirname(HERE), "src", "topdown_retriever.py"), encoding="utf-8") as f:
-        assert "HAS_CURRENT_VERSION]->(t)" in f.read()
     with open(os.path.join(os.path.dirname(HERE), "src", "document_replace.py"), encoding="utf-8") as f:
         assert "REPLACES|HAS_CURRENT_VERSION]->(d:Document)" in f.read()
 
@@ -223,14 +221,6 @@ def test_load_registry_rows():
             pass
     rows, status = REG.load_registry(dsn="x", connect=lambda: Conn())
     assert status == "ok: 1 rows" and rows[0]["doc_number"] == "HS-VTR-T001" and rows[0]["aliases"] == ["a"]
-
-
-def test_registry_table_name_guard(monkeypatch):
-    monkeypatch.setenv("DOCUMENT_REGISTRY_TABLE", "registry.document_registry")
-    assert REG.registry_table() == "registry.document_registry"
-    monkeypatch.setenv("DOCUMENT_REGISTRY_TABLE", "x; DROP TABLE y")
-    with pytest.raises(ValueError):
-        REG.registry_table()
 
 
 # ---- 5. 参照の一文の解決の内訳 ----

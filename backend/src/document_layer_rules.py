@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """文書層（文書番号・版・目録・廃止・適用先）と章・節の層の規則。LLM もグラフも呼ばない。標準ライブラリだけで動く。
 
-10 月の予備検証（tools/kg/hier/kg-final/recount.py・tree.py、56 本）の規則を backend に移したもの。
 文書番号の形（HS-VTR-T001 など）はこのファイルには書かず、設定 document_numbers.json（backend 直下）から読む。
 
 使い方:
@@ -42,8 +41,24 @@ def nfkc(text):
 
 def squeeze(text):
     """NFKC にし、全角の記号を半角に寄せ、空白を消す（番号の照合用）。"""
-    t = nfkc(text).replace("―", "-").replace("－", "-").replace("‐", "-").replace("–", "-")
+    t = nfkc(text).replace("―", "-").replace("‐", "-").replace("–", "-")   # 全角の「－」は NFKC で「-」になる
     return re.sub(r"\s+", "", t).upper()
+
+
+def _canonical(m, canonical, rev_group):
+    """系列の正規表現の一致から (正規形, 版の符号)。"""
+    canon = canonical
+    for i in range(1, (m.lastindex or 0) + 1):
+        canon = canon.replace("{%d}" % i, m.group(i) or "")
+    rev = m.group(rev_group) if rev_group and m.lastindex and m.lastindex >= rev_group else None
+    return canon, (rev or None)
+
+
+def _series_matches(s, cfg):
+    """系列ごとに、文字列 s の中の文書番号の一致を順に返す（[(一致, 正規形, 版の符号)]。系列の順、同じ系列の中は出現の順）。"""
+    for _name, rx, canonical, rev_group in cfg["_series"]:
+        for m in rx.finditer(s):
+            yield (m,) + _canonical(m, canonical, rev_group)
 
 
 def normalize_number(text, cfg, search=True, strict=False):
@@ -56,30 +71,18 @@ def normalize_number(text, cfg, search=True, strict=False):
     for _name, rx, canonical, rev_group in cfg["_series"]:
         m = rx.fullmatch(s) if strict else (rx.search(s) if search else rx.match(s))
         if m:
-            canon = canonical
-            for i in range(1, (m.lastindex or 0) + 1):
-                canon = canon.replace("{%d}" % i, m.group(i) or "")
-            rev = m.group(rev_group) if rev_group and m.lastindex and m.lastindex >= rev_group else None
-            return canon, (rev or None)
+            return _canonical(m, canonical, rev_group)
     return None, None
 
 
 def numbers_in(text, cfg):
-    """文字列に現れる文書番号の正規形を、重複なく返す（[(正規形, 版の符号), ...]）。目録や一覧のように複数並ぶかを見るのに使う。"""
-    s = squeeze(text)
+    """文字列に現れる文書番号の正規形を、重複なく返す（[(正規形, 版の符号), ...]）。目録や一覧のように複数並ぶかを見るのに使う。
+    空白をすべて詰めてから探す（document_numbers_in と違い、数字の間の空白でも番号をつなげる）。"""
     out, seen = [], set()
-    if not s:
-        return out
-    for _name, rx, canonical, rev_group in cfg["_series"]:
-        for m in rx.finditer(s):
-            canon = canonical
-            for i in range(1, (m.lastindex or 0) + 1):
-                canon = canon.replace("{%d}" % i, m.group(i) or "")
-            if canon in seen:
-                continue
+    for _m, canon, rev in _series_matches(squeeze(text), cfg):
+        if canon not in seen:
             seen.add(canon)
-            rev = m.group(rev_group) if rev_group and m.lastindex and m.lastindex >= rev_group else None
-            out.append((canon, rev or None))
+            out.append((canon, rev))
     return out
 
 
@@ -96,8 +99,8 @@ def number_of_file(file_name, cfg):
 def external_id(text):
     """手元に無い文書の識別子の表示形。大文字、空白は 1 つに、先頭の英字と数字の間のハイフンは落とす（V-00862 → V00862）。
     空白やハイフンの位置だけが違う表記（「HZTL 20559」と「HZTL20559」）は、この形では同じにならない。表記ゆれの突き合わせは external_key で行い、
-    同じ鍵の表記からどれを Standard の id にするかは document_layer.pick_external_ids が決める（11/10）。"""
-    t = re.sub(r"\s+", " ", nfkc(text).replace("－", "-")).strip().upper()
+    同じ鍵の表記からどれを Standard の id にするかは document_layer.pick_external_ids が決める。"""
+    t = re.sub(r"\s+", " ", nfkc(text)).strip().upper()
     return re.sub(r"^([A-Z])-(?=\d)", r"\1", t)
 
 
@@ -415,8 +418,7 @@ def _squeeze_index(text):
                     out.append("/")
                     idx.append(i)
             continue
-        rep = "-" if ch in "―－‐–" else ch
-        for r in rep.upper():
+        for r in ch.upper():
             out.append(r)
             idx.append(i)
     idx.append(len(t))
@@ -426,15 +428,8 @@ def _squeeze_index(text):
 def document_numbers_in(text, cfg):
     """文字列に現れる文書番号の正規形を、出現順に重複なく返す（numbers_in と同じだが、数字の間の空白で番号をつなげない）。"""
     s, _idx, _t = _squeeze_index(text)
-    hits = []
-    for _name, rx, canonical, rev_group in cfg["_series"]:
-        for m in rx.finditer(s):
-            canon = canonical
-            for i in range(1, (m.lastindex or 0) + 1):
-                canon = canon.replace("{%d}" % i, m.group(i) or "")
-            hits.append((m.start(), canon))
     out = []
-    for _pos, canon in sorted(hits):
+    for _pos, canon in sorted((m.start(), canon) for m, canon, _rev in _series_matches(s, cfg)):
         if canon not in out:
             out.append(canon)
     return out
@@ -452,23 +447,19 @@ def numbers_after_document_numbers(text, cfg):
     out = []
     if not s:
         return out
-    for _name, rx, canonical, rev_group in cfg["_series"]:
-        for m in rx.finditer(s):
-            canon = canonical
-            for i in range(1, (m.lastindex or 0) + 1):
-                canon = canon.replace("{%d}" % i, m.group(i) or "")
-            rest = t[idx[m.end()]:] if m.end() < len(idx) else ""
-            a = _AFTER_NUMBER_RX.match(rest)
-            if not a:
-                continue
-            if a.group("w"):
-                tgt = _target("付属", None, a.group("w") + a.group("n"))
-            elif a.group("chap"):
-                tgt = _target("章", a.group("chap"), a.group(0).strip())
-            else:
-                parts = [p.strip() for p in re.split(_DASH, a.group("sec"))]
-                tgt = _target("節" if len(parts) == 2 else "項", "-".join(parts), a.group(0).strip())
-            out.append((canon, tgt))
+    for m, canon, _rev in _series_matches(s, cfg):
+        rest = t[idx[m.end()]:] if m.end() < len(idx) else ""
+        a = _AFTER_NUMBER_RX.match(rest)
+        if not a:
+            continue
+        if a.group("w"):
+            tgt = _target("付属", None, a.group("w") + a.group("n"))
+        elif a.group("chap"):
+            tgt = _target("章", a.group("chap"), a.group(0).strip())
+        else:
+            parts = [p.strip() for p in re.split(_DASH, a.group("sec"))]
+            tgt = _target("節" if len(parts) == 2 else "項", "-".join(parts), a.group(0).strip())
+        out.append((canon, tgt))
     return out
 
 

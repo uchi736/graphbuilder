@@ -21,7 +21,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Optional
 
-from .textlayer import TextLayer, area
+from .textlayer import TextLayer, area, split_by_gap
 
 LONG_SHARE = 0.3            # 枠・本文の欄の辺とみなす線の長さ（ページの幅・高さに対する割合）
 FRAMED_MIN_SHARE = 0.6      # 枠とみなす矩形の面積（ページに対する割合）
@@ -30,12 +30,13 @@ COVER_TOL = 3.0             # 辺が線で覆われているかを見るとき�
 TITLE_BAND = 0.12           # 題名の欄を探す上の帯（枠の高さに対する割合）
 MAX_LONG_PAIRS = 1500       # 長い線の位置の数（縦×横）がこれを超えるページ（方眼の用紙など）は、欄の総当たりをしない
 
-# 管理の欄の読み取り（frame_pages.py の規則の写し。frame_pages は PyMuPDF を読み込むので import しない）
-CELL_NUMBER = re.compile(r"^(?:HS-?)?([A-Z]{2,4})-([A-Z]?\d{2,4})([A-Z])?$")
+# 管理の欄の読み取り
+_NUMBER = r"(?:HS-?)?([A-Z]{2,4})-([A-Z]?\d{2,4})([A-Z])?"    # 文書番号（TS-A104 の形）
+CELL_NUMBER = re.compile(r"^%s$" % _NUMBER)
 DATE = re.compile(r"('?\d{2,4}[./]\d{1,2}[./]\d{1,2}|[HSR]\d{1,2}[./]\d{1,2}[./]\d{1,2})")
 LABEL_WORD = re.compile(r"改正|来歴|配布|承認|審査|作成|同意|合計|番号")
 HISTORY_VERB = re.compile(r"(する|した|追加|変更|改訂|見直し|制定|移行|明記)[。.]?\s*(回|品|過|技|総|設)?")
-# 格子のページの見出しに使う語。先に挙げた語を優先する（frame_pages.CONTROL_LABELS と同じ）
+# 格子のページの見出しに使う語。先に挙げた語を優先する
 CONTROL_LABELS = ["発行目録", "基準来歴", "改正来歴", "改訂来歴", "来歴", "協議・通知票", "協議通知票", "通知票", "見直し確認欄",
                   "見直し確認", "配布先一覧"]
 COMPANY = re.compile(r"株式会社|有限会社|Co\.?,?\s*Ltd|Corporation|Mass-Produced", re.I)
@@ -165,6 +166,11 @@ def nfkc(text: str) -> str:
     return "".join(c if (c in "．！？" or "①" <= c <= "⑳") else unicodedata.normalize("NFKC", c) for c in (text or ""))
 
 
+def flat_nfkc(text: str) -> str:
+    """nfkc にして空白を詰めた文字列"""
+    return re.sub(r"\s+", "", nfkc(text))
+
+
 def cell_texts(layer: TextLayer, frame: Frame, indices) -> list:
     """文字を欄ごとに分け、(欄の矩形, 文字列) を上から下、左から右に並べて返す。欄の中の行は空白でつなぐ。
 
@@ -218,8 +224,8 @@ def frame_title(layer: TextLayer, frame: Frame) -> Optional[str]:
     cells = cell_texts(layer, frame, pool)
     ox0, oy0, ox1, oy1 = frame.outer
     limit = oy0 + TITLE_BAND * (oy1 - oy0)
-    texts = [(key, t, re.sub(r"\s+", "", nfkc(t))) for key, t in cells
-             if not COMPANY.search(nfkc(t)) and not _not_title(re.sub(r"\s+", "", nfkc(t)))]
+    texts = [(key, t, flat_nfkc(t)) for key, t in cells if not COMPANY.search(nfkc(t))]
+    texts = [(key, t, f) for key, t, f in texts if not _not_title(f)]
     head = [t for key, t, f in texts if key[1] <= limit and len(f) >= 6 and not CELL_NUMBER.match(f)
             and not DATE.search(f) and not LABEL_WORD.search(f) and f != "HS"]
     if head:
@@ -259,7 +265,7 @@ def grid_label(layer: TextLayer, frame: Optional[Frame] = None) -> str:
     題 = 上の帯（枠の上端から枠の高さの 2 割まで。枠の上も含む）にある行のかけらで、種類の語で終わり、文（。で終わる）でないもの。
     候補が複数なら字の大きいかけら。小欄の名前（台帳の下の「見直し確認欄(3年毎)」）や本文の文（協議・通知票の理由欄の
     「3．基準来歴が存在しないため。」）では決めない。ページ全体の字から探すと、別紙の台帳が「見直し確認欄」の様式になり、
-    枠の外の題名と柱（HS-VTR-T003C 別紙-1）が消えた（VTR-T003D）。種類が無い格子のページは Nemotron Parse に送る
+    枠の外の題名と柱（TS-A103C 別紙-1）が消えた（TS-A103D）。種類が無い格子のページは Nemotron Parse に送る
     """
     if frame is not None and frame.outer is not None:
         top, height = frame.outer[1], frame.outer[3] - frame.outer[1]
@@ -278,7 +284,7 @@ def grid_label(layer: TextLayer, frame: Optional[Frame] = None) -> str:
 
 
 def grid_rows(layer: TextLayer, frame: Frame) -> list:
-    """格子のページを、行ごとに欄の文字を「 / 」でつないだ並びにする（frame_pages の格子のページの書き方と同じ）。
+    """格子のページを、行ごとに欄の文字を「 / 」でつないだ並びにする。
 
     改訂記号だけの行（A B C …）は落とす。
     """
@@ -296,7 +302,7 @@ def grid_rows(layer: TextLayer, frame: Frame) -> list:
             continue
         line = texts[0]
         for t in texts[1:]:
-            # 文書番号の欄に続く改訂記号の欄（HS-VTR-T005 | A | B）は空白でつなぐ。協議・通知票の「■ 改訂 … HS-VTR-T005 A B」を
+            # 文書番号の欄に続く改訂記号の欄（TS-A105 | A | B）は空白でつなぐ。協議・通知票の「■ 改訂 … TS-A105 A B」を
             # 文書層の規則（parse_notice）が読む形。発行目録の「日付 / A / 日付」の並びは「 / 」のまま
             if REV_CELL.fullmatch(nfkc(t).strip()) and NUMBER_THEN_REVS.search(nfkc(line)):
                 line += " " + t
@@ -319,37 +325,23 @@ def line_bounds(frame: Frame) -> tuple:
     return (min(xs), min(ys), max(xs), max(ys))
 
 
-def is_framed_body(frame: Frame) -> bool:
-    return frame.kind == "body" and frame.body is not None and area(frame.body) > 0
-
-
-# ---- 枠の線が画像で描かれた様式（frame_pages._virtual_frame の写し。線の代わりに枠の語の位置を使う）----
+# ---- 枠の線が画像で描かれた様式（線の代わりに枠の語の位置を使う）----
 STRIP_LEFT, STRIP_TOP, STRIP_BOTTOM = 0.15, 0.10, 0.86
 VIRTUAL_MIN_LABELS = 4
 VIRTUAL_MAX_SEGMENTS = 8
 BOTTOM_WORD = re.compile(r"改正回数|年月日|来歴|石川島|IHI|回転機械")
 FRAME_LABEL = re.compile(r"^(配布先|控|合計|作成|審査|承認|来歴|番|号|HS|改正回数|年月日|原|計)$|^[回過技総][^\d]{1,5}\d?$|^[0-9]{1,2}$")
-_TEXT_NUMBER = re.compile(r"\b(?:HS-?)?([A-Z]{2,4})-([A-Z]?\d{2,4})([A-Z])?\b")
+_TEXT_NUMBER = re.compile(r"\b%s\b" % _NUMBER)
 
 
 def _pieces(layer: TextLayer) -> list:
     """文字層を、行のかけら（大きな字間で切ったもの）ごとの (矩形, 空白を詰めた文字列, 文字列) にする"""
     out = []
     for seg in layer.segments(layer.ink_indices()):
-        cur = [seg[0]]
-        groups = []
-        for a, b in zip(seg, seg[1:]):
-            ca, cb = layer.chars[a], layer.chars[b]
-            if cb.x0 - ca.x1 > 2.0 * max(ca.size, 1.0):
-                groups.append(cur)
-                cur = []
-            cur.append(b)
-        groups.append(cur)
-        for g in groups:
-            cs = [layer.chars[k] for k in g]
-            text = "".join(c.c for c in cs)
+        for cs in split_by_gap([layer.chars[k] for k in seg], pair_size=False):
+            text = nfkc("".join(c.c for c in cs))
             out.append(((min(c.x0 for c in cs), min(c.y0 for c in cs), max(c.x1 for c in cs), max(c.y1 for c in cs)),
-                        re.sub(r"\s+", "", nfkc(text)), nfkc(text)))
+                        re.sub(r"\s+", "", text), text))
     return out
 
 

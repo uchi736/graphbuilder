@@ -10,10 +10,9 @@ attach_provenance も file_names でこの試験の文書だけに絞って流�
 確かめること
   (1) dry_run は書き込まない（言及・根拠・安定キー・索引のいずれも付かない）が、付けたとしたらの集計は返す
   (2) HAS_ENTITY の mention・mention_found・mention_source（全角・空白の違い、aliases、見つからない場合）
-  (3) リレーションの source_chunk_id・evidence・evidence_kind・provenance_method（relation_mode='true' で書かせる）。規則のリレーションには付けない
-  (4) relation_mode='false' ではリレーションに書かない
-  (5) Chunk.stable_key・doc_ordinal（primary でない IN_SECTION は使わない）と索引 chunk_stable_key
-  (6) 2 回流しても同じ値（冪等）
+  (3) リレーションの source_chunk_id・evidence・evidence_kind・provenance_method。規則のリレーションには付けない
+  (4) Chunk.stable_key・doc_ordinal（primary でない IN_SECTION は使わない）と索引 chunk_stable_key
+  (5) 2 回流しても同じ値（冪等）
 実行: 試験用 Neo4j のパスワードを環境変数 GBDEV_TEST_PASSWORD で渡す（無ければ飛ばす）
     docker exec -e GBDEV_TEST_PASSWORD=... -w /code backend python -m pytest -q -p no:cacheprovider tests/test_provenance_db.py
 """
@@ -108,9 +107,9 @@ def read_state(driver):
 
 def test_dry_run_writes_nothing_but_reports(env):
     from src.provenance import attach_provenance
-    result = attach_provenance(env["graph"], dry_run=True, file_names=[DOC], relation_mode="true")
+    result = attach_provenance(env["graph"], dry_run=True, file_names=[DOC])
     summary = result["summary"]
-    assert summary["dry_run"] is True and summary["relation_properties_written"] is False
+    assert summary["dry_run"] is True
     assert summary["has_entity"] == 6 and summary["mention_found"] == 6
     assert summary["relations"] == 3   # 規則のリレーション（method='rule'）は数えない
     assert summary["evidence_kind"] == {"same_sentence": 1, "window": 1, "chunk_only": 1, "none": 0}
@@ -124,8 +123,7 @@ def test_dry_run_writes_nothing_but_reports(env):
 
 def test_attach_writes_mentions_evidence_and_stable_keys(env):
     from src.provenance import attach_provenance
-    result = attach_provenance(env["graph"], file_names=[DOC], relation_mode="true", details=True)
-    assert result["summary"]["relation_properties_written"] is True
+    attach_provenance(env["graph"], file_names=[DOC])
     first = read_state(env["driver"])
     mentions, rels, chunks, index = first
     p = PREFIX
@@ -148,22 +146,11 @@ def test_attach_writes_mentions_evidence_and_stable_keys(env):
     assert all(rels[t]["provenance_method"] == "rule" for t in ("JUDGES", "USES", "STORED_BY"))
     assert "evidence" not in rels["APPLIES_TO"] and "source_chunk_id" not in rels["APPLIES_TO"]   # 規則のリレーション
 
-    # (5) 安定キー: c3 の IN_SECTION は primary でないので節なし
+    # (4) 安定キー: c3 の IN_SECTION は primary でないので節なし
     assert chunks == {p + "c1": (DOC + "#1#1", 1), p + "c2": (DOC + "#2-1#1", 2), p + "c3": (DOC + "#-#3", 3)}
     assert index is True
 
-    # (6) 冪等: もう一度流しても同じ
-    attach_provenance(env["graph"], file_names=[DOC], relation_mode="true")
+    # (5) 冪等: もう一度流しても同じ
+    attach_provenance(env["graph"], file_names=[DOC])
     assert read_state(env["driver"]) == first
 
-
-def test_relation_mode_false_leaves_relations_alone(env):
-    from src.provenance import attach_provenance
-    with env["driver"].session(database=TEST_DATABASE) as s:
-        s.run("MATCH (a:__Entity__)-[r]->(:__Entity__) WHERE a.id STARTS WITH $p "
-              "REMOVE r.source_chunk_id, r.evidence, r.evidence_kind, r.provenance_method", p=PREFIX).consume()
-    summary = attach_provenance(env["graph"], file_names=[DOC], relation_mode="false")["summary"]
-    assert summary["relation_properties_written"] is False and summary["evidence_kind"]["same_sentence"] == 1
-    _, rels, chunks, _ = read_state(env["driver"])
-    assert all("evidence" not in p for p in rels.values())
-    assert chunks[PREFIX + "c2"] == (DOC + "#2-1#1", 2)   # 言及と安定キーは付ける

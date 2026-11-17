@@ -5,12 +5,11 @@ from langchain_core.documents import Document
 from langchain_neo4j import Neo4jGraph
 from langchain_text_splitters import TokenTextSplitter
 
+from src.document_sources.page_marks import PAGE_MARK_PATTERN
 from src.document_sources.youtube import get_calculated_timestamps, get_chunks_with_timestamps
 from src.shared.common_fn import get_value_from_env
 
 logging.basicConfig(format="%(asctime)s - %(message)s", level="INFO")
-
-MD_HEADING_PATTERN = re.compile(r"^#{1,3}\s", re.MULTILINE)
 
 
 def normalize_markdown_headers(text: str) -> str:
@@ -22,15 +21,6 @@ def normalize_markdown_headers(text: str) -> str:
             line = re.sub(r'^(#{1,3})([^\s#])', r'\1 \2', line)
         out.append(line)
     return "\n".join(out)
-
-
-def extract_h1_title(text: str) -> str:
-    """先頭の # (H1) タイトルを抽出する（正規化済みテキストを想定）。"""
-    for line in text.split("\n"):
-        line = line.strip()
-        if line.startswith("# ") and not line.startswith("## "):
-            return line[2:].strip()
-    return ""
 
 
 class CreateChunksofDocument:
@@ -121,7 +111,6 @@ class CreateChunksofDocument:
         1 文書あたりの上限（MAX_TOKEN_CHUNK_SIZE）は、チャンクの数ではなく実際のトークン数の累計で数える。0 以下は上限なし。
         """
         from langchain_text_splitters import RecursiveCharacterTextSplitter
-        from src.document_sources.page_marks import PAGE_MARK_PATTERN
         from src.document_sources.number_headings import is_control_heading
 
         length = chunk_length_function()
@@ -135,7 +124,6 @@ class CreateChunksofDocument:
                 )
             return splitters[size]
 
-        with_title = get_value_from_env("MARKDOWN_BREADCRUMB_TITLE", "true", "bool")
         min_tokens = get_value_from_env("MARKDOWN_MIN_CHUNK_TOKENS", "80", "int")
         chunks = []
         for document in self.pages:
@@ -144,12 +132,17 @@ class CreateChunksofDocument:
             if not document.metadata.get("markdown_strict"):
                 # 人が書いた .md には「#見出し」と空白なしで書く流儀がある。PDF から変換した Markdown には掛けない
                 text = normalize_markdown_headers(text)
-            title = (document.metadata.get("title") or "") if with_title else ""
+            title = document.metadata.get("title") or ""
+
+            def prefix_for(path):
+                """見出しの経路から (パンくずの行, パンくず)。パンくずは指定した大きさの 4 分の 1 までとし、超えるときは途中の段を
+                省く（小さいチャンクで本文を圧迫しない）"""
+                breadcrumb = fit_breadcrumb(title, path, token_chunk_size // 4, length)
+                return (f"[{breadcrumb}]\n" if breadcrumb else ""), breadcrumb
+
             page_number = None
             for path, body in markdown_sections(text):
-                # パンくずは指定した大きさの 4 分の 1 までとし、超えるときは途中の段を省く（小さいチャンクで本文を圧迫しない）
-                breadcrumb = fit_breadcrumb(title, path, token_chunk_size // 4, length)
-                prefix = f"[{breadcrumb}]\n" if breadcrumb else ""
+                prefix, breadcrumb = prefix_for(path)
                 # パンくずの分だけ本文の上限を詰める（指定した大きさを超えないようにする）
                 size = max(token_chunk_size - length(prefix), 1)
                 for content in merge_heading_only(split_section(body, splitter_for, length, size)):
@@ -172,11 +165,6 @@ class CreateChunksofDocument:
                     metadata["_prefix"] = prefix
                     metadata["_path"] = list(path)
                     doc_chunks.append(Document(page_content=prefix + content, metadata=metadata))
-
-            def prefix_for(path):
-                breadcrumb = fit_breadcrumb(title, path, token_chunk_size // 4, length)
-                return (f"[{breadcrumb}]\n" if breadcrumb else ""), breadcrumb
-
             chunks.extend(merge_tiny_chunks(doc_chunks, length, token_chunk_size, min_tokens, prefix_for))
 
         total = len(chunks)
@@ -202,7 +190,6 @@ MARKDOWN_SEPARATORS = ["\n\n", "\n", "。", "．", "！", "？", ". ", "! ", "? 
 _HEADING_LINE = re.compile(r"^ {0,3}(#{1,6})[ \t]+(.*?)(?:[ \t]+#+)?[ \t]*$")
 _FENCE_LINE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")  # 開始か終了かは _fence_state が決める
 _TABLE_RULE = re.compile(r"^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?\s*$")
-_PAGE_MARK_LINE = re.compile(r"^<!-- page:\d+ -->$")
 _LENGTH_FUNCTIONS = {}
 
 
@@ -257,7 +244,13 @@ def _fence_state(fence, line: str):
 
 
 def _is_blank(line: str) -> bool:
-    return not line.strip() or bool(_PAGE_MARK_LINE.match(line.strip()))
+    return not line.strip() or bool(PAGE_MARK_PATTERN.fullmatch(line.strip()))
+
+
+def _is_heading_only(lines) -> bool:
+    """空行とページの印を除くと何も残らないか、残りがすべて見出しの行か"""
+    body = [line for line in lines if not _is_blank(line)]
+    return not body or all(_HEADING_LINE.match(line) for line in body)
 
 
 def markdown_sections(text: str):
@@ -278,11 +271,11 @@ def markdown_sections(text: str):
 
     def flush():
         nonlocal pending
-        body = [line for line in lines if not _is_blank(line)]
-        if not body or all(_HEADING_LINE.match(line) for line in body):
+        if _is_heading_only(lines):
             # 本文の無い節（見出しだけ、ページの印だけ）。前の節より段が深い（前の節の中の項目の列挙）なら前の節の末尾に、
             # そうでなければ本文を持つ次の節の先頭に付ける
-            if sections and not pending and body and current_level > levels[-1]:
+            has_heading = any(not _is_blank(line) for line in lines)
+            if sections and not pending and has_heading and current_level > levels[-1]:
                 sections[-1] = (sections[-1][0], (sections[-1][1] + "\n" + "\n".join(lines)).strip("\n"))
             else:
                 pending = pending + lines
@@ -387,15 +380,11 @@ def merge_tiny_chunks(chunks, length, size: int, min_tokens: int, prefix_for):
     小さいチャンクの本文は見出しの行ごと移すので、どの節の話かは残る。パンくずは両方に共通の親の見出しに付け替える。
     prefix_for(path) は見出しの経路から (パンくずの行, パンくず) を返す。
     """
-    for chunk in chunks:
-        chunk.metadata.setdefault("_prefix", "")
-        chunk.metadata.setdefault("_path", [])
-
     def body_of(chunk):
         return chunk.page_content[len(chunk.metadata["_prefix"]):]
 
     def tiny(chunk):
-        return chunk.metadata.get("body_tokens", length(body_of(chunk))) < min_tokens
+        return chunk.metadata["body_tokens"] < min_tokens
 
     def same_kind(a, b):
         return a.metadata.get("kind") == b.metadata.get("kind")
@@ -455,8 +444,7 @@ def merge_heading_only(parts):
     """再分割で見出しの行だけ（またはページの印だけ）になった断片を、次の断片の先頭に付ける（見出しだけのチャンクを作らない）"""
     out, carry = [], []
     for part in parts:
-        body = [row for row in part.split("\n") if not _is_blank(row)]
-        if not body or all(_HEADING_LINE.match(row) for row in body):
+        if _is_heading_only(part.split("\n")):
             carry.append(part)
             continue
         out.append("\n\n".join(carry + [part]))

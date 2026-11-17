@@ -173,8 +173,29 @@ def get_chunk_and_graphDocument(graph_document_list, chunkId_chunkDoc_list):
           for chunk_id in graph_document.source.metadata['combined_chunk_ids'] :
             lst_chunk_chunkId_document.append({'graph_doc':graph_document,'chunk_id':chunk_id})
                   
-  return lst_chunk_chunkId_document  
-                 
+  return lst_chunk_chunkId_document
+
+
+def collect_chunk_results(chunk_documents, results, what):
+    """チャンクごとの抽出の結果（asyncio.gather(..., return_exceptions=True) の戻り値）から成功した結果の一覧を返す。
+    例外になったチャンクは飛ばして skipped_chunks に記録する。全部のチャンクが例外なら LLMGraphBuilderException を送出する。
+    what はログと例外の文に入れる処理の名前（例: graph transformation）。"""
+    from src import skipped_chunks
+    succeeded, failed = [], 0
+    for doc, result in zip(chunk_documents, results):
+        if isinstance(result, BaseException):
+            failed += 1
+            skipped_chunks.note(doc.metadata.get("combined_chunk_ids"))
+            logging.warning(f"Skipping chunk due to {what} error: {result}")
+        else:
+            succeeded.append(result)
+    if failed:
+        logging.warning(f"{what[0].upper()}{what[1:]} skipped {failed}/{len(chunk_documents)} combined chunks")
+    if chunk_documents and failed == len(chunk_documents):
+        raise LLMGraphBuilderException(f"{what[0].upper()}{what[1:]} failed for all chunks: {results[0]}")
+    return succeeded
+
+
 def create_graph_database_connection(credentials):
     graph = Neo4jGraph(url=credentials.uri, database=credentials.database, username=credentials.userName, password=credentials.password, refresh_schema=False, sanitize=True)    
     return graph
@@ -358,6 +379,12 @@ def get_value_from_env(key_name: str, default_value: Any = None, data_type: type
     error_msg = f"Environment variable '{key_name}' not found and no default value provided."
     logging.error(error_msg)
     return None
+
+
+def batches(rows, size=500):
+    """一覧を size 件ずつに切って返す（UNWIND で書く行の分割用）。"""
+    for i in range(0, len(rows), size):
+        yield rows[i:i + size]
 
 
 def convert_type(value: str, data_type: type):

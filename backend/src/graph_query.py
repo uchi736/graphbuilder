@@ -15,8 +15,9 @@ def get_graphDB_driver(credentials):
 
     """
     try:
-        logging.info(f"Attempting to connect to the Neo4j database at {credentials.uri}")
-        # Prefer credentials values, fallback to env if missing
+        # Prefer credentials values, fallback to env if missing（画面・API が接続先を空で送るときは .env の値）
+        uri = credentials.uri or get_value_from_env('NEO4J_URI')
+        logging.info(f"Attempting to connect to the Neo4j database at {uri}")
         username = credentials.userName if credentials.userName is not None else get_value_from_env('NEO4J_USERNAME')
         password = credentials.password if credentials.password is not None else get_value_from_env('NEO4J_PASSWORD')
         database = credentials.database if hasattr(credentials, 'database') and credentials.database is not None else get_value_from_env('NEO4J_DATABASE')
@@ -24,21 +25,21 @@ def get_graphDB_driver(credentials):
         enable_user_agent = get_value_from_env("ENABLE_USER_AGENT", "False", "bool")
         if enable_user_agent:
             driver = GraphDatabase.driver(
-                credentials.uri,
+                uri,
                 auth=(username, password),
                 database=database,
                 user_agent=get_value_from_env("USER_AGENT", "LLM-Graph-Builder")
             )
         else:
             driver = GraphDatabase.driver(
-                credentials.uri,
+                uri,
                 auth=(username, password),
                 database=database
             )
         logging.info("Connection successful")
         return driver
     except Exception:
-        error_message = f"graph_query module: Failed to connect to the database at {credentials.uri}."
+        error_message = f"graph_query module: Failed to connect to the database at {getattr(credentials, 'uri', None)}."
         logging.error(error_message, exc_info=True)
 
 
@@ -239,8 +240,7 @@ def get_graph_results(credentials, document_names, include_orphans=False):
         logging.info("Starting graph query process")
         driver = get_graphDB_driver(credentials)  
         document_names= list(map(str, json.loads(document_names)))
-        chunk_limit = get_value_from_env("GRAPH_CHUNK_LIMIT", GRAPH_CHUNK_LIMIT, "int")
-        chunk_limit_clause = f"LIMIT {chunk_limit}" if chunk_limit and chunk_limit > 0 else ""
+        chunk_limit_clause = f"LIMIT {GRAPH_CHUNK_LIMIT}" if GRAPH_CHUNK_LIMIT > 0 else ""
         query = GRAPH_QUERY.format(chunk_limit_clause=chunk_limit_clause)
         records, summary , keys = execute_query(driver, query.strip(), document_names, include_orphans=bool(include_orphans))
         document_nodes = extract_node_elements(records)

@@ -126,11 +126,14 @@ class LedgerTx:
 
     def put(self, kind, uid, **fields):
         """行を書く（無ければ作る）。既にあれば created_at は残し、op_id は今の操作にする。"""
-        current = self.get(uid) if uid not in self._before else self._current(uid)
+        current = self.get(uid)
         row = {"kind": kind, "uid": uid, "created_at": (current or {}).get("created_at") or now_iso(), "op_id": self.op_id}
         row.update({k: v for k, v in fields.items() if v is not None})
-        self.tx.run(f"MERGE (g:{GRAPH_EDIT_LABEL} {{uid: $uid}}) SET g = $row", uid=uid, row=row)
+        self._write(uid, row)
         return row
+
+    def _write(self, uid, row):
+        self.tx.run(f"MERGE (g:{GRAPH_EDIT_LABEL} {{uid: $uid}}) SET g = $row", uid=uid, row=row)
 
     def delete(self, uid):
         if uid not in self._before:
@@ -139,16 +142,12 @@ class LedgerTx:
 
     def restore(self, uid, row):
         """取り消しで、行をそのままの形に戻す（row が None なら消す）。"""
+        if row is None:
+            self.delete(uid)
+            return
         if uid not in self._before:
             self.get(uid)
-        if row is None:
-            self.tx.run(f"MATCH (g:{GRAPH_EDIT_LABEL} {{uid: $uid}}) DELETE g", uid=uid)
-        else:
-            self.tx.run(f"MERGE (g:{GRAPH_EDIT_LABEL} {{uid: $uid}}) SET g = $row", uid=uid, row=dict(row))
-
-    def _current(self, uid):
-        record = self.tx.run(f"MATCH (g:{GRAPH_EDIT_LABEL} {{uid: $uid}}) RETURN properties(g) AS p", uid=uid).single()
-        return dict(record["p"]) if record else None
+        self._write(uid, dict(row))
 
     def before_after(self):
         """触れた行の前と後（{uid: 行または None}）。"""
@@ -184,16 +183,33 @@ def keep_name(lt, name, entity_id):
         lt.delete(tnode_uid(name))
 
 
-def _retarget_alias_rows(lt, old_id, new_id):
-    for row in lt.find("alias", "target", [old_id]):
-        lt.put("alias", row["uid"], alias=row.get("alias"), target=new_id)
+def _alias_names_to(lt, names, final_id):
+    """各名前を指していた別名を final_id に付け替え、名前→final_id の別名を足す（名前が final_id なら足さない）。"""
+    for name in names:
+        for row in lt.find("alias", "target", [name]):
+            lt.put("alias", row["uid"], alias=row.get("alias"), target=final_id)
+        if name != final_id:
+            lt.put("alias", alias_uid(name), alias=name, target=final_id)
+
+
+def _manual_rels_touching(lt, entity_ids):
+    """端点（src か tgt）が entity_ids のどれかである manual_rel の行。{uid: 行}"""
+    ids = list(entity_ids)
+    return {row["uid"]: row for row in lt.find("manual_rel", "src", ids) + lt.find("manual_rel", "tgt", ids)}
+
+
+def _rewrite_names(lt, mapping, final_id):
+    """manual_rel・tombstone_rel・distinct の名前を mapping（旧い id → 新しい id）で書き換え、final_id の名前を残す。"""
+    if mapping:
+        _rewrite_manual_rels(lt, mapping)
+        _rewrite_tombstone_rels(lt, mapping)
+        _rewrite_distinct(lt, mapping)
+    keep_name(lt, final_id, final_id)
 
 
 def _rewrite_manual_rels(lt, mapping):
     """manual_rel の端点を mapping（旧い id → 新しい id）で書き換える。自分自身へのリレーションになる行は消す。"""
-    old_ids = list(mapping)
-    rows = {row["uid"]: row for row in lt.find("manual_rel", "src", old_ids) + lt.find("manual_rel", "tgt", old_ids)}
-    for row in rows.values():
+    for row in _manual_rels_touching(lt, mapping).values():
         src = mapping.get(row.get("src"), row.get("src"))
         tgt = mapping.get(row.get("tgt"), row.get("tgt"))
         lt.delete(row["uid"])
@@ -231,8 +247,7 @@ def _rewrite_distinct(lt, mapping):
 
 def rename_entity(lt, old_id, new_id):
     """改名 old→new（不変条件 2）。"""
-    _retarget_alias_rows(lt, old_id, new_id)
-    lt.put("alias", alias_uid(old_id), alias=old_id, target=new_id)
+    _alias_names_to(lt, [old_id], new_id)
     type_row = lt.get(type_uid(old_id))
     if type_row is not None:
         lt.delete(type_row["uid"])
@@ -242,11 +257,7 @@ def rename_entity(lt, old_id, new_id):
         lt.delete(cur_row["uid"])
         lt.put("curated", cur_uid(new_id), entity=new_id, keys=list(cur_row.get("keys") or []),
                values_json=cur_row.get("values_json") or "{}")
-    mapping = {old_id: new_id}
-    _rewrite_manual_rels(lt, mapping)
-    _rewrite_tombstone_rels(lt, mapping)
-    _rewrite_distinct(lt, mapping)
-    keep_name(lt, new_id, new_id)
+    _rewrite_names(lt, {old_id: new_id}, new_id)
 
 
 def merge_entities(lt, names, final_id, labels, extra_curated_keys, current_props):
@@ -258,10 +269,7 @@ def merge_entities(lt, names, final_id, labels, extra_curated_keys, current_prop
     - curated: 統合するもの全部の項目に extra_curated_keys を足して final に 1 行
     """
     all_ids = list(dict.fromkeys(list(names) + [final_id]))
-    for name in names:
-        _retarget_alias_rows(lt, name, final_id)
-        if name != final_id:
-            lt.put("alias", alias_uid(name), alias=name, target=final_id)
+    _alias_names_to(lt, names, final_id)
     had_type = False
     keys = []
     for entity_id in all_ids:
@@ -279,12 +287,7 @@ def merge_entities(lt, names, final_id, labels, extra_curated_keys, current_prop
     if keys:
         lt.put("curated", cur_uid(final_id), entity=final_id, keys=keys,
                values_json=json.dumps({k: current_props.get(k) for k in keys}, ensure_ascii=False, default=str))
-    mapping = {name: final_id for name in names if name != final_id}
-    if mapping:
-        _rewrite_manual_rels(lt, mapping)
-        _rewrite_tombstone_rels(lt, mapping)
-        _rewrite_distinct(lt, mapping)
-    keep_name(lt, final_id, final_id)
+    _rewrite_names(lt, {name: final_id for name in names if name != final_id}, final_id)
 
 
 def delete_entity(lt, entity_id, suppress):
@@ -298,8 +301,7 @@ def delete_entity(lt, entity_id, suppress):
     for uid in (type_uid(entity_id), cur_uid(entity_id)):
         if lt.get(uid) is not None:
             lt.delete(uid)
-    rows = {row["uid"]: row for row in lt.find("manual_rel", "src", [entity_id]) + lt.find("manual_rel", "tgt", [entity_id])}
-    for uid in rows:
+    for uid in _manual_rels_touching(lt, [entity_id]):
         lt.delete(uid)
 
 
@@ -411,12 +413,6 @@ class Ledger:
                                          "props": props if isinstance(props, dict) else {}})
             elif kind == "distinct":
                 self.distinct.add(tuple(sorted([norm_key(row.get("a")), norm_key(row.get("b"))])))
-
-    def __len__(self):
-        return len(self.rows)
-
-    def is_tombstoned_node(self, name):
-        return norm_key(name) in self.tombstone_nodes
 
     def is_tombstoned_rel(self, src, rel_type, tgt):
         return rel_key(src, rel_type, tgt) in self.tombstone_rels

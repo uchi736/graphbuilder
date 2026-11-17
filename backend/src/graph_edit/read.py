@@ -1,18 +1,16 @@
 """読み取りの入口（設計メモ 3 章の node_detail・search_entities・neighborhood・vocabulary・ledger）と、
 重複の候補から別物の組を外すための要素 ID の組（M10）。"""
-import csv
 import glob
 import os
 
 from src.graph_edit import history
-from src.graph_edit.ledger import LEDGER_KINDS, check_kind, cur_uid, type_uid
+from src.graph_edit.ledger import check_kind, cur_uid, type_uid
 from src.graph_edit.normalize import norm_key
-from src.graph_edit.ops import node_dict, node_hits, rel_dict, run_read
+from src.graph_edit.ops import ENTITY_IDS_QUERY, node_dict, node_hit_records, node_hits, rel_dict, run_read
 from src.graph_edit.validate import (
-    DOCUMENT_LABEL, ENTITY_LABEL, GRAPH_EDIT_LABEL, LABEL_PATTERN, NOT_FOUND, RELATIONSHIP_TYPE_PATTERN, RESERVED,
-    RESERVED_LABELS, RESERVED_RELATIONSHIP_TYPES, EditError, entity_block, parse_int, require_text,
+    ENTITY_LABEL, GRAPH_EDIT_LABEL, NOT_FOUND, RESERVED, RESERVED_LABELS, RESERVED_RELATIONSHIP_TYPES, EditError,
+    entity_block, parse_int, require_text, usable_label, usable_type,
 )
-from src.shared.common_fn import get_value_from_env
 
 DETAIL_RELATIONSHIP_LIMIT = 100
 NEIGHBORHOOD_LIMIT = 1000
@@ -28,31 +26,32 @@ def _editable_where(var="e"):
     return f"{var}.fileName IS NULL AND {var}.id IS NOT NULL AND NOT ({reserved})"
 
 
+def _neighbor_rels(tx, element_id, limit, order_by=""):
+    """ノードの隣のリレーション（チャンク・文書・コミュニティ・管理用への線を除く）と相手のノード。
+    ([rel_dict], {要素 ID: node_dict}（中心のノード自身は入れない）)"""
+    rels, neighbors, seen = [], {}, set()
+    for r in tx.run(f"""
+            MATCH (n)-[r]-(o) WHERE elementId(n) = $eid AND NOT ({_NOT_NEIGHBOR})
+            RETURN DISTINCT r, o {order_by} LIMIT $limit""", eid=element_id, limit=limit):
+        if r["r"].element_id in seen:
+            continue
+        seen.add(r["r"].element_id)
+        rels.append(rel_dict(r["r"]))
+        if r["o"].element_id != element_id:
+            neighbors.setdefault(r["o"].element_id, node_dict(r["o"]))
+    return rels, neighbors
+
+
 def node_detail(graph, element_id):
     element_id = require_text(element_id, "element_id")
 
     def work(tx):
-        record = tx.run("""
-            MATCH (n) WHERE elementId(n) = $eid
-            CALL (n) {
-                OPTIONAL MATCH (n)<-[:HAS_ENTITY]-(c:Chunk)
-                OPTIONAL MATCH (c)-[:PART_OF]->(d:Document)
-                RETURN count(DISTINCT c) AS chunk_count, [x IN collect(DISTINCT d.fileName) WHERE x IS NOT NULL] AS documents
-            }
-            RETURN n, chunk_count, documents""", eid=element_id).single()
-        if record is None:
+        records = node_hit_records(tx, [element_id])
+        if not records:
             raise EditError(NOT_FOUND, f"node {element_id} does not exist")
+        record = records[0]
         node = record["n"]
-        rels, neighbors, seen = [], {}, set()
-        for r in tx.run(f"""
-                MATCH (n)-[r]-(o) WHERE elementId(n) = $eid AND NOT ({_NOT_NEIGHBOR})
-                RETURN DISTINCT r, o ORDER BY type(r), o.id LIMIT $limit""", eid=element_id, limit=DETAIL_RELATIONSHIP_LIMIT):
-            if r["r"].element_id in seen:
-                continue
-            seen.add(r["r"].element_id)
-            rels.append(rel_dict(r["r"]))
-            if r["o"].element_id != element_id:
-                neighbors.setdefault(r["o"].element_id, node_dict(r["o"]))
+        rels, neighbors = _neighbor_rels(tx, element_id, DETAIL_RELATIONSHIP_LIMIT, "ORDER BY type(r), o.id")
         total = tx.run(f"MATCH (n)-[r]-(o) WHERE elementId(n) = $eid AND NOT ({_NOT_NEIGHBOR}) "
                        "RETURN count(DISTINCT r) AS c", eid=element_id).single()["c"]
         entity_id = node.get("id")
@@ -120,16 +119,8 @@ def neighborhood(graph, element_id):
         center = record["n"]
         if ENTITY_LABEL not in center.labels:
             raise EditError(RESERVED, f"node {element_id} is not an entity")
-        nodes = {element_id: node_dict(center)}
-        rels, seen = [], set()
-        for r in tx.run(f"""
-                MATCH (n)-[r]-(o) WHERE elementId(n) = $eid AND NOT ({_NOT_NEIGHBOR})
-                RETURN DISTINCT r, o LIMIT $limit""", eid=element_id, limit=NEIGHBORHOOD_LIMIT):
-            if r["r"].element_id in seen:
-                continue
-            seen.add(r["r"].element_id)
-            rels.append(rel_dict(r["r"]))
-            nodes.setdefault(r["o"].element_id, node_dict(r["o"]))
+        rels, neighbors = _neighbor_rels(tx, element_id, NEIGHBORHOOD_LIMIT)
+        nodes = {element_id: node_dict(center), **neighbors}
         return {"nodes": list(nodes.values()), "relationships": rels}
 
     return run_read(graph, work)
@@ -137,12 +128,12 @@ def neighborhood(graph, element_id):
 
 def _edc_vocabulary():
     """EDC の語彙（/edc_schemas の CSV の型名と述語名）。*_types.csv の 1 列目が型名、それ以外の CSV の 1 列目が述語名。"""
-    schemas_dir = get_value_from_env("EDC_SCHEMAS_DIR", "/edc_schemas")
+    from src.edc_extraction import read_csv_names, schemas_dir
+    directory = schemas_dir()
     labels, rel_types = set(), set()
-    for path in sorted(glob.glob(os.path.join(schemas_dir, "*.csv"))):
+    for path in sorted(glob.glob(os.path.join(directory, "*.csv"))):
         try:
-            with open(path, encoding="utf-8") as f:
-                names = {row[0].strip() for row in csv.reader(f) if row and row[0].strip()}
+            names = read_csv_names(directory, path)
         except OSError:
             continue
         if path.endswith("_types.csv"):
@@ -160,13 +151,6 @@ def vocabulary(graph):
 
     labels, rel_types = run_read(graph, work)
     edc_labels, edc_rel_types = _edc_vocabulary()
-
-    def usable_label(label):
-        return label not in RESERVED_LABELS and label not in (ENTITY_LABEL, DOCUMENT_LABEL) and bool(LABEL_PATTERN.match(label))
-
-    def usable_type(rel_type):
-        return rel_type not in RESERVED_RELATIONSHIP_TYPES and bool(RELATIONSHIP_TYPE_PATTERN.match(rel_type))
-
     return {"labels": sorted(l for l in labels if usable_label(l)),
             "relationship_types": sorted(t for t in rel_types if usable_type(t)),
             "edc_labels": sorted(l for l in edc_labels if usable_label(l)),
@@ -197,7 +181,7 @@ def distinct_element_pairs(graph):
         if not pairs:
             return []
         by_key = {}
-        for r in tx.run(f"MATCH (e:{ENTITY_LABEL}) WHERE e.id IS NOT NULL RETURN elementId(e) AS eid, e.id AS id"):
+        for r in tx.run(ENTITY_IDS_QUERY):
             by_key.setdefault(norm_key(r["id"]), []).append(r["eid"])
         out = set()
         for a, b in pairs:
@@ -208,7 +192,3 @@ def distinct_element_pairs(graph):
         return [list(p) for p in sorted(out)]
 
     return run_read(graph, work)
-
-
-__all__ = ["node_detail", "search_entities", "neighborhood", "vocabulary", "ledger", "distinct_element_pairs",
-           "LEDGER_KINDS"]

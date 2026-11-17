@@ -1,13 +1,13 @@
 """本文の文字の正規化と、見出しの段の決め方。
 
-段は番号の形で決める（既存の number_headings.py の規則を使い、次を足した）。
-    章   1.  2.                → ##        （number_headings と同じ）
-    節   2-1  3-5              → ###       （number_headings と同じ。題の頭の「.」は外す）
+段は番号の形で決める（番号の形の正規表現と題の判定は number_headings.py）。
+    章   1.  2.                → ##
+    節   2-1  3-5              → ###       （題の頭の「.」は外す）
     点区切り 3.1 / 3.1.2 / 3.1.2.1 → ### / #### / #####（同じ文書に章 3 があるか、見出しの領域の行のときだけ）
     付属 別表2・付表・別紙1・添付資料3（字間の空白も許す） → ##（### だと章の下に入り、付属の節ができない）。
          語と番号の間のダッシュは残す（別紙-1。章・節の層の annex_key は「別紙-1」も「別紙1」と読む）
-    表・注  表 1  注 1          → ###       （number_headings と同じ）
-    項 (1) → ####、号 1) → #####、目 a) → ######（number_headings と同じ）
+    表・注  表 1  注 1          → ###
+    項 (1) → ####、号 1) → #####（「(1)」の下に置かれる番号。番号の形は書き換えない）、目 a) → ######
     番号の無い見出し（変換器が見出しと判定した領域の行）は、本文の枠の無いページに限り ## にする（枠のある本文のページでは見出しにしない）
     章・節・点区切りの題は、末尾の括弧書きの注記を外した題で判定してもよい（「2-5 外部振動計測 (…、測定値は…に記録)」の
     注記の中の「は」で文と判定しない。heading_title_ok）
@@ -24,7 +24,7 @@
     図の範囲から見出しの候補として出した行（strict）は、点区切り・節とも、その章が文書に既にあるときだけ見出しにする。
     見出しにならなかった候補は「図中の文字」に戻す
 
-正規化（pdf_markdown.py の規則に合わせる）: 全角の英数字・記号を半角に（＃｜＊＿～｀＜＞［］＼．！？ は残す）、全角空白を半角に、
+正規化: 全角の英数字・記号を半角に（＃｜＊＿～｀＜＞［］＼．！？ は残す）、全角空白を半角に、
 半角カナを全角に、番号の中のハイフンの異体（−－‐ など）を半角の - に、バッククォートを消す。
 行頭の # は \\# に、行頭の | は \\| に逃がし、行全体が [ ] で囲まれた行は \\[ にする（パンくずと取り違えない）。
 """
@@ -122,6 +122,9 @@ def header_notes(text: str) -> list:
 
 
 # ---- 見出しの段 ----
+FIGURE_TEXT_LABEL = "図中の文字: "
+
+
 @dataclass
 class FigureText:
     """図中の文字の行。見出しにならなかった候補（strict の行）を、出すときに頭に足す"""
@@ -269,11 +272,14 @@ def promote_line(line: str, nxt: str, hint: bool, framed: bool, state: DocState,
         if known or hint:
             # 小数や量の行（1.5 倍）。章と読まないよう、ここで打ち切る
             return None, False
+    # 節。CHAPTER（番号の後が .）とは同時に当たらないので、章より先に見てよい。strict の候補は章が文書にあるときだけ。
+    # 「1-1項と別表の摘要欄…」のように番号の後が「項」で始まる行は、節の見出しではなく参照の文
+    m = SECTION.match(s)
+    title = _clean_title(m.group(3)) if m else ""
+    if (m and title and heading_title_ok(title) and not title.startswith(("項", "号", "条"))
+            and (not strict or m.group(1) in state.chapters)):
+        return (3, f"{m.group(1)}-{m.group(2)} {title}", "number"), False
     if strict:
-        m = SECTION.match(s)
-        if (m and m.group(1) in state.chapters and (m.group(3) or "").strip()
-                and heading_title_ok(_clean_title(m.group(3))) and not _clean_title(m.group(3)).startswith(("項", "号", "条"))):
-            return (3, f"{m.group(1)}-{m.group(2)} {_clean_title(m.group(3))}", "number"), False
         return None, False
     m = CHAPTER.match(s)
     if m:
@@ -292,11 +298,6 @@ def promote_line(line: str, nxt: str, hint: bool, framed: bool, state: DocState,
                 state.control = number
                 return (2, f"{m.group(1)}. {title}", "control"), used
             return (2, f"{m.group(1)}. {title}", "number"), used
-    m = SECTION.match(s)
-    if m and (m.group(3) or "").strip() and heading_title_ok(_clean_title(m.group(3))) \
-            and not _clean_title(m.group(3)).startswith(("項", "号", "条")):
-        # 「1-1項と別表の摘要欄…」のように番号の後が「項」で始まる行は、節の見出しではなく参照の文
-        return (3, f"{m.group(1)}-{m.group(2)} {_clean_title(m.group(3))}", "number"), False
     m = ITEM.match(s)
     if m and m.group(2) and _is_heading_title(m.group(2), item=True):
         return (4, f"({m.group(1)}) {m.group(2).strip()}", "number"), False
@@ -341,7 +342,6 @@ def heading_markdown(level: int, text: str, kind: str, state: DocState) -> str:
 
 def render_lines(lines, framed: bool, state: DocState) -> str:
     """ページの行の並びを Markdown にする。見出しにできる行は見出しに、それ以外の本文の行は逃がす。"""
-    from .vlm import FIGURE_TEXT_LABEL
     out = []
     skip = False
     for i, ln in enumerate(lines):
@@ -369,7 +369,7 @@ def render_lines(lines, framed: bool, state: DocState) -> str:
             out.append(heading_markdown(*heading, state))
             skip = used
         elif ln.strict:
-            # 図の範囲から出した候補で見出しにならなかった行は、図中の文字に戻す（図中の文字を出さない扱いなら捨てる）
+            # 図の範囲から出した候補で見出しにならなかった行は、図中の文字に戻す（戻す先が無ければ捨てる）
             if ln.figure is not None:
                 ln.figure.pending.append(ln.text)
         else:

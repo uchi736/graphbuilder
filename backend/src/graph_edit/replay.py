@@ -1,4 +1,4 @@
-"""取り込みの保存の直前と直後の、修正台帳の再適用（設計メモ 4 章、A2）。貸し出し（2.6）の関数は lease.py にあり、ここから使える。
+"""取り込みの保存の直前と直後の、修正台帳の再適用（設計メモ 4 章、A2）。
 
 main.processing_chunks の中で、標準の抽出と EDC の抽出の両方がここを通る:
 
@@ -17,15 +17,10 @@ apply_ledger_before_save は純粋な関数（Neo4j を呼ばない）。入力�
 """
 import json
 import logging
-import time  # noqa: F401  (試験が time.sleep を差し替える)
 
 from langchain_community.graphs.graph_document import GraphDocument, Node, Relationship
 
-from src.graph_edit.lease import (  # noqa: F401  (main と試験はここから使う)
-    LEASE_INTERVAL_SECONDS, LEASE_MAX_WAIT_SECONDS, LEASE_MS, acquire_lease, hold_lease, release_lease, renew_lease,
-    start_heartbeat,
-)
-from src.graph_edit.ledger import Ledger, load_ledger  # noqa: F401  (load_ledger は main から使う)
+from src.graph_edit.ledger import Ledger
 from src.graph_edit.normalize import rel_type_key
 from src.graph_edit.validate import ENTITY_LABEL
 

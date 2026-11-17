@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""節の要点（後処理 build_section_summaries）と、要点の一覧から LLM に節を選ばせる部品（参照追跡の reference_doc_select = summary_list）。
+"""節の要点（後処理 build_section_summaries）と、OpenAI 互換の接続へ 1 回だけ問い合わせる部品（chat）。
 
-要点（2026-11-09、実験台帳 X16 の指示を写す）
+要点（指示は実験台帳 X16 のもの）
   Section ごとに、見出しの経路＋主所属（IN_SECTION {primary: true}）のチャンクの本文の先頭 3,000 字を LLM（既定 gemma4）に渡し、
   検索用の要点（1〜2 文・80 字以内）を作る。主所属のチャンクが無い節（目録で切り出した小さな節が前の節のチャンクの中にある場合）は、
   Section.text（章・節の層が目録から切り出した節の本文）を使う。見出しの題・# ・空白を除いて 10 字に満たない本文は無いものとみなす。章（level 1）は、子の節の要点も入れて章の要点にする（子を先に作る）。
@@ -13,23 +13,17 @@
         打ち切った場合と、LLM に送った節の FAIL_RATIO を超えて失敗した場合は complete = False を返し、後処理（score.py）は Failed を返す。
   同時要求: LLM への同時要求の上限 MAX_CONCURRENCY は 1 プロセスあたりである（本番の backend は gunicorn の複数のワーカー）。
         要点の作成は、同じコンテナの中ではファイルの鍵（fcntl）で同時に 1 本に限る（2 本目は 1 本目の終了を待つ。待った後は、1 本目が作った要点をそのまま使う）。
-        一覧選択の要求は、別のワーカーから同時に届きうる（この上限の対象はそのワーカーの中だけ）。
+        chat を使うほかの要求（エンティティ起点の収集の質問の語の抜き出し）は、別のワーカーから同時に届きうる（この上限の対象はそのワーカーの中だけ）。
   章・節の層との関係: 章・節の層の作り直しの途中に読まないよう、層の貸し出し（lease）が返るまで待ってから節を読む。
         書き戻しだけの実行（restore_only = True）は、LLM を呼ばずに控えから書き戻す。後処理で章・節の層を作り直し、節の要点の段を流さないときに使う。
   控え: 章・節の層の後処理（build_section_layer）は Section を毎回消して作り直すので、要点が消える。作った要点は
         (:SectionSummary {src, summary, model, at, fileName}) にも控え、入力が同じ節には LLM を呼ばずに書き戻す。
         SectionSummary は関係を持たない管理用のノードで、後処理・件数・スキーマの対象から外す（shared/constants.py）。
-        控えの掃除（全文書を対象に流したときだけ）は、今の節の要点の入力と、この回の初めに読んだ節の入力のどちらとも一致しない控えだけを消す。
+        控えの掃除（書き戻しだけの実行と打ち切った回はしない）は、今の節の要点の入力と、この回の初めに読んだ節の入力のどちらとも一致しない控えだけを消す。
         グラフの貸し出しが出ている間（章・節の層の作り直しの途中など）は掃除しない。
+  読み手: 参照リンクの後処理（chunk_references）が、結び先の一覧に節の要点を出す（要点の無い節は本文）。
   要点は既定の検索の文脈に出ない: 文脈のノードの行は id（無ければ name・title・id・description で終わる名前の値）と description だけを使い、
   Section はグラフ展開の起点（エンティティ）にならない（tests/test_section_summaries.py で確かめる）。
-
-一覧選択（参照追跡の文書だけを指す参照）
-  参照先の文書の節を候補にし、リランカー（「質問＋参照の一文」対「節の見出しの経路＋要点」、要点が無ければ本文の先頭）で上位 20 件にし、
-  LLM に「質問・参照元の節・既に手元にある節・候補の一覧」を見せて、最大 k 件の番号を JSON の配列で返させる（X16 の一覧の指示）。
-  節の数が閾値を超える文書は、章の要点で章を選んでから、その章の節で同じことをする（2 段）。
-  LLM の失敗・空・範囲外の番号だけのときは SelectionFailed を上げ、呼び出し側が従来の選び方（rerank）に戻す。
-  一覧選択の要求は、このプロセスの同時要求の枠が LIST_SLOT_WAIT 秒で空かなければ失敗とする（待ちに上限を付ける）。
 
 このモジュールは langchain を import しない（試験を軽くするため）。DB は呼び出し側の関数（run）で読み書きする。
 """
@@ -52,47 +46,40 @@ import requests
 from src.shared.constants import GRAPH_EDIT_MANAGEMENT_LABELS
 
 GRAPH_LOCK_LABEL = GRAPH_EDIT_MANAGEMENT_LABELS[2]   # __GraphLock__
-# ---- 指示（X16: select_summ.py の SUM_SYS と、select_compare.py の LLM_SYS の写し）----
+# 要点の指示（X16 の指示の写し）
 SUMMARY_SYSTEM = ("社内規格の 1 節を読み、検索用の要点を 1〜2 文（80 字以内）で書く。何についての規定か（対象の部品・型式・材質・工程・試験）、"
                   "何を定めているか（値・条件・手順・禁止）、他の規格や節を参照していればその番号を必ず含める。前置きや箇条書きは書かない。")
-LIST_SYSTEM = ("あなたは社内規格の調査員である。質問に答えるために追加で読むべき節を、候補の一覧から選ぶ。候補には番号が付いている。"
-               "選んだ番号だけを JSON の配列で返す（例: [3, 7, 1, 9]）。説明は書かない。")
 
 BODY_CHARS = 3000             # 要点の入力にする本文の先頭の字数
 MIN_BODY_CHARS = 10           # 見出しの題・見出し記号（#）・空白を除いてこの字数に満たない本文は、本文が無いとみなす
-                              # （「##」だけの節で LLM が「対象のテキストが入力されていません」と答えた。11/9 の kgb4 で 34 節）
+                              # （「##」だけの節では LLM が断りの文を返す）
 CHILD_SUMMARY_CHARS = 3000    # 章の入力に入れる子の要点の合計の上限
 SUMMARY_MAX_TOKENS = 160      # X16 と同じ
 SUMMARY_MAX_CHARS = 200       # 保存する要点の上限（指示は 80 字。暴走した出力を切り詰める）
-MAX_CONCURRENCY = 3           # gemma4 への同時要求の上限（1 プロセスあたり。26B は並列の要求で止まった記録がある）
+MAX_CONCURRENCY = 8           # gemma4 への同時要求の上限（1 プロセスあたり。26B は並列の要求で止まった記録がある）
 ABORT_AFTER = 8               # 続けてこの数の要求が接続の失敗（時間切れ・HTTP 401/403/404/429/5xx を含む）になったら打ち切る
 FAIL_RATIO = 0.1              # LLM に送った節のうち、この割合を超えて失敗したら complete = False（後処理は Failed）
-LIST_SLOT_WAIT = 10.0         # 一覧選択の要求が、このプロセスの同時要求の枠を待つ上限（秒）
 BUILD_LOCK_WAIT = 3600.0      # 要点の作成が、同じコンテナの別の作成の終了を待つ上限（秒）
 SECTION_LAYER_WAIT = 900.0    # 章・節の層の作り直し（貸し出し中）の終了を待つ上限（秒）
 WRITE_BATCH = 20              # この数ごとに書き込む（途中で止まっても作った分は残る）
-LIST_TOP_K = 20               # 一覧に並べる候補の数（X16 の 20）
-LIST_MAX_TOKENS = 64          # X16 と同じ
-LIST_HEAD_CHARS = 150         # 要点の無い節の一覧の行に出す本文の先頭の字数
-ALREADY_MAX = 12              # 「既に手元にある節」に並べる数の上限
-# 要点ではない答え（入力への断り・前置き・箇条書き）の文。11/9 の kgb4 で 590 節中 4 節（「ご提示いただいた…」「…を貼り付けて…」）
+# 要点ではない答え（入力への断り・前置き・箇条書き）の文（「ご提示いただいた…」「…を貼り付けて…」）
 META_SENTENCE = re.compile(r"ご提示|ご指定|提供されていません|入力されていません|含まれておりません|含まれていません|貼り付け|いただければ|"
                            r"以下のよう|以下の通り|以下のとおり|承知しました|作成いたします|整理します|まとめると")
 CHAPTER_NOTE = "### 指示\nこの章全体について、要点を 1〜2 文（80 字以内）で書く。下位の節を列挙しない。"
 
-_SLOTS = threading.BoundedSemaphore(MAX_CONCURRENCY)   # このプロセスから LLM への同時要求（同じプロセスの要点の作成と一覧選択で共有。別のワーカーとは共有しない）
+_SLOTS = threading.BoundedSemaphore(MAX_CONCURRENCY)   # このプロセスから LLM への同時要求（chat を使う要求すべてで共有。別のワーカーとは共有しない）
 _BUILD_LOCK_PATH = os.path.join(tempfile.gettempdir(), "llm-graph-builder-section-summaries.lock")
 _LLM_STATE = {"template_kwargs": True}
 
 SECTIONS_QUERY = """
-MATCH (s:Section) WHERE s.method = 'rule' AND ($files IS NULL OR s.fileName IN $files)
+MATCH (s:Section) WHERE s.method = 'rule'
 OPTIONAL MATCH (p:Section)-[:HAS_SECTION]->(s)
 RETURN s.id AS id, s.fileName AS file_name, s.path AS path, s.title AS title, s.number AS number, s.level AS level,
        p.id AS parent, s.summary AS summary, s.summary_src AS summary_src, s.text AS text
 """
 PRIMARY_BODY_QUERY = """
 MATCH (c:Chunk)-[m:IN_SECTION]->(s:Section)
-WHERE m.primary = true AND s.method = 'rule' AND c.text IS NOT NULL AND ($files IS NULL OR s.fileName IN $files)
+WHERE m.primary = true AND s.method = 'rule' AND c.text IS NOT NULL
 RETURN s.id AS sid, c.text AS text, c.position AS position
 ORDER BY sid, position
 """
@@ -126,7 +113,7 @@ MATCH (s:Section {id: id})
 REMOVE s.summary, s.summary_model, s.summary_at, s.summary_src
 """
 CACHE_INDEX_QUERY = "CREATE INDEX section_summary_src IF NOT EXISTS FOR (x:SectionSummary) ON (x.src)"
-# 控えの掃除: 今のどの節の要点の入力とも、この回の初めに読んだ節の入力（$keep）とも一致しない控えを消す（全文書を対象に流したときだけ）。
+# 控えの掃除: 今のどの節の要点の入力とも、この回の初めに読んだ節の入力（$keep）とも一致しない控えを消す。
 # $keep は、作成の途中で章・節の層が節を作り直した（summary_src が消えた）場合に、この回に作った・書き戻した控えを残すため
 CACHE_PRUNE_QUERY = """
 MATCH (s:Section) WHERE s.summary_src IS NOT NULL
@@ -139,16 +126,6 @@ CACHE_ANY_QUERY = "MATCH (x:SectionSummary) RETURN x.src AS src LIMIT 1"
 # グラフの貸し出し（src/graph_edit/lease.py）の今の持ち主。持ち主の名前は「<処理の名前>#<乱数>」（章・節の層は section_layer#...）
 LEASE_HOLDER_QUERY = (f"MATCH (l:`{GRAPH_LOCK_LABEL}` {{name: 'graph'}}) WHERE coalesce(l.lease_until, 0) >= timestamp() "
                       "RETURN l.lease_owner AS owner")
-
-
-class SelectionFailed(Exception):
-    """一覧選択が使えなかった（呼び出し側は従来の選び方に戻す）。
-    reason: llm_failed / empty / out_of_range / no_sections / no_summaries / below_min_score / all_taken / ..."""
-
-    def __init__(self, reason: str, raw: str = ""):
-        super().__init__(reason)
-        self.reason = reason
-        self.raw = raw
 
 
 class SlotBusy(RuntimeError):
@@ -200,26 +177,11 @@ def chat(messages: List[dict], *, model_key: str, max_tokens: int, timeout: floa
     return strip_thinking(content), name
 
 
-def summary_model_key() -> str:
-    return os.environ.get("SECTION_SUMMARY_MODEL", "gemma4")
-
-
-def list_model_key() -> str:
-    return os.environ.get("CHAT_REFERENCE_DOC_SELECT_MODEL", "gemma4")
-
-
 def _float_env(name: str, default: float) -> float:
     try:
         return float(os.environ.get(name, str(default)))
     except ValueError:
         return default
-
-
-def list_chat(messages: List[dict]) -> str:
-    """一覧選択の 1 回の要求（試験では差し替える）。同時要求の枠は LIST_SLOT_WAIT 秒まで待つ（要点の作成が枠を使っている間）。"""
-    text, _ = chat(messages, model_key=list_model_key(), max_tokens=LIST_MAX_TOKENS,
-                   timeout=_float_env("CHAT_REFERENCE_DOC_SELECT_TIMEOUT", 60.0), slot_wait=LIST_SLOT_WAIT)
-    return text
 
 
 # ============================================================
@@ -379,32 +341,25 @@ def _build_lock(max_wait: float):
 
 
 def build_section_summaries(graph=None, *, run: Optional[Callable] = None, summarize: Optional[Callable] = None,
-                            file_names: Optional[List[str]] = None, concurrency: Optional[int] = None,
                             retries: int = 2, backoff: float = 3.0, restore_only: bool = False) -> dict:
-    """後処理 build_section_summaries。返り値 {"summary": {件数と時間}}。
+    """後処理 build_section_summaries。全文書の節を対象にする。返り値 {"summary": {件数と時間}}。
 
-    run(query, params) -> 行の一覧、summarize(入力) -> (要点, モデル名) は試験で差し替える。
-    file_names を渡すとその文書の節だけを対象にする（控えの掃除はしない）。
+    run(query, params) -> 行の一覧、summarize(入力) -> (要点, モデル名) は試験で差し替える。LLM への同時要求は MAX_CONCURRENCY 本。
     restore_only = True: LLM を呼ばず、入力が同じ節の要点を控えから書き戻すだけ（控えが 1 つも無い DB では何もしない）。
                          索引の作成・控えの掃除・同時に 1 本の鍵は使わない。LLM が要る節の数は pending に入る。
     complete: 打ち切らず、LLM に送った節の失敗が FAIL_RATIO 以下なら True（後処理は False のとき Failed を返す）。
     """
     if restore_only:
-        return _build_section_summaries(graph, run, summarize, file_names, concurrency, retries, backoff, True, 0.0)
+        return _build_section_summaries(graph, run, summarize, retries, backoff, True, 0.0)
     with _build_lock(BUILD_LOCK_WAIT) as waited:
-        return _build_section_summaries(graph, run, summarize, file_names, concurrency, retries, backoff, False, waited)
+        return _build_section_summaries(graph, run, summarize, retries, backoff, False, waited)
 
 
-def _build_section_summaries(graph, run, summarize, file_names, concurrency, retries, backoff, restore_only, lock_wait) -> dict:
+def _build_section_summaries(graph, run, summarize, retries, backoff, restore_only, lock_wait) -> dict:
     t0 = time.time()
     run = run or _default_run(graph)
-    model_key = summary_model_key()
-    try:
-        workers = int(concurrency or os.environ.get("SECTION_SUMMARY_CONCURRENCY", "3"))
-    except ValueError:
-        workers = MAX_CONCURRENCY
-    workers = max(1, min(workers, MAX_CONCURRENCY))
-    files = list(file_names) if file_names else None
+    model_key = os.environ.get("SECTION_SUMMARY_MODEL", "gemma4")
+    workers = MAX_CONCURRENCY
     stats = {"mode": "restore_only" if restore_only else "build", "sections": 0, "made": 0, "kept": 0, "restored": 0, "failed": 0,
              "pending": 0, "empty": 0, "made_with_children": 0, "cleared": 0, "rejected": 0, "aborted": False, "abort_reason": None,
              "complete": True, "model": None, "concurrency": workers, "seconds": 0.0, "llm_seconds": 0.0, "pruned": 0,
@@ -435,10 +390,10 @@ def _build_section_summaries(graph, run, summarize, file_names, concurrency, ret
     summarize = summarize or _default_summarize(model_key, _float_env("SECTION_SUMMARY_TIMEOUT", 120.0))
     stats["layer_wait_seconds"] = _wait_for_section_layer(run, SECTION_LAYER_WAIT)
 
-    rows = {r["id"]: dict(r) for r in run(SECTIONS_QUERY, {"files": files})}
+    rows = {r["id"]: dict(r) for r in run(SECTIONS_QUERY)}
     stats["sections"] = len(rows)
     bodies: Dict[str, List[str]] = {}
-    for r in run(PRIMARY_BODY_QUERY, {"files": files}):
+    for r in run(PRIMARY_BODY_QUERY):
         bodies.setdefault(r["sid"], []).append(r["text"] or "")
     children: Dict[str, List[str]] = {}
     for sid, r in rows.items():
@@ -604,7 +559,7 @@ def _build_section_summaries(graph, run, summarize, file_names, concurrency, ret
     if stats["aborted"]:
         logging.error("section summaries: stopped sending to the LLM (%s); %d sections are left without a new summary",
                       stats["abort_reason"], stats["pending"])
-    if files is None and not restore_only and not stats["aborted"]:
+    if not restore_only and not stats["aborted"]:
         # グラフの貸し出しが出ている間（章・節の層の作り直しの途中など）は、節の summary_src が揃っていないので掃除しない
         ok, holder = _lease_holder(run)
         if not ok or holder:
@@ -617,132 +572,3 @@ def _build_section_summaries(graph, run, summarize, file_names, concurrency, ret
                 logging.warning("section summaries: pruning the cache failed (%s)", exc)
     stats["complete"] = (not stats["aborted"]) and stats["failed"] <= FAIL_RATIO * (answered[0] + stats["failed"])
     return finish()
-
-
-# ============================================================
-# 一覧選択（参照追跡の reference_doc_select = summary_list）
-# ============================================================
-def section_item(row: dict) -> dict:
-    """一覧選択の候補の形にする。row: id, file_name, path, title, number, level, parent, summary, head"""
-    return {"id": row["id"], "file_name": row.get("file_name"), "label": section_label(row), "level": row.get("level") or 0,
-            "parent": row.get("parent"), "summary": (row.get("summary") or "").strip(),
-            "head": re.sub(r"\s+", " ", row.get("head") or "").strip()}
-
-
-def _item_text(item: dict) -> str:
-    """リランカーに渡す節の文: 見出しの経路＋要点（無ければ本文の先頭）"""
-    return f"{item['label']} {item['summary'] or item['head'] or item.get('children_text', '')}".strip() or "-"
-
-
-def _item_line(n: int, item: dict) -> str:
-    gist = item["summary"] or (item["head"] or item.get("children_text", ""))[:LIST_HEAD_CHARS]
-    return f"{n}. [{_stem(item['file_name'])} {item['label']}] {gist}".rstrip()
-
-
-def list_messages(question: str, source_context: str, already: List[str], items: List[dict], k: int, what: str = "節") -> List[dict]:
-    """X16 の一覧の指示（質問・既に手元にある節・候補）に、参照元の節を足したもの。"""
-    lines = [_item_line(i + 1, item) for i, item in enumerate(items)]
-    user = f"### 質問\n{question}\n\n"
-    if source_context:
-        user += f"### 参照元の節（この節が参照している文書の中から選ぶ）\n{source_context}\n\n"
-    user += "### 既に手元にある節\n" + ("\n".join(already) if already else "（なし）") + "\n\n"
-    user += "### 候補\n" + "\n".join(lines) + "\n\n"
-    if what == "章":
-        user += f"質問に答えるのに役立つ節を含む章を、役立つ順に最大 {k} 件、番号を JSON の配列で返せ。"
-    else:
-        user += f"質問に答えるのに役立つ順に、最大 {k} 件の番号を JSON の配列で返せ。"
-    return [{"role": "system", "content": LIST_SYSTEM}, {"role": "user", "content": user}]
-
-
-def parse_picks(raw: str, n: int, k: int) -> List[int]:
-    """LLM の答えから番号（1 始まり）を読み、0 始まりの添字にする。JSON の配列を優先し、読めなければ数字を拾う（X16 と同じ）。"""
-    raw = raw or ""
-    numbers = None
-    m = re.search(r"\[[^\[\]]*\]", raw)
-    if m:
-        try:
-            value = json.loads(m.group(0))
-            numbers = [int(x) for x in value if isinstance(x, (int, float, str)) and str(x).strip().lstrip("-").isdigit()]
-        except (ValueError, TypeError):
-            numbers = None
-    if numbers is None:
-        numbers = [int(x) for x in re.findall(r"\d+", raw)]
-    out = []
-    for x in numbers:
-        if 1 <= x <= n and (x - 1) not in out:
-            out.append(x - 1)
-    return out[:k]
-
-
-def _pick(question, rerank_query, source_context, already, items, *, k, top_k, rerank, ask, what="節"):
-    """リランカーで上位 top_k 件 → LLM に最大 k 件選ばせる。返り値 (選んだ候補, 生の答え, 一覧の候補の数)。"""
-    if not items:
-        raise SelectionFailed("no_candidates")
-    order = list(range(len(items)))
-    try:
-        scores = rerank(rerank_query, [_item_text(x) for x in items])
-        order.sort(key=lambda i: -scores[i])
-    except Exception as exc:   # リランカーが使えなくても、文書の順のまま LLM に選ばせる
-        logging.warning("summary list: rerank failed (%s); listing in document order", exc)
-    shown = [items[i] for i in order[:top_k]]
-    try:
-        raw = ask(list_messages(question, source_context, already, shown, k, what))
-    except Exception as exc:
-        raise SelectionFailed("llm_failed", str(exc)[:200])
-    picks = parse_picks(raw, len(shown), k)
-    if not picks:
-        raise SelectionFailed("out_of_range" if re.search(r"\d", raw or "") else "empty", (raw or "")[:200])
-    return [shown[i] for i in picks], (raw or "")[:200], len(shown)
-
-
-def _root_of(item, by_id):
-    seen = set()
-    while item.get("parent") in by_id and item["id"] not in seen:
-        seen.add(item["id"])
-        item = by_id[item["parent"]]
-    return item
-
-
-def select_by_list(question: str, rerank_query: str, source_context: str, already: List[str], sections: List[dict], *,
-                   rerank: Callable, ask: Callable, max_picks: int = 4, top_k: int = LIST_TOP_K, two_stage_min: int = 30) -> dict:
-    """要点の一覧から LLM に節を選ばせる。sections は section_item の形。
-
-    節の数が two_stage_min を超え、章（親の無い節）が 2 つ以上ある文書は、章を先に選ぶ（2 段）。
-    返り値 {"picked": [候補], "raw": [生の答え], "stage": 1|2, "chapters": [章の id], "candidates": 一覧の候補の数}。
-    失敗は SelectionFailed（reason と生の答えを持つ）。
-    """
-    if not sections:
-        raise SelectionFailed("no_sections")
-    by_doc: Dict[str, List[dict]] = {}
-    for s in sections:
-        by_doc.setdefault(s.get("file_name") or "", []).append(s)
-    by_id = {s["id"]: s for s in sections}
-    raws, chapter_ids, stage = [], [], 1
-    pool, large = [], []
-    for doc, items in by_doc.items():
-        roots = [s for s in items if s.get("parent") not in by_id]
-        if len(items) > two_stage_min and len(roots) >= 2:
-            large.append((doc, items, roots))
-        else:
-            pool.extend(items)
-    if large:
-        stage = 2
-        chapters = []
-        for _doc, items, roots in large:
-            kids: Dict[str, List[str]] = {}
-            for s in items:
-                if s.get("parent") in by_id:
-                    kids.setdefault(s["parent"], []).append(s["label"].split(" > ")[-1])
-            for r in roots:
-                chapters.append(dict(r, children_text=("子の節: " + "、".join(kids.get(r["id"], [])))[:300] if kids.get(r["id"]) else ""))
-        picked_chapters, raw, _ = _pick(question, rerank_query, source_context, already, chapters, k=max_picks, top_k=top_k,
-                                        rerank=rerank, ask=ask, what="章")
-        raws.append(raw)
-        chapter_ids = [c["id"] for c in picked_chapters]
-        chosen = set(chapter_ids)
-        for _doc, items, _roots in large:
-            pool.extend(s for s in items if _root_of(s, by_id)["id"] in chosen)
-    picked, raw, shown = _pick(question, rerank_query, source_context, already, pool, k=max_picks, top_k=top_k,
-                               rerank=rerank, ask=ask)
-    raws.append(raw)
-    return {"picked": picked, "raw": raws, "stage": stage, "chapters": chapter_ids, "candidates": shown}

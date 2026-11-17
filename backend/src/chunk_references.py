@@ -4,43 +4,37 @@
 別の箇所を見るよう求める記述があるとき、その記述のあるチャンクから参照先のチャンクへリレーションを張る。
 チャンク同士のリレーションは NEXT_CHUNK（並び順）と SIMILAR（類似度）しか無く、参照はどちらにも現れない。
 
-張り方は 3 つから選ぶ（環境変数 CHUNK_REFERENCE_MODE）。
-  hybrid  規則で結べる分は規則で結び（method = 'rule'）、規則で結べなかった分だけを LLM に回す（method = 'llm'）
-  rule    規則だけ。LLM を 1 回も呼ばない
-  llm     LLM だけ（下の手順 1〜4 を全チャンクに行う。従来の動き）
-既定は llm である。設定を足さずにこのファイルを置き換えても、張り方は変わらない。hybrid・rule へは、設定を書いて切り替える
-（切り替えた回は、LLM に渡す仕事が変わるチャンクを引き直し、規則と同じ先への LLM のリンクを消す）。
+張り方は 2 つから選ぶ（環境変数 CHUNK_REFERENCE_MODE。既定は llm）。
+  llm     LLM で抽出と特定を行う（下の手順 1〜4。method = 'llm'）
+  rule    規則だけ。LLM を 1 回も呼ばない（method = 'rule'）
 規則による抽出と解決は chunk_reference_rules.py にある（識別子と場所の名前の目録を作り、パターンで拾って目録で引く。
-特定の文書番号や言い回しを決め打ちした規則は持たない）。hybrid で LLM に回すのは、(a) 規則が参照として検出したが参照先を
-決められなかったもの、(b) 文書だけを指す参照のうち、同じ文に参照の語があり、文書の中の読むべき場所を選ぶ意味があるもの、
-(c) 規則の参照が 1 つも掛かっていない文に、文書らしい語＋参照の語（または「参照」）があるチャンク、の 3 つだけである（plan_llm_work）。
+特定の文書番号や言い回しを決め打ちした規則は持たない）。
 
 LLM の手順。判断は LLM とリランカーに任せる。
   1) 抽出: チャンクごとに、参照の記述を LLM が抜き出す（原文、参照先の文書、文書内の位置、見に行く内容）
   2) 文書の特定: 参照先の表記が手元のどの文書かを決める。文書が多いときは候補を絞ってから LLM に選ばせる
-  3) チャンクの特定: 参照先の文書の中から候補を絞り、LLM が参照先のチャンクを選ぶ
+  3) チャンクの特定: 参照先の文書の中から、LLM が参照先を選ぶ（下の (a)）
   4) 書き込み: 文書ごとに (:Chunk)-[:REFERS_TO {method: 'llm'}]->(:Chunk) を書く。チャンクまで絞れない場合は
      (:Chunk)-[:REFERS_TO]->(:Document)。手元に無い文書への参照は Chunk.external_references に表記を残す
 
-結び先の選び方（11/10、環境変数 CHUNK_REFERENCE_LINK_STYLE。既定 outline、legacy で従来の動きに戻る）。outline では次の 4 つを行う。
-個別に切り替える設定もある（括弧内。値を書けば LINK_STYLE より優先する）。
-  (a) 結び先の一覧（CHUNK_REFERENCE_TARGET_LISTING = outline | chunks）: チャンクの本文の先頭ではなく、参照先の文書の節の木を
-      「節の経路 ｜ 要点（Section.summary）か本文の先頭」の一覧で見せ、LLM に節を選ばせる（X16 の要点一覧の考え方）。
+結び先の選び方。
+  (a) 結び先の一覧: 参照先の文書の節の木を「節の経路 ｜ 要点（Section.summary）か本文の先頭」の一覧で見せ、LLM に節を選ばせる。
       選んだ節に主所属するチャンク（下位の節を含む）へ REFERS_TO を張り、リレーションに選んだ節（target_sections・target_section_paths）を残す。
-      章・節の層（section_layer）は、その節をそのまま節への参照の結び先にする。節の層がまだ無い文書は、チャンクの見出しの経路で節の木を作る
-  (b) 参照でない文を落とす（CHUNK_REFERENCE_DROP_NON_REFERENCES）: 抜き出した一文（と、本文でその一文がある行）に、
+      章・節の層（section_layer）は、その節をそのまま節への参照の結び先にする。節の層がまだ無い文書は、チャンクの見出しの経路で節の木を作る。
+      節の木が作れない文書（見出しが無い）は、チャンクの本文の先頭の一覧から選ばせる
+  (b) 参照でない文を落とす: 抜き出した一文（と、本文でその一文がある行）に、
       参照の言い回し（参照・準拠・に従う・に定める など）も、位置の語（項番号・別表・図-1・上記 など）も、文書番号・文書の名前も無ければ落とす
       （「試験回転数は…吸入温度により変化する。」の「により」は原因を表すだけ）
-  (c) 社外の文書（CHUNK_REFERENCE_LEDGER_EXTERNAL）: 参照先の文書の表記に文書番号があれば文書番号の規則（document_numbers.json）で
+  (c) 社外の文書: 参照先の文書の表記に文書番号があれば文書番号の規則（document_numbers.json）で
       手元の文書に直し、手元に無い番号なら手元に無い文書とする（LLM に選ばせない）。番号の無い文書の名前（「形式別単独運転要領」）が
       手元のどの文書の題名とも合わなければ、手元に無い文書とし、手元のチャンクに結ばない
-  (d) 参照元の中にある箇所（CHUNK_REFERENCE_SKIP_IN_CHUNK）: 位置の語の図・表・項の番号が、参照元のチャンク自身の見出しや図の題の行に
+  (d) 参照元の中にある箇所: 位置の語の図・表・項の番号が、参照元のチャンク自身の見出しや図の題の行に
       すべてあれば（「(P2/5 図-1 参照)」と同じチャンクに「図-1」）、どこにも結ばない
 抽出と特定の結果はチャンクに保存し、やり直しのときは変わっていない分を使い回す（文書が増減したときだけ引き直す）。
-結び先の選び方の設定を変えた回は、保存した抽出の結果を使い、(b)〜(d) の判定と文書・節の特定だけをやり直す（抽出は呼び直さない）。
+結び先の選び方の印（LINK_KEY）が保存と違う回は、保存した抽出の結果を使い、(b)〜(d) の判定と文書・節の特定だけをやり直す（抽出は呼び直さない）。
 失敗の扱い: 抽出か特定に失敗したチャンクは、既存のリンクを消さずに残し、次回の対象にする。失敗の件数は戻り値とログに出す。
 REFERS_TO という型は他の仕組み（別の参照グラフなど）も使うので、消すのは自分が書いたもの（method = 'llm' と 'rule'）だけにする。
-method の無い REFERS_TO には触れない。規則と LLM が同じ参照元から同じ先を指したときは、規則のリンクだけを残す。
+method の無い REFERS_TO には触れない。rule では、LLM が同じ参照元から同じ先へ張ったリンクを消し、規則のリンクだけを残す。
 """
 import hashlib
 import json
@@ -53,15 +47,34 @@ import uuid
 from difflib import SequenceMatcher
 from typing import Callable, Dict, List, Optional
 
-from src.chunk_reference_rules import OPTIONAL_RULES, RULE_VERSION, find_references
+from src import document_layer_rules
+from src.chunk_reference_rules import find_references
+from src.document_layer_rules import annex_key, heading_form, parse_locator
+from src.shared.common_fn import batches
 
 # プロンプトや保存の形を変えたら上げる。チャンクに保存した結果は、版が違えば使わない
 EXTRACT_VERSION = "4"
 METHOD = "llm"
 RULE_METHOD = "rule"
-MODES = ("hybrid", "rule", "llm")
-DEFAULT_MODE = "llm"  # 設定が無いときの張り方。従来の動き（LLM だけ）を保つ
+MODES = ("rule", "llm")
+DEFAULT_MODE = "llm"  # 設定が無いときの張り方
 SELF = "__self__"
+
+# LLM に見せる候補の数と分量、失敗の扱い
+SHORTLIST = 8              # 参照 1 件ごとに見せるチャンクの数（節の木が無い文書）
+DOCUMENT_SHORTLIST = 12    # 参照 1 件ごとに見せる文書の数
+PREFILTER = 80             # リランカーに掛ける前に、字面の重なりで残す候補の数
+FORCED = 4                 # 位置の語をそのまま含むので、リランカーの順位に関係なく見せるチャンクの数
+NEIGHBOR_CHARS = 2500      # 同じ文書の中の参照で、参照元の前後から必ず見せる字数
+LISTING_CHARS = 9000       # 一覧の全体の字数
+SECTION_CHUNKS = 6         # 選んだ節 1 つから結ぶチャンクの数
+OUTLINE_MAX = 40           # 節がこれより多い文書は、一覧に出す節を絞る
+OUTLINE_KEEP = 25          # 絞るときに、リランカーの上位から残す節の数
+NAME_MATCH = 0.8           # 字面で候補に入れる文書名の近さ（最長の共通部分が短い方に占める割合）
+QUOTE_OVERLAP = 0.5        # 抜き出した一文が本文にそのまま無いとき、本文と重なっていなければならない割合
+LLM_TIMEOUT = 300.0        # LLM 1 回の待ち時間（秒）
+MAX_FAILURE_RATE = 0.5     # 失敗したチャンクがこの割合を超えた文書は、何も書き込まない
+ABORT_AFTER = 5            # LLM への問い合わせがこの回数続けて失敗したら止める
 
 EXTRACT_PROMPT = """次の本文は、文書「{doc}」の一部である。本文の中から、読み手に別の箇所を見るよう求めている記述（参照）をすべて抜き出せ。
 
@@ -149,11 +162,10 @@ OUTLINE_PROMPT = """文書「{source_doc}」に次の記述がある。
 
 OUTLINE_SOURCE_NOTE = "★ の付いた節に、参照元の記述が書かれている。"
 
-LINK_STYLES = ("outline", "legacy")
-DEFAULT_LINK_STYLE = "outline"  # 11/10 の改善（節の一覧から選ぶ・参照でない文・社外の文書・参照元の中の箇所）。legacy で従来の動き
-LISTINGS = ("outline", "chunks")
 # 結び先の選び方の判定や指示を変えたら上げる。保存した結果は、印が違えば判定と特定をやり直す（抽出は使い回す）
 LINK_VERSION = "5"
+# 保存した結果に付ける、結び先の選び方の印（節の一覧・(b)・(c)・(d) を行う形）
+LINK_KEY = "v%s-Lo-n1-e1-i1" % LINK_VERSION
 # 参照でない文の判定（b）。位置の語（項番号・別表・図の番号・上記 など）。小数（168.3）は位置の語にしない
 _POSITION_CUE = re.compile(
     r"第\s*\d+\s*[章条項節号]|\d+\s*(?:章|条|項(?!目)|節)|\d+(?:\s*[-‐－−]\s*\d+)+|\d+\.\d+\.\d+"
@@ -161,28 +173,18 @@ _POSITION_CUE = re.compile(
     r"|[図表]\s*[-‐－−]?\s*\d|上記|前記|下記|前条|次条|前項|次項|同条|同項|本条|本項|ページ|頁|P\s*\d+\s*/\s*\d+")
 # 参照の言い回しのうち、それだけで参照と分かるもの（「による」「により」は手段・原因にも使うので入れない）
 _REFERENCE_CUE = re.compile(r"参照|準拠|準ず|準じ|に従|に定め|のとおり|の通り|を適用|基づ|基き|基く|に記載|に規定")
-# 手元に無い文書の識別子の形（JIS B 8340、QC-KAI-012、V-00862）。document_layer_rules._IDENT_RX と同じ
-_IDENTIFIER = re.compile(r"[A-Z][A-Z0-9]*(?:\s?-\s?[A-Z0-9]+)+|[A-Z]{1,6}\s?\d{3,}")
+# 手元に無い文書の識別子の形（JIS B 8340、QC-AB-012、X-00123）
+_IDENTIFIER = document_layer_rules._IDENT_RX
 _DOC_KINDS = ["規程", "規定", "規則", "基準", "要領", "要綱", "細則", "標準", "仕様書", "方案", "規格", "指針", "手順書", "マニュアル", "指示書", "承認図"]
 # 番号の無い文書の名前（「形式別単独運転要領」）。助詞「の」や区切りを含まない、種類の語で終わる語
 _DOC_PHRASE = re.compile(r"(?<![本当同])([^\s\d、。,，.．「」『』()（）\[\]［］:：;；・のはがをにでと]{2,24}?(?:%s))" % "|".join(_DOC_KINDS))
 _SELF_PREFIX = re.compile(r"(?:本|この|当|同|上記|下記|前記|次の|以下の)\s*$")
-# 参照元の中にある箇所（d）の番号: 図・表、付属（別表など）、項番号（2-1、3-1-2）
-_LABEL = re.compile(r"(?P<kind>[図表]|別表|別紙|付表|付図|付録)\s*[-‐－−]?\s*(?P<n>\d+)(?!\d)|(?P<sec>\d+(?:\s*[-‐－−]\s*\d+)+)")
+# 参照元の中にある箇所（d）の番号: 図・表、付属（別表など）
+_LABEL = re.compile(r"(?P<kind>[図表]|別表|別紙|付表|付図|付録)\s*[-‐－−]?\s*(?P<n>\d+)(?!\d)")
 _DASH = r"\s*[-‐－−ー]\s*"
 
 class LinkAborted(RuntimeError):
     """LLM に続けてつながらないなど、これ以上進めても無駄な状態。ここまでの書き込みは残る"""
-
-
-def _setting(name: str, default, cast=str):
-    value = os.environ.get(name)
-    if value is None or value == "":
-        return default
-    try:
-        return cast(value)
-    except (TypeError, ValueError):
-        return default
 
 
 def _norm(text: str) -> str:
@@ -190,6 +192,16 @@ def _norm(text: str) -> str:
     text = unicodedata.normalize("NFKC", text or "")
     text = re.sub(r"<br\s*/?>", "", text, flags=re.I)
     return re.sub(r"[\s*_|`\\]", "", text)
+
+
+def _squash(text: str) -> str:
+    """名前の照合用の正規化。全角半角を揃え、記号と空白を除いて小文字にする"""
+    return re.sub(r"[\W_]", "", unicodedata.normalize("NFKC", text or "")).lower()
+
+
+def _longest(a: str, b: str) -> int:
+    """a と b の最長の共通部分の字数"""
+    return SequenceMatcher(None, a, b, autojunk=False).find_longest_match(0, len(a), 0, len(b)).size
 
 
 def _json_of(raw: str) -> Optional[dict]:
@@ -250,22 +262,16 @@ def _default_ask() -> Callable[[str], str]:
     from src.llm import get_llm
     model = os.environ.get("CHUNK_REFERENCE_MODEL") or os.environ.get("GRAPH_CLEANUP_MODEL") or "gemma4"
     llm, _, _ = get_llm(model)
-    timeout = _setting("CHUNK_REFERENCE_LLM_TIMEOUT", 300.0, float)
 
     def ask(prompt: str) -> str:
         try:
-            content = llm.invoke(prompt, timeout=timeout).content
+            content = llm.invoke(prompt, timeout=LLM_TIMEOUT).content
         except TypeError:
             # 待ち時間の指定を受け付けないモデルの場合
             content = llm.invoke(prompt).content
         return content if isinstance(content, str) else json.dumps(content, ensure_ascii=False)
 
     return ask
-
-
-def _default_rerank() -> Callable[[str, List[str]], List[float]]:
-    from src.rerank_retriever import _rerank
-    return _rerank
 
 
 def _bigrams(text: str) -> set:
@@ -302,10 +308,9 @@ def _rank(query: str, texts: List[str], keep: int, rerank, corpus: Optional[_Cor
     indices = list(range(len(texts)))
     if len(indices) <= keep:
         return indices
-    prefilter = _setting("CHUNK_REFERENCE_PREFILTER", 80, int)
     corpus = corpus or _Corpus(texts)
-    if len(indices) > prefilter:
-        indices = corpus.top(query, prefilter, must)
+    if len(indices) > PREFILTER:
+        indices = corpus.top(query, PREFILTER, must)
     try:
         scores = rerank(query, [texts[i] or "-" for i in indices])
         order = sorted(zip(indices, scores), key=lambda x: -x[1])
@@ -318,11 +323,10 @@ def _rank(query: str, texts: List[str], keep: int, rerank, corpus: Optional[_Cor
 
 def _name_match(name: str, file_name: str):
     """参照の表記とファイル名の字面の近さ。（最長の共通部分の字数, それが短い方に占める割合, 長さの差）を返す"""
-    a = re.sub(r"[\W_]", "", unicodedata.normalize("NFKC", name or "")).lower()
-    b = re.sub(r"[\W_]", "", unicodedata.normalize("NFKC", os.path.splitext(file_name or "")[0])).lower()
+    a, b = _squash(name), _squash(os.path.splitext(file_name or "")[0])
     if not a or not b:
         return 0, 0.0, 0
-    size = SequenceMatcher(None, a, b, autojunk=False).find_longest_match(0, len(a), 0, len(b)).size
+    size = _longest(a, b)
     return size, size / min(len(a), len(b)), abs(len(a) - len(b))
 
 
@@ -349,7 +353,6 @@ def extract_references(doc: str, text: str, ask: Callable[[str], str]) -> Option
     if obj is None:
         return None
     body = _norm(text)
-    overlap = _setting("CHUNK_REFERENCE_QUOTE_OVERLAP", 0.5, float)
     clean = lambda v: (str(v).strip() or None) if v not in (None, "", "null") else None
     kept, dropped = [], []
     for ref in obj["references"]:
@@ -361,8 +364,7 @@ def extract_references(doc: str, text: str, ask: Callable[[str], str]) -> Option
         if not key:
             continue
         if key not in body:
-            longest = SequenceMatcher(None, key, body, autojunk=False).find_longest_match(0, len(key), 0, len(body)).size
-            if longest < max(8, int(len(key) * overlap)):
+            if _longest(key, body) < max(8, int(len(key) * QUOTE_OVERLAP)):
                 dropped.append({"quote": quote, "reason": "原文が本文に無い"})
                 continue
         missing = [term for term in (target, locator) if term and not _mentions(term, body)]
@@ -375,7 +377,7 @@ def extract_references(doc: str, text: str, ask: Callable[[str], str]) -> Option
 
 def document_candidates(name: str, quote: str, others: List[dict], rerank) -> List[dict]:
     """文書の特定で LLM に見せる候補。文書が多いときは、字面の近い文書とリランカーの上位で絞る"""
-    keep = _setting("CHUNK_REFERENCE_DOCUMENT_SHORTLIST", 12, int)
+    keep = DOCUMENT_SHORTLIST
     if len(others) <= keep:
         # 一覧の並びを表記ごとに変える（番号と文書の並びがたまたま一致して、誤りを見分けられなくなるのを防ぐ）
         return sorted(others, key=lambda d: hashlib.md5((name + d["fileName"]).encode("utf-8")).hexdigest())
@@ -384,7 +386,7 @@ def document_candidates(name: str, quote: str, others: List[dict], rerank) -> Li
     matches = []
     for index, document in enumerate(others):
         size, ratio, gap = _name_match(name, document["fileName"])
-        if size >= 3 and ratio >= _setting("CHUNK_REFERENCE_NAME_MATCH", 0.8, float):
+        if size >= 3 and ratio >= NAME_MATCH:
             matches.append((-size, gap, index))
     lexical = [index for _, _, index in sorted(matches)[:keep // 2]]
     ranked = _rank(f"{name} {quote}", [f"{d['fileName']}: {d['head']}" for d in others], keep, rerank)
@@ -406,6 +408,17 @@ def resolve_document(name: str, ref: dict, source_doc: str, documents: List[dict
     return candidates[choice - 1]["fileName"] if choice else None
 
 
+def _query_of(ref: dict) -> str:
+    """候補を絞る検索の問い（位置の語・確かめる内容・一文）"""
+    return " ".join(x for x in (ref.get("locator"), ref.get("topic"), ref.get("quote")) if x)
+
+
+def _locator_keys(locator: Optional[str]) -> List[str]:
+    """位置の語そのものと、その中の「3-5」「2.3.1」のような複数の段を持つ番号（2 字以上のもの）"""
+    locator = unicodedata.normalize("NFKC", locator or "")
+    return [key for key in [_norm(locator)] + re.findall(r"\d+(?:[-.]\d+)+", locator) if len(key) >= 2]
+
+
 def resolve_chunks(ref: dict, source: dict, target_doc: str, chunks: List[dict], ask, rerank, corpus: Optional[_Corpus] = None) -> List[dict]:
     """手順 3。参照先の文書のチャンクから、参照先を選ぶ。回答が読めないときは例外を出す。
 
@@ -416,22 +429,19 @@ def resolve_chunks(ref: dict, source: dict, target_doc: str, chunks: List[dict],
     candidates = [c for c in chunks if c["id"] != source["id"]]
     if not candidates:
         return []
-    keep = _setting("CHUNK_REFERENCE_SHORTLIST", 8, int)
     texts = [c["text"] or "" for c in candidates]
-    query = " ".join(x for x in (ref.get("locator"), ref.get("topic"), ref["quote"]) if x)
     if corpus is not None and same:
         corpus = None  # 参照元を除いたので、文書全体の索引とは並びが合わない
-    picked = set(_rank(query, texts, keep, rerank, corpus, ref.get("locator")))
+    picked = set(_rank(_query_of(ref), texts, SHORTLIST, rerank, corpus, ref.get("locator")))
     # 位置の語、または「3-5」「2.3.1」のように複数の段を持つ番号をそのまま含むチャンクは、リランカーの順位に関係なく候補に入れる
     # （見出しがチャンクの途中に埋もれていると、リランカーの上位に来ないことがある）
-    locator = unicodedata.normalize("NFKC", ref.get("locator") or "")
-    keys = [key for key in [_norm(locator)] + re.findall(r"\d+(?:[-.]\d+)+", locator) if len(key) >= 2]
+    keys = _locator_keys(ref.get("locator"))
     if keys:
         forced = [i for i, text in enumerate(texts) if i not in picked and any(key in _norm(text) for key in keys)]
-        picked.update(forced[:_setting("CHUNK_REFERENCE_FORCED", 4, int)])
+        picked.update(forced[:FORCED])
     if same:
         # 参照元の前後を、字数で決めた分量だけ入れる（チャンクが小さいと、個数では前の条まで届かない）
-        window = _setting("CHUNK_REFERENCE_NEIGHBOR_CHARS", 2500, int)
+        window = NEIGHBOR_CHARS
         position = source["position"] or 0
         for direction in (-1, 1):
             used = 0
@@ -443,8 +453,7 @@ def resolve_chunks(ref: dict, source: dict, target_doc: str, chunks: List[dict],
                 used += len(texts[i])
     shortlist = sorted((candidates[i] for i in picked), key=lambda c: c["position"] or 0)
     # 一覧が LLM の入力に収まるよう、長い文書片は頭の部分だけを見せる
-    budget = _setting("CHUNK_REFERENCE_LISTING_CHARS", 9000, int)
-    limit = max(300, budget // max(len(shortlist), 1))
+    limit = max(300, LISTING_CHARS // max(len(shortlist), 1))
     lines, marked = [], not same
     for i, c in enumerate(shortlist):
         if not marked and (c["position"] or 0) > (source["position"] or 0):
@@ -478,7 +487,7 @@ def _head(text: str) -> str:
 
 
 def _mode(value: Optional[str] = None) -> str:
-    """参照の張り方。llm = LLM だけ（従来の動き。既定）。hybrid = 規則が先、残りだけ LLM。rule = 規則だけ（LLM を呼ばない）"""
+    """参照の張り方。llm = LLM で張る（既定）。rule = 規則だけ（LLM を呼ばない）"""
     mode = (value or os.environ.get("CHUNK_REFERENCE_MODE") or DEFAULT_MODE).strip().lower()
     if mode not in MODES:
         logging.warning("chunk references: unknown CHUNK_REFERENCE_MODE '%s'; using '%s'", mode, DEFAULT_MODE)
@@ -486,76 +495,17 @@ def _mode(value: Optional[str] = None) -> str:
     return mode
 
 
-def _flag(name: str, default: bool) -> bool:
-    return _setting(name, default, lambda v: v.strip().lower() in ("1", "true", "yes", "on"))
-
-
 def _rule_pass(rows: List[dict]) -> Dict:
     """規則による抽出と解決（LLM もグラフも使わない）。記録の形を、LLM の記録にそろえて返す"""
-    disable = [x.strip() for x in (os.environ.get("CHUNK_REFERENCE_RULE_DISABLE") or "").split(",") if x.strip() in OPTIONAL_RULES]
-    found = find_references([{"id": r["id"], "fileName": r["fileName"], "position": r["position"], "text": r["text"],
-                              "page_number": r.get("page_number"), "section": r.get("section")} for r in rows], disable=disable)
-    records = [{"source": r["source"], "source_doc": r["source_doc"], "source_position": r["source_position"], "quote": r["quote"],
-                "target_document": r["target_document"], "locator": r["locator"] or None, "topic": "", "target_doc": r["target_doc"],
-                "targets": r["targets"], "scope": r["scope"], "reused": False, "method": RULE_METHOD, "form": r["form"], "level": r["level"],
-                "reason": r["reason"], "history": r["history"], "stage": r["stage"], "places": r.get("places", r["level"] == "document")}
-               for r in found["references"]]
-    return {"records": records, "chunks": found["chunks"], "dropped": found["dropped"], "vague": len(found["vague"])}
-
-
-def plan_llm_work(records: List[dict], chunks: Dict[str, dict], document_places: bool = True) -> Dict[str, dict]:
-    """hybrid で LLM に回す分を、チャンクごとに決める。回すのは次の 3 つだけである。
-
-    (a) unresolved     規則が参照として検出したが、参照先を決められなかったもの（略称・通称・旧番号、題名の無い表 など）
-    (b) document_only  文書だけを指す参照のうち、同じ文に参照の語があるもの。文書の中の読むべき場所を LLM が選ぶ
-                       （CHUNK_REFERENCE_DOCUMENT_PLACES=false で止められる。発行目録の行や関連文書の一覧の識別子は回さない）
-    (c) no_detection   規則の参照が 1 つも掛かっていない文に、文書らしい語＋参照の語（または「参照」）があるチャンク。抽出から LLM が行う
-                       （手段や原因を表すだけの「により」は回さない。規則が検出した文の参照は、LLM の結果から除く）
-    改正履歴の中の参照は回さない（LLM の抽出でも、改訂の来歴は参照に含めない決まりである）。
-    """
-    plan: Dict[str, dict] = {}
-    for r in records:
-        if r["history"]:
-            continue
-        why = "unresolved" if r["reason"] else ("document_only" if (r["level"] == "document" and document_places and r.get("places", True)) else None)
-        if why:
-            plan.setdefault(r["source"], {"full": False, "refs": []})["refs"].append(
-                {"why": why, "quote": r["quote"], "target_document": r["target_document"], "locator": r["locator"], "known_doc": r["target_doc"]})
-    for chunk_id, info in chunks.items():
-        if info.get("llm", info["cue"] and not info["references"]):
-            plan.setdefault(chunk_id, {"full": False, "refs": []})["full"] = True
-    return plan
-
-
-# ───────────────────────── 結び先の選び方（11/10）─────────────────────────
-def link_options() -> Dict:
-    """結び先の選び方の設定。CHUNK_REFERENCE_LINK_STYLE（outline = 既定、legacy = 従来）を基にし、個別の設定があればそれを使う"""
-    style = (os.environ.get("CHUNK_REFERENCE_LINK_STYLE") or DEFAULT_LINK_STYLE).strip().lower()
-    if style not in LINK_STYLES:
-        logging.warning("chunk references: unknown CHUNK_REFERENCE_LINK_STYLE '%s'; using '%s'", style, DEFAULT_LINK_STYLE)
-        style = DEFAULT_LINK_STYLE
-    new = style == "outline"
-    listing = (os.environ.get("CHUNK_REFERENCE_TARGET_LISTING") or ("outline" if new else "chunks")).strip().lower()
-    if listing not in LISTINGS:
-        listing = "outline" if new else "chunks"
-    return {"style": style, "listing": listing,
-            "drop_non_references": _flag("CHUNK_REFERENCE_DROP_NON_REFERENCES", new),
-            "ledger_external": _flag("CHUNK_REFERENCE_LEDGER_EXTERNAL", new),
-            "skip_in_chunk": _flag("CHUNK_REFERENCE_SKIP_IN_CHUNK", new)}
-
-
-def options_key(opts: Dict) -> Optional[str]:
-    """保存した結果に付ける、結び先の選び方の印。従来の動き（すべて無効）は None（従来の保存と同じに扱う）"""
-    flags = [opts["drop_non_references"], opts["ledger_external"], opts["skip_in_chunk"]]
-    if opts["listing"] == "chunks" and not any(flags):
-        return None
-    return "v%s-L%s-n%d-e%d-i%d" % ((LINK_VERSION, opts["listing"][0]) + tuple(int(bool(f)) for f in flags))
+    found = find_references(rows)
+    records = [dict(r, locator=r["locator"] or None, topic="", reused=False, method=RULE_METHOD) for r in found["references"]]
+    return {"records": records, "dropped": found["dropped"]}
 
 
 def _ledger_config():
+    """文書番号の規則（document_layer_rules）と、その設定（document_numbers.json）"""
     try:
-        from src import document_layer_rules as R
-        return R, R.load_config()
+        return document_layer_rules, document_layer_rules.load_config()
     except Exception as exc:  # 設定が読めなくても参照リンクは止めない（文書番号による判定だけを行わない）
         logging.warning("chunk references: the document number rules could not be read (%s)", exc)
         return None, None
@@ -604,20 +554,13 @@ def in_source_chunk(ref: dict, body: str) -> bool:
     if ref.get("target_document"):
         return False
     locator = unicodedata.normalize("NFKC", ref.get("locator") or "")
-    labels = []
-    for m in _LABEL.finditer(locator):
-        if m.group("kind"):
-            labels.append(re.escape(m.group("kind")) + r"\s*[-‐－−ー]?\s*" + m.group("n"))
-    try:
-        from src.document_layer_rules import parse_locator
-        numbers = [t["number"] for t in parse_locator(locator) if t["form"] in ("節", "項") and t["number"] and "-" in t["number"]]
-    except Exception:
-        numbers = ["-".join(re.findall(r"\d+", m.group("sec"))) for m in _LABEL.finditer(locator) if m.group("sec")]
+    labels = [re.escape(m.group("kind")) + r"\s*[-‐－−ー]?\s*" + m.group("n") for m in _LABEL.finditer(locator)]
+    numbers = [t["number"] for t in parse_locator(locator) if t["form"] in ("節", "項") and t["number"] and "-" in t["number"]]
     labels += [_DASH.join(n.split("-")) for n in numbers]
     patterns = [re.compile(r"^\s*(?:[#|*>・\-]\s*)*" + label + r"(?![\d])") for label in labels]
     if not patterns:
         return False
-    key = _norm(unicodedata.normalize("NFKC", ref.get("quote") or ""))
+    key = _norm(ref.get("quote") or "")
     lines = []
     for line in unicodedata.normalize("NFKC", body or "").splitlines():
         n = _norm(line)
@@ -628,30 +571,34 @@ def in_source_chunk(ref: dict, body: str) -> bool:
     return all(any(p.search(line) for line in lines) for p in patterns)
 
 
-def _squash(text: str) -> str:
-    return re.sub(r"[\W_]", "", unicodedata.normalize("NFKC", text or "")).lower()
-
-
 def _title_match(name: str, text: str) -> bool:
     """文書の名前が、手元の文書の題名（ファイル名か冒頭）に現れるか。最長の共通部分が名前の 8 割以上で 4 字以上"""
     a, b = _squash(name), _squash(text)
     if len(a) < 2 or not b:
         return False
-    size = SequenceMatcher(None, a, b, autojunk=False).find_longest_match(0, len(a), 0, len(b)).size
+    size = _longest(a, b)
     return size >= min(4, len(a)) and size / len(a) >= 0.8
 
 
-def ledger_document(ref: dict, source_doc: str, documents: List[dict], R=None, cfg=None):
-    """(c) 参照先の文書を、文書番号の規則と手元の文書の題名で決める。LLM に選ばせる前に行う。
-    戻り値: ("file", ファイル名) / ("self", None) / ("external", 表記) / None（決めない。従来どおり LLM に選ばせる）"""
-    name = ref.get("target_document")
-    quote = unicodedata.normalize("NFKC", ref.get("quote") or "")
-    numbers = {}
+def _file_numbers(documents: List[dict], R=None, cfg=None) -> Dict[str, List[str]]:
+    """手元の文書の文書番号（正規化したもの）-> ファイル名の一覧"""
+    numbers: Dict[str, List[str]] = {}
     if R and cfg:
         for d in documents:
             canon = R.number_of_file(d["fileName"], cfg)[0]
             if canon:
                 numbers.setdefault(canon, []).append(d["fileName"])
+    return numbers
+
+
+def ledger_document(ref: dict, source_doc: str, documents: List[dict], R=None, cfg=None, numbers: Optional[Dict[str, List[str]]] = None):
+    """(c) 参照先の文書を、文書番号の規則と手元の文書の題名で決める。LLM に選ばせる前に行う。
+    numbers は _file_numbers(documents, R, cfg) の結果（渡さなければここで作る）。
+    戻り値: ("file", ファイル名) / ("self", None) / ("external", 表記) / None（決めない。LLM に選ばせる）"""
+    name = ref.get("target_document")
+    quote = unicodedata.normalize("NFKC", ref.get("quote") or "")
+    if numbers is None:
+        numbers = _file_numbers(documents, R, cfg)
     # 手元の文書の題名: ファイル名と、冒頭の最初の見出し（冒頭の本文まで見ると、本文に書かれた社外の文書の名前に合ってしまう）
     title_of = lambda head: (re.match(r"\s*#*\s*([^#]{0,80})", head or "").group(1) or "").strip()[:60]
     titled = lambda n: any(_title_match(n, d["fileName"]) or _title_match(n, title_of(d.get("head"))) for d in documents)
@@ -732,10 +679,6 @@ class _Outline:
         """位置の語の章・節・項・付属の番号（「3-5項」「上記2-1～2-3」「別表2」「別紙-1」）を、この文書の節に引く（章・節の層の番号の規則と同じ読み方）。
         同じ番号の節が本文と付属の資料の両方にあれば、参照元と同じ範囲（同じ最上位の節）のものを先に、無ければ本文（番号のある最上位の節）のものを採る。
         引けない番号があれば空（LLM に選ばせる）"""
-        try:
-            from src.document_layer_rules import parse_locator, annex_key
-        except Exception:
-            return []
         targets = [t for t in parse_locator(locator or "") if t["form"] != "号"]
         if not targets:
             return []
@@ -768,14 +711,7 @@ def _strip_heading(text: str, title: str) -> str:
 
 
 def _chunk_path(row: dict) -> List[str]:
-    """チャンクの見出しの経路（section_path の配列、無ければ section を「 > 」で切り、先頭の文書名を落とす）"""
-    raw = row.get("section_path")
-    if raw:
-        try:
-            parts = json.loads(raw) if isinstance(raw, str) else list(raw)
-            return [p for p in parts if p]
-        except (TypeError, ValueError):
-            pass
+    """チャンクの見出しの経路（section を「 > 」で切り、先頭の文書名を落とす）"""
     parts = [p.strip() for p in (row.get("section") or "").split(" > ") if p.strip()]
     return parts[1:] if len(parts) > 1 else []
 
@@ -812,11 +748,7 @@ def load_outlines(graph, by_doc: Dict[str, List[dict]]) -> Dict[str, _Outline]:
             for depth in range(len(path)):
                 sid = "path:" + hashlib.sha1("\x1f".join([name] + path[:depth + 1]).encode("utf-8")).hexdigest()[:16]
                 if sid not in made:
-                    try:
-                        from src.document_layer_rules import heading_form
-                        form, number = heading_form(path[depth])
-                    except Exception:
-                        form, number = None, None
+                    form, number = heading_form(path[depth])
                     made[sid] = {"id": sid, "fileName": name, "path": path[:depth + 1], "title": path[depth], "level": depth + 1,
                                  "form": form, "number": number,
                                  "first_position": c["position"], "offset": 0, "summary": None, "text": None, "control": False, "parent": parent}
@@ -845,10 +777,10 @@ def _describe(outline: _Outline, sid: str, texts: Dict[str, str]) -> str:
 def _before(quote: str, body: str, limit: int = 300) -> str:
     """参照元の本文のうち、記述の直前の部分と記述のある行の全体（「但し…による」の「但し」が何についての但し書きか、
     行の途中で切られた記述の続き「…求める。上記例では…」を LLM が読めるように）"""
-    key = _norm(unicodedata.normalize("NFKC", quote or ""))[:12]
+    key = _norm(quote or "")[:12]
     lines = (body or "").splitlines()
     for i, line in enumerate(lines):
-        if key and key in _norm(unicodedata.normalize("NFKC", line)):
+        if key and key in _norm(line):
             text = re.sub(r"\s+", " ", " ".join(x for x in lines[:i] if x.strip())).strip()
             text = ("…" + text[-limit:]) if len(text) > limit else text
             whole = re.sub(r"\s+", " ", line).strip()
@@ -858,35 +790,41 @@ def _before(quote: str, body: str, limit: int = 300) -> str:
     return "（なし）"
 
 
-def resolve_sections(ref: dict, source: dict, target_doc: str, outline: _Outline, texts: Dict[str, str], ask, rerank):
-    """手順 3（outline）。参照先の文書の節の一覧から、LLM が参照先の節を選ぶ。回答が読めないときは例外を出す。
+def _section_targets(outline: _Outline, sids: List[str], exclude: str, loose: bool = False, by: Optional[str] = None):
+    """選んだ節から結び先のチャンクを集める。節の中身が参照元のチャンクだけの節（参照元の中を指す参照）は落とす。
+    戻り値: (結び先のチャンク [{"id", "position"}], 節 [{"id", "path"(, "by")}], チャンク -> [節])"""
+    chosen, by_chunk = [], {}
+    for sid in sids:
+        found = outline.chunks_of(sid, exclude=exclude, cap=SECTION_CHUNKS, loose=loose)
+        if not found:
+            continue
+        chosen.append(dict({"id": sid, "path": outline.path(sid)}, **({"by": by} if by else {})))
+        for c in found:
+            by_chunk.setdefault(c, [])
+            if sid not in by_chunk[c]:
+                by_chunk[c].append(sid)
+    targets = sorted(by_chunk, key=lambda c: outline.positions.get(c) or 0)
+    return [{"id": c, "position": outline.positions.get(c)} for c in targets], chosen, by_chunk
+
+
+def resolve_sections(ref: dict, source: dict, target_doc: str, outline: _Outline, texts: Dict[str, str], ask, rerank, ledger=None):
+    """手順 3。参照先の文書の節の一覧から、LLM が参照先の節を選ぶ。回答が読めないときは例外を出す。
+    ledger は _ledger_config() の結果（渡さなければここで読む）。
     戻り値: (結び先のチャンク [{"id", "position"}], 節 [{"id", "path"}], チャンク -> [節])"""
     same = target_doc == source["fileName"]
-    cap = _setting("CHUNK_REFERENCE_SECTION_CHUNKS", 6, int)
     numbered = outline.by_locator(ref.get("locator") or "", source["id"] if same else None)
     if numbered:
         # 位置の語の番号で節が決まる（章・節の層の番号の規則と同じ）。LLM は呼ばない。参照元が主所属の節でも、
         # 節に掛かる他のチャンク（見出しの行が前のチャンクの末尾にある）があれば結ぶ（章・節の層の判定と揃える）
-        chosen, by_chunk = [], {}
-        for sid in numbered:
-            found = outline.chunks_of(sid, exclude=source["id"], cap=cap, loose=True)
-            if not found:
-                continue
-            chosen.append({"id": sid, "path": outline.path(sid), "by": "number"})
-            for c in found:
-                by_chunk.setdefault(c, [])
-                if sid not in by_chunk[c]:
-                    by_chunk[c].append(sid)
-        targets = sorted(by_chunk, key=lambda c: outline.positions.get(c) or 0)
-        return [{"id": c, "position": outline.positions.get(c)} for c in targets], chosen, by_chunk
+        return _section_targets(outline, numbered, source["id"], loose=True, by="number")
     quote_loc = unicodedata.normalize("NFKC", " ".join(x for x in (ref.get("quote"), ref.get("locator")) if x))
     # 改訂の来歴・協議の記録などの管理の節は、記述がそれを名指ししていなければ一覧に出さない
     ids = [sid for sid in outline.order
            if not outline.sections[sid].get("control") or _squash(outline.sections[sid].get("title") or "")[:4] in _squash(quote_loc)]
-    # 見出しが記述と同じ文言の節（「1. 試運転方法及び性能換算方法……HS-VTR-T005による」が別の文書にも書かれている）は、同じ参照の繰り返しで中身ではない
-    # 題名が参照先の文書自身の番号を名指ししている節（「1. 試運転方法……HS-VTR-T005による」が HS-VTR-T005 の中にある）は、
+    # 見出しが記述と同じ文言の節（「1. 試運転方法及び性能換算方法……TS-A105による」が別の文書にも書かれている）は、同じ参照の繰り返しで中身ではない
+    # 題名が参照先の文書自身の番号を名指ししている節（「1. 試運転方法……TS-A105による」が TS-A105 の中にある）は、
     # 本文の別の箇所を指す案内の行で中身ではない
-    R, cfg = _ledger_config()
+    R, cfg = ledger or _ledger_config()
     own = R.number_of_file(target_doc, cfg)[0] if (R and cfg) else None
     if own:
         ids = [sid for sid in ids if own not in R.document_numbers_in(outline.sections[sid].get("title") or "", cfg)]
@@ -896,14 +834,11 @@ def resolve_sections(ref: dict, source: dict, target_doc: str, outline: _Outline
     if not ids:
         return [], [], {}
     mark = outline.source_sections(source["id"]) if same else set()
-    upper = _setting("CHUNK_REFERENCE_OUTLINE_MAX", 40, int)
-    if len(ids) > upper:
+    if len(ids) > OUTLINE_MAX:
         # 節が多い文書: リランカーの上位、位置の語を経路に含む節、参照元の節と前後、それらの祖先だけを見せる
-        query = " ".join(x for x in (ref.get("locator"), ref.get("topic"), ref.get("quote")) if x)
         descs = [outline.path(sid) + " " + _describe(outline, sid, texts)[:200] for sid in ids]
-        keep = set(ids[i] for i in _rank(query, descs, _setting("CHUNK_REFERENCE_OUTLINE_KEEP", 25, int), rerank))
-        locator = unicodedata.normalize("NFKC", ref.get("locator") or "")
-        keys = [k for k in [_norm(locator)] + re.findall(r"\d+(?:[-.]\d+)+", locator) if len(k) >= 2]
+        keep = set(ids[i] for i in _rank(_query_of(ref), descs, OUTLINE_KEEP, rerank))
+        keys = _locator_keys(ref.get("locator"))
         keep.update(sid for sid in ids if keys and any(k in _norm(outline.path(sid)) for k in keys))
         for sid in [s for s in ids if s in mark]:
             i = ids.index(sid)
@@ -914,9 +849,8 @@ def resolve_sections(ref: dict, source: dict, target_doc: str, outline: _Outline
                 keep.add(parent)
                 parent = outline.sections[parent].get("parent")
         ids = [sid for sid in ids if sid in keep]
-    budget = _setting("CHUNK_REFERENCE_LISTING_CHARS", 9000, int)
     paths = [outline.path(sid) for sid in ids]
-    limit = max(60, (budget - sum(len(p) + 8 for p in paths)) // max(len(ids), 1))
+    limit = max(60, (LISTING_CHARS - sum(len(p) + 8 for p in paths)) // max(len(ids), 1))
     lines = []
     for i, (sid, path) in enumerate(zip(ids, paths)):
         desc = _describe(outline, sid, texts)
@@ -930,24 +864,7 @@ def resolve_sections(ref: dict, source: dict, target_doc: str, outline: _Outline
     numbers = _numbers_of(ask(prompt), len(ids))
     if numbers is None:
         raise ValueError("unreadable answer for section selection")
-    chosen, by_chunk = [], {}
-    for n in numbers[:3]:
-        sid = ids[n - 1]
-        found = outline.chunks_of(sid, exclude=source["id"], cap=cap)
-        if not found:
-            continue  # 節の中身が参照元のチャンクだけ（参照元の中を指す参照）
-        chosen.append({"id": sid, "path": outline.path(sid)})
-        for c in found:
-            by_chunk.setdefault(c, [])
-            if sid not in by_chunk[c]:
-                by_chunk[c].append(sid)
-    targets = sorted(by_chunk, key=lambda c: outline.positions.get(c) or 0)
-    return [{"id": c, "position": outline.positions.get(c)} for c in targets], chosen, by_chunk
-
-
-def _task_key(task: dict) -> str:
-    """LLM に渡す仕事の中身の要約。前回と同じなら、保存した結果を使い回す。規則の版が変われば、仕事も変わったものとして扱う"""
-    return hashlib.sha1(json.dumps([RULE_VERSION, task], ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()[:16]
+    return _section_targets(outline, [ids[n - 1] for n in numbers[:3]], source["id"])
 
 
 def _stored_external(stored: Optional[str]) -> List[str]:
@@ -969,27 +886,17 @@ def link_chunk_references(graph, file_names: Optional[List[str]] = None, ask=Non
     """参照を抽出して REFERS_TO を張る。
 
     mode（既定は環境変数 CHUNK_REFERENCE_MODE、無ければ llm）:
-      llm     LLM だけ（従来の動き）。規則のリンクが残っていれば消す
-      hybrid  規則で結べる分を規則で結び（method = 'rule'）、残りだけを LLM に回す（method = 'llm'）
+      llm     LLM で張る。規則のリンクが残っていれば消す
       rule    規則だけ。LLM を 1 回も呼ばない。LLM が以前に書いた結果には触れない（規則と同じ先へのリンクだけ消す）
     規則の分は、毎回すべてのチャンクで計算し直して書き直す（速く、結果が入力だけで決まるので、古いリンクが残らない）。
     書き直しは、今回の分を先に書いてから古い分を消す順で行う（途中で切れても、規則のリンクが全部消えたままにならない）。
-    LLM の分は、前回の結果がチャンクに保存されていれば使い回す。引き直すのは、新しいチャンク、LLM に渡す仕事が変わったチャンク、
+    LLM の分は、前回の結果がチャンクに保存されていれば使い回す。引き直すのは、新しいチャンク、結び先の選び方の印が変わったチャンク、
     結び先のチャンクが無くなった参照、手元に無い文書への参照（文書の一覧が変わったとき）、前回失敗した参照だけである。
     file_names を渡すと、LLM の分は、その文書のチャンクと、引き直しが必要なチャンクだけを対象にする。
     reextract は抽出から、reresolve は文書とチャンクの特定からやり直す。
-    戻り値は、参照と結び先、失敗の一覧（確認用）。LLM に続けてつながらない場合も、規則の分は書き終えている。
+    戻り値は、参照と結び先、失敗の一覧（確認用）。
     """
     mode = _mode(mode)
-    max_failure = _setting("CHUNK_REFERENCE_MAX_FAILURE_RATE", 0.5, float)
-    # hybrid では LLM の結果が要るチャンクが文書に 1〜3 個しか無いことが多く、割合だけで見ると 1 回の読めない答えで文書が丸ごと飛ぶ。
-    # 失敗の件数がこの数に届かないうちは、文書を飛ばさない（失敗したチャンクは既存のリンクを消さずに残し、次回に回す）
-    min_failures = 1 if mode == "llm" else _setting("CHUNK_REFERENCE_MIN_FAILURES", 3, int)
-    abort_after = _setting("CHUNK_REFERENCE_ABORT_AFTER", 5, int)
-    document_places = _flag("CHUNK_REFERENCE_DOCUMENT_PLACES", True)
-    opts = link_options()
-    okey = options_key(opts)
-    R, ledger_cfg = _ledger_config() if okey else (None, None)
     screened = {"not_reference": 0, "in_chunk": 0, "external_by_ledger": 0, "document_by_ledger": 0, "outline": 0, "by_number": 0}
     state = {"llm": 0, "streak": 0, "ask": ask, "rerank": rerank}
 
@@ -1001,7 +908,7 @@ def link_chunk_references(graph, file_names: Optional[List[str]] = None, ask=Non
             answer = state["ask"](prompt)
         except Exception as exc:
             state["streak"] += 1
-            if state["streak"] >= abort_after:
+            if state["streak"] >= ABORT_AFTER:
                 raise LinkAborted(f"the LLM failed {state['streak']} times in a row: {exc}") from exc
             raise
         state["streak"] = 0
@@ -1009,7 +916,8 @@ def link_chunk_references(graph, file_names: Optional[List[str]] = None, ask=Non
 
     def ranked(query: str, texts: List[str]) -> List[float]:
         if state["rerank"] is None:
-            state["rerank"] = _default_rerank()
+            from src.rerank_retriever import _rerank
+            state["rerank"] = _rerank
         return state["rerank"](query, texts)
 
     if write:
@@ -1025,78 +933,91 @@ def link_chunk_references(graph, file_names: Optional[List[str]] = None, ask=Non
     by_doc: Dict[str, List[dict]] = {}
     for row in rows:
         by_doc.setdefault(row["fileName"], []).append(row)
-    chunk_ids = {row["id"] for row in rows}
-    documents = [{"fileName": name, "head": _head(chunks[0]["text"])} for name, chunks in by_doc.items()]
-    docs_hash = hashlib.sha1("\n".join(sorted(by_doc)).encode("utf-8")).hexdigest()[:16]
-    corpora: Dict[str, _Corpus] = {}
-    texts_by_id = {row["id"]: row["text"] or "" for row in rows}
-    outlines: Dict[str, _Outline] = load_outlines(graph, by_doc) if (opts["listing"] == "outline" and mode != "rule") else {}
     old_rule_links = sum((row.get("rule_links") or 0) for row in rows)
     old_llm_links = sum((row.get("links") or 0) for row in rows)
 
     result = {"mode": mode, "chunks": 0, "reused": 0, "skipped": 0, "failed": [], "skipped_documents": [], "references": [], "dropped": [],
-              "documents": {}, "aborted": None, "rule": None, "llm_routed": None}
-
-    # ── 規則の分。LLM より先に済ませる（LLM が止まっていても、規則のリンクは張られる）
-    plan: Dict[str, dict] = {}
-    rule_edges: set = set()
-    rule_external: Dict[str, List[str]] = {}
-    rule_quotes: Dict[str, List[str]] = {}
-    rule_removed = 0
-    rule, rule_error = None, None
-    if mode != "llm":
-        try:
-            rule = _rule_pass(rows)
-        except Exception as exc:
-            # 規則の側の不具合で後処理の全体を止めない。hybrid なら、この回は LLM だけで張る。規則のリンクには触れず、
-            # 前回までに保存した LLM の結果はそのまま使い回す（全チャンクの抽出をやり直さない）。張ってある規則のリンクと同じ先は重ねて張らない
-            logging.exception("chunk references: the rule pass failed: %s", exc)
-            rule_error = str(exc)[:200]
-            if mode == "hybrid":
-                mode = result["mode"] = "llm"
-                if old_rule_links:
-                    for row in graph.query("MATCH (s:Chunk)-[r:REFERS_TO]->(t) WHERE r.method = $method AND NOT t:Section "
-                                           "RETURN s.id AS source, coalesce(t.id, t.fileName) AS target", params={"method": RULE_METHOD}):
-                        rule_edges.add((row["source"], row["target"]))
-            else:
-                result["aborted"] = f"the rule pass failed: {rule_error}"
-    if rule is None:
-        if rule_error is None and write and old_rule_links:
+              "aborted": None, "rule": None}
+    rule_removed, rule_error = 0, None
+    if mode == "rule":
+        _link_by_rules(graph, rows, write, old_rule_links, old_llm_links, result)
+        rule_error = result.pop("rule_error", None)
+        result["chunks"] = len(rows)  # 規則は毎回すべてのチャンクを見る
+    else:
+        if write and old_rule_links:
             # 章・節の層（section_layer）が張る節への REFERS_TO（method = 'rule'）は、こちらの規則のリンクではないので消さない
             graph.query("MATCH (:Chunk)-[r:REFERS_TO]->(t) WHERE r.method = $method AND NOT t:Section DELETE r", params={"method": RULE_METHOD})
             rule_removed = old_rule_links
-    else:
-        records = rule["records"]
-        result["references"] += records
-        for r in records:
-            rule_quotes.setdefault(r["source"], []).append(_norm(r["quote"]))
-            for t in r["targets"]:
-                rule_edges.add((r["source"], t["id"]))
-            if r["level"] == "document":
-                rule_edges.add((r["source"], r["target_doc"]))
-            if r["scope"] == "external" and r["target_document"] and r["target_document"] not in rule_external.setdefault(r["source"], []):
-                rule_external[r["source"]].append(r["target_document"])
-        if mode == "hybrid":
-            plan = plan_llm_work(records, rule["chunks"], document_places)
-        if write:
-            _write_rules(graph, records, rows, rule_external, old_rule_links, old_llm_links)
-        why = lambda key: sum(1 for task in plan.values() if (task["full"] if key == "no_detection" else any(r["why"] == key for r in task["refs"])))
-        result["rule"] = {
-            "references": len(records), "links": sum(len(r["targets"]) for r in records), "document_links": sum(1 for r in records if r["level"] == "document"),
-            "edges": len(rule_edges),  # 書くリレーションの数（同じ参照元から同じ先へは 1 本にまとめる）
-            "in_chunk": sum(1 for r in records if r["level"] == "in_chunk"), "external": sum(1 for r in records if r["scope"] == "external"),
-            "unresolved": sum(1 for r in records if r["reason"]), "from_history": sum(1 for r in records if r["history"]), "dropped": rule["dropped"]}
-        result["llm_routed"] = {"chunks": len(plan), "unresolved": why("unresolved"), "document_only": why("document_only"), "no_detection": why("no_detection"), "sent": 0}
-        logging.info("chunk references: rules done (%s)", json.dumps(result["rule"], ensure_ascii=False))
+        _link_by_llm(graph, by_doc, file_names, counted, ranked, write, reextract, reresolve, screened, result)
+
+    result["llm_calls"] = state["llm"]
+    result["summary"] = {
+        "mode": mode,
+        "chunks": result["chunks"], "reused": result["reused"], "unchanged": result["skipped"],
+        "references": len(result["references"]),
+        "links": sum(len(r["targets"]) for r in result["references"]),
+        "external": sum(1 for r in result["references"] if r["scope"] == "external"),
+        "dropped": len(result["dropped"]), "failed_chunks": len(result["failed"]),
+        "skipped_documents": result["skipped_documents"], "llm_calls": state["llm"], "aborted": result["aborted"],
+        # 結び先の選び方の印と、この回に判定・特定した参照の数（使い回した参照は数えない）
+        "link_style": {"options": LINK_KEY, **screened},
+    }
+    if result["rule"] is not None:
+        result["summary"]["rule"] = {k: v for k, v in result["rule"].items() if k != "dropped"}
+    if rule_removed:
+        result["summary"]["rule_links_removed"] = rule_removed
+    if rule_error:
+        result["summary"]["rule_error"] = rule_error
+    logging.info("chunk references: %s", json.dumps(result["summary"], ensure_ascii=False))
+    return result
+
+
+def _link_by_rules(graph, rows: List[dict], write: bool, old_rule_links: int, old_llm_links: int, result: Dict) -> None:
+    """規則の分（mode = rule）。規則の側の不具合は、後処理の全体を止めずに aborted と rule_error に残す"""
+    try:
+        rule = _rule_pass(rows)
+    except Exception as exc:
+        logging.exception("chunk references: the rule pass failed: %s", exc)
+        result["rule_error"] = str(exc)[:200]
+        result["aborted"] = f"the rule pass failed: {result['rule_error']}"
+        return
+    records = rule["records"]
+    result["references"] += records
+    rule_edges: set = set()
+    rule_external: Dict[str, List[str]] = {}
+    for r in records:
+        for t in r["targets"]:
+            rule_edges.add((r["source"], t["id"]))
+        if r["level"] == "document":
+            rule_edges.add((r["source"], r["target_doc"]))
+        if r["scope"] == "external" and r["target_document"] and r["target_document"] not in rule_external.setdefault(r["source"], []):
+            rule_external[r["source"]].append(r["target_document"])
+    if write:
+        _write_rules(graph, records, rows, rule_external, old_rule_links, old_llm_links)
+    result["rule"] = {
+        "references": len(records), "links": sum(len(r["targets"]) for r in records), "document_links": sum(1 for r in records if r["level"] == "document"),
+        "edges": len(rule_edges),  # 書くリレーションの数（同じ参照元から同じ先へは 1 本にまとめる）
+        "in_chunk": sum(1 for r in records if r["level"] == "in_chunk"), "external": sum(1 for r in records if r["scope"] == "external"),
+        "unresolved": sum(1 for r in records if r["reason"]), "from_history": sum(1 for r in records if r["history"]), "dropped": rule["dropped"]}
+    logging.info("chunk references: rules done (%s)", json.dumps(result["rule"], ensure_ascii=False))
+
+
+def _link_by_llm(graph, by_doc: Dict[str, List[dict]], file_names: Optional[List[str]], counted, ranked, write: bool,
+                 reextract: bool, reresolve: bool, screened: Dict[str, int], result: Dict) -> None:
+    """LLM の分（mode = llm）。文書ごとに抽出・判定・特定をして書き込む。LLM に続けてつながらない場合は aborted に残して止める"""
+    chunk_ids = {row["id"] for chunks in by_doc.values() for row in chunks}
+    documents = [{"fileName": name, "head": _head(chunks[0]["text"])} for name, chunks in by_doc.items()]
+    docs_hash = hashlib.sha1("\n".join(sorted(by_doc)).encode("utf-8")).hexdigest()[:16]
+    texts_by_id = {row["id"]: row["text"] or "" for chunks in by_doc.values() for row in chunks}
+    outlines: Dict[str, _Outline] = load_outlines(graph, by_doc)
+    R, ledger_cfg = ledger = _ledger_config()
+    file_numbers = _file_numbers(documents, R, ledger_cfg)
+    corpora: Dict[str, _Corpus] = {}
 
     def corpus_of(name: str) -> _Corpus:
         if name not in corpora:
             corpora[name] = _Corpus([c["text"] or "" for c in by_doc[name]])
         return corpora[name]
-
-    def task_of(source: dict) -> dict:
-        """このチャンクで LLM がする仕事。llm では抽出から全部、hybrid では規則の残りだけ"""
-        return {"full": True, "refs": []} if mode == "llm" else plan.get(source["id"], {"full": False, "refs": []})
 
     def load(source: dict) -> Optional[dict]:
         if reextract or not source.get("stored"):
@@ -1105,63 +1026,42 @@ def link_chunk_references(graph, file_names: Optional[List[str]] = None, ask=Non
             stored = json.loads(source["stored"])
         except (TypeError, ValueError):
             return None
-        if stored.get("v") != EXTRACT_VERSION:
-            return None
-        if rule_error:
-            return stored  # 規則が失敗した回は、前回までの保存（hybrid のものも）をそのまま使う
-        if stored.get("mode", "llm") != mode:
-            return None
-        if mode != "llm" and stored.get("task") != _task_key(task_of(source)):
-            return None  # 規則の結果が変わり、LLM に渡す仕事が変わった
+        if stored.get("v") != EXTRACT_VERSION or stored.get("mode", METHOD) != METHOD:
+            return None  # 版の違う保存と、llm 以外の張り方で保存したものは使わない
         return stored
 
     def needs_work(source: dict, stored: Optional[dict]) -> bool:
         """保存した結果をそのまま使えないチャンクか"""
         if stored is None or reresolve or source["unresolved"]:
             return True
-        if stored.get("opts") != okey:
-            return True  # 結び先の選び方の設定が変わった。保存した抽出の結果で、判定と特定をやり直す
+        if stored.get("opts") != LINK_KEY:
+            return True  # 結び先の選び方の印が変わった。保存した抽出の結果で、判定と特定をやり直す
         if stored.get("links", 0) > (source.get("links") or 0):
             return True  # 結んだ先が消えた（文書の削除、書き込みの中断）
-        if any((source["id"], target) not in rule_edges for target in stored.get("covered") or []):
-            return True  # 規則と同じ先なので張らなかったリンクがあり、規則がその先を張らなくなった。保存した結び先から張り直す（LLM は呼ばない）
         return stored.get("docs") != docs_hash and any(r.get("scope") in ("external", None) for r in stored["refs"])
 
     resolved_names: Dict[tuple, object] = {}
     try:
-        for doc_name, chunks in (by_doc.items() if mode != "rule" else []):
+        for doc_name, chunks in by_doc.items():
             loaded = [(c, load(c)) for c in chunks]
             in_scope = not file_names or doc_name in file_names
             sources = [(c, stored) for c, stored in loaded if needs_work(c, stored) and (in_scope or stored is not None)]
             result["skipped"] += len(chunks) - len(sources)
             if not sources:
                 continue
-            records, done, partial, failed, worked = [], [], [], [], 0
+            records, done, partial, failed = [], [], [], []
             for source, stored in sources:
                 result["chunks"] += 1
-                task = task_of(source)
-                if task["full"] or task["refs"] or (stored is not None and stored["refs"]):
-                    worked += 1  # LLM の結果が要るチャンク（規則だけで済んだチャンクは、失敗の割合に数えない）
                 try:
                     if stored is not None:
                         found = stored["refs"]
                         result["reused"] += 1
                     else:
-                        found = []
-                        if task["full"]:
-                            extraction = extract_references(doc_name, _body(source["text"]), counted)
-                            if extraction is None:
-                                raise ValueError("no JSON with references in the answer")
-                            # 規則が検出した文の参照は、規則の側で扱っている（結んだか、下で LLM に回す）。LLM の結果からは除く
-                            taken = rule_quotes.get(source["id"], [])
-                            found += [f for f in extraction["references"]
-                                      if not any(q and (q in _norm(f["quote"]) or _norm(f["quote"]) in q) for q in taken)]
-                            result["dropped"] += [dict(d, source_doc=doc_name, source_position=source["position"]) for d in extraction["dropped"]]
-                        # 規則が検出した参照のうち、LLM に回す分。抽出は済んでいるので、文書とチャンクの特定だけを行う
-                        found += [{"quote": r["quote"], "target_document": r["target_document"], "locator": r["locator"], "topic": "",
-                                   "origin": RULE_METHOD, "why": r["why"], "known_doc": r["known_doc"]} for r in task["refs"]]
-                        if result["llm_routed"] is not None and (task["full"] or task["refs"]):
-                            result["llm_routed"]["sent"] += 1
+                        extraction = extract_references(doc_name, _body(source["text"]), counted)
+                        if extraction is None:
+                            raise ValueError("no JSON with references in the answer")
+                        found = extraction["references"]
+                        result["dropped"] += [dict(d, source_doc=doc_name, source_position=source["position"]) for d in extraction["dropped"]]
                 except LinkAborted:
                     raise
                 except Exception as exc:
@@ -1169,14 +1069,13 @@ def link_chunk_references(graph, file_names: Optional[List[str]] = None, ask=Non
                     failed.append({"source_doc": doc_name, "source_position": source["position"], "stage": "extract", "error": str(exc)[:200]})
                     continue
                 refs, errors = [], 0
-                stale = stored is not None and stored.get("opts") != okey
+                stale = stored is not None and stored.get("opts") != LINK_KEY
                 body = _body(source["text"])
                 for ref in found:
                     record = {"source": source["id"], "source_doc": doc_name, "source_position": source["position"],
                               "quote": ref["quote"], "target_document": ref.get("target_document"), "locator": ref.get("locator"),
                               "topic": ref.get("topic") or "", "target_doc": None, "targets": [], "scope": None, "reused": False,
-                              "method": METHOD, "origin": ref.get("origin") or METHOD, "why": ref.get("why"),
-                              "sections": [], "target_sections": {}}
+                              "method": METHOD, "sections": [], "target_sections": {}}
                     kept = None
                     if stored is not None and not reresolve and not stale:
                         scope, targets = ref.get("scope"), ref.get("targets") or []
@@ -1189,14 +1088,14 @@ def link_chunk_references(graph, file_names: Optional[List[str]] = None, ask=Non
                             kept = (scope, None, [])
                     try:
                         screen = None
-                        if kept is None and record["origin"] == METHOD:
-                            # 結び先の選び方（11/10）の (b)・(d)・(c)。規則が検出して LLM に回した参照（origin = rule）には掛けない
-                            if opts["drop_non_references"] and not is_reference_like(ref, body, R, ledger_cfg):
+                        if kept is None:
+                            # (b)・(d)・(c)
+                            if not is_reference_like(ref, body, R, ledger_cfg):
                                 screen = ("not_reference", None)
-                            elif opts["skip_in_chunk"] and in_source_chunk(ref, body):
+                            elif in_source_chunk(ref, body):
                                 screen = ("in_chunk", None)
-                            elif opts["ledger_external"] and not ref.get("known_doc"):
-                                screen = ledger_document(ref, doc_name, documents, R, ledger_cfg)
+                            else:
+                                screen = ledger_document(ref, doc_name, documents, R, ledger_cfg, file_numbers)
                         if kept is not None:
                             record["scope"], record["target_doc"], record["reused"] = kept[0], kept[1], True
                             positions = {c["id"]: c["position"] for c in by_doc.get(kept[1], [])} if kept[1] else {}
@@ -1215,10 +1114,7 @@ def link_chunk_references(graph, file_names: Optional[List[str]] = None, ask=Non
                             screened["external_by_ledger"] += 1
                         else:
                             name = record["target_document"]
-                            known = ref.get("known_doc")
-                            if known and known in by_doc:
-                                target = SELF if known == doc_name else known  # 文書は規則が決めた。LLM はチャンクだけを選ぶ
-                            elif screen is not None:
+                            if screen is not None:
                                 target = SELF if screen[0] == "self" else screen[1]  # 文書番号の規則で手元の文書に決まった
                                 screened["document_by_ledger"] += 1
                             elif name is None:
@@ -1227,7 +1123,6 @@ def link_chunk_references(graph, file_names: Optional[List[str]] = None, ask=Non
                                 key = (source["id"], _norm(name))
                                 if key not in resolved_names:
                                     resolved_names[key] = resolve_document(name, ref, doc_name, documents, counted, ranked)
-                                    result["documents"][f"{doc_name}#{source['position']} | {name}"] = resolved_names[key]
                                 target = resolved_names[key]
                             if target is None:
                                 record["scope"] = "external"
@@ -1237,7 +1132,7 @@ def link_chunk_references(graph, file_names: Optional[List[str]] = None, ask=Non
                                 outline = outlines.get(record["target_doc"])
                                 if outline is not None:
                                     picked, record["sections"], record["target_sections"] = resolve_sections(
-                                        ref, source, record["target_doc"], outline, texts_by_id, counted, ranked)
+                                        ref, source, record["target_doc"], outline, texts_by_id, counted, ranked, ledger)
                                     screened["by_number" if any(x.get("by") == "number" for x in record["sections"]) else "outline"] += 1
                                     record["targets"] = picked
                                 else:
@@ -1250,21 +1145,14 @@ def link_chunk_references(graph, file_names: Optional[List[str]] = None, ask=Non
                         logging.warning("chunk references: resolution failed on %s#%s: %s", doc_name, source["position"], exc)
                         record["scope"], record["error"] = None, str(exc)[:200]
                         errors += 1
-                    # 規則が同じ参照元から同じ先へ張っているものは、重ねて張らない
-                    record["covered_by_rule"] = [t["id"] for t in record["targets"] if (source["id"], t["id"]) in rule_edges]
-                    record["covered_document"] = bool(record["scope"] == "other_document" and record["target_doc"] and not record["targets"]
-                                                      and (source["id"], record["target_doc"]) in rule_edges)
                     records.append(record)
                     refs.append({"quote": record["quote"], "target_document": record["target_document"], "locator": record["locator"],
                                  "topic": record["topic"], "scope": record["scope"], "target_doc": record["target_doc"],
                                  "targets": [t["id"] for t in record["targets"]],
-                                 "origin": record["origin"], "why": record["why"], "known_doc": ref.get("known_doc"),
                                  **({"external_name": record["external_name"]} if record.get("external_name") else {}),
                                  **({"sections": [[s["id"], s["path"]] for s in record["sections"]], "target_sections": record["target_sections"]}
                                     if record["sections"] else {})})
-                entry = {"id": source["id"], "refs": refs, "task": _task_key(task), "opts": okey,
-                         "covered": sorted({t for r in records[-len(refs):] for t in r["covered_by_rule"] + ([r["target_doc"]] if r["covered_document"] else [])})
-                         if refs else []}
+                entry = {"id": source["id"], "refs": refs}
                 if errors:
                     # 特定に失敗した参照がある。既存のリンクには触れず、抽出の結果だけを残して次回に回す
                     failed.append({"source_doc": doc_name, "source_position": source["position"], "stage": "resolve", "error": f"{errors} references"})
@@ -1274,54 +1162,22 @@ def link_chunk_references(graph, file_names: Optional[List[str]] = None, ask=Non
 
             result["failed"] += failed
             result["references"] += records
-            if failed and len(failed) >= min_failures and len(failed) > max_failure * max(worked, 1):
+            if failed and len(failed) > MAX_FAILURE_RATE * len(sources):
                 # LLM が止まっているときに、既存のリンクを消してしまわないための歯止め
-                logging.error("chunk references: %d of %d chunks failed in %s; nothing is written for this document", len(failed), worked, doc_name)
+                logging.error("chunk references: %d of %d chunks failed in %s; nothing is written for this document", len(failed), len(sources), doc_name)
                 result["skipped_documents"].append(doc_name)
                 continue
             if write:
-                _write(graph, records, done, partial, docs_hash, mode, rule_edges, rule_external)
+                _write(graph, records, done, partial, docs_hash)
             logging.info("chunk references: %s done (%d chunks, %d references, %d failed)", doc_name, len(sources), len(records), len(failed))
     except LinkAborted as exc:
         logging.error("chunk references aborted: %s", exc)
         result["aborted"] = str(exc)
 
-    if mode == "rule":
-        result["chunks"] = len(rows)  # 規則は毎回すべてのチャンクを見る
-    result["llm_calls"] = state["llm"]
-    result["summary"] = {
-        "mode": mode,
-        "chunks": result["chunks"], "reused": result["reused"], "unchanged": result["skipped"],
-        "references": len(result["references"]),
-        "links": sum(len(r["targets"]) - len(r.get("covered_by_rule") or []) for r in result["references"]),
-        "external": sum(1 for r in result["references"] if r["scope"] == "external"),
-        "dropped": len(result["dropped"]), "failed_chunks": len(result["failed"]),
-        "skipped_documents": result["skipped_documents"], "llm_calls": state["llm"], "aborted": result["aborted"],
-    }
-    if okey:
-        # 結び先の選び方（11/10）: 設定と、この回に判定・特定した参照の数（使い回した参照は数えない）
-        result["summary"]["link_style"] = {"options": okey, **screened}
-    if result["rule"] is not None:
-        # 規則が張った分と、LLM に回したチャンクの数（理由ごと。1 つのチャンクが複数の理由を持つことがある）
-        result["summary"]["rule"] = {k: v for k, v in result["rule"].items() if k != "dropped"}
-        result["summary"]["llm_routed"] = result["llm_routed"]
-    if rule_removed:
-        result["summary"]["rule_links_removed"] = rule_removed
-    # rule は LLM の保存を書かないので、切り替えの判定は hybrid と llm のときだけ行う
-    switched = 0 if mode == "rule" else sum(1 for row in rows if row.get("stored") and f'"mode": "{mode}"' not in row["stored"]
-                                            and not (mode == "llm" and '"mode"' not in row["stored"]))
-    if switched and not rule_error:
-        # 張り方を切り替えた回。前回は別の張り方で保存されていたチャンクの数と、切り替える前のリンクの本数を残す
-        result["summary"]["mode_switch"] = {"chunks_stored_in_other_mode": switched, "llm_links_before": old_llm_links, "rule_links_before": old_rule_links}
-    if rule_error:
-        result["summary"]["rule_error"] = rule_error
-    logging.info("chunk references: %s", json.dumps(result["summary"], ensure_ascii=False))
-    return result
 
-
-def _batches(rows: List[dict], size: int = 500):
-    for i in range(0, len(rows), size):
-        yield rows[i:i + size]
+# 参照先の照合の形（結び先がチャンクか文書か）
+_CHUNK_TARGET = "(t:Chunk {id: row.target})"
+_DOCUMENT_TARGET = "(t:Document {fileName: row.target})"
 
 
 def _write_rules(graph, records: List[dict], rows: List[dict], rule_external: Dict[str, List[str]], old_rule_links: int, old_llm_links: int) -> None:
@@ -1343,25 +1199,19 @@ def _write_rules(graph, records: List[dict], rows: List[dict], rule_external: Di
     # 先に今回の分を書き（同じリンクがあれば今回の印を付け直す）、書き終えてから、今回の印の無い古いリンクを消す。
     # 途中で切れても、古い規則のリンクが残る（全部消えたままにならない）。残った古いリンクは、次の実行で消える
     run = uuid.uuid4().hex[:12]
+    buckets = ((to_chunks, _CHUNK_TARGET), (to_docs, _DOCUMENT_TARGET))
     if old_llm_links:
-        for batch in _batches(to_chunks):
-            graph.query("UNWIND $rows AS row MATCH (s:Chunk {id: row.source})-[r:REFERS_TO]->(t:Chunk {id: row.target}) WHERE r.method = $method DELETE r",
-                        params={"rows": batch, "method": METHOD})
-        for batch in _batches(to_docs):
-            graph.query("UNWIND $rows AS row MATCH (s:Chunk {id: row.source})-[r:REFERS_TO]->(t:Document {fileName: row.target}) WHERE r.method = $method DELETE r",
-                        params={"rows": batch, "method": METHOD})
-    for batch in _batches(to_chunks):
-        graph.query(
-            "UNWIND $rows AS row MATCH (s:Chunk {id: row.source}), (t:Chunk {id: row.target}) "
-            "MERGE (s)-[r:REFERS_TO {method: $method, quote: row.quote, locator: row.locator}]->(t) "
-            "SET r.scope = row.scope, r.form = row.form, r.source_section = row.section, r.run = $run",
-            params={"rows": batch, "method": RULE_METHOD, "run": run})
-    for batch in _batches(to_docs):
-        graph.query(
-            "UNWIND $rows AS row MATCH (s:Chunk {id: row.source}), (t:Document {fileName: row.target}) "
-            "MERGE (s)-[r:REFERS_TO {method: $method, quote: row.quote, locator: row.locator}]->(t) "
-            "SET r.scope = row.scope, r.form = row.form, r.source_section = row.section, r.run = $run",
-            params={"rows": batch, "method": RULE_METHOD, "run": run})
+        for bucket, target in buckets:
+            for batch in batches(bucket):
+                graph.query("UNWIND $rows AS row MATCH (s:Chunk {id: row.source})-[r:REFERS_TO]->" + target + " WHERE r.method = $method DELETE r",
+                            params={"rows": batch, "method": METHOD})
+    for bucket, target in buckets:
+        for batch in batches(bucket):
+            graph.query(
+                "UNWIND $rows AS row MATCH (s:Chunk {id: row.source}), " + target + " "
+                "MERGE (s)-[r:REFERS_TO {method: $method, quote: row.quote, locator: row.locator}]->(t) "
+                "SET r.scope = row.scope, r.form = row.form, r.source_section = row.section, r.run = $run",
+                params={"rows": batch, "method": RULE_METHOD, "run": run})
     if old_rule_links:
         graph.query("MATCH (:Chunk)-[r:REFERS_TO]->(t) WHERE r.method = $method AND NOT t:Section AND coalesce(r.run, '') <> $run DELETE r",
                     params={"method": RULE_METHOD, "run": run})
@@ -1372,32 +1222,25 @@ def _write_rules(graph, records: List[dict], rows: List[dict], rule_external: Di
         external += [name for name in _stored_external(row.get("stored")) if name not in external]
         if external != list(row.get("external") or []):
             changed.append({"id": row["id"], "external": external})
-    for batch in _batches(changed):
+    for batch in batches(changed):
         graph.query("UNWIND $rows AS row MATCH (c:Chunk {id: row.id}) "
                     "SET c.external_references = CASE WHEN size(row.external) > 0 THEN row.external ELSE null END", params={"rows": batch})
 
 
-def _write(graph, references: List[dict], done: List[dict], partial: List[dict], docs_hash: str,
-           mode: str = "llm", rule_edges: Optional[set] = None, rule_external: Optional[Dict[str, List[str]]] = None) -> None:
+def _write(graph, references: List[dict], done: List[dict], partial: List[dict], docs_hash: str) -> None:
     """特定まで終えたチャンク（done）について、自分が書いた REFERS_TO（method = 'llm'）を消して書き直す（やり直しても増えない）。
 
     特定に失敗した参照のあるチャンク（partial）は、抽出の結果だけを保存し、既存のリンクには触れない。
     途中で切れても次回に拾えるよう、消す前に「未解決」の印を付け、書き終えてから本来の値に直す。
-    規則が同じ参照元から同じ先へ張っているリンク（rule_edges）は書かない。
     """
-    rule_edges = rule_edges or set()
-    rule_external = rule_external or {}
     by_source: Dict[str, List[dict]] = {}
     for r in references:
         by_source.setdefault(r["source"], []).append(r)
     done_ids = [d["id"] for d in done]
     to_chunks, to_docs, final = [], [], []
     def stamp(entry, links):
-        data = {"v": EXTRACT_VERSION, "docs": docs_hash, "links": links, "refs": entry["refs"],
-                "mode": mode, "task": entry.get("task"), "covered": entry.get("covered") or []}
-        if entry.get("opts"):
-            data["opts"] = entry["opts"]  # 結び先の選び方の印（従来の動きでは書かない。従来の保存と同じ形のまま）
-        return json.dumps(data, ensure_ascii=False)
+        return json.dumps({"v": EXTRACT_VERSION, "docs": docs_hash, "links": links, "refs": entry["refs"], "mode": METHOD, "opts": LINK_KEY},
+                          ensure_ascii=False)
 
     for entry in done:
         records = by_source.get(entry["id"], [])
@@ -1406,17 +1249,15 @@ def _write(graph, references: List[dict], done: List[dict], partial: List[dict],
             base = {"source": r["source"], "quote": r["quote"], "locator": r["locator"] or "", "topic": r["topic"], "scope": r["scope"]}
             paths = {s["id"]: s["path"] for s in r.get("sections") or []}
             for t in r["targets"]:
-                if (r["source"], t["id"]) in rule_edges:
-                    continue
                 sids = (r.get("target_sections") or {}).get(t["id"]) or []
-                # 節の一覧から選んだ節（章・節の層が節への参照の結び先にする）。従来の選び方では空
+                # 節の一覧から選んだ節（章・節の層が節への参照の結び先にする）。節の木の無い文書では空
                 to_chunks.append(dict(base, target=t["id"], sections=sids, paths=[paths.get(s, "") for s in sids]))
                 edges.add((t["id"], base["quote"], base["locator"]))
-            if r["scope"] == "other_document" and r["target_doc"] and not r["targets"] and (r["source"], r["target_doc"]) not in rule_edges:
+            if r["scope"] == "other_document" and r["target_doc"] and not r["targets"]:
                 to_docs.append(dict(base, target=r["target_doc"]))
                 edges.add((r["target_doc"], base["quote"], base["locator"]))
         links = len(edges)
-        external = list(rule_external.get(entry["id"], []))
+        external = []
         for r in records:
             name = r.get("external_name") or r["target_document"]
             if r["scope"] == "external" and name and name not in external:
@@ -1443,16 +1284,13 @@ def _write(graph, references: List[dict], done: List[dict], partial: List[dict],
     graph.query("MATCH (c:Chunk) WHERE c.id IN $ids SET c.reference_unresolved = true", params={"ids": done_ids})
     graph.query("MATCH (c:Chunk)-[r:REFERS_TO]->() WHERE c.id IN $ids AND r.method = $method DELETE r",
                 params={"ids": done_ids, "method": METHOD})
-    graph.query(
-        "UNWIND $rows AS row MATCH (s:Chunk {id: row.source}), (t:Chunk {id: row.target}) "
-        "MERGE (s)-[r:REFERS_TO {method: $method, quote: row.quote, locator: row.locator}]->(t) SET r.topic = row.topic, r.scope = row.scope, "
-        "r.target_sections = CASE WHEN size(row.sections) > 0 THEN row.sections ELSE null END, "
-        "r.target_section_paths = CASE WHEN size(row.sections) > 0 THEN row.paths ELSE null END",
-        params={"rows": to_chunks, "method": METHOD})
-    graph.query(
-        "UNWIND $rows AS row MATCH (s:Chunk {id: row.source}), (t:Document {fileName: row.target}) "
-        "MERGE (s)-[r:REFERS_TO {method: $method, quote: row.quote, locator: row.locator}]->(t) SET r.topic = row.topic, r.scope = row.scope",
-        params={"rows": to_docs, "method": METHOD})
+    sections = (", r.target_sections = CASE WHEN size(row.sections) > 0 THEN row.sections ELSE null END, "
+                "r.target_section_paths = CASE WHEN size(row.sections) > 0 THEN row.paths ELSE null END")
+    for bucket, target, extra in ((to_chunks, _CHUNK_TARGET, sections), (to_docs, _DOCUMENT_TARGET, "")):
+        graph.query(
+            "UNWIND $rows AS row MATCH (s:Chunk {id: row.source}), " + target + " "
+            "MERGE (s)-[r:REFERS_TO {method: $method, quote: row.quote, locator: row.locator}]->(t) SET r.topic = row.topic, r.scope = row.scope" + extra,
+            params={"rows": bucket, "method": METHOD})
     graph.query(
         "UNWIND $rows AS row MATCH (c:Chunk {id: row.id}) "
         "SET c.reference_extraction = row.stored, c.reference_unresolved = row.unresolved, "

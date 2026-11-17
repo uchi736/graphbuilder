@@ -97,11 +97,6 @@ def test_processing_document_is_not_cleared(g):
     assert one(g, "MATCH (:Document {fileName: $A})<-[:PART_OF]-(c) RETURN count(c) AS n")["n"] == 3
 
 
-def test_delete_rule_layer_and_sweep(g):
+def test_delete_rule_layer(g):
     assert DR.delete_rule_layer(g, [g.A]) == {"rule_edges": 5, "sections": 2}
     assert {g.t + "-secE", g.t + "-rB"} <= left_ids(g)
-    # 本家の削除が文書ノードだけを消し、チャンクを残した状態
-    g.query("MATCH (d:Document {fileName: $A}) DETACH DELETE d", {"A": g.A})
-    assert DR.sweep_deleted_documents(g, [g.A], ["local file"]) == {"documents": 0, "chunks": 2}
-    # 文書ノードごと残った状態（B のチャンク b1 と、A が消えて B だけのものになった s1）
-    assert DR.sweep_deleted_documents(g, [g.B], ["local file"]) == {"documents": 1, "chunks": 2}

@@ -5,7 +5,7 @@ from neo4j.exceptions import TransientError
 from langchain_neo4j import Neo4jGraph
 from src.shared.common_fn import create_gcs_bucket_folder_name_hashed, delete_uploaded_local_file, load_embedding_model, get_value_from_env, get_user_embedding_model
 from src.document_sources.gcs_bucket import delete_file_from_gcs
-from src.shared.constants import NODEREL_COUNT_QUERY_WITH_COMMUNITY, NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY, PROTECTED_MANAGEMENT_LABELS, PROTECTED_LABELS_CYPHER, PROTECTED_RELATIONSHIP_TYPES
+from src.shared.constants import NODEREL_COUNT_QUERY_WITH_COMMUNITY, NODEREL_COUNT_QUERY_WITHOUT_COMMUNITY, PROTECTED_MANAGEMENT_LABELS, PROTECTED_LABELS_CYPHER
 from src.entities.source_node import sourceNode
 from src.communities import MAX_COMMUNITY_LEVELS
 from src.graph_edit.lease import hold_lease
@@ -421,25 +421,19 @@ class graphDBdataAccess:
             // 消すリレーション: 残すエンティティ a から出るリレーションを 1 本ずつ見て、消すチャンクの中に両端を一緒に指す
             // ものがあり、残るチャンクの中には無いもの（出どころの代用）。種類が予約のもの、手動で追加したもの（manual_rel）は
             // 消さない。両端を一緒に指すチャンクは、指すチャンクの少ない端からたどる（多くのチャンクに出るエンティティを
-            // 何度もたどらない）。端 b も残るものだけを選ぶ（b が消すエンティティなら、リレーションは b と一緒に消える）。
-            // b が残るかは b ごとに 1 回だけ、上の keep と同じ条件（手動で修正したもの・規則が作ったもの・残るチャンクから
-            // 指されるもの。C8）で判定する
+            // 何度もたどらない）。端 b も残るもの（kept に入るもの）だけを選ぶ（b が消すエンティティなら、リレーションは
+            // b と一緒に消える）。b は消すチャンクから指されるので、entities か kept のどちらかに必ず入っている
             CALL (documents, kept) {
+                WITH documents, kept, apoc.map.fromPairs([k IN kept | [elementId(k), true]]) AS kept_ids
                 UNWIND kept AS a
                 MATCH (a)-[rel]->(b:__Entity__)
-                WHERE NOT type(rel) IN $reserved_relationship_types
+                WHERE NOT type(rel) IN $reserved_relationship_types AND kept_ids[elementId(b)] IS NOT NULL
                 WITH documents, rel, a, b, COUNT { (a)<-[:HAS_ENTITY]-() } <= COUNT { (b)<-[:HAS_ENTITY]-() } AS from_a
                 WITH documents, rel, a, b, CASE WHEN from_a THEN a ELSE b END AS fewer, CASE WHEN from_a THEN b ELSE a END AS more
                 WHERE EXISTS { MATCH (fewer)<-[:HAS_ENTITY]-(c:Chunk) WHERE (c)-[:HAS_ENTITY]->(more) AND """ + deleted_chunk + """ }
                   AND NOT EXISTS { MATCH (fewer)<-[:HAS_ENTITY]-(r:Chunk) WHERE (r)-[:HAS_ENTITY]->(more) AND """ + remaining_chunk + """ }
                   AND NOT EXISTS { MATCH (g:__GraphEdit__ {uid: 'mrel:' + a.id + '|' + type(rel) + '|' + b.id})
                                    WHERE g.kind = 'manual_rel' }
-                WITH documents, b, collect(rel) AS rels_of_b
-                WHERE coalesce(b._curated, false) = true
-                   OR coalesce(b.method, '') = 'rule'
-                   OR EXISTS { (:Document)-[rr]->(b) WHERE rr.method = 'rule' }
-                   OR EXISTS { MATCH (b)<-[:HAS_ENTITY]-(r:Chunk) WHERE """ + remaining_chunk + """ }
-                UNWIND rels_of_b AS rel
                 RETURN collect(rel) AS relationships
             }
             // 残すエンティティのうち、HAS_ENTITY かリレーションを失うものの版（_v）を 1 上げる（前の手動の操作の取り消しが、
@@ -585,26 +579,6 @@ class graphDBdataAccess:
         total_nodes = self.execute_query(query_duplicate_nodes.format(return_statement=total_duplicate_nodes),param=param)
         return nodes_list, total_nodes[0]
     
-    def merge_duplicate_nodes(self,duplicate_nodes_list):
-        nodes_list = json.loads(duplicate_nodes_list)
-        logging.info(f'Nodes list to merge {nodes_list}')
-        query = """
-        UNWIND $rows AS row
-        CALL { with row
-        MATCH (first) WHERE elementId(first) = row.firstElementId
-        MATCH (rest) WHERE elementId(rest) IN row.similarElementIds
-        WITH first, collect (rest) as rest
-        WITH [first] + rest as nodes
-        CALL apoc.refactor.mergeNodes(nodes, 
-        {properties:"discard",mergeRels:true, produceSelfRel:false, preserveExistingSelfRels:false, singleElementAsArray:true}) 
-        YIELD node
-        RETURN size(nodes) as mergedCount
-        }
-        RETURN sum(mergedCount) as totalMerged
-        """
-        param = {"rows":nodes_list}
-        return self.execute_query(query,param)
-    
     def drop_create_vector_index(self, isVectorIndexExist, embedding_provider, embedding_model):
         """
         drop and create the vector index when vector index dimesion are different.
@@ -717,7 +691,7 @@ class graphDBdataAccess:
     def get_nodelabels_relationships(self):
         excluded_labels = ['Document', 'Chunk', '_Bloom_Perspective_', '__Community__', '__Entity__'] + PROTECTED_MANAGEMENT_LABELS
         from src.shared.constants import LAYER_RELATIONSHIP_TYPES  # 段 3 の層の関係型もスキーマ統合の候補から外す（C7）
-        excluded_relationships = ['PART_OF', 'NEXT_CHUNK', 'HAS_ENTITY', '_Bloom_Perspective_', 'FIRST_CHUNK', 'SIMILAR', 'IN_COMMUNITY', 'PARENT_COMMUNITY'] + PROTECTED_RELATIONSHIP_TYPES + LAYER_RELATIONSHIP_TYPES
+        excluded_relationships = RESERVED_RELATIONSHIP_TYPES + ['_Bloom_Perspective_'] + LAYER_RELATIONSHIP_TYPES
         node_query = """
                     CALL db.labels() YIELD label
                     WITH label

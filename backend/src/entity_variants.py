@@ -16,9 +16,18 @@
       組の中どうしの関係は自己ループになるので消す）。統合した側の名前（とその aliases）は残す側の aliases に足す。
       残す側の _v を 1 増やす（docs/graph-edit/DESIGN.md の 2.3）。説明が変わった時だけ埋め込みを消す（後処理「エンティティの埋め込み」で作り直す）。
 統合前の状態は台帳 logs/entity_variants/<時刻>.json に書く（restore_entity_variants で戻せる）。
-使い方: merge_entity_variants(graph, dry_run=False) -> {"summary": {...}, "groups": [...], "ledger": パス or None}
+段（level）: "variant"（既定。上の表記ゆれだけ）と "decorated"（飾りの違いまで。2026-11-14、実験台帳 X35）。
+  decorated は、種類が Material・TestItem・Process・Part・Defect・Instrument・Equipment のエンティティに限り、名前の正規形に次を足す（decorated_key）:
+    かな・送り仮名のゆれ  及び＝および、又は＝または、焼き入れ＝焼入れ、もどし＝戻し、テイ＝ティ、ザイグロ＝ザイクロ
+    材質の飾り            語尾の「又は相当材」「相当材」「相当」、型番（英数字）の直後の「材」（ZM440H相当材＝ZM440H、ZC4A材＝ZC4A）
+    試験項目の語尾        「試験」と「検査」を同じに扱う（硬さ試験＝硬さ検査）。語尾そのものは外さない（硬さ≠硬さ試験）
+  値（Criterion・Parameter・Condition）、規格・文書・型式（Standard・DocumentRef・Model）は対象にしない（表記ゆれの段のまま）。
+  括弧の中は外さない（括弧の別名を同じ物として結ぶと誤りを含む。X25）。型番の後ろの英字が違うもの（ZN630 と ZN630Q）は別物のまま。
+  残す側は、飾りの無い名前を優先する（ZM440H相当材 と ZM440H なら ZM440H を残し、相当材つきは aliases に入る）。
+  既定の段は環境変数 ENTITY_VARIANTS_LEVEL（無ければ variant）。
+使い方: merge_entity_variants(graph, dry_run=False, level=None) -> {"summary": {...}, "groups": [...], "ledger": パス or None}
         restore_entity_variants(graph, ledger_path) -> {"summary": {...}}
-        コマンド: python -m src.entity_variants [--apply | --restore 台帳]（接続は環境変数 NEO4J_URI など。既定は dry_run）
+        コマンド: python -m src.entity_variants [--level variant|decorated] [--apply | --restore 台帳]（接続は環境変数 NEO4J_URI など。既定は dry_run）
 """
 import collections
 import datetime
@@ -28,16 +37,18 @@ import os
 import re
 import unicodedata
 
+from src.graph_edit.history import entity_documents
+from src.graph_edit.normalize import norm_key
+from src.graph_edit.ops import merge_nodes_into, run_read, run_write, update_counts
+from src.graph_edit.validate import ENTITY_LABEL, RULE_METHOD
 from src.shared.common_fn import execute_graph_query
 from src.shared.constants import PROTECTED_MANAGEMENT_LABELS
 
-ENTITY_LABEL = "__Entity__"
-RULE_METHOD = "rule"
-# 管理ラベル（このラベルを 1 つでも持つノードは対象外）。Standard は EDC の抽出の型でもあるので、文書番号かどうかで分ける（is_document_number）
-EXCLUDED_LABELS = sorted({"Document", "Chunk", "Section", "__Community__", "Session", "Message"}
-                         | set(PROTECTED_MANAGEMENT_LABELS))
+# 管理ラベル（このラベルを 1 つでも持つノードは対象外。Section・Session・Message は PROTECTED_MANAGEMENT_LABELS に入っている）。
+# Standard は EDC の抽出の型でもあるので、文書番号かどうかで分ける（is_document_number）
+EXCLUDED_LABELS = sorted({"Document", "Chunk", "__Community__"} | set(PROTECTED_MANAGEMENT_LABELS))
+_EXCLUDED_LABEL_SET = frozenset(EXCLUDED_LABELS)
 LEDGER_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "logs", "entity_variants")
-MERGE_CONFIG = {"properties": "discard", "mergeRels": True, "produceSelfRel": False, "preserveExistingSelfRels": False}
 
 # ハイフンの異体（NFKC の後に残るもの。全角の「－」は NFKC で「-」になる）。長音符「ー」は含めない
 HYPHENS = "-‐‑‒–—―⁃−﹘﹣"
@@ -57,13 +68,38 @@ def variant_key(name):
     return head + _DROP.sub("", s).casefold()
 
 
+LEVELS = ("variant", "decorated")
+# 飾りの違いまで同じ物として扱う種類（値・規格・文書・型式は入れない）
+DECORATED_TYPES = frozenset({"Material", "TestItem", "Process", "Part", "Defect", "Instrument", "Equipment"})
+_KANA_VARIANTS = (("及び", "および"), ("又は", "または"), ("焼き", "焼"), ("もどし", "戻し"), ("テイ", "ティ"), ("ザイグロ", "ザイクロ"))
+_MATERIAL_SUFFIX = re.compile(r"(?:(?:又は|または)?相当材|相当|(?<=[a-z0-9)])材)$")
+_TEST_SUFFIX = re.compile(r"(?:試験|検査)$")
+
+
+def default_level():
+    level = (os.environ.get("ENTITY_VARIANTS_LEVEL") or "variant").strip().lower()
+    return level if level in LEVELS else "variant"
+
+
+def decorated_key(name, labels):
+    """飾りの違いまでそろえた正規形。対象の種類でなければ variant_key と同じ。"""
+    k = variant_key(name)
+    types = set(l for l in (labels or []) if l != ENTITY_LABEL)
+    if not (types & DECORATED_TYPES):
+        return k
+    for a, b in _KANA_VARIANTS:
+        k = k.replace(a, b)
+    if "Material" in types:
+        stripped = _MATERIAL_SUFFIX.sub("", k)
+        if len(stripped) >= 2:
+            k = stripped
+    if "TestItem" in types and len(k) > 2:
+        k = _TEST_SUFFIX.sub("検査", k)
+    return k
+
+
 def type_key(labels):
     return tuple(sorted(l for l in (labels or []) if l != ENTITY_LABEL))
-
-
-def _norm_key(name):
-    from src.graph_edit.normalize import norm_key
-    return norm_key(name)
 
 
 def _keep_order(row):
@@ -103,7 +139,7 @@ def _components(members):
     return list(comps.values())
 
 
-def plan_groups(rows, distinct_pairs=(), cfg=None):
+def plan_groups(rows, distinct_pairs=(), cfg=None, level="variant"):
     """組を作る（純粋な関数）。rows: [{eid, id, labels, method, mentions, curated, aliases}]。
     種類が同じ = __Entity__ 以外のラベルが 1 つでも共通する（多くは 1 つずつで、そのときは同じラベルであること）。
     3 つ以上が鎖状にだけ重なる（A〔X〕・B〔X,Y〕・C〔Y〕のように全員に共通のラベルが無い）組は統合しない。
@@ -117,9 +153,9 @@ def plan_groups(rows, distinct_pairs=(), cfg=None):
     for r in rows:
         if r.get("id") is None or str(r["id"]).strip() == "":
             continue
-        if set(r.get("labels") or []) & set(EXCLUDED_LABELS) or is_document_number(r, cfg):
+        if _EXCLUDED_LABEL_SET.intersection(r.get("labels") or []) or is_document_number(r, cfg):
             continue
-        k = variant_key(r["id"])
+        k = decorated_key(r["id"], r.get("labels")) if level == "decorated" else variant_key(r["id"])
         if k:
             by_key[k].append(r)
     groups, skipped, cross_type = [], [], []
@@ -133,7 +169,11 @@ def plan_groups(rows, distinct_pairs=(), cfg=None):
         for members in sorted(comps, key=lambda c: sorted(str(m["id"]) for m in c)):
             if len(members) < 2:
                 continue
-            members = sorted(members, key=_keep_order)
+            # 飾りの違いの段では、飾りの無い名前（正規形が組の鍵より長くない名前）を残す側に優先する。試験と検査の違いは言及の多い方
+            # 言及の数が同じなら、長い名前（ハイフンなどの区切りを残した書き方）を残す
+            members = sorted(members, key=(lambda m: (not m.get("curated"), len(variant_key(m["id"])) > len(k),
+                                                      -int(m.get("mentions") or 0), -len(str(m["id"])), str(m["id"])))
+                             if level == "decorated" else _keep_order)
             names = [str(m["id"]) for m in members]
             union = sorted(set().union(*[set(type_key(m.get("labels"))) for m in members]))
             common = set.intersection(*[set(type_key(m.get("labels"))) for m in members])
@@ -143,7 +183,7 @@ def plan_groups(rows, distinct_pairs=(), cfg=None):
             elif sum(1 for m in members if m.get("curated")) > 1:
                 reason = "手動で修正したノードが 2 つ以上ある"
             else:
-                nks = [_norm_key(n) for n in names]
+                nks = [norm_key(n) for n in names]
                 if any(tuple(sorted((a, b))) in distinct for i, a in enumerate(nks) for b in nks[i + 1:]):
                     reason = "手動修正の台帳で別物として登録されている"
             if reason:
@@ -160,7 +200,7 @@ def merged_aliases(keep, others):
         names.add(str(o["id"]))
         names |= set(a for a in (o.get("aliases") or []) if isinstance(a, str))
     names.discard(str(keep["id"]))
-    return sorted(names, key=lambda a: (_norm_key(a), a))
+    return sorted(names, key=lambda a: (norm_key(a), a))
 
 
 def _candidates(graph):
@@ -208,19 +248,8 @@ def _snapshot(graph, eid):
             "relationships": [dict(r) for r in rels]}
 
 
-def _session(graph):
-    return graph._driver.session(database=graph._database)
-
-
 def _merge_group(tx, keep_eid, other_eids, aliases, before_description):
-    tx.run("""
-        MATCH (k) WHERE elementId(k) = $keep
-        UNWIND $others AS oid
-        MATCH (o) WHERE elementId(o) = oid
-        WITH k, collect(o) AS others
-        CALL apoc.refactor.mergeNodes([k] + others, $config) YIELD node
-        RETURN count(node)""", keep=keep_eid, others=other_eids, config=MERGE_CONFIG).consume()
-    tx.run("MATCH (n)-[r]->(n) WHERE elementId(n) = $eid DELETE r", eid=keep_eid).consume()
+    merge_nodes_into(tx, keep_eid, other_eids)
     rec = tx.run("""
         MATCH (n) WHERE elementId(n) = $eid
         SET n.aliases = $aliases, n._v = coalesce(n._v, 0) + 1
@@ -230,13 +259,15 @@ def _merge_group(tx, keep_eid, other_eids, aliases, before_description):
     return rec["rels"]
 
 
-def merge_entity_variants(graph, dry_run=False, ledger_dir=None):
+def merge_entity_variants(graph, dry_run=False, ledger_dir=None, level=None):
+    level = level if level in LEVELS else default_level()
     rows = _candidates(graph)
-    plan = plan_groups(rows, _distinct_pairs(graph))
+    plan = plan_groups(rows, _distinct_pairs(graph), level=level)
     groups = plan["groups"]
     summary = {"entities": _entity_count(graph), "candidates": len(rows), "groups": len(groups),
                "nodes_in_groups": sum(1 + len(g["merge"]) for g in groups), "to_merge": sum(len(g["merge"]) for g in groups),
-               "skipped_groups": len(plan["skipped"]), "cross_type_names": len(plan["cross_type"]), "dry_run": bool(dry_run)}
+               "skipped_groups": len(plan["skipped"]), "cross_type_names": len(plan["cross_type"]), "dry_run": bool(dry_run),
+               "level": level}
     shown = [{"key": g["key"], "type": g["type"], "keep": _show(g["keep"]), "merge": [_show(m) for m in g["merge"]]} for g in groups]
     result = {"summary": summary, "groups": shown, "skipped": plan["skipped"], "cross_type": plan["cross_type"], "ledger": None}
     if dry_run or not groups:
@@ -246,7 +277,7 @@ def merge_entity_variants(graph, dry_run=False, ledger_dir=None):
     ledger_dir = ledger_dir or LEDGER_DIR
     os.makedirs(ledger_dir, exist_ok=True)
     ledger_path = os.path.join(ledger_dir, datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + ".json")
-    ledger = {"created_at": datetime.datetime.now().isoformat(timespec="seconds"), "groups": []}
+    ledger = {"created_at": datetime.datetime.now().isoformat(timespec="seconds"), "level": level, "groups": []}
     for g in groups:
         ledger["groups"].append({"key": g["key"], "type": g["type"], "keep": _snapshot(graph, g["keep"]["eid"]),
                                  "merged": [_snapshot(graph, m["eid"]) for m in g["merge"]]})
@@ -254,7 +285,6 @@ def merge_entity_variants(graph, dry_run=False, ledger_dir=None):
         json.dump(ledger, f, ensure_ascii=False, indent=1, default=str)
 
     # ---- 書き込み（組ごとに 1 つのトランザクション）----
-    from src.graph_edit.history import entity_documents
     merged = rels_before = rels_after = 0
     docs = set()
     for g, lg in zip(groups, ledger["groups"]):
@@ -267,17 +297,15 @@ def merge_entity_variants(graph, dry_run=False, ledger_dir=None):
         inside = sum(1 for s in [keep] + others for r in s["relationships"] if r["other_eid"] in member_eids) // 2
         aliases = merged_aliases({"id": keep["props"].get("id"), "aliases": keep["props"].get("aliases")},
                                  [{"id": m["props"].get("id"), "aliases": m["props"].get("aliases")} for m in others])
-        with _session(graph) as session:
-            docs |= session.execute_read(lambda tx: entity_documents(tx, list(member_eids)))
-            after = session.execute_write(lambda tx: _merge_group(tx, keep["eid"], [m["eid"] for m in others], aliases,
-                                                                 keep["props"].get("description")))
+        docs |= run_read(graph, lambda tx: entity_documents(tx, list(member_eids)))
+        after = run_write(graph, lambda tx: _merge_group(tx, keep["eid"], [m["eid"] for m in others], aliases,
+                                                         keep["props"].get("description")))
         merged += len(others)
         rels_before += outside + inside
         rels_after += after
     summary.update({"merged": merged, "relationships_before": rels_before, "relationships_after": rels_after,
                     "entities_after": _entity_count(graph), "ledger": ledger_path})
     try:
-        from src.graph_edit.ops import update_counts
         update_counts(graph, docs)
     except Exception as e:  # 件数の更新に失敗しても統合そのものは済んでいる
         logging.warning("entity variants: could not update the document counts: %s", e)
@@ -375,8 +403,7 @@ def restore_entity_variants(graph, ledger_path):
     for lg in reversed(ledger["groups"]):
         if not lg.get("keep"):
             continue
-        with _session(graph) as session:
-            missing += session.execute_write(lambda tx: _restore_group(tx, lg))
+        missing += run_write(graph, lambda tx: _restore_group(tx, lg))
         restored += sum(1 for m in lg["merged"] if m)
     summary = {"restored": restored, "missing_relationships": missing, "entities_after": _entity_count(graph)}
     logging.info("entity variants restored: %s", json.dumps(summary, ensure_ascii=False))
@@ -389,6 +416,7 @@ def _main():
     ap = argparse.ArgumentParser(description="表記ゆれのエンティティの統合（既定は dry_run）")
     ap.add_argument("--apply", action="store_true", help="統合する（貸し出しを取って書き込む）")
     ap.add_argument("--restore", help="台帳の統合を戻す")
+    ap.add_argument("--level", choices=LEVELS, default=None, help="統合の段（既定は環境変数 ENTITY_VARIANTS_LEVEL、無ければ variant）")
     args = ap.parse_args()
     graph = Neo4jGraph(url=os.environ["NEO4J_URI"], username=os.environ.get("NEO4J_USERNAME", "neo4j"),
                        password=os.environ["NEO4J_PASSWORD"], database=os.environ.get("NEO4J_DATABASE", "neo4j"),
@@ -397,9 +425,9 @@ def _main():
     if args.restore:
         out = run_with_lease(graph, "entity_variants", restore_entity_variants, graph, args.restore)
     elif args.apply:
-        out = run_with_lease(graph, "entity_variants", merge_entity_variants, graph)
+        out = run_with_lease(graph, "entity_variants", merge_entity_variants, graph, level=args.level)
     else:
-        out = merge_entity_variants(graph, dry_run=True)
+        out = merge_entity_variants(graph, dry_run=True, level=args.level)
     print(json.dumps(out, ensure_ascii=False, indent=1, default=str))
 
 

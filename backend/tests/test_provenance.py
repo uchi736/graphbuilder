@@ -7,13 +7,12 @@
   (3) 言及: 本文を先に、パンくずの行は後に探す。見つからなければ None。200 字以内
   (4) リレーションの根拠: same_sentence / window / chunk_only / none と、チャンクの間の優先の順
   (5) 安定キー: 節の番号・付け直しの番号の前置き・番号の無い節の題・重なりの「~2」・節の無いチャンク・文書内の順位
-  (6) 除外するリレーションの種類と、リレーションへの書き込みの判断（既定の検索の書き出しが除外していなければ書かない）
+  (6) 除外するリレーションの種類と、既定の検索の書き出しがリレーションに付ける由来のプロパティを文脈から除外していること
   (7) 後処理への登録（score.py は貸し出しの中で流し、失敗は残りの段を止めない）と一括取り込みの既定・EDC の指定
 実行: docker exec -w /code backend python -m pytest -q -p no:cacheprovider tests/test_provenance.py
 """
 import ast
 import os
-import types
 
 import pytest
 
@@ -172,32 +171,13 @@ def test_excluded_relationship_types():
     assert "APPLIES_TO" not in P.EXCLUDED_RELATIONSHIP_TYPES
 
 
-def test_relation_write_decision(monkeypatch):
-    assert P.relation_write_decision("true")[0] is True
-    assert P.relation_write_decision("false")[0] is False
-    monkeypatch.setenv("PROVENANCE_RELATION_PROPERTIES", "false")
-    assert P.relation_write_decision()[0] is False
-    monkeypatch.delenv("PROVENANCE_RELATION_PROPERTIES")
-    # auto: 既定の検索の書き出しが 4 つを除外していなければ書かない
-    fake = types.SimpleNamespace(
-        VECTOR_GRAPH_SEARCH_QUERY_SUFFIX="[k IN keys(r) WHERE k <> 'embedding']",
-        LOCAL_COMMUNITY_SEARCH_QUERY_SUFFIX="[k IN keys(r) WHERE NOT k IN ['embedding', 'source_chunk_id', 'evidence', 'evidence_kind', 'provenance_method']]")
-    import src.shared as shared_pkg
-    monkeypatch.setattr(shared_pkg, "constants", fake, raising=False)
-    monkeypatch.setitem(__import__("sys").modules, "src.shared.constants", fake)
-    ok, reason = P.relation_write_decision("auto")
-    assert ok is False and "VECTOR_GRAPH_SEARCH_QUERY_SUFFIX" in reason and "LOCAL_COMMUNITY" not in reason
-    fake.VECTOR_GRAPH_SEARCH_QUERY_SUFFIX = fake.LOCAL_COMMUNITY_SEARCH_QUERY_SUFFIX
-    assert P.relation_write_decision("auto")[0] is True
-
-
-def test_current_retrieval_rendering_decides_auto():
-    """今の constants の書き出しで auto が何を選ぶか。除外していないのに書く判断をしていないこと"""
+def test_retrieval_rendering_hides_provenance_properties():
+    """リレーションに付ける由来の 4 つのプロパティは、既定の検索の文脈の書き出し 2 本がどちらも除外している"""
     from src.shared import constants as C
-    ok, reason = P.relation_write_decision("auto")
-    hidden = all(f"'{k}'" in C.VECTOR_GRAPH_SEARCH_QUERY_SUFFIX and f"'{k}'" in C.LOCAL_COMMUNITY_SEARCH_QUERY_SUFFIX
-                 for k in P.RELATION_PROPERTY_KEYS)
-    assert ok is hidden, reason
+    for query in (C.VECTOR_GRAPH_SEARCH_QUERY_SUFFIX, C.LOCAL_COMMUNITY_SEARCH_QUERY_SUFFIX):
+        assert "keys(r)" in query
+        for key in ("source_chunk_id", "evidence", "evidence_kind", "provenance_method"):
+            assert f"'{key}'" in query, key
 
 
 # ---------------------------------------------------------------- (7) 後処理への登録と一括取り込み
@@ -213,7 +193,8 @@ def test_score_runs_provenance_with_lease_and_defers_errors():
                  and isinstance(n.test.left, ast.Constant) and n.test.left.value == "attach_provenance")
     src = ast.unparse(block)
     assert "run_with_lease, graph, 'provenance', attach_provenance, graph" in src
-    assert "deferred_errors.append" in src   # 失敗しても残りの段（類似リンク・索引）は流す
+    # 失敗しても残りの段（類似リンク・索引）は流す（run_step の defer=True は例外を deferred_errors に貯める）
+    assert "defer=True" in src or "deferred_errors.append" in src
 
 
 def test_ingest_default_tasks_and_edc_options():

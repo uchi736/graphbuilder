@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""PDF の新しい変換（src/document_sources/pdf_regions、PDF_CONVERTER=regions）の試験。GPU も HTTP も使わない。
+"""PDF の変換（src/document_sources/pdf_regions）の試験。GPU も HTTP も使わない。
 
 Nemotron Parse の応答は、調査で保存した出力（tests/fixtures/pdf_regions/nemotron_raw.json。
 tools/kg/parser/survey_20261109/page-compare/nemotron/ と nemotron_modes/bodycrop/ の raw_out を集めたもの。
@@ -29,12 +29,11 @@ sys.path.insert(0, ROOT)
 from src.document_sources.pdf_regions import converter as CV  # noqa: E402
 from src.document_sources.pdf_regions import headings as HD  # noqa: E402
 from src.document_sources.pdf_regions import nemotron as NM  # noqa: E402
-from src.document_sources.pdf_regions import vlm as VL  # noqa: E402
 from src.document_sources.pdf_regions.assemble import PageInput, assemble_page  # noqa: E402
 from src.document_sources.pdf_regions.frame import Frame  # noqa: E402
 from src.document_sources.pdf_regions.graph_builder import build_markdown, load_pdf_as_markdown_regions  # noqa: E402
 from src.document_sources.pdf_regions.nemotron import Block  # noqa: E402
-from src.document_sources.pdf_regions.textlayer import TextLayer  # noqa: E402
+from src.document_sources.pdf_regions.textlayer import Char, TextLayer  # noqa: E402
 
 FIXTURE = os.path.join(HERE, "fixtures", "pdf_regions", "nemotron_raw.json")
 PDF_DIR = os.environ.get("PDF_REGIONS_TEST_PDF_DIR") or os.path.join(os.path.dirname(ROOT), "tools", "kg", "hs", "runs",
@@ -44,6 +43,21 @@ TOKENIZER = os.path.join(ROOT, "tokenizers", "ruri-v3-310m", "tokenizer.json")
 
 FULL56_DIR = os.environ.get("PDF_REGIONS_TEST_FULL56_DIR") or os.path.join(os.path.dirname(ROOT), "tools", "kg", "hs", "runs",
                                                                          "full56_night1109", "pdf")
+
+
+def _from_lines(width, height, lines):
+    """(文字列, x0, y0, 文字の大きさ) の並びから、等幅の文字を並べた文字層を作る。行の終わりに補った改行を入れる"""
+    chars, i = [], 0
+    for text, x0, y0, size in lines:
+        x = float(x0)
+        for c in text:
+            w = size if ord(c) > 0x2E7F else size * 0.55
+            chars.append(Char(i, c, x, y0, x + w, y0 + size, False, size))
+            x += w
+            i += 1
+        chars.append(Char(i, "\n", x, y0, x, y0 + size, True, 1.0))
+        i += 1
+    return TextLayer(width, height, chars)
 
 
 def _pdf(stem):
@@ -85,9 +99,9 @@ class FakeParser:
         return NM.parse_blocks(self.raw[f"{stem} p{n} {mode}"])
 
 
-def _convert(stem, figures="text", parser=None, reader=None, path=None):
+def _convert(stem, parser=None, path=None):
     parser = parser or FakeParser()
-    res = CV.convert_pdf(path or _pdf(stem), CV.RegionsConfig(figures=figures), parser=parser, reader=reader)
+    res = CV.convert_pdf(path or _pdf(stem), CV.RegionsConfig(), parser=parser)
     return res, parser
 
 
@@ -186,13 +200,13 @@ def test_vtr_t005b_end_to_end_markdown():
 
 
 def test_grid_pages_keep_document_layer_rules():
-    """格子の様式のページは、文書層の規則（協議・通知票の parse_notice、発行目録の parse_catalog）が今の変換と同じく読める形にする"""
+    """格子の様式のページは、文書層の規則（協議・通知票の parse_notice、発行目録の parse_catalog）が読める形にする"""
     from src import document_layer_rules as R
     cfg = R.load_config()
     res, _ = _convert("VTR-T005B")
     notice = R.parse_notice(_pages(build_markdown(res))[6], cfg)
     assert notice == {"kind": "改訂", "number": "HS-VTR-T005", "old_rev": "A", "new_rev": "B", "date": "04.03.03"}
-    res = CV.convert_pdf(_pdf("VTR-T_発行目録"), CV.RegionsConfig(figures="off"), parser=FakeParser(fail_all=True))
+    res = CV.convert_pdf(_pdf("VTR-T_発行目録"), CV.RegionsConfig(), parser=FakeParser(fail_all=True))
     md = build_markdown(res)
     assert md.split("\n")[1] == "## 発行目録"
     rows = R.parse_catalog(md, cfg)
@@ -232,7 +246,7 @@ def test_chunks_and_section_layer_resolve_annex(monkeypatch):
     from src import section_layer as SL
 
     fname = "VTR-T005B.pdf"
-    docs = load_pdf_as_markdown_regions(_pdf("VTR-T005B"), CV.RegionsConfig(figures="text"), parser=FakeParser())
+    docs = load_pdf_as_markdown_regions(_pdf("VTR-T005B"), CV.RegionsConfig(), parser=FakeParser())
     assert len(docs) == 1
     meta = docs[0].metadata
     assert meta["markdown"] is True and meta["markdown_strict"] is True and meta["source"].endswith(fname)
@@ -249,7 +263,7 @@ def test_chunks_and_section_layer_resolve_annex(monkeypatch):
     assert idx.find(fname, {"form": "付属", "label": "別表2", "number": None})
     assert idx.find(fname, {"form": "付属", "label": "別表1", "number": None})   # 番号の見出しを含まない付属も節になる
     from src.chunk_reference_rules import Catalogue
-    assert any("判定基準" in n for n in Catalogue(rows, ()).names.get(fname, ()))   # 題名の見出しから名称が読める
+    assert any("判定基準" in n for n in Catalogue(rows).names.get(fname, ()))   # 題名の見出しから名称が読める
     chapters = {s["number"] for s in secs.values() if s.get("form") == "章"}
     assert {"1", "2", "3", "4", "5", "6", "7"} <= chapters
     # 4 ページ目の節は別表2 の中にある（付属の中の「1. テスト方法」が本文の章 1 と混ざらない）
@@ -279,7 +293,7 @@ def test_failure_returns_none(tmp_path):
     assert res is None
     bad = tmp_path / "broken.pdf"
     bad.write_bytes(b"not a pdf")
-    assert CV.convert_pdf(str(bad), CV.RegionsConfig(figures="off"), parser=FakeParser()) is None
+    assert CV.convert_pdf(str(bad), CV.RegionsConfig(), parser=FakeParser()) is None
     assert load_pdf_as_markdown_regions(str(tmp_path / "missing.pdf"), CV.RegionsConfig(), parser=FakeParser()) is None
 
 
@@ -288,7 +302,7 @@ W, H = 600.0, 800.0
 
 
 def _page(lines, blocks_kind="none", body=None, png=None):
-    layer = TextLayer.from_lines(W, H, lines)
+    layer = _from_lines(W, H, lines)
     frame = Frame("body", outer=(10, 10, 590, 790), body=body) if body else Frame("none")
     return PageInput(number=1, layer=layer, frame=frame, png=png, view=body or (0.0, 0.0, W, H))
 
@@ -309,7 +323,7 @@ def test_annex_header_becomes_heading_with_title():
               Block("Page-header", _norm((418, 38, 520, 52)), "HS-VTR-T005 B"),
               Block("Section-header", _norm((198, 78, 540, 96)), "コンプレッサ性能計測要領"),
               Block("Text", _norm((78, 148, 560, 162)), "下図に示す…")]
-    out = assemble_page(page, blocks, None, "text", own_keys=HD.doc_number_keys("VTR-T005B"))
+    out = assemble_page(page, blocks, own_keys=HD.doc_number_keys("VTR-T005B"))
     md = _render(out)
     assert md.split("\n")[0] == "## 別表1 コンプレッサ性能計測要領"
     assert "HS-VTR-T005" not in md
@@ -358,7 +372,7 @@ def test_normalize_text_rules():
 def _table_page(table_raw, tl_lines, rect, cls="Table"):
     page = _page(tl_lines)
     blocks = [Block(cls, _norm(rect), table_raw)]
-    return assemble_page(page, blocks, None, "text")
+    return assemble_page(page, blocks)
 
 
 def test_table_to_gfm_and_seventy_percent_rule():
@@ -385,19 +399,7 @@ def test_big_table_is_read_as_body_text():
 def test_latex_spans_are_repeated():
     raw = ("\\begin{tabular}{ccc}\n\\multicolumn{2}{c}{\\thead{区分}} & 値\\\\\n\\multirow{2}{*}{A} & a1 & 1\\\\\n"
            " & a2 & 2\\\\\n\\end{tabular}")
-    assert NM.table_grid(raw) == [["区分", "区分", "値"], ["A", "a1", "1"], ["A", "a2", "2"]]
-    assert NM.table_grid("<table><tr><th colspan='2'>x|y</th></tr><tr><td>1</td><td>2</td></tr></table>") == \
-        [["x|y", "x|y"], ["1", "2"]]
-
-
-class FakeVlm:
-    def __init__(self, reply):
-        self.reply = reply
-        self.calls = 0
-
-    def chat(self, prompt, png, max_tokens=700):
-        self.calls += 1
-        return self.reply
+    assert NM.place(NM.table_rows(raw)) == [["区分", "区分", "値"], ["A", "a1", "1"], ["A", "a2", "2"]]
 
 
 def _figure_page():
@@ -410,36 +412,12 @@ def _figure_page():
     return page, blocks
 
 
-def test_figure_description_strips_fences_and_numbers():
+def test_figure_keeps_text_inside():
+    """図は VLM を呼ばず、図の範囲の文字層を図中の文字として残す。題は Caption の領域として出る"""
     page, blocks = _figure_page()
-    triage = FakeVlm('{"種類": "グラフ", "扱い": "図として説明する", "理由": "曲線"}')
-    describe = FakeVlm("```markdown\n1. 横軸は空気量、縦軸は圧力比である。\n2. 回転数ごとの曲線がある。\n```")
-    out = assemble_page(page, blocks, VL.FigureReader(triage, describe), "describe")
-    md = _render(out)
-    assert "```" not in md
-    assert "（図の説明・自動生成）横軸は空気量、縦軸は圧力比である。回転数ごとの曲線がある。" in md.split("\n")
-    assert any(ln.startswith("図中の文字: ") and "圧力比" in ln for ln in md.split("\n"))
-    assert "図2 ABBマップ" in md.split("\n")
-    assert triage.calls == 1 and describe.calls == 1
-    # 写真は題だけ（説明も図中の文字も出さない）
-    page, blocks = _figure_page()
-    out = assemble_page(page, blocks, VL.FigureReader(FakeVlm('{"種類": "写真"}'), FakeVlm("x")), "describe")
-    md = _render(out)
-    assert "図の説明" not in md and "図中の文字" not in md and "図2 ABBマップ" in md
-    # text: VLM を呼ばない。off: 図は何も出さない
-    page, blocks = _figure_page()
-    md = _render(assemble_page(page, blocks, None, "text"))
-    assert "図中の文字: " in md and "図の説明" not in md
-    page, blocks = _figure_page()
-    md = _render(assemble_page(page, blocks, None, "off"))
-    assert "図中の文字" not in md
-
-
-def test_clean_vlm_text():
-    assert VL.clean_vlm_text("```\n# 概要\n- **軸**: 空気量\n(1) 傾向は右上がり\n```") == "概要軸: 空気量傾向は右上がり"
-    assert VL.clean_vlm_text("3-1 サージ線を示す。") == "サージ線を示す。"
-    assert VL.clean_vlm_text("300 rpm の曲線") == "300 rpm の曲線"
-    assert VL.clean_vlm_text("縦軸に$\\pi^c$、横軸に流量$V$(単位:$\\text{m}^3/\\text{s}$)") == "縦軸にπ^c、横軸に流量V(単位:m^3/s)"
+    md = _render(assemble_page(page, blocks)).split("\n")
+    assert any(ln.startswith("図中の文字: ") and "圧力比" in ln for ln in md)
+    assert "図2 ABBマップ" in md
 
 
 def test_table_with_invented_values_is_treated_as_figure():
@@ -457,7 +435,7 @@ def test_nemotron_request_shape_and_retry(monkeypatch):
     replies = [RuntimeError("connection refused"),
                {"choices": [{"message": {"content": "<x_0.1><y_0.1>本文<x_0.5><y_0.2><class_Text>"}, "finish_reason": "stop"}]}]
 
-    def post(payload, tag):
+    def post(payload):
         sent.append(payload)
         r = replies.pop(0)
         if isinstance(r, Exception):
@@ -475,13 +453,13 @@ def test_nemotron_request_shape_and_retry(monkeypatch):
     assert client.calls == 2
     # 途中で切れた生成は送り直さずに失敗
     client2 = NM.NemotronClient("http://parse:8000/v1", retries=2)
-    monkeypatch.setattr(client2, "_post", lambda payload, tag: {"choices": [{"message": {"content": "<x_0.1>"}, "finish_reason": "length"}]})
+    monkeypatch.setattr(client2, "_post", lambda payload: {"choices": [{"message": {"content": "<x_0.1>"}, "finish_reason": "length"}]})
     with pytest.raises(NM.ParseError):
         client2.parse(b"x")
     assert client2.calls == 1
 
 
-def test_nemotron_http_transport():
+def test_nemotron_http_transport(monkeypatch):
     import httpx
     seen = {}
 
@@ -491,9 +469,9 @@ def test_nemotron_http_transport():
         return httpx.Response(200, json={"choices": [{"message": {"content": "<x_0.1><y_0.1>**1.** **適用**<x_0.3><y_0.12><class_Section-header>"},
                                                       "finish_reason": "stop"}]})
 
-    with httpx.Client(transport=httpx.MockTransport(handler)) as http:
-        client = NM.NemotronClient("http://parse:8000/v1", client=http)
-        blocks = client.parse(b"png")
+    real = httpx.Client
+    monkeypatch.setattr(httpx, "Client", lambda **kw: real(transport=httpx.MockTransport(handler), **kw))
+    blocks = NM.NemotronClient("http://parse:8000/v1").parse(b"png")
     assert seen["url"] == "http://parse:8000/v1/chat/completions"
     assert seen["body"]["temperature"] == 0.2 and seen["body"]["repetition_penalty"] == 1.05
     assert blocks[0].cls == "Section-header" and NM.plain_text(blocks[0].text) == "1. 適用"
@@ -502,7 +480,7 @@ def test_nemotron_http_transport():
 # ---- Graph Builder への組み込み ----
 def test_local_file_selects_converter(monkeypatch, tmp_path):
     """変換器は regions だけ。regions が None・例外なら文字層だけの簡易変換に戻り、それも None・例外なら従来の読み込み
-    （EDC の OCR、無効ならページごとの読み込み PdfPageLoader）に進む。以前の値 pymupdf4llm は regions として扱う"""
+    （EDC の OCR、無効ならページごとの読み込み PdfPageLoader）に進む"""
     from langchain_core.documents import Document
     from src.document_sources import local_file
     from src.document_sources.pdf_regions import graph_builder
@@ -517,17 +495,8 @@ def test_local_file_selects_converter(monkeypatch, tmp_path):
     plain_doc = Document(page_content="<!-- page:1 -->\nP", metadata={"markdown": True, "markdown_strict": True})
     monkeypatch.setattr(graph_builder, "load_pdf_as_markdown_regions", lambda p: calls.append("regions") or [regions_doc])
     monkeypatch.setattr(graph_builder, "load_pdf_as_markdown_plain", lambda p: calls.append("plain") or [plain_doc])
-    # 既定（未設定）は regions
-    monkeypatch.delenv("PDF_CONVERTER", raising=False)
     loader, raw = local_file.load_document_content(str(pdf))
     assert loader.load() == [regions_doc] and calls == ["regions"] and raw is True
-    # 以前の値 pymupdf4llm・知らない値は regions として扱う
-    for value in ("pymupdf4llm", "bogus"):
-        calls.clear()
-        monkeypatch.setenv("PDF_CONVERTER", value)
-        loader, _ = local_file.load_document_content(str(pdf))
-        assert loader.load() == [regions_doc] and calls == ["regions"]
-    monkeypatch.setenv("PDF_CONVERTER", "regions")
     # regions が None なら簡易変換に戻る
     calls.clear()
     monkeypatch.setattr(graph_builder, "load_pdf_as_markdown_regions", lambda p: calls.append("regions") or None)
@@ -564,7 +533,7 @@ def test_page_mark_is_shared():
 
 def test_new_code_does_not_load_agpl_parts():
     """PDF の経路は PyMuPDF・pymupdf4llm を読み込まない（ソースの字面と、実際に読み込まれたモジュールの両方で確かめる）。
-    2026-11-10 に今の変換（pdf_markdown.py・frame_pages.py）を外し、requirements.txt からも外した"""
+    外した変換（pdf_markdown.py・frame_pages.py）が無く、requirements.txt にも無いことも確かめる"""
     pkg = os.path.join(ROOT, "src", "document_sources", "pdf_regions")
     banned = re.compile(r"^\s*(import|from)\s+(fitz|pymupdf|pymupdf4llm)\b|PyMuPDFLoader|pdf_markdown\s+import|import\s+.*pdf_markdown"
                         r"|frame_pages\s+import|import\s+.*frame_pages", re.M)
@@ -587,30 +556,15 @@ def test_new_code_does_not_load_agpl_parts():
     assert out.stdout.strip() == "[]"
 
 
-def test_settings_defaults_use_regions(monkeypatch):
-    """変換器の既定は regions（2026-11-10 に pymupdf4llm を外した）。図の扱いの既定は text（2026-11-09 の手直し 2: 図の説明は
-    本番 6 文書の 6 個すべてに読み誤りがあった）。describe は選べる。設定の一覧・example.env・コードの既定がそろっている"""
+def test_settings_defaults_use_regions():
+    """変換の設定の既定が、設定の一覧とコードでそろっている"""
     from src import settings_overview as so
     from src.document_sources.pdf_regions import graph_builder as GB
     env = {n: d for n, _g, _m, d in so.OVERVIEW_ENV}
-    assert env["PDF_CONVERTER"] == "regions"
     texts = {n: m for n, _g, m, _d in so.OVERVIEW_ENV}
     assert "pymupdf4llm で変換" not in texts["PDF_REGIONS_MAX_PAGES"] and "簡易変換" in texts["PDF_REGIONS_MAX_PAGES"]
-    with open(os.path.join(ROOT, "example.env"), encoding="utf-8") as f:
-        lines = f.read().split("\n")
-    assert '# PDF_CONVERTER="regions"' in lines and '# PDF_CONVERTER="pymupdf4llm"' not in lines
-    assert env["PDF_REGIONS_FIGURES"] == "text"
-    assert env["PDF_REGIONS_PARSE_CONCURRENCY"] == "2" and env["PDF_REGIONS_VLM_CONCURRENCY"] == "2"
-    cfg = CV.RegionsConfig()
-    assert (cfg.parse_concurrency, cfg.vlm_concurrency, cfg.figures) == (2, 2, "text")
-    assert CV.RegionsConfig(figures="bogus").normalized().figures == "text"
-    assert CV.RegionsConfig(figures="describe").normalized().figures == "describe"
-    monkeypatch.delenv("PDF_REGIONS_FIGURES", raising=False)
-    assert GB.config_from_env().figures == "text"
-    monkeypatch.setenv("PDF_REGIONS_FIGURES", "describe")
-    assert GB.config_from_env().figures == "describe"
-    with open(os.path.join(ROOT, "example.env"), encoding="utf-8") as f:
-        assert '# PDF_REGIONS_FIGURES="text"' in f.read().split("\n")
+    assert env["PDF_REGIONS_PARSE_CONCURRENCY"] == "2"
+    assert CV.RegionsConfig().parse_concurrency == 2 and GB.config_from_env().parse_concurrency == 2
 
 
 # ---- 反証役のレビューの指摘に対する試験（2026-11-09 の手直し） ----
@@ -647,7 +601,7 @@ def test_history_section_through_real_chunks(monkeypatch):
     import src.create_chunks as cc
     from src.create_chunks import CreateChunksofDocument
     monkeypatch.setattr(cc, "TokenTextSplitter", lambda **kw: None)
-    docs = load_pdf_as_markdown_regions(_pdf56("HS-RU-006J"), CV.RegionsConfig(figures="text"), parser=FakeParser())
+    docs = load_pdf_as_markdown_regions(_pdf56("HS-RU-006J"), CV.RegionsConfig(), parser=FakeParser())
     md = docs[0].page_content
     heads = [ln for ln in md.split("\n") if ln.startswith("#")]
     assert "## 10. 基準来歴" in heads
@@ -674,11 +628,11 @@ def _chart_page(lines, chart_rect, caption_rect=None):
 
 
 def test_figure_heading_candidates_need_known_chapter():
-    """図の範囲の行は、その章が文書にあるときだけ見出しにする。ならなかった行は図中の文字に戻す（off・写真なら捨てる）"""
+    """図の範囲の行は、その章が文書にあるときだけ見出しにする。ならなかった行は図中の文字に戻す"""
     lines = [("3-1.サージ誤差計算", 100, 210, 10), ("0.7 D Ⅰ (翼付け根R部)", 120, 240, 9), ("1.0 1.5 2.0 2.5", 120, 380, 9),
              ("圧力比", 100, 300, 9)]
     page, blocks = _chart_page(lines, (90, 200, 400, 400))
-    out = assemble_page(page, blocks, None, "text")
+    out = assemble_page(page, blocks)
     st = HD.DocState(chapters={"3"})
     md = HD.render_lines(out.lines, out.framed, st).split("\n")
     assert md[0] == "### 3-1 サージ誤差計算"
@@ -688,12 +642,8 @@ def test_figure_heading_candidates_need_known_chapter():
     assert "1.0 1.5 2.0 2.5" not in md                       # 本文の行として図から切り離さない
     # 章 3 が無い文書では「3-1」も見出しにしない
     page, blocks = _chart_page(lines, (90, 200, 400, 400))
-    md = _render(assemble_page(page, blocks, None, "text")).split("\n")
+    md = _render(assemble_page(page, blocks)).split("\n")
     assert not any(ln.startswith("#") for ln in md) and "3-1.サージ誤差計算" in [ln for ln in md if ln.startswith("図中")][0]
-    # off は図中の文字を出さないので、見出しにならなかった行も出さない
-    page, blocks = _chart_page(lines, (90, 200, 400, 400))
-    md = _render(assemble_page(page, blocks, None, "off"))
-    assert "0.7 D" not in md and "1.0 1.5" not in md
     # 実物（VTR-T005B の添付資料のグラフ）: 軸の数字は図中の文字に入り、本文の行として出ない
     res, _ = _convert("VTR-T005B")
     lines = build_markdown(res).split("\n")
@@ -702,34 +652,24 @@ def test_figure_heading_candidates_need_known_chapter():
 
 
 def test_no_double_output_when_text_belongs_to_other_region():
-    """範囲の文字層の字が他の領域に入ったとき、Nemotron Parse の文字で 2 回目を出さない（VTR-T004C 4 ページ目、図を「文字だけ」と判定）"""
-    class Reader:
-        triage_client = describe_client = None
-
-        def triage(self, png, cls):
-            return ("文字だけ(図ではない)", "本文として読む") if cls == "Picture" else ("グラフ", "図として説明する")
-
-        def describe(self, png, kind, cap):
-            return "説明"
-
+    """範囲の文字層の字が他の領域に入ったとき、Nemotron Parse の文字で 2 回目を出さない（VTR-T004C 4 ページ目）"""
     from src.document_sources.pdf_regions import pdfpage
-    cfg = CV.RegionsConfig(figures="describe").normalized()
     doc = pdfpage.open_document(_pdf("VTR-T004C"))
     try:
         page = doc[3]
-        inp = CV._prepare(page, 4, cfg)
+        inp = CV._prepare(page, 4)
         page.close()
     finally:
         doc.close()
     with open(FIXTURE, encoding="utf-8") as f:
         raw = json.load(f)["pages"]["VTR-T004C p4 full"]
-    out = assemble_page(inp, NM.parse_blocks(raw), Reader(), "describe", HD.doc_number_keys("VTR-T004C"))
+    out = assemble_page(inp, NM.parse_blocks(raw), HD.doc_number_keys("VTR-T004C"))
     md = HD.render_lines(out.lines, out.framed, HD.DocState())
     assert md.count("1.62=1.85") == 1
     # 合成: 本文の領域の割り当てが 0 でも、範囲に文字層の字があれば Nemotron Parse の文字は出さない
     page = _page([("本文の行である。", 100, 100, 10)])
     blocks = [Block("Text", _norm((95, 95, 300, 112)), "本文の行である。"), Block("Text", _norm((98, 97, 200, 110)), "読み誤りの本文")]
-    md = _render(assemble_page(page, blocks, None, "text"))
+    md = _render(assemble_page(page, blocks))
     assert md.count("本文の行") == 1 and "読み誤り" not in md
 
 
@@ -739,7 +679,7 @@ def _concurrency_probe(monkeypatch, url, clients, calls_each=2, hold=0.3):
     state = {"now": 0, "max": 0}
     lock = threading.Lock()
 
-    def post(payload, tag):
+    def post(payload):
         with lock:
             state["now"] += 1
             state["max"] = max(state["max"], state["now"])
@@ -769,7 +709,7 @@ import json, os, sys, threading, time
 sys.path.insert(0, %(root)r)
 from src.document_sources.pdf_regions import nemotron as NM
 log = %(log)r
-def post(self, payload, tag):
+def post(self, payload):
     fd = os.open(log, os.O_WRONLY | os.O_APPEND | os.O_CREAT)
     os.write(fd, ("%%f +1\n" %% time.time()).encode()); time.sleep(0.4)
     os.write(fd, ("%%f -1\n" %% time.time()).encode()); os.close(fd)
@@ -818,7 +758,7 @@ from src.document_sources.pdf_regions.graph_builder import load_pdf_as_markdown_
 files = [%(a)r, %(b)r]
 async def main():
     for _ in range(4):
-        docs = await asyncio.gather(*(asyncio.to_thread(load_pdf_as_markdown_regions, f, RegionsConfig(figures="text"), FakeParser())
+        docs = await asyncio.gather(*(asyncio.to_thread(load_pdf_as_markdown_regions, f, RegionsConfig(), FakeParser())
                                       for f in files))
         assert all(d and d[0].page_content for d in docs)
 asyncio.run(main())
@@ -859,17 +799,17 @@ def test_unresponsive_endpoint_is_skipped_and_not_retried(tmp_path):
         client.parse(b"png")                      # 遮断中はすぐ失敗
     assert client.calls == 2 and _time.time() - t0 < 6
     srv.close()
-    # 文書の締め切り: 締め切りを過ぎたページは送らず、文字層で組み立てる（半分を超えれば None で今の変換に戻る）
+    # 文書の締め切り: 締め切りを過ぎたページは送らず、文字層で組み立てる（半分を超えれば None で簡易変換に戻る）
     # （同時 1 本の接続先が 1 枚 0.6 秒で答える。締め切り 0.5 秒なら 2 枚目以降は順番を待つ間に締め切りを過ぎる）
     slow = NM.NemotronClient("http://parse-deadline-test:8000/v1", concurrency=1, lock_dir=str(tmp_path),
                              deadline=_time.time() + 0.5)
 
-    def answer(payload, tag):
+    def answer(payload):
         _time.sleep(0.6)
         return {"choices": [{"message": {"content": "<x_0.1><y_0.1>本文<x_0.5><y_0.2><class_Text>"}, "finish_reason": "stop"}]}
     slow._post = answer
     t0 = _time.time()
-    res = CV.convert_pdf(_pdf("VTR-T005B"), CV.RegionsConfig(figures="text", deadline=0.5), parser=slow)
+    res = CV.convert_pdf(_pdf("VTR-T005B"), CV.RegionsConfig(deadline=0.5), parser=slow)
     assert res is None and _time.time() - t0 < 5 and slow.calls == 1
 
 
@@ -936,8 +876,8 @@ def test_pages_are_read_one_by_one_and_released(monkeypatch, tmp_path):
     lock = threading.Lock()
     orig = CV._prepare
 
-    def spy(page, number, cfg, *args):
-        inp = orig(page, number, cfg, *args)
+    def spy(page, number, *args):
+        inp = orig(page, number, *args)
         with lock:
             alive["now"] += 1
             alive["max"] = max(alive["max"], alive["now"])
@@ -949,10 +889,10 @@ def test_pages_are_read_one_by_one_and_released(monkeypatch, tmp_path):
         return inp
 
     monkeypatch.setattr(CV, "_prepare", spy)
-    cfg = CV.RegionsConfig(figures="text", parse_concurrency=1, vlm_concurrency=1)
+    cfg = CV.RegionsConfig(parse_concurrency=1)
     res = CV.convert_pdf(_pdf("HS-VTR-T002F"), cfg, parser=FakeParser())
-    assert res is not None and alive["max"] <= 3 and alive["now"] == 0
-    assert CV.convert_pdf(_pdf("HS-VTR-T002F"), CV.RegionsConfig(figures="text", max_pages=5), parser=FakeParser()) is None
+    assert res is not None and alive["max"] <= 1 + CV.READ_AHEAD and alive["now"] == 0
+    assert CV.convert_pdf(_pdf("HS-VTR-T002F"), CV.RegionsConfig(max_pages=5), parser=FakeParser()) is None
 
 
 def test_detect_frame_with_many_lines_is_fast():
@@ -971,7 +911,7 @@ def test_latex_ranges_and_symbols_in_tables():
     """範囲の ~ は「～」に、記号の命令は字に直す（空白にしたり消したりしない）"""
     raw = ("\\begin{tabular}{cc}\n表面硬度 & 1000~1350HV0.5\\\\\n深さ & 0.07~0.1mmにて 345~410HV0.5\\\\\n"
            "公差 & $\\pm$0.5 \\times 2\\\\\n温度 & 130$^{\\circ}$C $\\leq$ T\\\\\n範囲 & 900 \\textasciitilde{}1,050\\\\\n\\end{tabular}")
-    grid = NM.table_grid(raw)
+    grid = NM.place(NM.table_rows(raw))
     assert grid[0][1] == "1000～1350HV0.5" and grid[1][1] == "0.07～0.1mmにて 345～410HV0.5"
     assert grid[2][1] == "±0.5 ×2" and grid[3][1] == "130°C ≤ T" and grid[4][1] == "900 ～1,050"
     # 実物（HS-TP-017D の保存出力）: 規格の範囲が残り、読み誤りの「室化」は文字層の「窒化」に直る
@@ -996,7 +936,7 @@ def test_table_cells_follow_text_layer():
 def test_revision_stamp_is_not_appended_to_body_lines():
     """本文の欄の右端の改正の印（改正番号 6）は、本文の行の末尾につながらない（領域の組み立てと文字層だけの組み立ての両方）"""
     lines = [("1. 適用", 80, 90, 10), ("この基準は試験に適用する。", 80, 110, 10), ("改正番号 6", 520, 110, 9)]
-    layer = TextLayer.from_lines(W, H, lines)
+    layer = _from_lines(W, H, lines)
     frame = Frame("body", outer=(10, 10, 590, 790), body=(70, 80, 580, 700))
     page = PageInput(number=1, layer=layer, frame=frame, view=(70, 80, 580, 700))
     from src.document_sources.pdf_regions.assemble import fallback_page
@@ -1004,7 +944,7 @@ def test_revision_stamp_is_not_appended_to_body_lines():
     assert "改正番号" not in md and "この基準は試験に適用する。" in md
     x0, y0, x1, y1 = 70, 80, 580, 700
     blocks = [Block("Text", ((78 - x0) / (x1 - x0), (108 - y0) / (y1 - y0), (575 - x0) / (x1 - x0), (122 - y0) / (y1 - y0)), "x")]
-    md = _render(assemble_page(page, blocks, None, "text"))
+    md = _render(assemble_page(page, blocks))
     assert "改正番号" not in md
     res, _ = _convert("HS-VTR-T002F")
     assert "改正番号" not in build_markdown(res)
@@ -1045,7 +985,7 @@ def test_superscripts_are_joined_without_space():
 
 
 def test_scanned_pdf_is_left_to_the_current_converter(tmp_path):
-    """文字層の無い PDF（スキャン）は None を返す（今の変換と同じく OCR を含む従来の読み込みに進ませる）"""
+    """文字層の無い PDF（スキャン）は None を返す（OCR を含む従来の読み込みに進ませる）"""
     from PIL import Image
     from src.document_sources.pdf_regions import pdfpage
     doc = pdfpage.open_document(_pdf("VTR-T005B"))
@@ -1056,7 +996,7 @@ def test_scanned_pdf_is_left_to_the_current_converter(tmp_path):
     scan = tmp_path / "scan.pdf"
     img.save(scan, "PDF", resolution=120.0)
     parser = FakeParser()
-    assert CV.convert_pdf(str(scan), CV.RegionsConfig(figures="off"), parser=parser) is None and parser.calls == 0
+    assert CV.convert_pdf(str(scan), CV.RegionsConfig(), parser=parser) is None and parser.calls == 0
     # 文字層のあるページが多数なら変換する。OCR の経路（ocr_route）が有効なら、スキャンのページが 1 つでもあれば None
     import pypdfium2 as pdfium
     mixed = pdfium.PdfDocument(_pdf("VTR-T005B"))
@@ -1071,7 +1011,7 @@ def test_scanned_pdf_is_left_to_the_current_converter(tmp_path):
     finally:
         doc.close()
     assert flags == [False] * 6 + [True]
-    assert CV.convert_pdf(out, CV.RegionsConfig(figures="off", ocr_route=True), parser=FakeParser()) is None
+    assert CV.convert_pdf(out, CV.RegionsConfig(ocr_route=True), parser=FakeParser()) is None
 
 
 def test_ligatures_are_not_dropped(tmp_path):
@@ -1110,7 +1050,7 @@ def test_ligatures_are_not_dropped(tmp_path):
 
 def test_history_records_in_one_region_are_not_joined():
     """来歴の 1 件ずつの記録（0改正… / A改正… / B改正…）は、いちばん長い行を折り返しとみなしてつながない"""
-    layer = TextLayer.from_lines(W, H, [("0改正:H6. 8. 4新規調整 担当 回技部 福沢", 80, 100, 10),
+    layer = _from_lines(W, H, [("0改正:H6. 8. 4新規調整 担当 回技部 福沢", 80, 100, 10),
                                         ("A改正:96. 1.20全面見直し 担当 回技部 大槻", 80, 114, 10),
                                         ("B改正:04. 3. 3一部見直し 担当 回品管 赤羽", 80, 128, 10)])
     assert len(layer.text(layer.ink_indices()).split("\n")) == 3
@@ -1128,7 +1068,7 @@ def _chunks_of(stem, monkeypatch, path=None):
     from src import document_layer_rules as R
     from src import section_layer as SL
     fname = stem + ".pdf"
-    docs = load_pdf_as_markdown_regions(path or _pdf(stem), CV.RegionsConfig(figures="text"), parser=FakeParser())
+    docs = load_pdf_as_markdown_regions(path or _pdf(stem), CV.RegionsConfig(), parser=FakeParser())
     docs[0].metadata["title"] = stem
     chunks = CreateChunksofDocument(docs, None).split_file_into_chunks(512, 50, "t@example.com")
     rows = [{"id": f"c{i}", "fileName": fname, "position": i + 1, "section": c.metadata.get("section"),
@@ -1143,10 +1083,10 @@ def test_grid_label_comes_from_the_page_title():
     「見直し確認欄(3年毎)」）や、協議・通知票の理由欄の文（「3．基準来歴が存在しないため。」）では決めない"""
     from src.document_sources.pdf_regions import frame as FR, pdfpage
     outer = Frame("grid", outer=(60.0, 70.0, 560.0, 790.0))
-    layer = TextLayer.from_lines(W, H, [("協議・通知票", 250, 100, 16), ("3．基準来歴が存在しないため。", 90, 170, 11),
+    layer = _from_lines(W, H, [("協議・通知票", 250, 100, 16), ("3．基準来歴が存在しないため。", 90, 170, 11),
                                         ("見直し確認欄(3年毎)", 90, 650, 10)])
     assert FR.grid_label(layer, outer) == "協議・通知票"
-    layer = TextLayer.from_lines(W, H, [("コンプレッサ性能管理曲線管理台帳", 200, 60, 12), ("管理番号 仕様区分", 90, 100, 10),
+    layer = _from_lines(W, H, [("コンプレッサ性能管理曲線管理台帳", 200, 60, 12), ("管理番号 仕様区分", 90, 100, 10),
                                         ("見直し確認欄(3年毎)", 90, 650, 10)])
     assert FR.grid_label(layer, outer) == ""
     cases = [(_pdf("VTR-T003D"), 2, ""), (_pdf("VTR-T003D"), 3, "協議・通知票"), (_pdf("VTR-T_発行目録"), 1, "発行目録"),
@@ -1236,7 +1176,7 @@ def test_formula_under_figure_heading_belongs_to_the_section(monkeypatch):
     lines = [("圧力比", 100, 300, 9), ("1.0 1.5 2.0 2.5", 120, 380, 9), ("3-1.サージ誤差計算", 100, 400, 10),
              ("a=実測風量 b=マップ風量", 140, 414, 10), ("15%", 300, 421, 9), ("X=±3%以内", 140, 432, 10)]
     page, blocks = _chart_page(lines, (90, 200, 400, 445))
-    out = assemble_page(page, blocks, None, "text")
+    out = assemble_page(page, blocks)
     md = HD.render_lines(out.lines, out.framed, HD.DocState(chapters={"3"})).split("\n")
     k = md.index("### 3-1 サージ誤差計算")
     assert md[k + 1:k + 3] == ["a=実測風量 b=マップ風量", "X=±3%以内"]
@@ -1306,15 +1246,12 @@ def _one_page(stem, n, path=None):
     doc = pdfpage.open_document(path)
     try:
         page = doc[n - 1]
-        try:
-            inp = CV._prepare(page, n, CV.RegionsConfig(), own)
-        except TypeError:
-            inp = CV._prepare(page, n, CV.RegionsConfig())   # 直す前のコード（試験が直す前に落ちることを確かめるため）
+        inp = CV._prepare(page, n, own)
         page.close()
     finally:
         doc.close()
     blocks = FakeParser().parse(inp.png, tag=f"{stem}.pdf p{n}") if inp.needs_parse and inp.png else None
-    out = assemble_page(inp, blocks, None, "text", own)
+    out = assemble_page(inp, blocks, own)
     return HD.render_lines(out.lines, out.framed, HD.DocState()), out, inp
 
 
@@ -1332,7 +1269,7 @@ def test_numbered_heading_in_page_header_region_is_kept():
               Block("Page-header", _norm((448, 38, 520, 52)), "HS-TP-002C"),
               Block("Picture", _norm((150, 120, 450, 380)), ""),
               Block("Text", _norm((98, 468, 360, 483)), "5-14 コンプレッサケーシングインナーパート")]
-    md = _render(assemble_page(page, blocks, None, "text", own_keys=HD.doc_number_keys("HS-TP-002C"))).split("\n")
+    md = _render(assemble_page(page, blocks, own_keys=HD.doc_number_keys("HS-TP-002C"))).split("\n")
     assert md[0] == "### 5-13 コンプレッサケーシングアウターパート"
     assert "### 5-14 コンプレッサケーシングインナーパート" in md and not any("HS-TP-002C" in ln for ln in md)
     md10, _out, _inp = _one_page("HS-TP-002C", 10)
@@ -1394,7 +1331,7 @@ def test_row_mismatch_returns_table_to_text_layer():
     assert out.stats.get("tables_row_mismatch") == 1
     assert "① | 表面欠陥 | φ3以下 | 1個(合計3以下)" in _render(out).split("\n")
     # 字間の空いた 1 字の語の並びは 1 語。その行が表に無ければ欠けとみなす
-    layer = TextLayer.from_lines(W, H, [("材 料 試 験 成 績 表", 100, 100, 10)])
+    layer = _from_lines(W, H, [("材 料 試 験 成 績 表", 100, 100, 10)])
     assert AS.piece_words(layer, layer.ink_indices()) == ["材料試験成績表"]
     tl = [("材 料 試 験 成 績 表", 100, 100, 10), ("温度 130 ℃", 100, 114, 10), ("圧力 0.5 MPa", 100, 128, 10),
           ("流量 2.5 m3/s", 100, 142, 10), ("回転数 12000 rpm", 100, 156, 10)]
@@ -1433,8 +1370,8 @@ def test_layer_table_is_built_from_rulings():
     short = "\\begin{tabular}{cc}\n番号 & 降伏点\\\\\n\\end{tabular}"
     hs = [(95.0, 320.0, y) for y in (95.0, 110.0, 124.0, 152.0)]
     vs = [(95.0, 152.0, x) for x in (95.0, 160.0, 240.0, 320.0)]
-    page = PageInput(number=1, layer=TextLayer.from_lines(W, H, tl), frame=Frame("none", hs=hs, vs=vs), view=(0.0, 0.0, W, H))
-    out = assemble_page(page, [Block("Table", _norm((95, 95, 320, 152)), short)], None, "text")
+    page = PageInput(number=1, layer=_from_lines(W, H, tl), frame=Frame("none", hs=hs, vs=vs), view=(0.0, 0.0, W, H))
+    out = assemble_page(page, [Block("Table", _norm((95, 95, 320, 152)), short)])
     assert out.stats["tables_to_text"] == 1 and out.stats["tables_grid"] == 1
     assert _render(out).split("\n") == ["| 番号 | 降伏点 | 伸び |", "|---|---|---|", "| 規格 | 250以上 | 12以上 |",
                                         "| Z-1 | 324 | 18.5 |", "| Z-2 | 340 | 19 |"]
@@ -1536,12 +1473,11 @@ def test_plain_converter_matches_text_layer_on_real_pdf():
 
 
 def test_regions_over_page_limit_falls_back_to_plain(monkeypatch):
-    """ページ数が PDF_REGIONS_MAX_PAGES を超える PDF は、regions が None を返し、簡易変換で変換する（以前は pymupdf4llm）"""
+    """ページ数が PDF_REGIONS_MAX_PAGES を超える PDF は、regions が None を返し、簡易変換で変換する"""
     from src.document_sources import local_file
     path = _pdf("VTR-T005B")
     monkeypatch.setenv("PDF_CHUNK_STRATEGY", "markdown")
     monkeypatch.setenv("MARKDOWN_CHUNKING", "true")
-    monkeypatch.setenv("PDF_CONVERTER", "regions")
     monkeypatch.setenv("EDC_PDF_CONVERT", "false")
     monkeypatch.setenv("PDF_REGIONS_MAX_PAGES", "2")
     # Nemotron Parse に届かないこと（--network none でも、ページ数の判定が先なので要求は作られない）

@@ -2,7 +2,7 @@
 
 流れ:
   0. 全ページの文字層の有無を軽く数える。文字層の無いページ（スキャン・輪郭にした文字）が過半数なら None
-     （ocr_route が真なら、文字層の無いページが 1 つでもあれば None。今の変換と同じく、OCR を含む従来の読み込みに進ませる）
+     （ocr_route が真なら、文字層の無いページが 1 つでもあれば None。OCR を含む従来の読み込みに進ませる）
   1〜3 をページごとに別スレッドで進める（同時に持つページは作業スレッドの数まで。読み終えたページの画像は手放す。
      pdfium の文書は REOPEN_PAGES ページごとに開き直し、pdfium が溜める字形・画像の領域を手放す）
   1. pypdfium2 で文字層・罫線・ページ画像を読む。pdfium はスレッド安全ではないので、プロセスに 1 つの錠
@@ -10,15 +10,15 @@
   2. 枠を求める。本文の欄のあるページは本文の欄だけを、枠の無いページは全体を Nemotron Parse に送る。
      格子の様式のうち、ページの題の位置に種類の語があるもの（協議・通知票・発行目録）は送らず、欄の文字を行ごとに並べる。
      種類の語の無い格子のページ（別紙の台帳など）はページ全体を送る（frame.grid_label）
-  3. 領域と文字層を合わせて組み立てる（assemble.py）。図は既定（figures=text）では図中の文字と題だけ。describe なら E4B → 26B
+  3. 領域と文字層を合わせて組み立てる（assemble.py）。図は図中の文字と題だけ
   4. 文書全体を通して見出しの段を番号の規則で決める（headings.py）
-Nemotron Parse・E4B・26B への同時の要求は、接続先ごとの上限で抑える（limits.py。プロセスの間でも共有する）。
+Nemotron Parse への同時の要求は、接続先ごとの上限で抑える（limits.py。プロセスの間でも共有する）。
 
-締め切り（deadline 秒、0 なら無し）: 過ぎたら、まだ送っていないページは Nemotron Parse に送らず文字層の行で組み立て、
-図は説明を省いて図中の文字だけにする。応答しない接続先は limits の遮断で、しばらく呼ばずにすぐ失敗にする。
+締め切り（deadline 秒、0 なら無し）: 過ぎたら、まだ送っていないページは Nemotron Parse に送らず文字層の行で組み立てる。
+応答しない接続先は limits の遮断で、しばらく呼ばずにすぐ失敗にする。
 
 失敗の扱い: 文書を開けない、読めるページが無い、ページ数が max_pages を超える、文字層の無いページが多い、
-Nemotron Parse を要するページの半分を超えて失敗した、のいずれかなら None を返す（呼び出し側が今の変換に戻す）。
+Nemotron Parse を要するページの半分を超えて失敗した、のいずれかなら None を返す（呼び出し側が文字層だけの簡易変換に戻す）。
 失敗が全ページの半分を超えた時点で、残りのページは送らない。ページ単位の失敗は、そのページだけ文字層の行で組み立てて続ける。
 """
 from __future__ import annotations
@@ -38,45 +38,29 @@ from .assemble import PageInput, assemble_page, fallback_page
 from .frame import detect_page_frame, frame_title, grid_label
 from .headings import DocState, doc_number_keys, header_annex, header_notes, normalize_text, render_lines
 from .nemotron import NemotronClient
-from .vlm import FigureReader, VlmClient
 
-FIGURE_MODES = ("describe", "text", "off")
-# 文字層の無いページ（pdf_markdown._survey と同じ条件）: 画像が 5 割以上で文字の行が 5% 以下、または字が 0 で図形だけ
+# 文字層の無いページ: 画像が 5 割以上で文字の行が 5% 以下、または字が 0 で図形だけ
 IMAGE_AREA_MIN = 0.5
 TEXT_AREA_MAX = 0.05
+MAX_FAILED_SHARE = 0.5      # Nemotron Parse を要するページのうち、これを超えて失敗したら None
+READ_AHEAD = 4              # Nemotron Parse の応答を待つ間に読んでおくページの数（作業スレッドの数 = parse_concurrency + これ）
 
 
 @dataclass
 class RegionsConfig:
     parse_url: str = "http://localhost:8022/v1"
     parse_model: str = "nemotron-parse"
-    triage_url: str = "http://localhost:8030/v1"
-    triage_model: str = "google/gemma-4-E4B-it"
-    vlm_url: str = "http://localhost:8000/v1"
-    vlm_model: str = "google/gemma-4-26B-A4B-it"
-    figures: str = "text"               # text（既定。VLM を呼ばず図中の文字と題だけ）| describe | off
     timeout: float = 180.0              # 1 回の要求の時間切れ（秒）。締め切りが近ければ締め切りまでに縮める
     retries: int = 2                    # 接続の失敗・5xx のときの送り直しの回数（応答の時間切れは送り直さない）
     parse_concurrency: int = 2          # Nemotron Parse への同時の要求の上限（コンテナの中の全作業プロセスで共有）
-    vlm_concurrency: int = 2            # E4B・26B それぞれへの同時の要求の上限（同上。26B は画像付きの同時 6 本でハングした記録がある）
     deadline: float = 600.0             # 文書 1 本の締め切り（秒、0 なら無し）
-    max_pages: int = 300                # これを超えるページ数の PDF は変換しない（None。今の変換に戻す）
+    max_pages: int = 300                # これを超えるページ数の PDF は変換しない（None。簡易変換に戻す）
     ocr_route: bool = False             # 真なら、文字層の無いページが 1 つでもあれば None（EDC_PDF_CONVERT の経路に任せる）
     lock_dir: Optional[str] = None      # プロセスをまたぐ上限のロック用ファイルの置き場所（None は既定、"" は使わない）
     title_line: bool = True             # 枠の題名の欄を文書の先頭に見出しとして置く（graph_builder.TITLE_LEVEL）
-    big_table_area: float = 0.6
-    table_min_coverage: float = 0.7
-    long_side: int = pdfpage.LONG_SIDE_PX
-    max_failed_share: float = 0.5       # Nemotron Parse を要するページのうち、これを超えて失敗したら None
 
     def normalized(self) -> "RegionsConfig":
-        figures = (self.figures or "text").strip().lower()
-        if figures not in FIGURE_MODES:
-            logging.warning("pdf_regions: unknown figures mode %r; using text", self.figures)
-            figures = "text"
-        self.figures = figures
         self.parse_concurrency = max(1, int(self.parse_concurrency))
-        self.vlm_concurrency = max(1, int(self.vlm_concurrency))
         self.deadline = max(0.0, float(self.deadline or 0))
         self.max_pages = max(0, int(self.max_pages or 0))
         return self
@@ -89,7 +73,7 @@ class ConvertResult:
     stats: dict = field(default_factory=dict)
 
 
-def _prepare(page, number: int, cfg: RegionsConfig, own_keys=frozenset()) -> PageInput:
+def _prepare(page, number: int, own_keys=frozenset()) -> PageInput:
     """pdfium でページを読む（文書を開いたスレッドで呼ぶ）。
 
     字の多くが同じ向きに倒れたページ（/Rotate は 0 のまま、横向きの付表を縦のページに置いたもの。HS-TP-023 の 5 ページ目）は、
@@ -124,7 +108,7 @@ def _prepare(page, number: int, cfg: RegionsConfig, own_keys=frozenset()) -> Pag
         inp.needs_parse = False
         inp.note = f"rotated {rotation}"
         return inp
-    image, scale = pdfpage.render_image(page, cfg.long_side, extra)
+    image, scale = pdfpage.render_image(page, extra=extra)
     if frame.kind == "body" and frame.body:
         x0, y0, x1, y1 = frame.body
         box = (max(0, math.floor(x0 * scale)), max(0, math.floor(y0 * scale)),
@@ -158,19 +142,21 @@ def _missing_text(survey: dict) -> bool:
     return survey["image_share"] >= IMAGE_AREA_MIN and (survey["text_share"] or 0.0) <= TEXT_AREA_MAX
 
 
-def convert_pdf(path, config: Optional[RegionsConfig] = None, parser=None, reader=None) -> Optional[ConvertResult]:
-    """PDF をページごとの Markdown にする。失敗したら None。parser・reader は試験で差し替える"""
+def _too_many_missing(missing: list, count: int, ocr_route: bool) -> bool:
+    """文字層の無いページが過半数か（ocr_route が真なら 1 ページでもあるか）"""
+    return bool(missing) and (ocr_route or 2 * len(missing) > count)
+
+
+def convert_pdf(path, config: Optional[RegionsConfig] = None, parser=None) -> Optional[ConvertResult]:
+    """PDF をページごとの Markdown にする。失敗したら None。parser は試験で差し替える"""
     cfg = (config or RegionsConfig()).normalized()
     name = Path(path).name
     started = time.time()
     deadline = started + cfg.deadline if cfg.deadline else None
-    try:
-        with _Batch(path) as batch, pdfpage.PDFIUM_LOCK:
-            count = len(batch.doc)
-    except Exception as error:
-        logging.warning("pdf_regions: cannot open %s (%s)", name, error)
+    count = _page_count(path, name, "pdf_regions")
+    if count is None:
         return None
-    return _convert(path, name, count, cfg, started, deadline, parser, reader)
+    return _convert(path, name, count, cfg, started, deadline, parser)
 
 
 REOPEN_PAGES = 32
@@ -198,33 +184,65 @@ class _Batch:
         return False
 
 
-def _convert(path, name, count, cfg, started, deadline, parser, reader) -> Optional[ConvertResult]:
+def _page_count(path, name: str, log: str) -> Optional[int]:
+    """ページ数。開けなければ None"""
+    try:
+        with _Batch(path) as batch, pdfpage.PDFIUM_LOCK:
+            return len(batch.doc)
+    except Exception as error:
+        logging.warning("%s: cannot open %s (%s)", log, name, error)
+        return None
+
+
+def _survey(path, name: str, count: int, log: str) -> Optional[list]:
+    """全ページの文字層の有無を軽く数え、文字層の無いページの番号（1 始まり）の並びを返す。文書を読めなければ None。
+    数えられなかったページは文字層の無いページに入れない"""
+    missing = []
+    try:
+        for start in range(0, count, REOPEN_PAGES):
+            with _Batch(path) as batch, pdfpage.PDFIUM_LOCK:
+                for i in range(start, min(count, start + REOPEN_PAGES)):
+                    page = batch.doc[i]
+                    try:
+                        if _missing_text(pdfpage.survey_page(page)):
+                            missing.append(i + 1)
+                    except Exception as error:
+                        logging.debug("%s: %s page %d could not be surveyed (%s)", log, name, i + 1, error)
+                    finally:
+                        page.close()
+    except Exception as error:
+        logging.warning("%s: cannot read %s (%s)", log, name, error)
+        return None
+    return missing
+
+
+def _render(outputs: list) -> list:
+    """組み立てたページを文書の頭から順に Markdown にする（見出しの段は文書全体の状態で決める）。
+    返り値は [(ページ番号, Markdown)]（中身の無いページは入れない）。各ページの字数を stats["chars"] に入れる"""
+    state = DocState()
+    pages = []
+    for out in outputs:
+        md = render_lines(out.lines, out.framed, state)
+        out.stats["chars"] = len(md)
+        if md.strip():
+            pages.append((out.number, md))
+    return pages
+
+
+def _convert(path, name, count, cfg, started, deadline, parser) -> Optional[ConvertResult]:
     lock = pdfpage.PDFIUM_LOCK
     if count == 0:
         return None
     if cfg.max_pages and count > cfg.max_pages:
-        logging.warning("pdf_regions: %s has %d pages (more than %d); leaving it to the current converter", name, count, cfg.max_pages)
+        logging.warning("pdf_regions: %s has %d pages (more than %d); leaving it to the text-layer converter",
+                        name, count, cfg.max_pages)
         return None
     # 0. 文字層の有無
-    surveys = []
-    try:
-        for start in range(0, count, REOPEN_PAGES):
-            with _Batch(path) as batch, lock:
-                for i in range(start, min(count, start + REOPEN_PAGES)):
-                    page = batch.doc[i]
-                    try:
-                        surveys.append(pdfpage.survey_page(page))
-                    except Exception as error:
-                        logging.debug("pdf_regions: %s page %d could not be surveyed (%s)", name, i + 1, error)
-                        surveys.append(None)
-                    finally:
-                        page.close()
-    except Exception as error:
-        logging.warning("pdf_regions: cannot read %s (%s)", name, error)
+    missing = _survey(path, name, count, "pdf_regions")
+    if missing is None:
         return None
-    missing = [i + 1 for i, sv in enumerate(surveys) if sv is not None and _missing_text(sv)]
-    if missing and (cfg.ocr_route or 2 * len(missing) > count):
-        logging.warning("pdf_regions: %s: %d of %d pages have no text layer (%s); leaving it to the current converter",
+    if _too_many_missing(missing, count, cfg.ocr_route):
+        logging.warning("pdf_regions: %s: %d of %d pages have no text layer (%s); leaving it to the text-layer converter",
                         name, len(missing), count, missing[:30])
         return None
     if missing:
@@ -235,11 +253,6 @@ def _convert(path, name, count, cfg, started, deadline, parser, reader) -> Optio
     if parser is None:
         parser = NemotronClient(cfg.parse_url, cfg.parse_model, cfg.timeout, cfg.retries, cfg.parse_concurrency,
                                 deadline=deadline, lock_dir=cfg.lock_dir)
-    if reader is None and cfg.figures == "describe":
-        reader = FigureReader(VlmClient(cfg.triage_url, cfg.triage_model, cfg.timeout, cfg.retries, cfg.vlm_concurrency,
-                                        deadline=deadline, lock_dir=cfg.lock_dir),
-                              VlmClient(cfg.vlm_url, cfg.vlm_model, cfg.timeout, cfg.retries, cfg.vlm_concurrency,
-                                        deadline=deadline, lock_dir=cfg.lock_dir))
     own_keys = doc_number_keys(Path(path).stem)
     tally = {"failed": 0}
     tally_lock = threading.Lock()
@@ -257,7 +270,7 @@ def _convert(path, name, count, cfg, started, deadline, parser, reader) -> Optio
             with lock:
                 page = current["batch"].doc[index]
                 try:
-                    inp = _prepare(page, number, cfg, own_keys)
+                    inp = _prepare(page, number, own_keys)
                 finally:
                     try:
                         page.close()
@@ -283,15 +296,14 @@ def _convert(path, name, count, cfg, started, deadline, parser, reader) -> Optio
             if blocks is None:
                 with tally_lock:
                     tally["failed"] += 1
-                    if tally["failed"] > cfg.max_failed_share * count:
+                    if tally["failed"] > MAX_FAILED_SHARE * count:
                         give_up.set()   # 結果が None に決まった。残りのページは送らない
         parse_seconds = time.time() - t
-        figure_reader = None if past_deadline() else reader
         try:
             if blocks is None and inp.needs_parse:
                 out = fallback_page(inp, f"parse failed: {error}" if error else inp.note)
             else:
-                out = assemble_page(inp, blocks, figure_reader, cfg.figures, own_keys, cfg.big_table_area, cfg.table_min_coverage)
+                out = assemble_page(inp, blocks, own_keys)
         except Exception as exc:
             logging.warning("pdf_regions: %s page %d could not be assembled (%s); using the text layer for this page",
                             name, number, exc)
@@ -303,7 +315,7 @@ def _convert(path, name, count, cfg, started, deadline, parser, reader) -> Optio
         inp.png = None   # 画像と文字層はここで手放す（返すのは組み立てた行だけ）
         return out, title
 
-    workers = cfg.parse_concurrency + 2 * cfg.vlm_concurrency
+    workers = cfg.parse_concurrency + READ_AHEAD
     results = []
     try:
         with ThreadPoolExecutor(max_workers=max(1, min(workers, count))) as pool:
@@ -320,27 +332,19 @@ def _convert(path, name, count, cfg, started, deadline, parser, reader) -> Optio
 
     needed = sum(1 for o in outputs if o.stats.get("needs_parse"))
     failed = sum(1 for o in outputs if o.stats.get("parse_failed"))
-    if needed and failed > cfg.max_failed_share * needed:
+    if needed and failed > MAX_FAILED_SHARE * needed:
         logging.warning("pdf_regions: %s: Nemotron Parse failed on %d of %d pages; giving up this converter", name, failed, needed)
         return None
 
-    state = DocState()
-    pages = []
-    for out in outputs:
-        md = render_lines(out.lines, out.framed, state)
-        out.stats["chars"] = len(md)
-        if md.strip():
-            pages.append((out.number, md))
+    pages = _render(outputs)
     if not pages:
         return None
     # 文書の題名は、題名の欄が読めた最初のページのもの（後のページの欄には社名が入る様式がある）
     title = next((normalize_text(t).strip() for _, t in results if t), None) if cfg.title_line else None
     stats = {"file": name, "pages": count, "seconds": round(time.time() - started, 2),
              "read_seconds": round(read_seconds, 2), "parse_calls": getattr(parser, "calls", None),
-             "parse_failed_pages": failed, "figures_mode": cfg.figures, "no_text_layer_pages": missing,
+             "parse_failed_pages": failed, "no_text_layer_pages": missing,
              "past_deadline": past_deadline(),
-             "triage_calls": getattr(getattr(reader, "triage_client", None), "calls", 0) if reader else 0,
-             "describe_calls": getattr(getattr(reader, "describe_client", None), "calls", 0) if reader else 0,
              "page_stats": [dict(o.stats, page=o.number) for o in outputs]}
     logging.info("pdf_regions: %s converted (%d pages, %d sent to Nemotron Parse, %d failed, %.1fs)",
                  name, count, needed, failed, stats["seconds"])

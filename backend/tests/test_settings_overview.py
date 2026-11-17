@@ -69,7 +69,6 @@ def test_settings_hide_secrets(monkeypatch):
     monkeypatch.setenv("LLM_MODEL_CONFIG_GEMMA4", "gemma4,http://x/v1,key-should-not-leak")
     monkeypatch.setenv("CHAT_RERANK_URL", "http://user:pw-in-url@rerank:8000/v1/rerank")
     monkeypatch.setenv("MAX_TOKEN_CHUNK_SIZE", "")
-    monkeypatch.delenv("CHUNK_ID_MODE", raising=False)
     monkeypatch.delenv("CHUNK_REFERENCE_MODEL", raising=False)
     monkeypatch.setenv("GRAPH_CLEANUP_MODEL", "gemma4cpu")
     rows = {r["name"]: r for r in so.collect_settings(env_file=os.devnull)}
@@ -78,7 +77,6 @@ def test_settings_hide_secrets(monkeypatch):
     assert rows["CHAT_RERANK_URL"]["value"] == "http://***@rerank:8000/v1/rerank"
     assert so._safe("http://h/v1/rerank?api_key=abc&model=m") == "http://h/v1/rerank?api_key=***&model=m"
     assert (rows["MAX_TOKEN_CHUNK_SIZE"]["value"], rows["MAX_TOKEN_CHUNK_SIZE"]["source"]) == ("10000", "既定値（空の値）")
-    assert (rows["CHUNK_ID_MODE"]["value"], rows["CHUNK_ID_MODE"]["source"]) == ("document", "既定値（未設定）")
     assert rows["CHUNK_REFERENCE_MODEL"]["value"] == "gemma4cpu"
     assert rows["CHAT_RERANK_URL"]["source"] == "環境変数（docker-compose.yml・ルートの .env）"
     assert rows["VECTOR_SEARCH_TOP_K"]["value"] == str(so.constants.VECTOR_SEARCH_TOP_K)
@@ -187,3 +185,6 @@ def test_collect_overview_fills_missing_credentials_from_env(monkeypatch):
     seen.clear()
     so.collect_overview(Neo4jCredentials(uri="neo4j://given:7687", userName="u", password="p", database="d"))
     assert seen[0] == ("uri", "neo4j://given:7687", ("u", "p")) and seen[1] == ("database", "d")
+    seen.clear()
+    data = so.collect_overview(Neo4jCredentials(uri="neo4j://given:7687", userName="u", password="p", database="d"), include_counts=False)
+    assert data["counts"] == [] and data["settings"] and seen[0] == ("uri", "neo4j://given:7687", ("u", "p"))   # 件数なしでも資格情報は確かめる

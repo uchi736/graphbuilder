@@ -7,7 +7,6 @@
 
 入口から呼ぶ関数（rename など）は Form の値（JSON は文字列）をそのまま受ける。失敗は validate.EditError。
 """
-import json
 import logging
 from uuid import uuid4
 
@@ -32,6 +31,8 @@ SET l.seq = coalesce(l.seq, 0) + 1
 RETURN l.seq AS seq, coalesce(l.lease_until, 0) AS lease_until, l.lease_owner AS owner, timestamp() AS now
 """
 MERGE_CONFIG = {"properties": "discard", "mergeRels": True, "produceSelfRel": False, "preserveExistingSelfRels": False}
+# 名前を持つ全エンティティの要素 ID と名前（正規化キーでの照合は Python で行う）
+ENTITY_IDS_QUERY = f"MATCH (e:{ENTITY_LABEL}) WHERE e.id IS NOT NULL RETURN elementId(e) AS eid, e.id AS id"
 
 
 # ---- 応答の形 ----
@@ -101,18 +102,21 @@ class Edit:
             raise EditError(STALE, f"node {element_id} is now {node.get('id')!r}, not {expected_id!r}")
         return node
 
-    def snapshot(self, element_ids):
+    def snapshot(self, element_ids, recount=False):
+        """写しを取る。recount なら、そのエンティティの文書を件数の数え直しの対象に加える（ノードやリレーションの数が変わる操作）。"""
         snapshots = history.capture_snapshots(self.tx, element_ids)
         self.snapshots.extend(snapshots)
+        if recount:
+            self.docs |= history.entity_documents(self.tx, element_ids)
         return snapshots
 
     def bump(self, element_id, before_id):
-        """手動の操作の印: _v を 1 増やし、_curated を true にする（設計メモ 2.3）。"""
-        record = self.tx.run("MATCH (n) WHERE elementId(n) = $eid SET n._v = coalesce(n._v, 0) + 1, n._curated = true "
-                             "RETURN n.id AS id, n._v AS v", eid=element_id).single()
-        self.ids_after[before_id] = [record["id"], element_id]
-        self.versions_after[record["id"]] = record["v"]
-        return record["v"]
+        """手動の操作の印: _v を 1 増やし、_curated を true にする（設計メモ 2.3）。書き換えた後のノードを返す。"""
+        node = self.tx.run("MATCH (n) WHERE elementId(n) = $eid SET n._v = coalesce(n._v, 0) + 1, n._curated = true "
+                           "RETURN n", eid=element_id).single()["n"]
+        self.ids_after[before_id] = [node.get("id"), element_id]
+        self.versions_after[node.get("id")] = node.get("_v")
+        return node
 
     def gone(self, before_id):
         self.ids_after[before_id] = None
@@ -125,12 +129,10 @@ class Edit:
                          undo_of=self.undo_of)
         return self.op_id
 
-    def fresh_node(self, element_id):
-        return node_dict(self.tx.run("MATCH (n) WHERE elementId(n) = $eid RETURN n", eid=element_id).single()["n"])
-
 
 def _edit(graph, op, user, payload, body):
-    """排他を取って body(edit) を 1 つの書き込みトランザクションで行い、文書の件数を数え直す。"""
+    """排他を取って body(edit) を 1 つの書き込みトランザクションで行い、文書の件数を数え直す。user が空なら unknown。"""
+    user = optional_text(user) or "unknown"
     ensure_schema(graph)
 
     def work(tx):
@@ -160,11 +162,6 @@ def _read_node(graph, element_id):
     return rows[0] if rows else None
 
 
-def _embed_one(text):
-    vectors, _ = embed_texts([text])
-    return vectors
-
-
 def _write_entity_embedding(edit, element_id, used_text, vectors):
     """計算した文が今のノードの文と同じなら書く。違えば（計算の後で変わった）消す。"""
     record = edit.tx.run("MATCH (n) WHERE elementId(n) = $eid RETURN n.id AS id, n.description AS description",
@@ -192,13 +189,16 @@ def _sync_aliases(edit, entity_id, element_id, removed=()):
 
 
 def _key_hits(tx, names, exclude_element_ids):
-    """{名前: [要素 ID]}: 名前が同じか、正規化すると同じになるエンティティ（exclude を除く）。"""
+    """{名前: [要素 ID]}: 名前が同じか、正規化すると同じになるエンティティ（exclude を除く）。全エンティティを 1 回だけ読む。"""
+    names = list(dict.fromkeys(names))
+    if not names:
+        return {}
     by_key = {}
     for name in names:
         by_key.setdefault(norm_key(name), []).append(name)
     exclude = set(exclude_element_ids)
     hits = {name: [] for name in names}
-    for record in tx.run(f"MATCH (e:{ENTITY_LABEL}) WHERE e.id IS NOT NULL RETURN elementId(e) AS eid, e.id AS id"):
+    for record in tx.run(ENTITY_IDS_QUERY):
         if record["eid"] in exclude:
             continue
         for name in by_key.get(norm_key(str(record["id"])), ()):
@@ -206,22 +206,21 @@ def _key_hits(tx, names, exclude_element_ids):
     return hits
 
 
-def find_conflicts(tx, name, exclude_element_ids):
-    """名前が同じか、正規化すると同じになるエンティティ（exclude を除く）。[{node, chunk_count, documents}]"""
-    return node_hits(tx, _key_hits(tx, [name], exclude_element_ids)[name])
+def refuse_name_taken(edit, name, element_ids):
+    """名前 name が同じか、正規化すると同じになる別のエンティティ（element_ids、_key_hits の結果）があれば CONFLICT。"""
+    if element_ids:
+        raise EditError(CONFLICT, f"an entity named {name!r} (or the same after normalization) already exists",
+                        data={"conflicts": node_hits(edit.tx, element_ids)})
 
 
-def refuse_same_key_entities(edit, names, exclude_element_ids):
+def refuse_same_key_entities(edit, names, hits):
     """別名か削除の記録を書く名前（names）と正規化キーが同じ、操作の対象以外の生きたエンティティがあれば CONFLICT。
+    hits は names を含めて引いた _key_hits の結果。
 
     別名と削除の記録は正規化キーで抽出の名前に当たるので、書くと、そのエンティティの今後の抽出を奪う（読み替える・落とす）。
     同じものなら、まとめて統合（または一緒に削除）するよう促す。
     """
-    names = [name for name in dict.fromkeys(names) if name]
-    if not names:
-        return
-    hits = _key_hits(edit.tx, names, exclude_element_ids)
-    holders = [name for name in names if hits[name]]
+    holders = [name for name in dict.fromkeys(names) if name and hits.get(name)]
     if holders:
         eids = list(dict.fromkeys(eid for name in holders for eid in hits[name]))
         shown = "」「".join(holders)
@@ -231,23 +230,30 @@ def refuse_same_key_entities(edit, names, exclude_element_ids):
                                         "そのエンティティの今後の抽出結果が読み替えられるか除外されるため、先に統合してください。"})
 
 
+def _entity_element_id(tx, entity_id):
+    """名前（id）のエンティティの要素 ID。無ければ None。"""
+    record = tx.run(f"MATCH (e:{ENTITY_LABEL} {{id: $id}}) RETURN elementId(e) AS eid", id=entity_id).single()
+    return record["eid"] if record is not None else None
+
+
 def refuse_alias_of_other(edit, name, own_element_ids):
     """名前 name が、操作の対象以外の生きたエンティティの別名（正規化キーが同じ）なら CONFLICT（黙って別名を奪わない）。"""
     row = edit.lt.get(ledger_rows.alias_uid(name))
     if row is None or not row.get("target"):
         return
-    record = edit.tx.run(f"MATCH (e:{ENTITY_LABEL} {{id: $id}}) RETURN elementId(e) AS eid", id=row["target"]).single()
-    if record is None or record["eid"] in set(own_element_ids):
+    target_eid = _entity_element_id(edit.tx, row["target"])
+    if target_eid is None or target_eid in set(own_element_ids):
         return
     raise EditError(CONFLICT, f"{name!r} is an alias of {row['target']!r}; merge into it instead",
-                    data={"conflicts": node_hits(edit.tx, [record["eid"]]), "alias_of": row["target"],
+                    data={"conflicts": node_hits(edit.tx, [target_eid]), "alias_of": row["target"],
                           "reason": f"「{name}」は「{row['target']}」の別名です（修正台帳）。同一のエンティティであれば「{row['target']}」に統合してください。"})
 
 
-def node_hits(tx, element_ids):
+def node_hit_records(tx, element_ids):
+    """要素 ID のノードと、それを指すチャンクの数と文書名。[{n, chunk_count, documents}]（無いノードは入れない）"""
     if not element_ids:
         return []
-    result = tx.run("""
+    return list(tx.run("""
         UNWIND $eids AS eid
         MATCH (n) WHERE elementId(n) = eid
         CALL (n) {
@@ -255,24 +261,17 @@ def node_hits(tx, element_ids):
             OPTIONAL MATCH (c)-[:PART_OF]->(d:Document)
             RETURN count(DISTINCT c) AS chunk_count, [x IN collect(DISTINCT d.fileName) WHERE x IS NOT NULL] AS documents
         }
-        RETURN n, chunk_count, documents""", eids=list(element_ids))
+        RETURN n, chunk_count, documents""", eids=list(element_ids)))
+
+
+def node_hits(tx, element_ids):
     return [{"node": node_dict(r["n"]), "chunk_count": r["chunk_count"], "documents": sorted(r["documents"])}
-            for r in result]
-
-
-def _user(user):
-    return optional_text(user) or "unknown"
+            for r in node_hit_records(tx, element_ids)]
 
 
 def _set_type_labels(tx, element_id, current_labels, labels):
-    remove = [label for label in type_labels_of(current_labels) if label not in labels]
-    add = [label for label in labels if label not in current_labels]
-    if remove:
-        tx.run("MATCH (n) WHERE elementId(n) = $eid CALL apoc.create.removeLabels(n, $labels) YIELD node RETURN count(node)",
-               eid=element_id, labels=remove)
-    if add:
-        tx.run("MATCH (n) WHERE elementId(n) = $eid CALL apoc.create.addLabels(n, $labels) YIELD node RETURN count(node)",
-               eid=element_id, labels=add)
+    """種類のラベルを labels にそろえる（__Entity__ は外さない）。"""
+    history.apply_labels(tx, element_id, current_labels, list(labels) + [ENTITY_LABEL])
 
 
 # ---- M1 改名 ----
@@ -281,31 +280,27 @@ def rename(graph, element_id, expected_id, new_id, user=None):
     element_id = require_text(element_id, "element_id")
     expected_id = require_text(expected_id, "expected_id")
     new_id = require_text(new_id, "new_id")
-    user = _user(user)
     before = _read_node(graph, element_id)
     used_text = entity_text(new_id, before["description"]) if before else None
-    vectors = _embed_one(used_text) if before else {}
+    vectors = embed_texts([used_text]) if before else {}
 
     def body(edit):
         node = edit.entity(element_id, expected_id)
         old_id = node.get("id")
         if new_id == old_id:
             raise EditError(INVALID, "new_id is the same as the current id")
-        conflicts = find_conflicts(edit.tx, new_id, [element_id])
-        if conflicts:
-            raise EditError(CONFLICT, f"an entity named {new_id!r} (or the same after normalization) already exists",
-                            data={"conflicts": conflicts})
+        hits = _key_hits(edit.tx, [new_id, old_id], [element_id])
+        refuse_name_taken(edit, new_id, hits[new_id])
         refuse_alias_of_other(edit, new_id, [element_id])
-        refuse_same_key_entities(edit, [old_id], [element_id])  # 旧い名前は別名になる
-        edit.snapshot([element_id])
-        edit.docs |= history.entity_documents(edit.tx, [element_id])
+        refuse_same_key_entities(edit, [old_id], hits)  # 旧い名前は別名になる
+        edit.snapshot([element_id])  # 名前だけの変更なので文書の件数は変わらない
         edit.tx.run("MATCH (n) WHERE elementId(n) = $eid SET n.id = $new_id", eid=element_id, new_id=new_id)
         ledger_rows.rename_entity(edit.lt, old_id, new_id)
         _sync_aliases(edit, new_id, element_id)
-        edit.bump(element_id, old_id)
+        renamed = edit.bump(element_id, old_id)
         _write_entity_embedding(edit, element_id, used_text, vectors)
         op_id = edit.finish(f"「{old_id}」を「{new_id}」に改名")
-        return {"node": edit.fresh_node(element_id), "op_id": op_id}
+        return {"node": node_dict(renamed), "op_id": op_id}
 
     return _edit(graph, "rename", user, {"element_id": element_id, "expected_id": expected_id, "new_id": new_id}, body)
 
@@ -316,7 +311,6 @@ def set_labels(graph, element_id, expected_id, labels, user=None):
     element_id = require_text(element_id, "element_id")
     expected_id = require_text(expected_id, "expected_id")
     requested = parse_json(labels, "labels", list)
-    user = _user(user)
 
     def body(edit):
         node = edit.entity(element_id, expected_id)
@@ -326,9 +320,9 @@ def set_labels(graph, element_id, expected_id, labels, user=None):
         _set_type_labels(edit.tx, element_id, current, new_labels)
         entity_id = node.get("id")
         edit.lt.put("type_override", ledger_rows.type_uid(entity_id), entity=entity_id, labels=new_labels)
-        edit.bump(element_id, entity_id)
+        changed = edit.bump(element_id, entity_id)
         op_id = edit.finish(f"「{entity_id}」のラベルを {'・'.join(new_labels)} に変更")
-        return {"node": edit.fresh_node(element_id), "op_id": op_id}
+        return {"node": node_dict(changed), "op_id": op_id}
 
     return _edit(graph, "set_labels", user, {"element_id": element_id, "expected_id": expected_id, "labels": requested},
                  body)
@@ -340,9 +334,8 @@ def update_props(graph, element_id, expected_id, props, user=None):
     element_id = require_text(element_id, "element_id")
     expected_id = require_text(expected_id, "expected_id")
     changes = validate_entity_props(parse_json(props, "props", dict))
-    user = _user(user)
     used_text = entity_text(expected_id, changes.get("description")) if "description" in changes else None
-    vectors = _embed_one(used_text) if used_text is not None else {}
+    vectors = embed_texts([used_text]) if used_text is not None else {}
 
     def body(edit):
         node = edit.entity(element_id, expected_id)
@@ -358,17 +351,29 @@ def update_props(graph, element_id, expected_id, props, user=None):
         current = dict(edit.tx.run("MATCH (n) WHERE elementId(n) = $eid RETURN apoc.map.removeKey(properties(n), 'embedding') AS p",
                                    eid=element_id).single()["p"])
         ledger_rows.update_curated(edit.lt, entity_id, list(changes), current)
-        edit.bump(element_id, entity_id)
+        changed = edit.bump(element_id, entity_id)
         if used_text is not None:
             _write_entity_embedding(edit, element_id, used_text, vectors)
         op_id = edit.finish(f"「{entity_id}」のプロパティ {'・'.join(sorted(changes))} を修正")
-        return {"node": edit.fresh_node(element_id), "op_id": op_id}
+        return {"node": node_dict(changed), "op_id": op_id}
 
     return _edit(graph, "update_props", user, {"element_id": element_id, "expected_id": expected_id, "props": changes},
                  body)
 
 
 # ---- M4 統合 ----
+
+def merge_nodes_into(tx, target_element_id, source_element_ids):
+    """source のノードを target に apoc.refactor.mergeNodes で統合し（MERGE_CONFIG）、統合でできた自己ループを消す。"""
+    tx.run("""
+        MATCH (t) WHERE elementId(t) = $target
+        UNWIND $sources AS sid
+        MATCH (s) WHERE elementId(s) = sid
+        WITH t, collect(s) AS sources
+        CALL apoc.refactor.mergeNodes([t] + sources, $config) YIELD node
+        RETURN count(node)""", target=target_element_id, sources=source_element_ids, config=MERGE_CONFIG)
+    tx.run("MATCH (n)-[r]->(n) WHERE elementId(n) = $eid DELETE r", eid=target_element_id)
+
 
 def _merged_description(mode, descriptions, custom):
     """統合の後の説明。descriptions は [target]+sources の順。target は統合先の説明（無ければ統合で残る説明。
@@ -400,14 +405,13 @@ def merge(graph, target_element_id, target_expected_id, sources, keep_id, labels
     source_ids = [ref["element_id"] for ref in source_refs]
     if len(set(source_ids)) != len(source_ids) or target_element_id in source_ids:
         raise EditError(INVALID, "the target and the sources must be different nodes")
-    user = _user(user)
 
     before = [_read_node(graph, eid) for eid in [target_element_id] + source_ids]
     used_text = None
     vectors = {}
     if all(before):
         used_text = entity_text(keep_id, _merged_description(mode, [b["description"] for b in before], custom))
-        vectors = _embed_one(used_text)
+        vectors = embed_texts([used_text])
 
     def body(edit):
         target = edit.entity(target_element_id, target_expected_id, allow_rule_made=True)
@@ -421,26 +425,17 @@ def merge(graph, target_element_id, target_expected_id, sources, keep_id, labels
             raise EditError(RESERVED, "a rule-made entity keeps its name and labels when it is the merge target",
                             data={"reason": "規則により生成したノード（文書番号・型式）を統合先にする場合は、名前とラベルを変更できません。"})
         merged_eids = [target_element_id] + source_ids
-        conflicts = find_conflicts(edit.tx, keep_id, merged_eids)
-        if conflicts:
-            raise EditError(CONFLICT, f"an entity named {keep_id!r} (or the same after normalization) already exists",
-                            data={"conflicts": conflicts})
-        final_description = _merged_description(mode, [n.get("description") for n in all_nodes], custom)
         target_old_id = target.get("id")
         source_entity_ids = [n.get("id") for n in nodes]
-        refuse_alias_of_other(edit, keep_id, merged_eids)
         # 統合で使われなくなる名前は別名になる
-        refuse_same_key_entities(edit, source_entity_ids + ([target_old_id] if keep_id != target_old_id else []), merged_eids)
-        edit.snapshot(merged_eids)
-        edit.docs |= history.entity_documents(edit.tx, merged_eids)
-        edit.tx.run("""
-            MATCH (t) WHERE elementId(t) = $target
-            UNWIND $sources AS sid
-            MATCH (s) WHERE elementId(s) = sid
-            WITH t, collect(s) AS sources
-            CALL apoc.refactor.mergeNodes([t] + sources, $config) YIELD node
-            RETURN count(node)""", target=target_element_id, sources=source_ids, config=MERGE_CONFIG)
-        edit.tx.run("MATCH (n)-[r]->(n) WHERE elementId(n) = $eid DELETE r", eid=target_element_id)
+        used_names = source_entity_ids + ([target_old_id] if keep_id != target_old_id else [])
+        hits = _key_hits(edit.tx, [keep_id] + used_names, merged_eids)
+        refuse_name_taken(edit, keep_id, hits[keep_id])
+        final_description = _merged_description(mode, [n.get("description") for n in all_nodes], custom)
+        refuse_alias_of_other(edit, keep_id, merged_eids)
+        refuse_same_key_entities(edit, used_names, hits)
+        edit.snapshot(merged_eids, recount=True)
+        merge_nodes_into(edit.tx, target_element_id, source_ids)
         if keep_id != target_old_id:
             edit.tx.run("MATCH (n) WHERE elementId(n) = $eid SET n.id = $id", eid=target_element_id, id=keep_id)
         merged = edit.tx.run("MATCH (n) WHERE elementId(n) = $eid RETURN n", eid=target_element_id).single()["n"]
@@ -452,11 +447,10 @@ def merge(graph, target_element_id, target_expected_id, sources, keep_id, labels
                         d=final_description)
         current = dict(edit.tx.run("MATCH (n) WHERE elementId(n) = $eid RETURN apoc.map.removeKey(properties(n), 'embedding') AS p",
                                    eid=target_element_id).single()["p"])
-        used_names = source_entity_ids + ([target_old_id] if keep_id != target_old_id else [])
         ledger_rows.merge_entities(edit.lt, used_names, keep_id, new_labels,
                                    ["description"] if mode in ("concat", "custom") else [], current)
         _sync_aliases(edit, keep_id, target_element_id)
-        edit.bump(target_element_id, target_old_id)
+        merged_node = edit.bump(target_element_id, target_old_id)
         for entity_id in source_entity_ids:
             edit.gone(entity_id)
         if used_text is not None:
@@ -467,7 +461,7 @@ def merge(graph, target_element_id, target_expected_id, sources, keep_id, labels
         op_id = edit.finish(f"「{names}」を「{target_old_id}」に統合"
                             + (f"し「{keep_id}」に改名" if keep_id != target_old_id else "")
                             + f"（{len(all_nodes)} 件）")
-        return {"node": edit.fresh_node(target_element_id), "op_id": op_id, "merged_ids": source_entity_ids}
+        return {"node": node_dict(merged_node), "op_id": op_id, "merged_ids": source_entity_ids}
 
     payload = {"target_element_id": target_element_id, "target_expected_id": target_expected_id, "sources": source_refs,
                "keep_id": keep_id, "labels": requested_labels, "description_mode": mode, "description": custom}
@@ -484,16 +478,15 @@ def delete_nodes(graph, nodes, suppress=True, user=None):
     if len(set(element_ids)) != len(element_ids):
         raise EditError(INVALID, "the same node is listed twice")
     suppress = parse_bool(suppress, True)
-    user = _user(user)
 
     def body(edit):
         found = [edit.entity(ref["element_id"], ref["expected_id"]) for ref in refs]
         ids = [node.get("id") for node in found]
         if suppress:  # 名前と別名が削除の記録になる
             alias_names = [row.get("alias") for row in edit.lt.find("alias", "target", ids)]
-            refuse_same_key_entities(edit, ids + alias_names, element_ids)
-        edit.snapshot(element_ids)
-        edit.docs |= history.entity_documents(edit.tx, element_ids)
+            names = [name for name in ids + alias_names if name]
+            refuse_same_key_entities(edit, names, _key_hits(edit.tx, names, element_ids))
+        edit.snapshot(element_ids, recount=True)
         edit.tx.run("UNWIND $eids AS eid MATCH (n) WHERE elementId(n) = eid DETACH DELETE n", eids=element_ids)
         for entity_id in ids:
             ledger_rows.delete_entity(edit.lt, entity_id, suppress)
@@ -528,6 +521,27 @@ def _rel_text(src, rel_type, tgt):
     return f"{src} -[{rel_type}]-> {tgt}"
 
 
+def _merge_relationship(edit, start_element_id, end_element_id, rel_type, props):
+    """start→end に rel_type のリレーションを作る（同じ種類が既にあれば、そのプロパティを props にする）。作ったリレーションを返す。"""
+    return edit.tx.run("""
+        MATCH (a) WHERE elementId(a) = $a
+        MATCH (b) WHERE elementId(b) = $b
+        CALL apoc.merge.relationship(a, $type, {}, $props, b, $props) YIELD rel
+        RETURN rel""", a=start_element_id, b=end_element_id, type=rel_type, props=props).single()["rel"]
+
+
+def _snapshot_ends(edit, a, b, recount):
+    """リレーションの両端（自分自身へのリレーションなら 1 つ）の写しを取り、両端の一覧を返す。"""
+    ends = [a] if a.element_id == b.element_id else [a, b]
+    edit.snapshot([node.element_id for node in ends], recount=recount)
+    return ends
+
+
+def _bump_ends(edit, ends):
+    for node in ends:
+        edit.bump(node.element_id, node.get("id"))
+
+
 def create_relationship(graph, source_element_id, source_expected_id, target_element_id, target_expected_id, type,
                         props=None, user=None):
     source_element_id = require_text(source_element_id, "source_element_id")
@@ -535,28 +549,20 @@ def create_relationship(graph, source_element_id, source_expected_id, target_ele
     target_element_id = require_text(target_element_id, "target_element_id")
     target_expected_id = require_text(target_expected_id, "target_expected_id")
     rel_type = validate_relationship_type(type)
-    rel_props = validate_relationship_props(parse_json(props, "props", dict, required=False), allow_null=True)
+    rel_props = validate_relationship_props(parse_json(props, "props", dict, required=False))
     rel_props = {k: v for k, v in rel_props.items() if v is not None}
-    user = _user(user)
     if source_element_id == target_element_id:
         raise EditError(INVALID, "a relationship from an entity to itself cannot be created")
 
     def body(edit):
         a = edit.entity(source_element_id, source_expected_id, allow_rule_made=True)
         b = edit.entity(target_element_id, target_expected_id, allow_rule_made=True)
-        edit.snapshot([source_element_id, target_element_id])
-        rel = edit.tx.run("""
-            MATCH (a) WHERE elementId(a) = $a
-            MATCH (b) WHERE elementId(b) = $b
-            CALL apoc.merge.relationship(a, $type, {}, $props, b, $props) YIELD rel
-            RETURN rel""", a=source_element_id, b=target_element_id, type=rel_type, props=rel_props).single()["rel"]
+        ends = _snapshot_ends(edit, a, b, recount=True)
+        rel = _merge_relationship(edit, source_element_id, target_element_id, rel_type, rel_props)
         ledger_rows.add_manual_relationship(edit.lt, a.get("id"), rel_type, b.get("id"), rel_props)
-        edit.bump(source_element_id, a.get("id"))
-        edit.bump(target_element_id, b.get("id"))
-        edit.docs |= history.entity_documents(edit.tx, [source_element_id, target_element_id])
+        _bump_ends(edit, ends)
         op_id = edit.finish(f"リレーション {_rel_text(a.get('id'), rel_type, b.get('id'))} を追加")
-        fresh = edit.tx.run("MATCH ()-[r]->() WHERE elementId(r) = $rid RETURN r", rid=rel.element_id).single()["r"]
-        return {"relationship": rel_dict(fresh), "op_id": op_id}
+        return {"relationship": rel_dict(rel), "op_id": op_id}
 
     payload = {"source_element_id": source_element_id, "source_expected_id": source_expected_id,
                "target_element_id": target_element_id, "target_expected_id": target_expected_id, "type": rel_type,
@@ -568,17 +574,13 @@ def delete_relationship(graph, element_id, expected, suppress=True, user=None):
     element_id = require_text(element_id, "element_id")
     expected = parse_expected_relationship(expected)
     suppress = parse_bool(suppress, True)
-    user = _user(user)
 
     def body(edit):
         rel, a, b = _relationship(edit, element_id, expected)
-        ends = list(dict.fromkeys([a.element_id, b.element_id]))
-        edit.snapshot(ends)
-        edit.docs |= history.entity_documents(edit.tx, ends)
+        ends = _snapshot_ends(edit, a, b, recount=True)
         edit.tx.run("MATCH ()-[r]->() WHERE elementId(r) = $rid DELETE r", rid=element_id)
         ledger_rows.remove_relationship(edit.lt, a.get("id"), rel.type, b.get("id"), suppress)
-        for node in ([a, b] if a.element_id != b.element_id else [a]):
-            edit.bump(node.element_id, node.get("id"))
+        _bump_ends(edit, ends)
         op_id = edit.finish(f"リレーション {_rel_text(a.get('id'), rel.type, b.get('id'))} を削除"
                             + ("。再抽出されても作成しない" if suppress else ""))
         return {"op_id": op_id}
@@ -596,8 +598,7 @@ def update_relationship(graph, element_id, expected, new_type=None, reverse=Fals
     reverse = parse_bool(reverse, False)
     changes = parse_json(props, "props", dict, required=False)
     if changes is not None:
-        changes = validate_relationship_props(changes, allow_null=True)
-    user = _user(user)
+        changes = validate_relationship_props(changes)
 
     def body(edit):
         rel, a, b = _relationship(edit, element_id, expected)
@@ -606,9 +607,8 @@ def update_relationship(graph, element_id, expected, new_type=None, reverse=Fals
         flip = reverse and not self_loop
         if not type_change and not flip and not changes:
             raise EditError(INVALID, "nothing to change")
-        ends = list(dict.fromkeys([a.element_id, b.element_id]))
-        edit.snapshot(ends)
-        edit.docs |= history.entity_documents(edit.tx, ends)
+        # プロパティだけの修正は文書の件数を変えない
+        ends = _snapshot_ends(edit, a, b, recount=type_change or flip)
         merged_props = history.jsonable(dict(rel))
         for key, value in (changes or {}).items():
             if value is None:
@@ -619,26 +619,19 @@ def update_relationship(graph, element_id, expected, new_type=None, reverse=Fals
         if type_change or flip:
             start, end = (b, a) if flip else (a, b)
             rel_type = new_type or rel.type
-            created = edit.tx.run("""
-                MATCH (s) WHERE elementId(s) = $s
-                MATCH (e) WHERE elementId(e) = $e
-                CALL apoc.merge.relationship(s, $type, {}, $props, e, $props) YIELD rel
-                RETURN rel""", s=start.element_id, e=end.element_id, type=rel_type, props=merged_props).single()["rel"]
+            result = _merge_relationship(edit, start.element_id, end.element_id, rel_type, merged_props)
             edit.tx.run("MATCH ()-[r]->() WHERE elementId(r) = $rid DELETE r", rid=element_id)
             ledger_rows.remove_relationship(edit.lt, a.get("id"), rel.type, b.get("id"), suppress=True)
             ledger_rows.add_manual_relationship(edit.lt, start.get("id"), rel_type, end.get("id"), merged_props)
-            new_rid = created.element_id
             summary = f"リレーション {old_text} を {_rel_text(start.get('id'), rel_type, end.get('id'))} に変更"
         else:
-            edit.tx.run("MATCH ()-[r]->() WHERE elementId(r) = $rid SET r = $props", rid=element_id, props=merged_props)
+            result = edit.tx.run("MATCH ()-[r]->() WHERE elementId(r) = $rid SET r = $props RETURN r",
+                                 rid=element_id, props=merged_props).single()["r"]
             ledger_rows.update_manual_relationship_props(edit.lt, a.get("id"), rel.type, b.get("id"), merged_props)
-            new_rid = element_id
             summary = f"リレーション {old_text} のプロパティ {'・'.join(sorted(changes))} を修正"
-        for node in ([a, b] if not self_loop else [a]):
-            edit.bump(node.element_id, node.get("id"))
+        _bump_ends(edit, ends)
         op_id = edit.finish(summary)
-        fresh = edit.tx.run("MATCH ()-[r]->() WHERE elementId(r) = $rid RETURN r", rid=new_rid).single()["r"]
-        return {"relationship": rel_dict(fresh), "op_id": op_id}
+        return {"relationship": rel_dict(result), "op_id": op_id}
 
     payload = {"element_id": element_id, "expected": expected, "new_type": new_type, "reverse": reverse, "props": changes}
     return _edit(graph, "update_relationship", user, payload, body)
@@ -648,20 +641,19 @@ def update_relationship(graph, element_id, expected, new_type=None, reverse=Fals
 
 def undo(graph, op_id, user=None):
     op_id = require_text(op_id, "op_id")
-    user = _user(user)
     op = run_read(graph, lambda tx: history.load_op(tx.run, op_id))
     texts = [entity_text(s["id"], s["props"].get("description")) for s in op["snapshot"]]
-    vectors, _ = embed_texts(texts)
+    vectors = embed_texts(texts)
 
     def body(edit):
         target = history.load_op(edit.tx.run, op_id)
-        entity_state = history.check_undoable(edit.tx.run, target)
+        history.check_undoable(edit.tx.run, target)
         edit.undo_of = op_id
         current_eids = [after[1] for after in target["ids_after"].values() if after]
         if current_eids:
             edit.snapshot(current_eids)  # 取り消しの直前の状態（記録用）
         index_dim = index_dimension(edit.tx.run)
-        restored_ids, restored, docs, skipped = history.restore(edit.tx, target, vectors, index_dim, edit.lt)
+        restored, docs, skipped = history.restore(edit.tx, target, vectors, index_dim, edit.lt)
         _refuse_restored_names_taken(edit, restored)
         edit.docs |= docs
         for snapshot in target["snapshot"]:
@@ -674,7 +666,7 @@ def undo(graph, op_id, user=None):
         undo_id = edit.finish(f"取り消し: {target['summary']}")
         if skipped:
             logging.info(f"graph_edit: undo {op_id} could not restore {skipped} relationships whose other end is gone")
-        return {"op_id": undo_id, "restored_ids": restored_ids, "skipped_relationships": skipped}
+        return {"op_id": undo_id, "restored_ids": list(restored), "skipped_relationships": skipped}
 
     return _edit(graph, "undo", user, {"op_id": op_id}, body)
 
@@ -685,8 +677,8 @@ def _refuse_restored_names_taken(edit, restored):
     for entity_id, element_id in restored.items():
         alias = edit.lt.get(ledger_rows.alias_uid(entity_id))
         if alias is not None and alias.get("target") and alias["target"] != entity_id:
-            record = edit.tx.run(f"MATCH (e:{ENTITY_LABEL} {{id: $id}}) RETURN elementId(e) AS eid", id=alias["target"]).single()
-            if record is not None and record["eid"] != element_id and record["eid"] not in restored.values():
+            holder_eid = _entity_element_id(edit.tx, alias["target"])
+            if holder_eid is not None and holder_eid != element_id and holder_eid not in restored.values():
                 raise EditError(NOT_UNDOABLE, f"{entity_id!r} is now an alias of {alias['target']!r}",
                                 data={"reason": f"「{entity_id}」はその後「{alias['target']}」の別名として登録されました（修正台帳）。"})
         tomb = edit.lt.get(ledger_rows.tnode_uid(entity_id))
@@ -705,23 +697,21 @@ def history_rows(graph, limit=50, before_seq=None):
 
 def ledger_delete(graph, uid, user=None):
     uid = require_text(uid, "uid")
-    user = _user(user)
 
     def body(edit):
         row = edit.lt.get(uid)
         if row is None:
             raise EditError(NOT_FOUND, f"ledger row {uid} does not exist")
-        holder = None
+        holder_eid = None
         if row.get("kind") == "alias" and row.get("target"):
             # 別名を消したら、代表のエンティティの aliases（表示と検索用）もそろえる。写しを取り、版を上げる
-            holder = edit.tx.run(f"MATCH (e:{ENTITY_LABEL} {{id: $id}}) RETURN elementId(e) AS eid",
-                                 id=row["target"]).single()
-            if holder is not None:
-                edit.snapshot([holder["eid"]])
+            holder_eid = _entity_element_id(edit.tx, row["target"])
+            if holder_eid is not None:
+                edit.snapshot([holder_eid])
         edit.lt.delete(uid)
-        if holder is not None:
-            _sync_aliases(edit, row["target"], holder["eid"], removed=[row.get("alias")])
-            edit.bump(holder["eid"], row["target"])
+        if holder_eid is not None:
+            _sync_aliases(edit, row["target"], holder_eid, removed=[row.get("alias")])
+            edit.bump(holder_eid, row["target"])
         op_id = edit.finish(f"修正台帳の行（{uid}）を削除")
         return {"uid": uid, "op_id": op_id}
 
@@ -733,7 +723,6 @@ def mark_distinct(graph, a_element_id, b_element_id, user=None):
     b_element_id = require_text(b_element_id, "b_element_id")
     if a_element_id == b_element_id:
         raise EditError(INVALID, "a and b must be different nodes")
-    user = _user(user)
 
     def body(edit):
         a = edit.entity(a_element_id, allow_rule_made=True)
@@ -792,12 +781,6 @@ def merge_duplicate_rows_report(graph, duplicate_nodes_list, user=None):
     if skipped:
         logging.info(f"graph_edit: merge_duplicate_rows skipped {len(skipped)} of {len(rows)} rows: {skipped}")
     return [{"totalMerged": total}], skipped
-
-
-def merge_duplicate_rows(graph, duplicate_nodes_list, user=None):
-    """merge_duplicate_rows_report の data だけを返す。"""
-    data, _ = merge_duplicate_rows_report(graph, duplicate_nodes_list, user)
-    return data
 
 
 def delete_unconnected(graph, unconnected_entities_list, user=None):

@@ -171,7 +171,11 @@ def recount(method):
     ms = collections.defaultdict(dict)                         # gold id -> {eid: tier}
     for e in d["entities"]:
         if not ent_chunks.get(e["id"]): continue               # チャンクに付いたノードだけ（score_gold.py と同じ）
-        for gid, (tier, cov) in M.match_name(e["props"].get("id")).items(): ms[gid][e["id"]] = tier
+        # 名前と、統合で残った別名（props.aliases。表記ゆれの統合・手動の統合が書く）のどれかで当たれば当たり。段階は良い方を取る（X35）
+        al = e["props"].get("aliases"); al = al if isinstance(al, list) else []
+        for nm_ in [e["props"].get("id")] + [a for a in al if isinstance(a, str)]:
+            for gid, (tier, cov) in M.match_name(nm_).items():
+                if gid not in ms or e["id"] not in ms[gid] or TIERS.index(tier) < TIERS.index(ms[gid][e["id"]]): ms[gid][e["id"]] = tier
     node_tier_gold = collections.defaultdict(dict)             # eid -> {gid: tier}
     for gid, mm in ms.items():
         for eid, t in mm.items(): node_tier_gold[eid][gid] = t

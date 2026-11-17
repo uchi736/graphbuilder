@@ -37,6 +37,9 @@ SETTINGS = {
     "参照追跡": ("graph_vector_fulltext_ref", {}),
     # 11/9: 文書だけを指す参照の行き先を要点の一覧から LLM に選ばせる
     "参照追跡一覧": ("graph_vector_fulltext_ref", {"reference_doc_select": "summary_list"}),
+    # 11/13 追加（X26）: 網羅型の質問に向けた方式「エンティティ起点の収集」。指示なしは切り分け用（回答の指示を既定のままにする）
+    "エンティティ起点": ("entity_collect", {"collect_prompt": False}),
+    "エンティティ起点＋指示": ("entity_collect", {}),
 }
 ROUTE = ("ref1", "ref2", "ent1", "ent2")
 REFUSAL = re.compile(r"(記載|情報|記述|明記|言及|定め|規定|データ|内容|数値|値).{0,24}(ありません|ございません|無い|ない|なし|見当たりません|見つかりません|含まれていません|含まれておりません|されていません|されておりません|確認できません|存在しません)"
